@@ -27,6 +27,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "buffer.h"
 #include "insdel.h"
+#define EXPOSE_FIXED_BUFFER_INTERNALS 1
 #include "lstream.h"
 #include "tls.h"
 #include "extents.h"
@@ -1621,16 +1622,8 @@ lisp_string_marker (Lisp_Object stream)
 
 /*********** a fixed buffer ***********/
 
-#define FIXED_BUFFER_STREAM_DATA(stream) \
-  LSTREAM_TYPE_DATA (stream, fixed_buffer)
-
-struct fixed_buffer_stream
-{
-  const unsigned char *inbuf;
-  unsigned char *outbuf;
-  Bytecount size;
-  Bytecount offset;
-};
+/* Much of the implementation of this is in lstream.h, since we need to
+   stack-allocate a fixed_buffer_lstream. */
 
 DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", fixed_buffer);
 
@@ -1639,7 +1632,7 @@ make_fixed_buffer_input_stream (const void *buf, Bytecount size)
 {
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "r");
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
-  str->inbuf = (const unsigned char *) buf;
+  str->inbuf = (const Ibyte *) buf;
   str->size = size;
   return wrap_lstream (lstr);
 }
@@ -1649,7 +1642,7 @@ make_fixed_buffer_output_stream (void *buf, Bytecount size)
 {
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "w");
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
-  str->outbuf = (unsigned char *) buf;
+  str->outbuf = (Ibyte *) buf;
   str->size = size;
   return wrap_lstream (lstr);
 }
@@ -1690,14 +1683,14 @@ fixed_buffer_rewinder (Lstream *stream)
   return 0;
 }
 
-const unsigned char *
+const Ibyte *
 fixed_buffer_input_stream_ptr (Lstream *stream)
 {
   assert (stream->imp == lstream_fixed_buffer);
   return FIXED_BUFFER_STREAM_DATA (stream)->inbuf;
 }
 
-unsigned char *
+Ibyte *
 fixed_buffer_output_stream_ptr (Lstream *stream)
 {
   assert (stream->imp == lstream_fixed_buffer);

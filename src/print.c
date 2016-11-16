@@ -310,36 +310,38 @@ write_string_to_external_output (const Ibyte *ptr, Bytecount len,
 #endif
 }
 
-/* #### The following function should make use of a call to the
-   emacs_vsprintf_*() functions rather than just using vsprintf.  This is
-   the only way to ensure that I18N3 works properly (many implementations
-   of the *printf() functions, including the ones included in glibc, do not
-   implement the %###$ argument-positioning syntax).
+/* This function can be called from fatal_error_signal() and so should make as
+   few assumptions as possible about what allocation is
+   available.
 
-   Note, however, that to do this, we'd have to
+   emacs_vsnprintf(), which does the work of formatting, jumps through
+   significant hoops to ensure that all its (usually) dynamic data structures
+   are precalculated and allocated on the stack, and so it sidesteps the
+   typical dependence of the doprnt.c functions on a working C heap (the
+   Dynarr for the parsed specs requires malloc()) and a working Lisp object
+   allocation system (for the lstream objects).
 
-   1) pre-allocate all the lstreams and do whatever else was necessary
-   to make sure that no allocation occurs, since these functions may be
-   called from fatal_error_signal().
+   In addition, if there are actually no format specs in FMT,
+   emacs_vsnprintf() just does an memmove(), which is even less likely to go
+   pear-shaped.
 
-   2) (to be really correct) make a new lstream that outputs using
-   mswindows_output_console_string().
-
-   3) A reasonable compromise might be to use emacs_vsprintf() when we're
-   in a safe state, and when not, use plain vsprintf(). */
-
+   Both emacs_vsnprintf() and write_string_to_external_output_va() will fail
+   if we run out of stack space. Oh well. */
 static void
 write_string_to_external_output_va (const CIbyte *fmt, va_list args,
 				    int dest)
 {
-  Ibyte kludge[8192];
-  Bytecount kludgelen;
+  Ibyte kludge[4096];
+  Bytecount klen;
 
   if (initialized && !inhibit_non_essential_conversion_operations)
     fmt = GETTEXT (fmt);
-  vsprintf ((CIbyte *) kludge, fmt, args);
-  kludgelen = qxestrlen (kludge);
-  write_string_to_external_output (kludge, kludgelen, dest);
+
+  klen = emacs_vsnprintf (kludge, sizeof (kludge), fmt, args);
+
+  write_string_to_external_output (kludge,
+                                   min (klen, (Bytecount) sizeof (kludge)),
+                                   dest);
 }
 
 /* Output portably to stderr or its equivalent (i.e. may be a console

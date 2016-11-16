@@ -43,6 +43,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 
 #include "buffer.h"
+#define EXPOSE_FIXED_BUFFER_INTERNALS
 #include "lstream.h"
 #include "insdel.h"
 #include "lrecord.h"
@@ -1083,21 +1084,29 @@ doprnt_1 (Lisp_Object stream,
    conversion specifiers contain non-ASCII non-pad characters, or if the
    minimum widths and precisions supplied are nonsensical.
 
-   The returned Dynarr should be freed once callers are finished with it,
-   e.g. with record_unwind_protect_freeing_dynarr(). */
+   The Dynarr may be preallocated and supplied in SPECS. This is usually not
+   convenient, and when SPECS is NULL, parse_doprnt_spec returns a fresh
+   heap-allocated Dynarr, which should be freed once callers are finished with
+   it, e.g. with record_unwind_protect_freeing_dynarr(). */
 static printf_spec_dynarr *
-parse_doprnt_spec (const Ibyte *format, Bytecount format_length,
+parse_doprnt_spec (printf_spec_dynarr *specs,
+                   const Ibyte *format, Bytecount format_length,
                    Elemcount *args_needed_out)
 {
   const Ibyte *fmt = format;
   const Ibyte *fmt_end = format + format_length;
   Elemcount prev_argnum = 0, max_argnum = 0;
-  printf_spec_dynarr *specs = Dynarr_new (printf_spec);
-  /* As a somewhat-representative survey, of the format specs used while
-     building XEmacs, as of 20161013, there were 16168 where the length of
-     specs was one, 21198 where it was two, 664 when it was 3, 86 when it was
-     4, 35 when it was 5, and 4 when it was 7. Nothing greater than that. */
-  Dynarr_resize_to_fit (specs, 8);
+
+  if (specs == NULL)
+    {
+      specs = Dynarr_new (printf_spec);
+      /* As a somewhat-representative survey, of the format specs used while
+         building XEmacs, as of 20161013, there were 16168 where the length of
+         specs was one, 21198 where it was two, 664 when it was 3, 86 when it
+         was 4, 35 when it was 5, and 4 when it was 7. Nothing greater than
+         that. */
+      Dynarr_resize_to_fit (specs, 8);
+    }
 
   while (1)
     {
@@ -2854,8 +2863,8 @@ write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
   Bytecount len = strlen (fmt);
   Elemcount nargs = 0;
-  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
-                                                 &nargs);
+  printf_spec_dynarr *specs = parse_doprnt_spec (NULL, (const Ibyte *) fmt,
+                                                 len, &nargs);
   int count = record_unwind_protect_freeing_dynarr (specs);
   printf_arg *args = alloca_array (printf_arg, nargs);
 
@@ -2875,8 +2884,8 @@ write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
 {
   Bytecount len = strlen (fmt);
   Elemcount nargs = 0;
-  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
-                                                 &nargs);
+  printf_spec_dynarr *specs = parse_doprnt_spec (NULL, (const Ibyte *) fmt,
+                                                 len, &nargs);
   int count = record_unwind_protect_freeing_dynarr (specs);
   printf_arg *args = alloca_array (printf_arg, nargs);
   va_list va;
@@ -2897,8 +2906,8 @@ write_fmt_string_lisp_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
   Bytecount len = strlen (fmt);
   Elemcount nargs = 0, ii = 0;
-  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
-                                                 &nargs);
+  printf_spec_dynarr *specs = parse_doprnt_spec (NULL, (const Ibyte *) fmt,
+                                                 len, &nargs);
   int count = record_unwind_protect_freeing_dynarr (specs);
   Lisp_Object *largs = alloca_array (Lisp_Object, nargs);
   struct gcpro gcpro1, gcpro2;
@@ -2925,8 +2934,8 @@ write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, ...)
 {
   Bytecount len = strlen (fmt);
   Elemcount nargs = 0, ii = 0;
-  printf_spec_dynarr *specs = parse_doprnt_spec ((const Ibyte *) fmt, len,
-                                                 &nargs);
+  printf_spec_dynarr *specs = parse_doprnt_spec (NULL, (const Ibyte *) fmt,
+                                                 len, &nargs);
   int count = record_unwind_protect_freeing_dynarr (specs);
   Lisp_Object *largs = alloca_array (Lisp_Object, nargs);
   struct gcpro gcpro1, gcpro2;
@@ -3104,7 +3113,7 @@ emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
 }
 
 /* vsnprintf() replacement.  Writes output into OUTPUT, which has SIZE octets.
-   Data from Lisp strings is OK because we explicitly inhibit GC.
+   Data from Lisp strings is OK because we cannot GC.
 
    Return the number of octets that would have been written were the buffer
    unlimited in size, which will be equivalent to the number of octets written
@@ -3117,12 +3126,66 @@ Bytecount
 emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
                  va_list vargs)
 {
-  Bytecount retval;
-  int count = begin_gc_forbidden ();
-  Lisp_Object stream = make_fixed_buffer_output_stream (output, size - 1);
+  /* emacs_vsnprintf can be called from write_string_to_external_output_va()
+     in print.c. That function is called in situations where XEmacs is about
+     to crash, and to be as useful as possible, we need to avoid allocating
+     Lisp objects or calling malloc (), whence the allocation of the fixed
+     buffer lstream and the specs on the stack. This is not a practice that
+     should be emulated anywhere else. */
+  Bytecount retval, len, speccount = 1;
+  const CIbyte *cursor = format;
 
-  write_fmt_string_va (stream, format, vargs);
-  retval = Lstream_byte_count (XLSTREAM (stream));
+  while (*cursor)
+    {
+      /* Count the number of format specs, so we can allocate the Dynarr on
+         the stack for parse_doprnt_spec(). */
+      speccount += *cursor == '%', cursor += 1;
+    }
+
+  len = cursor - format;
+
+  if (speccount == 1)
+    {
+      /* No actual format specs, and since we may be preparing for armageddon,
+         there is some value to not going ahead with the emacs_doprnt() and
+         instead just copying the data to where our caller wants it to go. */
+      retval = len;
+      /* For the same reason, use the more robust memmove() rather than
+         memcpy(). */
+      memmove (output, format, min (size - 1, len));
+    }
+  else
+    {
+      printf_spec_dynarr specs;
+      printf_spec sbase[speccount];
+      printf_arg *args;
+      Elemcount nargs;
+      /* Beyond the upside of avoiding touching the Lisp allocation code,
+         allocating this on the stack has the advantage that we're not bitten
+         by the non-dumpability of lstreams, something that would mean
+         separate code paths for dump time and normal runtime. */
+      DECLARE_STACK_FIXED_BUFFER_LSTREAM (stream);
+
+      INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM (stream, output, size);
+
+      INIT_STACK_DYNARR (specs, printf_spec,
+                         /* This is actually not exact, but will always be at
+                            least the number of specs. */
+                         speccount, sbase);
+
+      parse_doprnt_spec (&specs, (const Ibyte *) format, len, &nargs);
+      /* Check we allocated enough on the stack for the specs. If we haven't,
+         we've probably crashed already, though, since the dynarr code will
+         have attempted to realloc stack-based data. */
+      structure_checking_assert (sbase == specs.base);
+
+      args = alloca_array (printf_arg, nargs);
+
+      get_doprnt_c_args (args, nargs, &specs, vargs);
+
+      retval = emacs_doprnt (stream, (const Ibyte *) format, len,
+                             Qnil, &specs, NULL, args);
+    }
 
   if (retval < size - 1)
     {
@@ -3133,15 +3196,11 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
       output[size - 1] = '\0';
     }
 
-  Lstream_delete (XLSTREAM (stream));
-  end_gc_forbidden (count);
-
   return retval;
 }
 
 /* snprintf() replacement. Writes output into OUTPUT, which is a buffer
-   comprising SIZE octets. Data from Lisp strings is OK because we explicitly
-   inhibit GC. 
+   comprising SIZE octets. Data from Lisp strings is OK because we cannot GC.
 
    Return the number of octets that would have been written were the buffer
    unlimited in size, which will be equivalent to the number of octets written
@@ -3176,8 +3235,8 @@ format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
   Elemcount args_needed = 0;
   Bytecount format_length = XSTRING_LENGTH (format_reloc);
   printf_spec_dynarr *specs
-    = parse_doprnt_spec (XSTRING_DATA (format_reloc), format_length,
-                         &args_needed);
+    = parse_doprnt_spec (NULL, XSTRING_DATA (format_reloc),
+                         format_length, &args_needed);
   int count = record_unwind_protect_freeing_dynarr (specs);
   struct gcpro gcpro1, gcpro2, gcpro3;
 
