@@ -1,3 +1,10 @@
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c:
+	Document why we haven't yet implemented #'format-message or
+	`text-quoting-style'.
+
 2016-09-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c:
