@@ -4491,6 +4491,8 @@ Lisp_Object int32_t_to_lisp (INT_32_BIT);
 UINT_32_BIT lisp_to_uint32_t (Lisp_Object);
 INT_32_BIT lisp_to_int32_t (Lisp_Object);
 
+Lisp_Object build_fixnum_to_char_map (Lisp_Object radix_table);
+
 enum parse_integer_flags
 {
   JUNK_ALLOWED = 1 << 0,
@@ -5427,6 +5429,31 @@ Charbpos vmotion_pixels (Lisp_Object, Charbpos, int, int, int *);
 /* Defined in insdel.c */
 void set_buffer_point (struct buffer *buf, Charbpos pos, Bytebpos bipos);
 
+DECLARE_INLINE_HEADER (
+void
+fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
+			  Bytecount offset, Bytecount *len)
+)
+{
+  text_checking_assert ((nonreloc && NILP (reloc))
+                        || (!nonreloc && STRINGP (reloc)));
+  if (*len < 0)
+    {
+      if (nonreloc)
+	*len = strlen ((const Chbyte *) nonreloc) - offset;
+      else
+	*len = XSTRING_LENGTH (reloc) - offset;
+    }
+#ifdef ERROR_CHECK_TEXT
+  assert (*len >= 0);
+  if (STRINGP (reloc))
+    {
+      assert (offset >= 0 && offset <= XSTRING_LENGTH (reloc));
+      assert (offset + *len <= XSTRING_LENGTH (reloc));
+    }
+#endif
+}
+
 /* Defined in intl.c */
 EXFUN (Fgettext, 1);
 
@@ -5614,7 +5641,7 @@ void write_ascstring (Lisp_Object stream, const Ascbyte *str)
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
 void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void stderr_out_lisp (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void stderr_out_lisp (const CIbyte *, ...);
 void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
@@ -6146,11 +6173,11 @@ int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 DECLARE_INLINE_HEADER (int qxesscanf_ascii_1 (Ibyte *buffer,
-					      const Ascbyte *format,
+					      const Ascbyte *fermat,
 					      void *ptr))
 {
   /* #### DAMNIT! No vsscanf! */
-  return sscanf ((Chbyte *) buffer, format, ptr);
+  return sscanf ((Chbyte *) buffer, fermat, ptr);
 }
 
 /* Do not use POSIX locale routines.  Not Mule-correct. */

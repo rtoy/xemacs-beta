@@ -172,22 +172,22 @@ EXFUN (Fnext_window, 4);
  ****************************************************************************/
 
 struct image_instantiator_methods *
-decode_device_ii_format (Lisp_Object device, Lisp_Object format,
+decode_device_ii_format (Lisp_Object device, Lisp_Object fermat,
 			 Error_Behavior errb)
 {
   int i;
 
-  if (!SYMBOLP (format))
+  if (!SYMBOLP (fermat))
     {
       if (ERRB_EQ (errb, ERROR_ME))
-	CHECK_SYMBOL (format);
+	CHECK_SYMBOL (fermat);
       return 0;
     }
 
   for (i = 0; i < Dynarr_length (the_image_instantiator_format_entry_dynarr);
        i++)
     {
-      if ( EQ (format,
+      if ( EQ (fermat,
 	       Dynarr_at (the_image_instantiator_format_entry_dynarr, i).
 	       symbol) )
 	{
@@ -202,24 +202,24 @@ decode_device_ii_format (Lisp_Object device, Lisp_Object format,
 	}
     }
 
-  maybe_invalid_argument ("Invalid image-instantiator format", format,
+  maybe_invalid_argument ("Invalid image-instantiator format", fermat,
 			  Qimage, errb);
 
   return 0;
 }
 
 struct image_instantiator_methods *
-decode_image_instantiator_format (Lisp_Object format, Error_Behavior errb)
+decode_image_instantiator_format (Lisp_Object fermat, Error_Behavior errb)
 {
-  return decode_device_ii_format (Qnil, format, errb);
+  return decode_device_ii_format (Qnil, fermat, errb);
 }
 
 static int
-valid_image_instantiator_format_p (Lisp_Object format, Lisp_Object locale)
+valid_image_instantiator_format_p (Lisp_Object fermat, Lisp_Object locale)
 {
   int i;
   struct image_instantiator_methods* meths =
-    decode_image_instantiator_format (format, ERROR_ME_NOT);
+    decode_image_instantiator_format (fermat, ERROR_ME_NOT);
   Lisp_Object contype = Qnil;
   /* mess with the locale */
   if (!NILP (locale) && SYMBOLP (locale))
@@ -230,7 +230,7 @@ valid_image_instantiator_format_p (Lisp_Object format, Lisp_Object locale)
       contype = console ? CONSOLE_TYPE (console) : locale;
     }
   /* nothing is valid in all locales */
-  if (EQ (format, Qnothing))
+  if (EQ (fermat, Qnothing))
     return 1;
   /* reject unknown formats */
   else if (NILP (contype) || !meths)

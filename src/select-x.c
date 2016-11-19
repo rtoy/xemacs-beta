@@ -466,7 +466,7 @@ x_selection_request_lisp_error (Lisp_Object closure)
    requestor wants it.  Then tell them whether we've succeeded.
  */
 static void
-x_reply_selection_request (XSelectionRequestEvent *event, int format,
+x_reply_selection_request (XSelectionRequestEvent *event, int fermat,
 			   Rawbyte *data, Bytecount size, Atom type)
 {
   /* This function can GC */
@@ -475,7 +475,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
   struct device *d = get_device_from_display (display);
   Window window = event->requestor;
   Bytecount bytes_remaining;
-  int format_bytes = format/8;
+  int format_bytes = fermat/8;
   Bytecount max_bytes = SELECTION_QUANTUM (display);
   if (max_bytes > MAX_SELECTION_QUANTUM) max_bytes = MAX_SELECTION_QUANTUM;
 
@@ -499,7 +499,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 #if 0
       stderr_out ("\nStoring all %d\n", bytes_remaining);
 #endif
-      XChangeProperty (display, window, reply.property, type, format,
+      XChangeProperty (display, window, reply.property, type, fermat,
 		       PropModeReplace, data, size);
       /* At this point, the selection was successfully stored; ack it. */
       XSendEvent (display, window, False, 0L, (XEvent *) &reply);
@@ -571,7 +571,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 	  stderr_out ("  INCR adding %d\n", i);
 #endif
 	  /* Append the next chunk of data to the property. */
-	  XChangeProperty (display, window, reply.property, type, format,
+	  XChangeProperty (display, window, reply.property, type, fermat,
 			   PropModeAppend, data, i / format_bytes);
 	  bytes_remaining -= i;
 	  data += i;
@@ -591,7 +591,7 @@ x_reply_selection_request (XSelectionRequestEvent *event, int format,
 	XSelectInput (display, window, 0L);
 	XtUnregisterDrawable(display, (Drawable)window);
       }
-      XChangeProperty (display, window, reply.property, type, format,
+      XChangeProperty (display, window, reply.property, type, fermat,
 		       PropModeReplace, data, 0);
 #endif /* HAVE_XTREGISTERDRAWABLE */
     }
@@ -664,12 +664,12 @@ x_handle_selection_request (XSelectionRequestEvent *event)
   {
     Rawbyte *data;
     Bytecount size;
-    int format;
+    int fermat;
     Atom type;
     lisp_data_to_selection_data (d, converted_selection,
-				 &data, &type, &size, &format);
+				 &data, &type, &size, &fermat);
 
-    x_reply_selection_request (event, format, data, size, type);
+    x_reply_selection_request (event, fermat, data, size, type);
     successful_p = Qt;
     /* Tell x_selection_request_lisp_error() it's cool. */
     event->type = 0;
@@ -1313,7 +1313,7 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   Rawbyte *data;
   Bytecount bytes;
   Atom type;
-  int format;
+  int fermat;
   unsigned long size;
   Lisp_Object ret;
 
@@ -1321,13 +1321,13 @@ Return the value of the named CUTBUFFER (typically CUT_BUFFER0).
   cut_buffer_atom = symbol_to_x_atom (d, cutbuffer, 0);
 
   x_get_window_property (display, window, cut_buffer_atom, &data, &bytes,
-			 &type, &format, &size, 0);
+			 &type, &fermat, &size, 0);
   if (!data) return Qnil;
 
-  if (format != 8 || type != XA_STRING)
+  if (fermat != 8 || type != XA_STRING)
     invalid_state_2 ("Cut buffer doesn't contain 8-bit STRING data",
 		     x_atom_to_symbol (d, type),
-		     make_fixnum (format));
+		     make_fixnum (fermat));
 
   /* We cheat - if the string contains an ESC character, that's
      technically not allowed in a STRING, so we assume it's
