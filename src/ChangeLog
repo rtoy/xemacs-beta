@@ -38,6 +38,9 @@
 	* strftime.c (strftime):
 	* text.c (qxesprintf):
 
+	* text.h (ichar_ascii_p):
+	Make this available on non-MULE builds, always giving 1.
+	
 2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (print_char_table):

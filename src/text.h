@@ -123,6 +123,7 @@ enum converr
 #define MAX_ICHAR_LEN 1
 /* Exclusive upper bound on character codes. */
 #define CHAR_CODE_LIMIT 0x100 
+#define ichar_ascii_p(c) ((void) (c), 1)
 
 #else /* MULE */
 
