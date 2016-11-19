@@ -1082,7 +1082,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
   /* This function can GC */
   const Ibyte *strp, *backslashp, *strdata;
   Boolint changed = 0;
-  Ibyte *symname;;
+  Ibyte *symname;
   Bytecount strlength = MOST_POSITIVE_FIXNUM, stretch_begin;
   Bytecount idx = 0, symlen, partlen;
   Lisp_Object tem = Qnil, keymap = Qnil, name = Qnil, stream = Qnil;

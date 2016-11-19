@@ -140,31 +140,6 @@ void buffer_reset_changes (struct buffer *buf);
 Membpos do_marker_adjustment (Membpos mpos, Membpos from,
 			     Membpos to, Bytecount amount);
 
-DECLARE_INLINE_HEADER (
-void
-fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
-			  Bytecount offset, Bytecount *len)
-)
-{
-  text_checking_assert ((nonreloc && NILP (reloc))
-                        || (!nonreloc && STRINGP (reloc)));
-  if (*len < 0)
-    {
-      if (nonreloc)
-	*len = qxestrlen (nonreloc) - offset;
-      else
-	*len = XSTRING_LENGTH (reloc) - offset;
-    }
-#ifdef ERROR_CHECK_TEXT
-  assert (*len >= 0);
-  if (STRINGP (reloc))
-    {
-      assert (offset >= 0 && offset <= XSTRING_LENGTH (reloc));
-      assert (offset + *len <= XSTRING_LENGTH (reloc));
-    }
-#endif
-}
-
 /* In font-lock.c */
 void font_lock_maybe_update_syntactic_caches (struct buffer *buf,
 					      Charbpos start,

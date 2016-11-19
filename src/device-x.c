@@ -672,7 +672,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
        does not override resources defined elsewhere */
     const Extbyte *data_dir;
     Extbyte *path;
-    const Extbyte *format;
+    const Extbyte *fermat;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
     Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
@@ -682,13 +682,13 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	LISP_PATHNAME_CONVERT_OUT (Vx_app_defaults_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
-	format = "%s%s/Emacs";
+	fermat = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_PATHNAME_CONVERT_OUT (Vdata_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
-	format = "%sapp-defaults/%s/Emacs";
+	fermat = "%sapp-defaults/%s/Emacs";
       }
     else
       {
@@ -701,14 +701,14 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      * app-defaults file found.
      */
 
-    sprintf (path, format, data_dir, locale);
+    sprintf (path, fermat, data_dir, locale);
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
 
     if ((locale_end = strchr (locale, '.')))
       {
 	*locale_end = '\0';
-	sprintf (path, format, data_dir, locale);
+	sprintf (path, fermat, data_dir, locale);
 
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -717,7 +717,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if ((locale_end = strchr (locale, '_')))
       {
 	*locale_end = '\0';
-	sprintf (path, format, data_dir, locale);
+	sprintf (path, fermat, data_dir, locale);
 
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);

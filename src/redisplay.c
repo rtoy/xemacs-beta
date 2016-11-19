@@ -1577,9 +1577,9 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 	  && CONSP (XCDR (entry))
 	  && STRINGP (XCAR (XCDR (entry))))
 	{
-	  Lisp_Object format = XCAR (XCDR (entry));
-	  Bytebpos len = XSTRING_LENGTH (format);
-	  Ibyte *src = XSTRING_DATA (format), *end = src + len;
+	  Lisp_Object fermat = XCAR (XCDR (entry));
+	  Bytebpos len = XSTRING_LENGTH (fermat);
+	  Ibyte *src = XSTRING_DATA (fermat), *end = src + len;
 	  Ibyte *result = alloca_ibytes (len);
 	  Ibyte *dst = result;
 

@@ -1,5 +1,45 @@
 2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Further build fixes:
+
+	1. Don't use format as a local variable name, now it is the name of a
+	globally-visible function.
+	2. Move the recently-inlined fixup_internal_substring() to lisp.h
+	from insdel.h, turns out a decent number of the places that used
+	it didn't necessarily #include insdel.h, and it's fine to have it
+	in lisp.h
+	3. Put a declaration for build_fixnum_to_char_map() in lisp.h
+
+	* device-x.c (x_init_device):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c:
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (emacs_vsprintf_string):
+	* doprnt.c (emacs_sprintf_string):
+	* doprnt.c (emacs_vasprintf):
+	* doprnt.c (emacs_asprintf):
+	* doprnt.c (emacs_vsnprintf):
+	* doprnt.c (emacs_snprintf):
+	* frame-x.c (x_wm_hack_wm_protocols):
+	* glyphs.c (decode_device_ii_format):
+	* glyphs.c (decode_image_instantiator_format):
+	* glyphs.c (valid_image_instantiator_format_p):
+	* insdel.h:
+	* lisp.h:
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lisp.h (qxestrcoll):
+	* print.c (debug_out_lisp):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* strftime.c (strftime):
+	* text.c (qxesprintf):
+
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* chartab.c (print_char_table):
 	typename seems to be a reserved word in C++, rename this
 	variable.

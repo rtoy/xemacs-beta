@@ -521,8 +521,6 @@ ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
 
 #endif /* HAVE_RATIO */
 
-extern Lisp_Object build_fixnum_to_char_map (Lisp_Object radix_table);
-
 DEFUN ("number-to-string", Fnumber_to_string, 1, 3, 0, /*
 Convert NUMBER to a string by printing it in base RADIX.
 
@@ -1074,13 +1072,13 @@ doprnt_1 (Lisp_Object stream,
       }                                                         \
   } while (0)
 
-/* Given FORMAT, an internal-format string of length FORMAT_LENGTH, parse it
+/* Given FERMAT, an internal-format string of length FERMAT_LENGTH, parse it
    into a Dynarr of struct printf_spec reflecting the % conversion specifiers
-   within FORMAT, and return that Dynarr. In ARGS_NEEDED_OUT, return the
+   within FERMAT, and return that Dynarr. In ARGS_NEEDED_OUT, return the
    greatest argument number encountered. Note this function has no access to
    the actual args specified, and in theory could run at compile time.
 
-   Error if FORMAT ends in the middle of a conversion specifier, if its
+   Error if FERMAT ends in the middle of a conversion specifier, if its
    conversion specifiers contain non-ASCII non-pad characters, or if the
    minimum widths and precisions supplied are nonsensical.
 
@@ -1090,11 +1088,11 @@ doprnt_1 (Lisp_Object stream,
    it, e.g. with record_unwind_protect_freeing_dynarr(). */
 static printf_spec_dynarr *
 parse_doprnt_spec (printf_spec_dynarr *specs,
-                   const Ibyte *format, Bytecount format_length,
+                   const Ibyte *fermat, Bytecount fermat_length,
                    Elemcount *args_needed_out)
 {
-  const Ibyte *fmt = format;
-  const Ibyte *fmt_end = format + format_length;
+  const Ibyte *fmt = fermat;
+  const Ibyte *fmt_end = fermat + fermat_length;
   Elemcount prev_argnum = 0, max_argnum = 0;
 
   if (specs == NULL)
@@ -1124,7 +1122,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
       text_end = (Ibyte *) memchr (fmt, '%', fmt_end - fmt);
       if (!text_end)
 	text_end = fmt_end;
-      spec.text_before = fmt - format;
+      spec.text_before = fmt - fermat;
       spec.text_before_len = text_end - fmt;
       set_itext_ichar (spec.pad_char, ' ');
       spec.precision = -1;
@@ -3043,12 +3041,12 @@ emacs_asprintf_lisp (Ibyte **retval_out, const CIbyte *format_nonreloc,
    objects--doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data
    from Lisp strings is OK because we explicitly inhibit GC. */
 Lisp_Object
-emacs_vsprintf_string (const CIbyte *format, va_list vargs)
+emacs_vsprintf_string (const CIbyte *fermat, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
   int count = begin_gc_forbidden ();
 
-  write_fmt_string_va (stream, format, vargs);
+  write_fmt_string_va (stream, fermat, vargs);
   obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
   end_gc_forbidden (count);
@@ -3060,13 +3058,13 @@ emacs_vsprintf_string (const CIbyte *format, va_list vargs)
    --doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data from Lisp
    strings is OK because we explicitly inhibit GC. */
 Lisp_Object
-emacs_sprintf_string (const CIbyte *format, ...)
+emacs_sprintf_string (const CIbyte *fermat, ...)
 {
   va_list vargs;
   Lisp_Object retval;
 
-  va_start (vargs, format);
-  retval = emacs_vsprintf_string (format, vargs);
+  va_start (vargs, fermat);
+  retval = emacs_vsprintf_string (fermat, vargs);
   va_end (vargs);
   return retval;
 }
@@ -3077,13 +3075,13 @@ emacs_sprintf_string (const CIbyte *format, ...)
    terminating zero). Stores a pointer to be freed with free() into
    *RETVAL_OUT. */
 Bytecount
-emacs_vasprintf (Ibyte **retval_out, const CIbyte *format, va_list vargs)
+emacs_vasprintf (Ibyte **retval_out, const CIbyte *fermat, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   int count = begin_gc_forbidden ();
   Bytecount len;
 
-  write_fmt_string_va (stream, format, vargs);
+  write_fmt_string_va (stream, fermat, vargs);
 
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
@@ -3102,13 +3100,13 @@ emacs_vasprintf (Ibyte **retval_out, const CIbyte *format, va_list vargs)
    explicitly inhibit GC.  Returns length (not including the terminating
    zero), Stores a pointer to be freed with free() into *RETVAL_OUT. */
 Bytecount
-emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
+emacs_asprintf (Ibyte **retval_out, const CIbyte *fermat, ...)
 {
   va_list vargs;
   Bytecount len;
 
-  va_start (vargs, format);
-  len = emacs_vasprintf (retval_out, format, vargs);
+  va_start (vargs, fermat);
+  len = emacs_vasprintf (retval_out, fermat, vargs);
   va_end (vargs);
   return len;
 }
@@ -3124,7 +3122,7 @@ emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
    will not zero-terminate if the number of octets is greater than SIZE -
    1.  The terminating zero is not included in the returned value. */
 Bytecount
-emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
+emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
                  va_list vargs)
 {
   /* emacs_vsnprintf can be called from write_string_to_external_output_va()
@@ -3134,7 +3132,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
      buffer lstream and the specs on the stack. This is not a practice that
      should be emulated anywhere else. */
   Bytecount retval, len, speccount = 1;
-  const CIbyte *cursor = format;
+  const CIbyte *cursor = fermat;
 
   while (*cursor)
     {
@@ -3143,7 +3141,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
       speccount += *cursor == '%', cursor += 1;
     }
 
-  len = cursor - format;
+  len = cursor - fermat;
 
   if (speccount == 1)
     {
@@ -3153,7 +3151,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
       retval = len;
       /* For the same reason, use the more robust memmove() rather than
          memcpy(). */
-      memmove (output, format, min (size - 1, len));
+      memmove (output, fermat, min (size - 1, len));
     }
   else
     {
@@ -3174,7 +3172,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
                             least the number of specs. */
                          speccount, sbase);
 
-      parse_doprnt_spec (&specs, (const Ibyte *) format, len, &nargs);
+      parse_doprnt_spec (&specs, (const Ibyte *) fermat, len, &nargs);
       /* Check we allocated enough on the stack for the specs. If we haven't,
          we've probably crashed already, though, since the dynarr code will
          have attempted to realloc stack-based data. */
@@ -3184,7 +3182,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
 
       get_doprnt_c_args (args, nargs, &specs, vargs);
 
-      retval = emacs_doprnt (stream, (const Ibyte *) format, len,
+      retval = emacs_doprnt (stream, (const Ibyte *) fermat, len,
                              Qnil, &specs, NULL, args);
     }
 
@@ -3211,13 +3209,13 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
    will not zero-terminate if the number of octets is greater than SIZE -
    1. The terminating zero is not included in the returned value. */
 Bytecount
-emacs_snprintf (Ibyte *output, Bytecount size, const CIbyte *format, ...)
+emacs_snprintf (Ibyte *output, Bytecount size, const CIbyte *fermat, ...)
 {
   va_list vargs;
   Bytecount retval;
 
-  va_start (vargs, format);
-  retval = emacs_vsnprintf (output, size, format, vargs);
+  va_start (vargs, fermat);
+  retval = emacs_vsnprintf (output, size, fermat, vargs);
   va_end (vargs);
 
   return retval;
