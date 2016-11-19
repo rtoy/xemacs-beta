@@ -1,3 +1,10 @@
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fontconfig.el (fc-define-property):
+	Supply the right number of arguments to #'format when creating the
+	fc-pattern-del- functions, now we have diagnostics that complain
+	when too many arguments are supplied.
+
 2016-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* about.el (about-finish-buffer):
