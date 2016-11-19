@@ -7377,7 +7377,8 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	Ibyte buf[DECIMAL_PRINT_SIZE (long)];
 
 	Dynarr_add_many (mode_spec_ibyte_string, buf,
-                         fixnum_to_string (buf, sizeof (buf), col, 10, Qnil));
+                         fixnum_to_string (buf, sizeof (buf), col, 10,
+                                           Vfixnum_to_majuscule_ascii));
 	goto decode_mode_spec_done;
       }
       /* print the file coding system */
@@ -7396,7 +7397,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 
       /* print the current line number */
     case 'l':
-      str = window_line_number (w, type);
+      str = (const Ascbyte *) window_line_number (w, type);
       break;
 
       /* print value of mode-name (obsolete) */
@@ -7409,12 +7410,20 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 #ifdef HAVE_TTY
       {
 	struct frame *f = XFRAME (w->frame);
-	if (FRAME_TTY_P (f) && f->order_count > 1 && f->order_count <= 99999999)
+	if (FRAME_TTY_P (f) && f->order_count > 1
+            && f->order_count <= 99999999)
 	  {
 	    /* Naughty, naughty */
-	    Ascbyte *writable_str = alloca_array (Ascbyte, 10);
-	    sprintf (writable_str, "-%d", f->order_count);
-	    str = writable_str;
+	    Ibyte writable_str[DECIMAL_PRINT_SIZE (f->order_count)];
+
+            Dynarr_add_many (mode_spec_ibyte_string, writable_str,
+                             fixnum_to_string (writable_str,
+                                               sizeof (writable_str),
+                                               /* Put a minus before the
+                                                  number. */
+                                               -(f->order_count), 10,
+                                               Vfixnum_to_majuscule_ascii));
+            goto decode_mode_spec_done;
 	  }
       }
 #endif /* HAVE_TTY */
@@ -7430,10 +7439,8 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print %, * or hyphen, if buffer is read-only, modified or neither */
     case '*':
       str = (!NILP (b->read_only)
-	     ? "%"
-	     : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
-		? "*"
-		: "-"));
+	     ? "%" : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+                      ? "*" : "-"));
       break;
 
       /* print * or hyphen -- XEmacs change to allow a buffer to be

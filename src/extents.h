@@ -22,6 +22,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define INCLUDED_extents_h_
 
 #include "lstream.h"
+#include "buffer.h"
 
 DECLARE_LISP_OBJECT (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)

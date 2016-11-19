@@ -1,5 +1,33 @@
 2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* chartab.c (print_char_table):
+	typename seems to be a reserved word in C++, rename this
+	variable.
+	* doc.c (Fsubstitute_command_keys):
+	Do some casting here to placate the C++ compiler.
+	* doprnt.c (emacs_doprnt):
+	RETURN_UNGCPRO is only appropriate when returning a Lisp_Object,
+	thank you the C++ compiler.
+	* extents.h:
+	#include "buffer.h" for the sake of stream_extent_position().
+	* lread.c (read_rational):
+	Do some casts to placate the C++ compiler.
+	* number.h:
+	Remove the declarations for {bignum,ratio}_to_string() now they're
+	in lisp.h
+	* redisplay.c (decode_mode_spec):
+	Do some casts to placate the C++ compiler.
+	* search.c (Freplace_match):
+	Ditto.
+	* sequence.c:
+	Remove a couple of symbol declarations that are now in
+	general-slots.h.
+	* tls.h (tls_open):
+	When there's no TLS support, make the stub implementations into
+	legal C.
+
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doc.c (Fsubstitute_command_keys):
 	* doprnt.c:
 	Document why we haven't yet implemented #'format-message or

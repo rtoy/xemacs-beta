@@ -1080,9 +1080,9 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
        (string))
 {
   /* This function can GC */
-  Ibyte *strp, *backslashp, *symname;
+  const Ibyte *strp, *backslashp, *strdata;
   Boolint changed = 0;
-  REGISTER Ibyte *strdata;
+  Ibyte *symname;;
   Bytecount strlength = MOST_POSITIVE_FIXNUM, stretch_begin;
   Bytecount idx = 0, symlen, partlen;
   Lisp_Object tem = Qnil, keymap = Qnil, name = Qnil, stream = Qnil;
@@ -1131,7 +1131,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
       strdata = XSTRING_DATA (string);
       strlength = XSTRING_LENGTH (string);
       strp = strdata + idx;
-      backslashp = memchr (strp, '\\', strlength - idx);
+      backslashp = (const Ibyte *) memchr (strp, '\\', strlength - idx);
       partlen = backslashp ? backslashp - strp : strlength - idx;
 
       if (changed)
@@ -1163,7 +1163,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
           
           idx += ichar_itext_len ('[');
           strp = strdata + idx;
-          strp = memchr (strp, ']', strlength - idx);
+          strp = (Ibyte *) memchr (strp, ']', strlength - idx);
  
           if (!strp)
             {
@@ -1221,7 +1221,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
           idx += ichar_itext_len ('{');
           strdata = XSTRING_DATA (string);
           strp = strdata + idx;
-          strp = memchr (strp, '}', strlength - idx);
+          strp = (Ibyte *) memchr (strp, '}', strlength - idx);
  
           if (!strp)
             {
@@ -1306,7 +1306,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
           idx += ichar_itext_len ('<');
           strdata = XSTRING_DATA (string);
           strp = strdata + idx;
-          strp = memchr (strp, '>', strlength - idx);
+          strp = (Ibyte *) memchr (strp, '>', strlength - idx);
  
           if (!strp)
             {
