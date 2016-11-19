@@ -3441,7 +3441,32 @@ arguments: (STREAM CONTROL-STRING &rest ARGS)
   /* #### Consider implementing the frame kludge of print_prepare (). */
   return format_into (stream, control_string, nargs - 2, args + 2);
 }
-
+
+/* If we were to implement GNU's #'format-message, this would be the place to
+   do it. The design of #'format-message (and their `text-quoting-style') is
+   wrong, though, since it replaces every backtick with a left single
+   quotation mark and every apostrophe with a right single quotation mark. It
+   is perfectly legitimate and expected that messages (and docstrings) contain
+   both English text (where this replacement is sensible and correct) and
+   examples of source code (where this replacement is actively unhelpful and
+   likely to lead to confusion when examples don't run in *scratch*).
+
+   The right design is for the XEmacs source code to use ‘ (U+2018) and ’
+   (U+2019) when that is appropriate, ` and ' when those are appropriate.  It
+   is easy enough to do the transformation of our source code
+   semi-programmatically.
+
+   If text-quoting-style is to do anything, it should transform ‘ to ` and ’
+   to ' if it is clear the current redisplay device cannot handle the directed
+   quotation marks. This could be implemented by parse_doprnt_spec() making
+   new specs for each ‘ and ’ encountered.
+
+   Now, given that we still (*still*) support non-Mule builds, which don't
+   support the directed quotation marks characters, we can't do this, and so
+   we should not implement this for the moment.
+
+   Aidan Kehoe, Sa 19 Nov 2016 11:13:20 GMT */
+
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/

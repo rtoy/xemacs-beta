@@ -1121,7 +1121,10 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
      from the source string in the output of describe_map_tree (); use our
      resizing buffer rather than a full-on Lisp buffer to preserve
      non-duplicable string extents and to avoid entertainment with default
-     values for hooks. */
+     values for hooks.
+
+     See doprnt.c for commentary on `text-quoting-style' and #'format-message
+     also relevant to #'substitute-command-keys. */
   while (idx < strlength)
     {
       /* Re-fetch the string data after Lisp has been called. */
