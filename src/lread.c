@@ -2037,21 +2037,21 @@ read_rational (Lisp_Object readcharfun, Fixnum base)
 {
   /* This function can GC */
   int saw_a_backslash;
-  Ibyte *buf_end, *buf_ptr, *slash;
+  const Ibyte *buf_end, *buf_ptr, *slash;
   Bytecount len = read_atom_0 (readcharfun, -1, &saw_a_backslash);
   Lisp_Object num = Qnil, denom = Qzero;
 
   buf_ptr = resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
 
-  if ((slash = (Ibyte *) memchr (buf_ptr, '/', len)) == NULL)
+  if ((slash = (const Ibyte *) memchr (buf_ptr, '/', len)) == NULL)
     {
       /* Can't be a ratio, parse as as an integer. */ 
-      return parse_integer (buf_ptr, &buf_end, len, base, 0, Qnil);
+      return parse_integer (buf_ptr, (Ibyte **) &buf_end, len, base, 0, Qnil);
     }
 
   /* No need to call isratio_string, the detailed parsing (and erroring, as
      necessary) will be done by parse_integer. */
-  num = parse_integer (buf_ptr, &buf_end, slash - buf_ptr, base,
+  num = parse_integer (buf_ptr, (Ibyte **) &buf_end, slash - buf_ptr, base,
                        CHECK_OVERFLOW_SYNTAX, Qnil);
 
   INC_IBYTEPTR (slash);
@@ -2060,8 +2060,9 @@ read_rational (Lisp_Object readcharfun, Fixnum base)
       Ichar cc = itext_ichar (slash);
       if (cc != '+' && cc != '-')
         {
-          denom = parse_integer (slash, &buf_end, len - (slash - buf_ptr),
-                                 base, CHECK_OVERFLOW_SYNTAX, Qnil);
+          denom = parse_integer (slash, (Ibyte **) &buf_end,
+                                 len - (slash - buf_ptr), base,
+                                 CHECK_OVERFLOW_SYNTAX, Qnil);
         }
     }
 

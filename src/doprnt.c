@@ -2845,7 +2845,8 @@ emacs_doprnt (Lisp_Object stream,
         }
     }
 
-  RETURN_UNGCPRO (byte_count);
+  UNGCPRO;
+  return byte_count;
 }
 
 /* Write a printf-style string to STREAM, an object accepted by

@@ -2899,7 +2899,7 @@ rare.)
 		    case '1': case '2': case '3': case '4': case '5':
 		    case '6': case '7': case '8': case '9':
 		      {
-			Ibyte *charpos
+			const Ibyte *charpos
                           = string_char_addr (replacement, strpos);
 			Ibyte *regend = NULL;
                         Bytecount limit = min (XSTRING_LENGTH (replacement)
@@ -3100,7 +3100,7 @@ rare.)
                 case '1': case '2': case '3': case '4': case '5':
                 case '6': case '7': case '8': case '9':
                   {
-                    Ibyte *charpos
+                    const Ibyte *charpos
                       = string_char_addr (replacement, strpos);
                     Ibyte *regend = NULL;
                     Bytecount limit = min (XSTRING_LENGTH (replacement)

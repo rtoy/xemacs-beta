@@ -21,13 +21,13 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 #include "extents.h"
 
-Lisp_Object Qadjoin, Qarray, QassocX, Qbit_vector, Qcar_less_than_car;
+Lisp_Object Qadjoin, Qarray, QassocX, Qcar_less_than_car;
 Lisp_Object QdeleteX, Qdelete_duplicates, Qevery, Qfill, Qfind, Qidentity;
 Lisp_Object Qintersection, Qmap, Qmap_into, Qmapc, Qmapcan, QmapcarX;
 Lisp_Object Qmapconcat, Qmapvector, Qmerge, Qmismatch, Qnintersection;
 Lisp_Object Qnset_difference, Qnsubstitute, Qnunion, Qposition, QrassocX;
 Lisp_Object Qreduce, QremoveX, Qreplace, Qset_difference, Qsome, QsortX;
-Lisp_Object Qstring_lessp, Qsubsetp, Qsubstitute, Qvector;
+Lisp_Object Qstring_lessp, Qsubsetp, Qsubstitute;
 
 Lisp_Object Q_count, Q_descend_structures, Q_end1, Q_end2, Q_from_end;
 Lisp_Object Q_if_, Q_if_not, Q_initial_value, Q_stable, Q_start1, Q_start2;

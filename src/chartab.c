@@ -474,7 +474,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
 		  int UNUSED (escapeflag))
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
-  Lisp_Object typename = XSYMBOL_NAME (char_table_type_to_symbol (ct->type));
+  Lisp_Object typname = XSYMBOL_NAME (char_table_type_to_symbol (ct->type));
   struct chartab_range range;
   struct ptemap arg;
 
@@ -484,7 +484,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_ascstring (printcharfun, "#s(char-table :type ");
   /* write_lisp_string() is fine, we know it's not an uninterned symbol. */
-  write_lisp_string (printcharfun, typename, 0, XSTRING_LENGTH (typename));
+  write_lisp_string (printcharfun, typname, 0, XSTRING_LENGTH (typname));
 			 
   if (!(EQ (ct->default_, char_table_default_for_type (ct->type))))
     {
