@@ -2860,41 +2860,52 @@ emacs_doprnt (Lisp_Object stream,
 void
 write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
-  Bytecount len = strlen (fmt);
+  const CIbyte *cursor = fmt;
+  Bytecount len, speccount = 1;
   Elemcount nargs = 0;
-  printf_spec_dynarr *specs = parse_doprnt_spec (NULL, (const Ibyte *) fmt,
-                                                 len, &nargs);
-  int count = record_unwind_protect_freeing_dynarr (specs);
-  printf_arg *args = alloca_array (printf_arg, nargs);
 
-  get_doprnt_c_args (args, nargs, specs, va);
+  while (*cursor)
+    {
+      /* Count the number of format specs, so we can allocate the Dynarr on
+         the stack for parse_doprnt_spec(). */
+      speccount += *cursor == '%', cursor += 1;
+    }
 
-  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, NULL, args);
-  unbind_to (count);
+  len = cursor - fmt;
+
+  if (speccount == 1)
+    {
+      write_string_1 (stream, fmt, len);
+    }
+  else
+    {
+      printf_spec_dynarr specs;
+      printf_spec sbase[speccount];
+      printf_arg *args;
+  
+      INIT_STACK_DYNARR (specs, printf_spec,
+                         /* This is actually not exact, but will always be at
+                            least the number of specs. */
+                         speccount, sbase);
+
+      parse_doprnt_spec (&specs, (const Ibyte *) fmt, len, &nargs);
+      args = alloca_array (printf_arg, nargs);
+
+      get_doprnt_c_args (args, nargs, &specs, va);
+      emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, &specs, NULL,
+                    args);
+    }
 }
 
 /* Write a printf-style string to STREAM; see output_string(). Arguments are C
-   doubles, longs, uints, char *s, etc, rather than uniformly Lisp_Objects.
-
-   We could implement this with write_fmt_string_va (stream, fmt, va), but
-   write_fmt_string() itself is the most called function of this family. */
+   doubles, longs, uints, char *s, etc, rather than uniformly Lisp_Objects. */
 void
 write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
 {
-  Bytecount len = strlen (fmt);
-  Elemcount nargs = 0;
-  printf_spec_dynarr *specs = parse_doprnt_spec (NULL, (const Ibyte *) fmt,
-                                                 len, &nargs);
-  int count = record_unwind_protect_freeing_dynarr (specs);
-  printf_arg *args = alloca_array (printf_arg, nargs);
   va_list va;
-
   va_start (va, fmt);
-  get_doprnt_c_args (args, nargs, specs, va);
+  write_fmt_string_va (stream, fmt, va);
   va_end (va);
-
-  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, NULL, args);
-  unbind_to (count);
 }
 
 /* Write a printf-style string to STREAM, an object accepted by
