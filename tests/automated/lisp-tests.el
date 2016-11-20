@@ -997,7 +997,7 @@ will be used to make debugging easier."
               (unless (eq (car tail) '&optional)
                 (list (cons (car tail) 4))))
           '(opcode stack-adjust opname &optional docstring))
-         ((opcode . 4) (stack-adjust . 4) (opname . 4) (docstring . 4))))
+         '((opcode . 4) (stack-adjust . 4) (opname . 4) (docstring . 4))))
 
 ;;-----------------------------------------------------
 ;; function-max-args, function-min-args
