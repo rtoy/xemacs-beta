@@ -2875,7 +2875,7 @@ write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 
   if (speccount == 1)
     {
-      write_string_1 (stream, fmt, len);
+      write_string_1 (stream, (const Ibyte *) fmt, len);
     }
   else
     {

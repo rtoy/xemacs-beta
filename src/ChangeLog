@@ -5,6 +5,9 @@
 	this function, as was done with emacs_vsnprintf, since we need to
 	do a strlen() on the format string anyway and can check the number
 	of %-signs in passing.
+	Cast the argument to write_string_1() for the sake of the C++
+	build.
+
 	* doprnt.c (write_fmt_string):
 	Implement this in terms of write_fmt_string_va() now that the
 	latter is cheaper than previously.
