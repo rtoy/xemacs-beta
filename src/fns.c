@@ -2227,7 +2227,8 @@ maplist (Lisp_Object function, int nlists, Lisp_Object *lists,
             }
           /* Only check a given stretch of result for well-formedness
              once: */
-          nconcing[0] = funcalled;
+          nconcing[0]
+            = NILP (funcalled) ? Flast (accum, Qnil) : funcalled;
         }
       else if (NILP (accum))
         {

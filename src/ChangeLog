@@ -1,3 +1,8 @@
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (maplist):
+	Fix a bug in #'mapcon when FUNCTION returns nil.
+
 2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Further build fixes:

@@ -1,3 +1,8 @@
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check a specific bug in #'mapcon has been fixed.
+
 2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
