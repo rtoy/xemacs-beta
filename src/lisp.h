@@ -2870,8 +2870,6 @@ struct Lisp_Symbol
     } v;
   } u;
 
-  /* next symbol in this obarray bucket */
-  Lisp_Symbol *next;
   Lisp_Object name;
   Lisp_Object value;
   Lisp_Object function;
@@ -2893,13 +2891,11 @@ DECLARE_MODULE_API_LISP_OBJECT (symbol, Lisp_Symbol);
 #define CHECK_SYMBOL(x) CHECK_RECORD (x, symbol)
 #define CONCHECK_SYMBOL(x) CONCHECK_RECORD (x, symbol)
 
-#define symbol_next(s) ((s)->next)
 #define symbol_name(s) ((s)->name)
 #define symbol_value(s) ((s)->value)
 #define symbol_function(s) ((s)->function)
 #define symbol_plist(s) ((s)->plist)
 
-#define XSYMBOL_NEXT(s) (XSYMBOL (s)->next)
 #define XSYMBOL_NAME(s) (XSYMBOL (s)->name)
 #define XSYMBOL_VALUE(s) (XSYMBOL (s)->value)
 #define XSYMBOL_FUNCTION(s) (XSYMBOL (s)->function)
@@ -5373,10 +5369,8 @@ EXFUN (Freally_free, 1);
 #undef SYMBOL_GENERAL
 #undef SYMBOL_KEYWORD_GENERAL
 
-extern Lisp_Object Qeq;
-extern Lisp_Object Qeql;
-extern Lisp_Object Qequal;
-extern Lisp_Object Qequalp;
+extern Lisp_Object Qeq, Qeql, Qequal, Qequalp;
+extern Lisp_Object Qeq_hash, Qeql_hash, Qequal_hash, Qequalp_hash;
 
 /* Defined in glyphs.c */
 EXFUN (Fmake_glyph_internal, 1);

@@ -1055,7 +1055,7 @@ Writes to stderr if not.
   Lisp_Object closure = Fcons (Qnil, Qnil);
   struct gcpro gcpro1;
   GCPRO1 (closure);
-  map_obarray (Vobarray, verify_doc_mapper, &closure);
+  elisp_maphash (verify_doc_mapper, Vobarray, &closure);
   if (!NILP (Fcdr (closure)))
     message ("\n"
 "This is usually because some files were preloaded by loaddefs.el or\n"

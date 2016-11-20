@@ -501,5 +501,10 @@ is an inclusive upper bound on the possible values returned by `char-int'."
  'max-char
  "consider `char-code-limit', which gives an exclusive upper bound")
 
+(autoload 'xemacs-intern-in-vector "obarray")
+(autoload 'xemacs-intern-soft-in-vector "obarray")
+(autoload 'xemacs-unintern-in-vector "obarray")
+(autoload 'xemacs-mapatoms-in-vector "obarray")
+
 (provide 'obsolete)
 ;;; obsolete.el ends here
