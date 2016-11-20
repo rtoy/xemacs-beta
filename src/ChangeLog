@@ -14,6 +14,117 @@
 
 2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Implement obarray as a Lisp hash table object, rather than a vector.
+
+	* abbrev.c:
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (abbrev_match):
+	* abbrev.c (abbrev_oblookup):
+	Move abbrev tables to being implemented in terms of Lisp hash
+	table objects rather than the old-school obarray.
+	* alloc.c:
+	* alloc.c (Fmake_symbol):
+	No need any more for the symbol next slot, obarray is implemented
+	as a hash table with linear probing.
+	* alloc.c (alloc_managed_lcrecord):
+	list->free can be Qnull_pointer for objects allocated before Qnil
+	is correctly initialised, handle this correctly.
+	* doc.c (Fverify_documentation):
+	elisp_maphash() rather than map_obarray(), now Vobarray is a hash
+	table object.
+	* elhash.c:
+	* elhash.c (mark_hash_table_test):
+	No need to have Qnil marked one more time, return http->name
+	instead.
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
+	* elhash.c (HASHCODE):
+	* elhash.c (KEYS_EQUAL_P):
+	Rename Vhash_table_test_eql, Vhash_table_test_eq to
+	Veq_hash_table_test, Veql_hash_table_test.
+
+	* elhash.c (oblookup): Moved here from symbols.c.
+	Re-implement in terms of our Lisp hash tables, make it possible to
+	use #'equalp as well as #'equal as a test.
+	* elhash.c (intern_istring):
+	Moved here from symbols.c. Use the new Lisp hash table
+	implementation.
+	* elhash.c (intern):
+	Moved here from symbols.c.
+	* elhash.c (intern_massaging_name):
+	Ditto.
+	* elhash.c (Fintern):
+	Move here from symbols.c, support a Lisp hash table
+	obarray. Support a vector PACKAGE by calling out to the autoloaded
+	Lisp #'xemacs-intern-in-vector.
+	* elhash.c (Fintern_soft):
+	Move here from symbols.c, support a Lisp hash table
+	obarray. Support a vector PACKAGE by calling out to the autoloaded
+	Lisp #'xemacs-intern-soft-in-vector.
+	* elhash.c (Funintern):
+	Move here from symbols.c, support a Lisp hash table
+	obarray. Support a vector PACKAGE by calling out to the autoloaded
+	Lisp #'xemacs-unintern-in-vector.
+	* elhash.c (hash_string):
+	Move this here from symbols.c
+	* elhash.c (Fmapatoms):
+	Ditto.
+	* elhash.c (itext_equalp_hash):
+	Change string_equalp_hash to not necessarily use a Lisp string
+	object, useful for symbols encountered by the Lisp reader.
+	* elhash.c (string_equalp_hash):
+	Implement this as a #define.
+	* elhash.c (syms_of_elhash):
+	Initialise the basic hash table tests here, make Fintern,
+	Fintern_soft, Funintern, Fmapatoms available.
+	Make obarray available here.
+	* elhash.c (init_elhash_once_early):
+	Create Vequal_hash_table_test very early; create Vobarray once it
+	is created.
+	* emacs.c (main_1):
+	Call init_elhash_once_early() earlier in the startup sequence,
+	since it now creates obarray.
+	* general-slots.h:
+	Make the symbols for the various default hash table tests
+	available here.
+	* lisp.h (struct Lisp_Symbol):
+	* lisp.h (symbol_name):
+	* lisp.h (XSYMBOL_NAME):
+	No need for the symbol next pointers any more.
+	* minibuf.c:
+	* minibuf.c (map_completion_trad_obarray): New. Map FUNCTION
+	across a traditional emacs obarray, with help from the Lisp
+	#'xemacs-next-iteration-in-vector function.
+	* minibuf.c (map_completion):
+	Use it.
+	* minibuf.c (ignore_completion_p):
+	Since obarray (and presumably other packages) is (are) now a hash table,
+	PREDICATE may be called with either one or two arguments if
+	HASH_TABLE_P. Decide depending on how many arguments PREDICATE
+	takes.
+	* minibuf.c (Ftest_completion):
+	Update the documentation here.
+	* minibuf.c (syms_of_minibuf):
+	We need the symbol xemacs-next-iteration-in-vector available to C.
+	* minibuf.c (reinit_vars_of_minibuf):
+	* symbols.c:
+	* symbols.c (mark_symbol):
+	No more need to mark through sym->next.
+	Move most of the functions dealing with obarrays to elhash.c
+	* symbols.c (Fapropos_internal):
+	Implement this with the hash table code.
+	* symbols.c (flush_all_buffer_local_cache_mapper): New.
+	* symbols.c (flush_all_buffer_local_cache):
+	Implement this using elisp_maphash_unsafe, rather then using our
+	own implementation of mapatoms().
+	* symbols.c (init_symbols_once_early):
+	Intern Qnil using #'puthash.
+	* symbols.c (syms_of_symbols):
+	Remove Fintern and friends from here, they're in elhash.c
+	* symbols.c (vars_of_symbols):
+	Remove this, obarray is now in elhash.c
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (maplist):
 	Fix a bug in #'mapcon when FUNCTION returns nil.
 

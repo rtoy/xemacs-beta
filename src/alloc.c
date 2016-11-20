@@ -2380,7 +2380,6 @@ Its value and function definition are void, and its property list is nil.
   p->plist    = Qnil;
   p->value    = Qunbound;
   p->function = Qunbound;
-  symbol_next (p) = 0;
   return wrap_symbol (p);
 }
 
@@ -3563,9 +3562,19 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
   if (!NILP (list->free))
     {
       Lisp_Object val = list->free;
-      struct free_lcrecord_header *free_header =
-	(struct free_lcrecord_header *) XPNTR (val);
-      struct lrecord_header *lheader = &free_header->lcheader.lheader;
+      struct free_lcrecord_header *free_header;
+      struct lrecord_header *lheader;
+
+      if (EQ (val, Qnull_pointer))
+        {
+          /* This can happen for those objects created before Qnil is
+             initialized. */
+          list->free = Qnil;
+          goto normal_alloc;
+        }
+
+      free_header = (struct free_lcrecord_header *) XPNTR (val);
+      lheader = &free_header->lcheader.lheader;
 
 #ifdef ERROR_CHECK_GC
       /* Major overkill here. */
@@ -3593,8 +3602,9 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
       zero_sized_lisp_object (val, list->size);
       return val;
     }
-  else
-    return old_alloc_sized_lcrecord (list->size, list->implementation);
+
+ normal_alloc:
+  return old_alloc_sized_lcrecord (list->size, list->implementation);
 }
 
 /* "Free" a Lisp object LCRECORD by placing it on its associated free list

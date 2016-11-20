@@ -1,3 +1,45 @@
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.el:
+	* abbrev.el (defining-abbrev-turns-on-abbrev-mode):
+	* abbrev.el (make-abbrev-table):
+	* abbrev.el (clear-abbrev-table):
+	* abbrev.el (define-abbrev-table):
+	* abbrev.el (define-abbrev):
+	* abbrev.el (inverse-add-abbrev):
+	* abbrev.el (expand-region-abbrevs):
+	Implement abbrev tables as hash-table objects, not as vectors.
+
+	* derived.el:
+	* derived.el (derived):
+	Ditto.
+
+	* obarray.el: New.
+	* obarray.el (xemacs-intern-in-vector):
+	* obarray.el (xemacs-intern-soft-in-vector):
+	* obarray.el (xemacs-unintern-in-vector):
+	* obarray.el (xemacs-mapatoms-in-vector):
+	* obarray.el (xemacs-next-iteration-in-vector):
+	For compatibility with all the emacs code out there that expects
+	that #'intern and friends can take vector arguments, provide a
+	non-dumped but autoloaded implementation of traditional emacs
+	obarrays, with the buckets implemented as individual slots in a
+	non-resizing vector and each entry in a bucket chained through a
+	symbol's next pointer.
+
+	* obarray.el (obarray-default-size): New.
+	* obarray.el (obarray-make): New.
+	* obarray.el (obarrayp): New.
+	* obarray.el (obarray-get): New.
+	* obarray.el (obarray-put): New.
+	* obarray.el (obarray-remove): New.
+	* obarray.el (obarray-map): New.
+	Import these ill-conceived GNU functions, mark them compatible.
+
+	* obsolete.el:
+	Provide autoloads for the traditional-obarray compatibility
+	functions.
+
 2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fontconfig.el (fc-define-property):

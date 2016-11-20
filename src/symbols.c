@@ -97,19 +97,10 @@ mark_symbol (Lisp_Object obj)
   mark_object (sym->value);
   mark_object (sym->function);
   mark_object (sym->name);
-  if (!symbol_next (sym))
-    return sym->plist;
-  else
-  {
-    mark_object (sym->plist);
-    /* Mark the rest of the symbols in the obarray hash-chain */
-    sym = symbol_next (sym);
-    return wrap_symbol (sym);
-  }
+  return sym->plist;
 }
 
 static const struct memory_description symbol_description[] = {
-  { XD_LISP_OBJECT, offsetof (Lisp_Symbol, next) },
   { XD_LISP_OBJECT, offsetof (Lisp_Symbol, name) },
   { XD_LISP_OBJECT, offsetof (Lisp_Symbol, value) },
   { XD_LISP_OBJECT, offsetof (Lisp_Symbol, function) },
@@ -155,338 +146,6 @@ DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("symbol", symbol,
 					Lisp_Symbol);
 
 /**********************************************************************/
-/*                              Intern				      */
-/**********************************************************************/
-
-/* #### using a vector here is way bogus.  Use a hash table instead. */
-
-Lisp_Object Vobarray;
-
-static Lisp_Object initial_obarray;
-
-/* oblookup stores the bucket number here, for the sake of Funintern.  */
-
-static int oblookup_last_bucket_number;
-
-static Lisp_Object
-check_obarray (Lisp_Object obarray)
-{
-  while (!VECTORP (obarray) || XVECTOR_LENGTH (obarray) == 0)
-    {
-      /* If Vobarray is now invalid, force it to be valid.  */
-      if (EQ (Vobarray, obarray)) Vobarray = initial_obarray;
-
-      obarray = wrong_type_argument (Qvectorp, obarray);
-    }
-  return obarray;
-}
-
-Lisp_Object
-intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
-                Lisp_Object package)
-{
-  Lisp_Object lookup, *ptr, symbol;
-
-  lookup = oblookup (package, str, len);
-  if (FIXNUMP (lookup))
-    {
-      ptr = &XVECTOR_DATA (package)[XREALFIXNUM (lookup)];
-      if (NILP (reloc))
-	{
-	  reloc = make_string (str, len);
-	}
-      symbol = Fmake_symbol (reloc);
-
-      if (SYMBOLP (*ptr))
-	XSYMBOL_NEXT (symbol) = XSYMBOL (*ptr);
-      else
-	XSYMBOL_NEXT (symbol) = 0;
-      *ptr = symbol;
-
-      XSYMBOL (symbol)->u.v.package_count = 1;
-      XSYMBOL (symbol)->u.v.first_package_id
-	= (EQ (package, Vobarray)) ? 1 : 2;
-
-      if (string_byte (XSYMBOL_NAME (symbol), 0) == ':'
-	  && EQ (package, Vobarray))
-	{
-	  /* The LISP way is to put keywords in their own package, but we
-	     don't have packages, so we do something simpler.  Someday,
-	     maybe we'll have packages and then this will be reworked.
-	     --Stig. */
-	  XSYMBOL_VALUE (symbol) = symbol;
-	}
-      return symbol;
-    }
-
-  return lookup;
-}
-
-Lisp_Object
-intern (const CIbyte *str)
-{
-  return intern_istring ((Ibyte *) str, qxestrlen ((Ibyte *) str), Qnil,
-                         Vobarray);
-}
-
-Lisp_Object
-intern_massaging_name (const CIbyte *str)
-{
-  Bytecount len = strlen (str);
-  CIbyte *tmp = alloca_extbytes (len + 1);
-  Bytecount i;
-  strcpy (tmp, str);
-  for (i = 0; i < len; i++)
-    {
-      if (tmp[i] == '_')
-	{
-	  tmp[i] = '-';
-	}
-      else if (tmp[i] == 'X')
-	{
-	  tmp[i] = '*';
-	}
-    }
-  return intern_istring ((Ibyte *) tmp, len, Qnil, Vobarray);
-}
-
-DEFUN ("intern", Fintern, 1, 2, 0, /*
-Return the canonical symbol whose name is STRING.
-If there is none, one is created by this function and returned.
-Optional second argument OBARRAY specifies the obarray to use;
-it defaults to the value of the variable `obarray'.
-*/
-       (string, obarray))
-{
-  CHECK_STRING (string);
-
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  return intern_istring (XSTRING_DATA (string), XSTRING_LENGTH (string),
-			 string, obarray);
-}
-
-DEFUN ("intern-soft", Fintern_soft, 1, 3, 0, /*
-Return the canonical symbol named NAME, or nil if none exists.
-NAME may be a string or a symbol.  If it is a symbol, that exact
-symbol is searched for.
-Optional second argument OBARRAY specifies the obarray to use;
-it defaults to the value of the variable `obarray'.
-Optional third argument DEFAULT says what Lisp object to return if there is
-no canonical symbol named NAME, and defaults to nil. 
-*/
-       (name, obarray, default_))
-{
-  Lisp_Object tem;
-  Lisp_Object string;
-
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  if (!SYMBOLP (name))
-    {
-      CHECK_STRING (name);
-      string = name;
-    }
-  else
-    string = symbol_name (XSYMBOL (name));
-
-  tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
-  if (FIXNUMP (tem) || (SYMBOLP (name) && !EQ (name, tem)))
-    return default_;
-  else
-    return tem;
-}
-
-DEFUN ("unintern", Funintern, 1, 2, 0, /*
-Delete the symbol named NAME, if any, from OBARRAY.
-The value is t if a symbol was found and deleted, nil otherwise.
-NAME may be a string or a symbol.  If it is a symbol, that symbol
-is deleted, if it belongs to OBARRAY--no other symbol is deleted.
-OBARRAY defaults to the value of the variable `obarray'.
-*/
-       (name, obarray))
-{
-  Lisp_Object tem;
-  Lisp_Object string;
-  int hash;
-
-  if (NILP (obarray)) obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  if (SYMBOLP (name))
-    string = symbol_name (XSYMBOL (name));
-  else
-    {
-      CHECK_STRING (name);
-      string = name;
-    }
-
-  tem = oblookup (obarray, XSTRING_DATA (string), XSTRING_LENGTH (string));
-  if (FIXNUMP (tem))
-    return Qnil;
-  /* If arg was a symbol, don't delete anything but that symbol itself.  */
-  if (SYMBOLP (name) && !EQ (name, tem))
-    return Qnil;
-
-  hash = oblookup_last_bucket_number;
-
-  if (EQ (XVECTOR_DATA (obarray)[hash], tem))
-    {
-      unsigned int package_count = XSYMBOL (tem)->u.v.package_count;
-      if (XSYMBOL (tem)->next)
-	XVECTOR_DATA (obarray)[hash] = wrap_symbol (XSYMBOL (tem)->next);
-      else
-	XVECTOR_DATA (obarray)[hash] = Qzero;
-      if (package_count > 0)
-        {
-          if (1 == package_count)
-            {
-              XSYMBOL (tem)->u.v.first_package_id = 0;
-            }
-          XSYMBOL (tem)->u.v.package_count = package_count - 1;
-        }
-    }
-  else
-    {
-      Lisp_Object tail, following;
-
-      for (tail = XVECTOR_DATA (obarray)[hash];
-	   XSYMBOL (tail)->next;
-	   tail = following)
-	{
-	  following = wrap_symbol (XSYMBOL (tail)->next);
-	  if (EQ (following, tem))
-	    {
-              unsigned int package_count = XSYMBOL (tem)->u.v.package_count;
-	      XSYMBOL (tail)->next = XSYMBOL (following)->next;
-
-              if (package_count > 0)
-                {
-                  if (1 == package_count)
-                    {
-                      XSYMBOL (tem)->u.v.first_package_id = 0;
-                    }
-                  XSYMBOL (tem)->u.v.package_count = package_count - 1;
-                }
-	      break;
-	    }
-	}
-    }
-  return Qt;
-}
-
-/* Return the symbol in OBARRAY whose names matches the string
-   of SIZE characters at PTR.  If there is no such symbol in OBARRAY,
-   return the index into OBARRAY that the string hashes to.
-
-   Also store the bucket number in oblookup_last_bucket_number.  */
-
-Lisp_Object
-oblookup (Lisp_Object obarray, const Ibyte *ptr, Bytecount size)
-{
-  unsigned int hash, obsize;
-  Lisp_Symbol *tail;
-  Lisp_Object bucket;
-
-  if (!VECTORP (obarray) ||
-      (obsize = XVECTOR_LENGTH (obarray)) == 0)
-    {
-      obarray = check_obarray (obarray);
-      obsize = XVECTOR_LENGTH (obarray);
-    }
-  hash = hash_string (ptr, size) % obsize;
-  oblookup_last_bucket_number = hash;
-  bucket = XVECTOR_DATA (obarray)[hash];
-  if (ZEROP (bucket))
-    ;
-  else if (!SYMBOLP (bucket))
-    signal_error (Qinvalid_state, "Bad data in guts of obarray", Qunbound); /* Like CADR error message */
-  else
-    for (tail = XSYMBOL (bucket); ;)
-      {
-	if (XSTRING_LENGTH (tail->name) == size &&
-	    !memcmp (XSTRING_DATA (tail->name), ptr, size))
-	  {
-	    return wrap_symbol (tail);
-	  }
-	tail = symbol_next (tail);
-	if (!tail)
-	  break;
-      }
-  return make_fixnum (hash);
-}
-
-/* An excellent string hashing function.
-   Adapted from glib's g_str_hash().
-   Investigation by Karl Nelson <kenelson@ece.ucdavis.edu>.
-   Do a web search for "g_str_hash X31_HASH" if you want to know more. */
-unsigned int
-hash_string (const Ibyte *ptr, Bytecount len)
-{
-  unsigned int hash;
-
-  for (hash = 0; len; len--, ptr++)
-    /* (31 * hash) will probably be optimized to ((hash << 5) - hash). */
-    hash = 31 * hash + *ptr;
-
-  return hash;
-}
-
-/* Map FN over OBARRAY.  The mapping is stopped when FN returns a
-   non-zero value.  */
-void
-map_obarray (Lisp_Object obarray,
-	     int (*fn) (Lisp_Object, Lisp_Object, void *), void *arg)
-{
-  REGISTER Elemcount i;
-
-  CHECK_VECTOR (obarray);
-  for (i = XVECTOR_LENGTH (obarray) - 1; i >= 0; i--)
-    {
-      Lisp_Object tail = XVECTOR_DATA (obarray)[i];
-      if (SYMBOLP (tail))
-	while (1)
-	  {
-	    Lisp_Symbol *next;
-	    if ((*fn) (XSYMBOL_NAME (tail), tail, arg))
-	      return;
-	    next = symbol_next (XSYMBOL (tail));
-	    if (!next)
-	      break;
-	    tail = wrap_symbol (next);
-	  }
-    }
-}
-
-static int
-mapatoms_1 (Lisp_Object UNUSED (key), Lisp_Object sym, void *arg)
-{
-  call1 (*(Lisp_Object *)arg, sym);
-  return 0;
-}
-
-DEFUN ("mapatoms", Fmapatoms, 1, 2, 0, /*
-Call FUNCTION on every symbol in OBARRAY.
-OBARRAY defaults to the value of `obarray'.
-*/
-       (function, obarray))
-{
-  struct gcpro gcpro1;
-
-  if (NILP (obarray))
-    obarray = Vobarray;
-  obarray = check_obarray (obarray);
-
-  GCPRO1 (obarray);
-  map_obarray (obarray, mapatoms_1, &function);
-  UNGCPRO;
-  return Qnil;
-}
-
-
-/**********************************************************************/
 /*                              Apropos				      */
 /**********************************************************************/
 
@@ -513,23 +172,30 @@ apropos_mapper (Lisp_Object UNUSED (key), Lisp_Object symbol, void *arg)
   return 0;
 }
 
-DEFUN ("apropos-internal", Fapropos_internal, 1, 2, 0, /*
+DEFUN ("apropos-internal", Fapropos_internal, 1, 3, 0, /*
 Return a list of all symbols whose names contain match for REGEXP.
 If optional 2nd arg PREDICATE is non-nil, only symbols for which
 \(funcall PREDICATE SYMBOL) returns non-nil are returned.
+Optional third argument PACKAGE describes the Lisp package to search, and
+defaults to the value of `obarray'.
 */
-       (regexp, predicate))
+       (regexp, predicate, package))
 {
   struct appropos_mapper_closure closure;
   struct gcpro gcpro1;
 
   CHECK_STRING (regexp);
+  if (NILP (package))
+    {
+      package = Vobarray;
+    }
+  CHECK_HASH_TABLE (package);
 
   closure.regexp = regexp;
   closure.predicate = predicate;
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
-  map_obarray (Vobarray, apropos_mapper, &closure);
+  elisp_maphash_unsafe (apropos_mapper, package, &closure);
   closure.accumulation = list_sort (closure.accumulation,
 				    check_string_lessp_nokey, Qnil, Qnil);
   UNGCPRO;
@@ -1559,6 +1225,18 @@ flush_buffer_local_cache (Lisp_Object sym,
   store_symval_forwarding (sym, bfwd->current_value, bfwd->default_value);
 }
 
+static int
+flush_all_buffer_local_cache_mapper (Lisp_Object UNUSED (key),
+                                     Lisp_Object sym, void * UNUSED (arg))
+{
+  Lisp_Object value;
+  assert (SYMBOLP (sym));
+  value = fetch_value_maybe_past_magic (sym, Qt);
+  if (SYMBOL_VALUE_BUFFER_LOCAL_P (value))
+    flush_buffer_local_cache (sym, XSYMBOL_VALUE_BUFFER_LOCAL (value));
+  return 0; /* Never stop */
+}
+
 /* Flush all the buffer-local variable caches.  Whoever has a
    non-interned buffer-local variable will be spanked.  Whoever has a
    magic variable that interns or uninterns symbols... I don't even
@@ -1568,32 +1246,8 @@ flush_buffer_local_cache (Lisp_Object sym,
 void
 flush_all_buffer_local_cache (void)
 {
-  Lisp_Object *syms = XVECTOR_DATA (Vobarray);
-  Elemcount count = XVECTOR_LENGTH (Vobarray), i;
-
-  for (i = 0; i < count; i++)
-    {
-      Lisp_Object sym = syms[i];
-      Lisp_Object value;
-
-      if (!ZEROP (sym))
-	for(;;)
-	  {
-	    Lisp_Symbol *next;
-	    assert (SYMBOLP (sym));
-	    value = fetch_value_maybe_past_magic (sym, Qt);
-	    if (SYMBOL_VALUE_BUFFER_LOCAL_P (value))
-	      flush_buffer_local_cache (sym,
-                                        XSYMBOL_VALUE_BUFFER_LOCAL (value));
-
-	    next = symbol_next (XSYMBOL (sym));
-	    if (!next)
-	      break;
-	    sym = wrap_symbol (next);
-	  }
-    }
+  elisp_maphash_unsafe (flush_all_buffer_local_cache_mapper, Vobarray, NULL);
 }
-
 
 void
 kill_buffer_local_variables (struct buffer *buf)
@@ -3589,14 +3243,9 @@ init_symbols_once_early (void)
   XSYMBOL (Qnil)->u.v.package_count = 1;
   XSYMBOL (Qnil)->u.v.first_package_id = 1;
 
-  Vobarray = make_vector (OBARRAY_SIZE, Qzero);
-  initial_obarray = Vobarray;
-  staticpro (&initial_obarray);
-  /* Intern nil in the obarray */
-  {
-    unsigned int hash = hash_string (XSTRING_DATA (XSYMBOL (Qnil)->name), 3);
-    XVECTOR_DATA (Vobarray)[hash % OBARRAY_SIZE] = Qnil;
-  }
+  /* Intern nil in obarray. In this context #'puthash is a better option than
+     #'intern, no copying of the string needed. */
+  Fputhash (XSYMBOL_NAME (Qnil), Qnil, Vobarray);
 
   {
     /* Required to get around a GCC syntax error on certain
@@ -3990,10 +3639,6 @@ syms_of_symbols (void)
   DEFSYMBOL (Qselected_console);
   DEFSYMBOL (Qconst_selected_console);
 
-  DEFSUBR (Fintern);
-  DEFSUBR (Fintern_soft);
-  DEFSUBR (Funintern);
-  DEFSUBR (Fmapatoms);
   DEFSUBR (Fapropos_internal);
 
   DEFSUBR (Fsymbol_function);
@@ -4059,14 +3704,3 @@ defvar_magic (const Ascbyte *symbol_name,
   XSYMBOL (sym)->value = wrap_pointer_1 (magic);
 }
 
-void
-vars_of_symbols (void)
-{
-  DEFVAR_LISP ("obarray", &Vobarray /*
-Symbol table for use by `intern' and `read'.
-It is a vector whose length ought to be prime for best results.
-The vector's contents don't make sense if examined from Lisp programs;
-to find all the symbols in an obarray, use `mapatoms'.
-*/ );
-  /* obarray has been initialized long before */
-}

@@ -38,10 +38,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "insdel.h"
 #include "syntax.h"
 #include "window.h"
+#include "elhash.h"
 
-/* An abbrev table is an obarray.
-   Each defined abbrev is represented by a symbol in that obarray
-   whose print name is the abbreviation.
+/* An abbrev table is a hash table, mapping strings, whose print name is the
+   abbreviation, to symbols.
    The symbol's value is a string which is the expansion.
    If its function definition is non-nil, it is called
    after the expansion is done.
@@ -86,7 +86,7 @@ struct abbrev_match_mapper_closure
 
 /* For use by abbrev_match(): Match SYMBOL's name against buffer text
    before point, case-insensitively.  When found, return non-zero, so
-   that map_obarray terminates mapping.  */
+   that elisp_maphash terminates mapping.  */
 static int
 abbrev_match_mapper (Lisp_Object UNUSED (key), Lisp_Object symbol, 
                      void *arg)
@@ -152,7 +152,7 @@ abbrev_match_mapper (Lisp_Object UNUSED (key), Lisp_Object symbol,
 /* Match the buffer text against names of symbols in obarray.  Returns
    the matching symbol, or 0 if not found.  */
 static Lisp_Symbol *
-abbrev_match (struct buffer *buf, Lisp_Object obarray)
+abbrev_match (struct buffer *buf, Lisp_Object table)
 {
   struct abbrev_match_mapper_closure closure;
 
@@ -164,7 +164,7 @@ abbrev_match (struct buffer *buf, Lisp_Object obarray)
   closure.chartab = buf->mirror_syntax_table;
   closure.found = 0;
 
-  map_obarray (obarray, abbrev_match_mapper, &closure);
+  elisp_maphash (abbrev_match_mapper, table, &closure);
 
   return closure.found;
 }
@@ -240,17 +240,19 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
       p += set_itext_ichar (p, c);
     }
   lookup = oblookup (obarray, word, p - word);
-  if (SYMBOLP (lookup) && !NILP (symbol_value (XSYMBOL (lookup))))
-    return XSYMBOL (lookup);
-  else
-    return NULL;
+  if (!SYMBOLP (lookup) || NILP (Fsymbol_value (lookup)))
+    {
+      return NULL;
+    }
+
+  return XSYMBOL (lookup);
 }
 
 /* Return non-zero if OBARRAY contains an interned symbol ` '. */
 static int
 obarray_has_blank_p (Lisp_Object obarray)
 {
-  return !ZEROP (oblookup (obarray, (Ibyte *)" ", 1));
+  return SYMBOLP (oblookup (obarray, (Ibyte *)" ", 1));
 }
 
 /* Analyze case in the buffer substring, and report it.  */
@@ -516,12 +518,8 @@ READABLE is non-nil, they are listed.  */
   stream = wrap_buffer (current_buffer);
 
   symbols = Fcons (Qnil, Qnil);
-  /* Lisp_Object closure = Fcons (Qnil, Qnil); */
-  /* struct gcpro gcpro1; */
-  /* GCPRO1 (closure); */
-  /* map_obarray (table, record_symbol, symbols); */
-  map_obarray (table, record_symbol, &symbols);
-  /* map_obarray (table, record_symbol, &closure); */
+  elisp_maphash_unsafe (record_symbol, table, &symbols);
+
   symbols = XCDR (symbols);
   symbols = list_sort (symbols, check_string_lessp_nokey, Qnil, Qnil);
 

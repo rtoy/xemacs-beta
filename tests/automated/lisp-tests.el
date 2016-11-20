@@ -1055,7 +1055,7 @@ will be used to make debugging easier."
 ;; Test `type-of'
 ;;-----------------------------------------------------
 (Assert (eq (type-of load-path) 'cons))
-(Assert (eq (type-of obarray) 'vector))
+(Assert (eq (type-of obarray) 'hash-table))
 (Assert (eq (type-of 42) 'fixnum))
 (Assert (eq (type-of ?z) 'character))
 (Assert (eq (type-of "42") 'string))
