@@ -1148,10 +1148,12 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
 	  {
             /* Do a gross plausibility check instead of calling parse_integer
                on every converter we see. */
+            Ichar cch = itext_ichar (fmt);
             Ibyte *fmt1;
-            Lisp_Object got = get_char_table (itext_ichar (fmt),
-                                              Vdigit_fixnum_ascii);
-            Lisp_Object posnum = (XFIXNUM (got) > 0 && XFIXNUM (got) < 10) ?
+            /* No language dependence in this parsing, so direct comparison is
+               fine, and a bit more robust when erroring early in the
+               build. */
+            Lisp_Object posnum = (cch > '0' && cch <= '9') ?
               parse_integer (fmt, &fmt1, fmt_end - fmt, 10, 1,
                              Vdigit_fixnum_ascii) : Qnil;
 
@@ -1249,10 +1251,9 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
 	    }
 	  else
 	    {
-              Lisp_Object got = get_char_table (itext_ichar (fmt),
-                                                Vdigit_fixnum_ascii);
+              Ichar cch = itext_ichar (fmt);
               Lisp_Object mwidth
-                = (XFIXNUM (got) > 0 && XFIXNUM (got) < 10) ?
+                = (cch > '0' && cch <= '9') ?
                 parse_integer (fmt, (Ibyte **) (&fmt), fmt_end - fmt, 10, 1,
                                Vdigit_fixnum_ascii) : Qnil;
               if (NILP (mwidth))

@@ -7,6 +7,11 @@
 	of %-signs in passing.
 	Cast the argument to write_string_1() for the sake of the C++
 	build.
+	(parse_doprnt_spec):
+	Don't use Vdigit_fixnum_ascii for the gross plausibility check for
+	repositioning specifiers, minimum widths, there's no loss of
+	flexibility (we only accept the ASCII digits anyway) and we're a
+	little more robust when called with very early errors.
 
 	* doprnt.c (write_fmt_string):
 	Implement this in terms of write_fmt_string_va() now that the
