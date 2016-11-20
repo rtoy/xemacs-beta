@@ -988,6 +988,18 @@ will be used to make debugging easier."
   (Assert (let* ((x (a)) (y (remrassq  "6" x))) (and (eq x y) (equal y (a))))))
 
 ;;-----------------------------------------------------
+;; Check a specific bug in #'mapcon has been fixed.
+;;-----------------------------------------------------
+
+(Assert (equal
+         (mapcon
+          #'(lambda (tail)
+              (unless (eq (car tail) '&optional)
+                (list (cons (car tail) 4))))
+          '(opcode stack-adjust opname &optional docstring))
+         ((opcode . 4) (stack-adjust . 4) (opname . 4) (docstring . 4))))
+
+;;-----------------------------------------------------
 ;; function-max-args, function-min-args
 ;;-----------------------------------------------------
 (defmacro check-function-argcounts (fun min max)
