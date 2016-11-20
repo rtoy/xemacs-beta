@@ -1,5 +1,16 @@
 2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* doprnt.c (write_fmt_string_va):
+	Parse the format string into a stack-allocated SPECS dynarr in
+	this function, as was done with emacs_vsnprintf, since we need to
+	do a strlen() on the format string anyway and can check the number
+	of %-signs in passing.
+	* doprnt.c (write_fmt_string):
+	Implement this in terms of write_fmt_string_va() now that the
+	latter is cheaper than previously.
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fns.c (maplist):
 	Fix a bug in #'mapcon when FUNCTION returns nil.
 
