@@ -1,5 +1,10 @@
 2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* elhash.c (intern_istring):
+	Only enlarge the hash table after we're done with PROBE, which is
+	a htentry * pointing into the pre-enlargement hash table. Thank
+	you Mats Lidell and the XEmacs package smoketest.
+
 	* abbrev.c (abbrev_oblookup):
 	Check that abbrev table objects are hash tables, not vectors
 	(something missed on merging my code).

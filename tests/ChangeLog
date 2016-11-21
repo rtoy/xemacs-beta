@@ -1,3 +1,9 @@
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	Creating sufficiently many symbols in a hash table that is being
+	treated as an obarray shouldn't crash:
+
 2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
