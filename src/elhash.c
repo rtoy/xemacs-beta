@@ -1891,9 +1891,6 @@ intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
   probe->key = NILP (reloc) ? make_string (str, len) : reloc;
   probe->value = Fmake_symbol (probe->key);
 
-  if (++ht->count >= ht->rehash_count)
-    enlarge_hash_table (ht);
-
   XSYMBOL (probe->value)->u.v.package_count = 1;
   XSYMBOL (probe->value)->u.v.first_package_id
     = (EQ (package, Vobarray)) ? 1 : 2;
@@ -1908,7 +1905,13 @@ intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
       XSYMBOL_VALUE (probe->value) = probe->value;
     }
 
-  return probe->value;
+  lookup = probe->value;
+
+  /* Enlarge and rehash only after we're done with the htentry. */
+  if (++ht->count >= ht->rehash_count)
+    enlarge_hash_table (ht);
+
+  return lookup;
 }
 
 Lisp_Object
