@@ -1,3 +1,9 @@
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obarray.el (obarray-map):
+	Correct the spelling of #'maphash when marking this for
+	compatibility.
+
 2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.el:

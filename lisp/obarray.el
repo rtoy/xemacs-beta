@@ -200,7 +200,7 @@ Return t on success, nil otherwise."
 (defun obarray-map (fn ob)
   "Call function FN on every symbol in obarray OB and return nil."
   (xemacs-mapatoms-in-vector fn ob))
-(make-compatible 'obarray-map 'maphas)
+(make-compatible 'obarray-map 'maphash)
 
 (provide 'obarray)
 
