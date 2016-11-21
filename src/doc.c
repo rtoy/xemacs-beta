@@ -33,6 +33,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lstream.h"
 #include "sysfile.h"
 #include "extents.h"
+#include "elhash.h"
 
 Lisp_Object Vinternal_doc_file_name;
 

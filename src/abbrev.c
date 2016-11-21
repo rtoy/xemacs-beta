@@ -187,7 +187,7 @@ abbrev_oblookup (struct buffer *buf, Lisp_Object obarray)
   Charbpos idx;
   Lisp_Object lookup;
 
-  CHECK_VECTOR (obarray);
+  CHECK_HASH_TABLE (obarray);
 
   if (!NILP (Vabbrev_start_location))
     {
@@ -509,7 +509,7 @@ READABLE is non-nil, they are listed.  */
 
   CHECK_SYMBOL (name);
   table = Fsymbol_value (name);
-  CHECK_VECTOR (table);
+  CHECK_HASH_TABLE (table);
 
   /* FIXME: what's the XEmacs equivalent? APA */
   /* XSETBUFFER (stream, current_buffer); */

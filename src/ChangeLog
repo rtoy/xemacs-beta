@@ -1,3 +1,12 @@
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.c (abbrev_oblookup):
+	Check that abbrev table objects are hash tables, not vectors
+	(something missed on merging my code).
+	* doc.c:
+	#include "elhash.h" to give a declaration for elisp_maphash() and
+	quiet the C++ build.
+
 2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (write_fmt_string_va):
