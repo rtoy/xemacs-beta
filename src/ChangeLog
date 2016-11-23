@@ -1,3 +1,25 @@
+2016-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* file-coding.c (coding_character_tell):
+	* file-coding.c (no_conversion_decode):
+	* file-coding.c (no_conversion_character_tell):
+	* file-coding.c (lstream_type_create_file_coding):
+	* file-coding.c (coding_system_type_create):
+	* file-coding.h (struct coding_system_methods):
+	* tests.c (Ftest_character_tell):
+	* unicode.c:
+	* unicode.c (decode_utf_8):
+	* unicode.c (unicode_decode):
+	* unicode.c (unicode_character_tell):
+	* unicode.c (coding_system_type_create_unicode):
+	* unicode.h (struct unicode_coding_stream):
+	Restore the character_tell methods for the no-conversion and
+	Unicode coding system types, code that is useful for avoiding redundant
+	byte-char conversion with huge buffers and had been imperfectly
+	merged.
+	Test the UTF-16 character tell implementation, newly added.
+
 2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Remove the badly-named word_to_lisp(), lisp_to_word(). Add

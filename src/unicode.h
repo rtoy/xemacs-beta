@@ -69,6 +69,7 @@ struct unicode_coding_stream
   int seen_char;
   int first_surrogate;
   int ch;
+  Charcount characters_seen;
   /* encode */
   int wrote_bom;
 };

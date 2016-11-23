@@ -387,6 +387,9 @@ struct coding_system_methods
      the init_coding_stream method will be called upon rewind. */
   void (*rewind_coding_stream_method) (struct coding_stream *str);
 
+  /* Return the number of characters *decoded*. Optional. */
+  Charcount (*character_tell_method) (struct coding_stream *str);
+
   /* Copy coding stream method: Copy any indirect pointers from SRC to DST.
      SRC and DST are pointers to the type-specific coding-stream data (e.g.
      `struct iso2022_coding_stream').  At the time this function is called,

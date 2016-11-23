@@ -602,7 +602,11 @@ REASON is nil or a string describing the failure (not required).
   /* Previous string in UTF-8. */
   Extbyte ext_utf_8_unix[]
     = "\n\nfoo\nbar\n\nf\303\272b\303\243\303\240\nfoo\nbar\n";
-  Charcount ext_utf_8_unix_char_len = 25;
+  Extbyte ext_utf_16_be_unix[] =
+    "\x0\xa\x0\xa\x0\x66\x0\x6f\x0\x6f\x0\xa\x0\x62\x0\x61\x0\x72\x0\xa\x0"
+    "\xa\x0\x66\x0\xfa\x0\x62\x0\xe3\x0\xe0\x0\xa\x0\x66\x0\x6f\x0\x6f\x0"
+    "\xa\x0\x62\x0\x61\x0\x72\x0\xa";
+  Charcount ext_utf_8_unix_char_len = 25, ext_utf_16_be_unix_char_len = 25;
   Ibyte shortbuf[13], longbuf[512];
   Lisp_Object stream =
     make_fixed_buffer_input_stream (ext_unix, sizeof (ext_unix) - 1);
@@ -759,6 +763,91 @@ REASON is nil or a string describing the failure (not required).
      == sizeof (shortbuf) - 1,
      "utf-8 tell with short read, character mode, utf-8-unix",
      "utf-8 read character tell, character mode failed");
+
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  stream
+    = make_fixed_buffer_input_stream (ext_utf_16_be_unix,
+                                      sizeof (ext_utf_16_be_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("utf-16-be-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+
+  bytecount = Lstream_read (XLSTREAM (stream), longbuf, sizeof (longbuf));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == bytecount_to_charcount (longbuf, bytecount),
+                         "utf-16-be character tell, utf-16-be-unix",
+                         "utf-16-be character tell failed");
+
+  {
+    DECLARE_EISTRING (utf_16_scratch);
+    
+    /* Can't use build_extstring, the null octets confuse it. */
+    eicpy_ext_len (utf_16_scratch, ext_utf_16_be_unix,
+                   sizeof (ext_utf_16_be_unix) - 1,
+                   Ffind_coding_system (intern
+                                        ("utf-16-be-unix")));
+    string = eimake_string (utf_16_scratch);
+  }
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == string_char_length (string),
+                         "repeat utf-16-be character tell, utf-16-be-unix",
+                         "repeat utf-16-be character tell failed with string");
+
+  count = Lstream_character_tell (XLSTREAM (stream));
+
+  CHARACTER_TELL_ASSERT (count == ext_utf_16_be_unix_char_len,
+                         "char count is the expected value, utf-16-be-unix",
+                         "char count not the expected value, utf-16-be-unix");
+
+  Lstream_unread (XLSTREAM (stream), "r\n", 2);
+
+  /* This should give the same result as before the unread. */
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count, "checking post-unread utf-16-be tell",
+                         "post-unread utf-16-be tell failed");
+  bytecount += Lstream_read (XLSTREAM (stream), longbuf + bytecount,
+                             sizeof (longbuf) - bytecount);
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count + 2,
+                         "checking post-unread+read utf-16-be tell",
+                         "post-unread+read utf-16-be tell failed");
+
+  /* This seems to be buggy for my purposes. */
+  /* Lstream_rewind (XLSTREAM (stream)); */
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  stream = make_fixed_buffer_input_stream (ext_utf_16_be_unix,
+                                           sizeof (ext_utf_16_be_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_set_character_mode (XLSTREAM (stream));
+
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("utf-16-be-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_set_character_mode (XLSTREAM (stream));
+
+  bytecount = Lstream_read (XLSTREAM (stream), shortbuf, sizeof (shortbuf));
+
+  CHARACTER_TELL_ASSERT
+    (bytecount == (sizeof (shortbuf) - 1),
+     "utf-16-be Lstream_read, character mode, checking partial char not read",
+     "partial char appars to have been read when it shouldn't");
+
+  CHARACTER_TELL_ASSERT
+    (Lstream_character_tell (XLSTREAM (stream))
+     /* This is shorter, because it's in the middle of a character. */
+     == sizeof (shortbuf) - 1,
+     "utf-16-be tell with short read, character mode, utf-16-be-unix",
+     "utf-16-be read character tell, character mode failed");
 
   Lstream_close (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));

@@ -1,3 +1,9 @@
+2016-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Restore mule/digit.el to the list of dumped files, dropped
+	accidentally in the Unicode merge.
+
 2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* select.el:
