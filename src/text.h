@@ -118,8 +118,8 @@ enum converr
 
 #ifndef MULE
 
-#define rep_bytes_by_first_byte(fb) 1
-#define byte_ascii_p(byte) 1
+#define rep_bytes_by_first_byte(fb) ((void) (fb), 1)
+#define byte_ascii_p(byte) ((void) (byte), 1)
 #define MAX_ICHAR_LEN 1
 /* Exclusive upper bound on character codes. */
 #define CHAR_CODE_LIMIT 0x100 
@@ -1203,7 +1203,7 @@ itext_ichar_eql (const Ibyte *str, Ichar ch)
    octets are needed to represent CH. Most useful for constant ASCII CH. */
 DECLARE_INLINE_HEADER (
 Bytecount
-ichar_itext_len (Ichar ch)
+ichar_len (Ichar ch)
 )
 {
   if (ichar_ascii_p (ch))
@@ -1219,13 +1219,31 @@ ichar_itext_len (Ichar ch)
 #endif
 }
 
+DECLARE_INLINE_HEADER (
+Bytecount
+ichar_len_fmt (Ichar c, Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return ichar_len (c);
+    case FORMAT_16_BIT_FIXED:
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return 1;
+    }
+}
+
 /* Retrieve the character at offset N (in characters) from PTR, as an
    Ichar.
 */
      
 #define itext_ichar_n(ptr, offset) \
   itext_ichar (itext_n_addr (ptr, offset))
-
 
 /************************************************************************/
 /*									*/

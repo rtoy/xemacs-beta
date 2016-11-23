@@ -1145,24 +1145,22 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
           break;
         }
       
-      idx = backslashp - strdata + ichar_itext_len ('\\');
+      idx = backslashp - strdata + ichar_len ('\\');
       strdata = XSTRING_DATA (string);
       strlength = XSTRING_LENGTH (string);
       strp = strdata + idx;
 
-      if (idx + ichar_itext_len ('[') < strlength
-	  && itext_ichar_eql (strp, '['))
+      if (idx + ichar_len ('[') < strlength && itext_ichar_eql (strp, '['))
         {
           if (!changed)
             {
               changed = 1;
               stream = make_resizing_buffer_output_stream ();
               Lstream_write_with_extents (XLSTREAM (stream),
-                                          string, 0,
-                                          idx - ichar_itext_len ('\\'));
+                                          string, 0, idx - ichar_len ('\\'));
             }
           
-          idx += ichar_itext_len ('[');
+          idx += ichar_len ('[');
           strp = strdata + idx;
           strp = (Ibyte *) memchr (strp, ']', strlength - idx);
  
@@ -1195,19 +1193,17 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
             }
 
           stretch_string_extents (stream, string, stretch_begin,
-                                  idx - ichar_itext_len ('\\') -
-                                  ichar_itext_len ('['),
-                                  symlen + ichar_itext_len ('\\') +
-                                  ichar_itext_len ('['),
+                                  idx - ichar_len ('\\') - ichar_len ('['),
+                                  symlen + ichar_len ('\\') + ichar_len ('['),
                                   stream_extent_position (stream)
                                   - stretch_begin);
           idx = idx + symlen;
           if (idx < strlength)
             {
-              idx += ichar_itext_len (']');
+              idx += ichar_len (']');
             }
         }
-      else if (idx + ichar_itext_len ('{') < strlength
+      else if (idx + ichar_len ('{') < strlength
                && itext_ichar_eql (strp, '{'))
         {
           if (!changed)
@@ -1215,11 +1211,10 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
               changed = 1;
               stream = make_resizing_buffer_output_stream ();
               Lstream_write_with_extents (XLSTREAM (stream),
-                                          string, 0,
-                                          idx - ichar_itext_len ('\\'));
+                                          string, 0, idx - ichar_len ('\\'));
             }
           
-          idx += ichar_itext_len ('{');
+          idx += ichar_len ('{');
           strdata = XSTRING_DATA (string);
           strp = strdata + idx;
           strp = (Ibyte *) memchr (strp, '}', strlength - idx);
@@ -1259,19 +1254,17 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
             }
 
           stretch_string_extents (stream, string, stretch_begin,
-                                  idx - ichar_itext_len ('\\') -
-                                  ichar_itext_len ('{'),
-                                  symlen + ichar_itext_len ('\\') +
-                                  ichar_itext_len ('{'),
+                                  idx - ichar_len ('\\') - ichar_len ('{'),
+                                  symlen + ichar_len ('\\') + ichar_len ('{'),
                                   stream_extent_position (stream)
                                   - stretch_begin);
           idx = idx + symlen;
           if (idx < strlength)
             {
-              idx += ichar_itext_len ('}');
+              idx += ichar_len ('}');
             }
         }
-      else if (idx + ichar_itext_len ('=') < strlength
+      else if (idx + ichar_len ('=') < strlength
 	       && itext_ichar_eql (strp, '='))
         {
           Bytecount blen;
@@ -1282,17 +1275,17 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
               stream = make_resizing_buffer_output_stream ();
               Lstream_write_with_extents (XLSTREAM (stream),
                                           string, 0,
-                                          idx - ichar_itext_len ('\\'));
+                                          idx - ichar_len ('\\'));
             }
 
-          idx += ichar_itext_len ('=');
+          idx += ichar_len ('=');
           /* \= quotes the next character; thus, to put in \[ without its
              special meaning, use \=\[.  */
           blen = itext_ichar_len (strdata + idx);
           write_lisp_string (stream, string, idx, blen);
           idx += blen;
         }
-      else if (idx + ichar_itext_len ('<') < strlength
+      else if (idx + ichar_len ('<') < strlength
                && itext_ichar_eql (strp, '<'))
         {
           if (!changed)
@@ -1301,10 +1294,10 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
               stream = make_resizing_buffer_output_stream ();
               Lstream_write_with_extents (XLSTREAM (stream),
                                           string, 0,
-                                          idx - ichar_itext_len ('\\'));
+                                          idx - ichar_len ('\\'));
             }
 
-          idx += ichar_itext_len ('<');
+          idx += ichar_len ('<');
           strdata = XSTRING_DATA (string);
           strp = strdata + idx;
           strp = (Ibyte *) memchr (strp, '>', strlength - idx);
@@ -1344,23 +1337,23 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
             }
           
           stretch_string_extents (stream, string, stretch_begin,
-                                  idx - ichar_itext_len ('\\') -
-                                  ichar_itext_len ('<'),
-                                  symlen + ichar_itext_len ('\\') +
-                                  ichar_itext_len ('<'),
+                                  idx - ichar_len ('\\') -
+                                  ichar_len ('<'),
+                                  symlen + ichar_len ('\\') +
+                                  ichar_len ('<'),
                                   stream_extent_position (stream)
                                   - stretch_begin);
           idx = idx + symlen;
           if (idx < strlength)
             {
-              idx += ichar_itext_len ('>');
+              idx += ichar_len ('>');
             }
         }
       else if (changed)
         {
           Lstream_write_with_extents (XLSTREAM (stream), string,
-                                      idx - ichar_itext_len ('\\'),
-                                      ichar_itext_len ('\\'));
+                                      idx - ichar_len ('\\'),
+                                      ichar_len ('\\'));
         }
       /* If !changed, do nothing with this backslash, just increment past
          it, which we've done above already. */

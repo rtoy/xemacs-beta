@@ -331,7 +331,7 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
 
   if (minusp)
     {
-      len += ichar_itext_len ('-');
+      len += ichar_len ('-');
       set_itext_ichar (buffer + size - len, '-');
     }
 
@@ -377,7 +377,7 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
     {
       bignum_neg (scratch_bignum, bn);
       /* Reserve space for the minus sign in our accounting. */
-      buf1 += ichar_itext_len ('-');
+      buf1 += ichar_len ('-');
     }
   else
     {
@@ -398,7 +398,7 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
           XREALLOC_ARRAY (*buf, Ibyte, *size_inout << 1);
           memcpy (*buf, *buf + *size_inout, *size_inout);
           *size_inout <<= 1;
-          buf1 = *buf + minusp * ichar_itext_len ('-');
+          buf1 = *buf + minusp * ichar_len ('-');
         }
       signum = bignum_sign (scratch_bignum);
     }
@@ -413,7 +413,7 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
 
   if (minusp)
     {
-      cursor -= ichar_itext_len ('-');
+      cursor -= ichar_len ('-');
       set_itext_ichar (cursor, '-');
     }
 
@@ -478,8 +478,7 @@ ratio_to_string_1 (Ibyte **buf, Bytecount size, ratio rat, UINT_16_BIT base,
 #ifdef mpz_sizeinbase
       size = ((mpz_sizeinbase (ratio_numerator (rat), base) +
                mpz_sizeinbase (ratio_denominator (rat), base))
-              * MAX_ICHAR_LEN)
-        + ichar_itext_len ('/') + ichar_itext_len ('-') + 1;
+              * MAX_ICHAR_LEN) + ichar_len ('/') + ichar_len ('-') + 1;
       *buf = xnew_ibytes (size);
 #else
 #error "unimplemented"
@@ -489,7 +488,7 @@ ratio_to_string_1 (Ibyte **buf, Bytecount size, ratio rat, UINT_16_BIT base,
   len = bignum_to_string_1 (buf, &size, ratio_denominator (rat), base, table); 
   cursor = *buf + size - len;
 
-  cursor -= ichar_itext_len ('/');
+  cursor -= ichar_len ('/');
   len += set_itext_ichar (cursor, '/');
   size -= len;
   len += bignum_to_string_1 (buf, &size, ratio_numerator (rat), base, table);
@@ -1130,7 +1129,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
       fmt = text_end;
       if (fmt != fmt_end)
 	{
-          fmt += ichar_itext_len ('%'); /* skip over % */
+          fmt += ichar_len ('%'); /* skip over % */
 
 	  /* A % is special -- no arg number.  According to ANSI specs,
 	     field width does not apply to %% conversion. */
@@ -1140,7 +1139,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
               spec.spec_length = fmt - text_end;
               /* Argnum is zero here, which is intended. */
 	      Dynarr_add (specs, spec); 
-              fmt += ichar_itext_len ('%');
+              fmt += ichar_len ('%');
 	      continue;
 	    }
 
@@ -1247,7 +1246,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
                       - MAX_ICHAR_LEN);
 	      spec.argnum = ++prev_argnum;
               max_argnum = max (max_argnum, prev_argnum);
-              fmt += ichar_itext_len ('*');
+              fmt += ichar_len ('*');
 	    }
 	  else
 	    {
@@ -1304,7 +1303,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
                           - MAX_ICHAR_LEN);
 		  spec.argnum = ++prev_argnum;
                   max_argnum = max (max_argnum, prev_argnum);
-                  fmt += ichar_itext_len ('*');
+                  fmt += ichar_len ('*');
 		}
 	      else
 		{
@@ -1958,8 +1957,8 @@ emacs_doprnt (Lisp_Object stream,
             if (arg.l < 0)
               {
                 spec->sign_flag = SIGN_FLAG_MINUS;
-                cursor += ichar_itext_len ('-');
-                len -= ichar_itext_len ('-');
+                cursor += ichar_len ('-');
+                len -= ichar_len ('-');
               }
 
             byte_count += doprnt_1 (stream, cursor, Qnil, 0, len, spec,
@@ -2260,7 +2259,7 @@ emacs_doprnt (Lisp_Object stream,
                format string.  */
             byte_count += doprnt_1 (stream, format_nonreloc, format_reloc,
                                     spec->text_before + spec->text_before_len,
-                                    ichar_itext_len ('%'), NULL, Qnil);
+                                    ichar_len ('%'), NULL, Qnil);
             continue;
           }
         case '*':

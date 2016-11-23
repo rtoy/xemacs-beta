@@ -2253,10 +2253,10 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
 		  set_itext_ichar (buf, '#');
                   write_string_1 (printcharfun, buf, 
-                                  ichar_itext_len ('#')
-                                  + fixnum_to_string (buf + ichar_itext_len
-                                                      ('#'), sizeof (buf),
-                                                      i, 10, Qnil));
+                                  ichar_len ('#')
+                                  + fixnum_to_string (buf + ichar_len ('#'),
+                                                      sizeof (buf), i, 10,
+                                                      Qnil));
 		  break;
 		}
 	    if (i < print_depth - 1) /* Did we print something? */
