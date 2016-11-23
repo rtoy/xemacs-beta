@@ -244,7 +244,9 @@ in dumped-lisp.el and is not itself listed.")
        ;; in old-Mule, must be loaded after all charsets created
        (when (and (featurep 'mule) (featurep 'use-unidata-case-tables))
 	 "mule/uni-case-conv")
-       (when (featurep 'mule) "mule/general-late")
+       (when (featurep 'mule) 
+	 '("mule/digit"
+	   "mule/general-late"))
 
 ;;; mule-load.el ends here
 

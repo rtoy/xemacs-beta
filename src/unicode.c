@@ -2794,12 +2794,15 @@ decode_utf_8 (struct unicode_coding_stream *data, unsigned_char_dynarr *dst,
 	{
 	  /* ASCII. */
 	  decode_unicode_to_dynarr_0 (c, dst, data, ignore_bom);
+          data->characters_seen++;
 	}
       else if (0 == (c & 0x40))
 	{
 	  /* Highest bit set, second highest not--there's
 	     something wrong. */
 	  UNICODE_DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
+          /* This is a character in the buffer. */
+          data->characters_seen++;
 	}
       else if (0 == (c & 0x20))
 	{
@@ -2839,7 +2842,7 @@ decode_utf_8 (struct unicode_coding_stream *data, unsigned_char_dynarr *dst,
 	     data, unless we are in decoding escape-quoted (signalled by
 	     ALLOW_PRIVATE). */
 	  UNICODE_DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
-
+          data->characters_seen++;
 	}
     }
   else
@@ -2853,12 +2856,14 @@ decode_utf_8 (struct unicode_coding_stream *data, unsigned_char_dynarr *dst,
 	  if (c & 0x80)
 	    {
 	      UNICODE_DECODE_ERROR_OCTET (c, dst, data, ignore_bom);
+              data->characters_seen++;
 	    }
 	  else
 	    {
 	      /* The character just read is ASCII. Treat it as
 		 such.  */
 	      decode_unicode_to_dynarr_0 (c, dst, data, ignore_bom);
+              data->characters_seen++;
 	    }
 	  data->ch = 0;
 	  data->counter = 0;
@@ -2895,10 +2900,13 @@ decode_utf_8 (struct unicode_coding_stream *data, unsigned_char_dynarr *dst,
 					  data->counter, 
 					  data->ch, dst, data,
 					  ignore_bom);
+                  data->characters_seen
+                    += (data->indicated_length - data->counter);
 		}
 	      else
 		{
 		  decode_unicode_to_dynarr_0 (data->ch, dst, data, ignore_bom);
+                  data->characters_seen++;
 		}
 	      data->ch = 0;
 	    }
@@ -3131,6 +3139,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 	      ch = 0;
 	      counter = 0;
 	      decode_unicode_to_dynarr_0 (tempch, dst, data, ignore_bom);
+              data->characters_seen++;
 	    }
 	  else if (32 == counter)
 	    {
@@ -3148,6 +3157,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 						  data, ignore_bom);
 		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
 						  data, ignore_bom);
+                      data->characters_seen += 4;
 		    }
 		  else
 		    {
@@ -3155,6 +3165,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 							  (ch >> 16));
 		      decode_unicode_to_dynarr_0 (tempch, dst,
 						  data, ignore_bom);
+                      data->characters_seen++;
 		    }
 		}
 	      else
@@ -3169,6 +3180,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 						  data, ignore_bom);
 		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst,
 						  data, ignore_bom);
+                      data->characters_seen += 4;
 		    }
 		  else 
 		    {
@@ -3176,6 +3188,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 							  (ch & 0xffff));
 		      decode_unicode_to_dynarr_0 (tempch, dst,
 						  data, ignore_bom);
+                      data->characters_seen++;
 		    }
 		}
 
@@ -3208,6 +3221,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 		    {
 		      decode_unicode_to_dynarr_0 (ch, dst,
 						  data, ignore_bom);
+                      data->characters_seen++;
 		    }
 		  else if (little_endian)
 		    {
@@ -3219,6 +3233,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 						  data, ignore_bom);
 		      UNICODE_DECODE_ERROR_OCTET ((ch >> 24) & 0xFF, dst,
 						  data, ignore_bom);
+                      data->characters_seen += 4;
 		    }
 		  else
 		    {
@@ -3230,11 +3245,13 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 						  data, ignore_bom);
 		      UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst,
 						  data, ignore_bom);
+                      data->characters_seen += 4;
 		    }
 		}
 	      else
 		{
 		  decode_unicode_to_dynarr_0 (ch, dst, data, ignore_bom);
+                  data->characters_seen++;
 		}
 	      ch = 0;
 	      counter = 0;
@@ -3257,6 +3274,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 	  indicate_invalid_utf_8 (indicated_length, 
 				  counter, ch, dst, data, 
 				  ignore_bom);
+          data->characters_seen += (indicated_length - counter);
 	  break;
 
 	case UNICODE_UTF_16:
@@ -3265,6 +3283,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 	  if (8 == counter)
 	    {
 	      UNICODE_DECODE_ERROR_OCTET (ch, dst, data, ignore_bom);
+              data->characters_seen++;
 	    }
 	  else if (16 == counter)
 	    {
@@ -3282,6 +3301,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 		  UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
 					      ignore_bom); 
 		}
+              data->characters_seen += 2;
 	    }
 	  else if (24 == counter)
 	    {
@@ -3303,6 +3323,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
 		  UNICODE_DECODE_ERROR_OCTET (ch & 0xFF, dst, data,
 					      ignore_bom); 
 		}
+              data->characters_seen += 3;
 	    }
 	  else assert (0);
 	  break;
@@ -3438,6 +3459,16 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
   /* Whatever. */
 
   return src - str->src;
+}
+
+static Charcount
+unicode_character_tell (struct coding_stream *str)
+{
+  /* CH doesn't matter, since what the callers of this function are interested
+     in is how many characters they have consumed (e.g. and are about to
+     insert into a buffer), and they certainly haven't consumed a character
+     that is still partial on the coding system level. */
+  return CODING_STREAM_TYPE_DATA (str, unicode)->characters_seen;
 }
 
 static Bytecount
@@ -3915,6 +3946,7 @@ coding_system_type_create_unicode (void)
   CODING_SYSTEM_HAS_METHOD (unicode, init_coding_stream);
   CODING_SYSTEM_HAS_METHOD (unicode, putprop);
   CODING_SYSTEM_HAS_METHOD (unicode, getprop);
+  CODING_SYSTEM_HAS_METHOD (unicode, character_tell);
 
   INITIALIZE_DETECTOR (utf_8);
   DETECTOR_HAS_METHOD (utf_8, detect);
