@@ -239,7 +239,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object
       (obj, XSTRING_DATA (XSYMBOL (XCHARSET_NAME (obj))->name));
 
-  write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S", 4,
+  write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S",
 			 XCHARSET_NAME (obj), XCHARSET_SHORT_NAME (obj),
 			 XCHARSET_LONG_NAME (obj), XCHARSET_DOC_STRING (obj));
   if (XCHARSET_DIMENSION (obj) == 1)

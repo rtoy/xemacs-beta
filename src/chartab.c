@@ -1104,12 +1104,12 @@ print_table_entry (Lisp_Object UNUSED (table), Ichar from, Ichar to,
       return 1;
     }
   if (from == to)
-    write_fmt_string_lisp (a->printcharfun, "%s %S", 2, make_char (from), val);
+    write_fmt_string_lisp (a->printcharfun, "%s %S", make_char (from), val);
   else if (print_readably)
-    write_fmt_string_lisp (a->printcharfun, "(%s %s) %S", 3,
+    write_fmt_string_lisp (a->printcharfun, "(%s %s) %S",
 			   make_char (from), make_char (to), val);
   else
-    write_fmt_string_lisp (a->printcharfun, "%s-%s %S", 3,
+    write_fmt_string_lisp (a->printcharfun, "%s-%s %S",
 			   make_char (from), make_char (to), val);
   a->num_printed++;
   return 0;
@@ -2129,7 +2129,7 @@ print_category_table (Lisp_Object obj, Lisp_Object printcharfun,
   /* #### Eventually need to print properly and readably */
   write_ascstring (printcharfun, "#<category-table");
   for (i = 0; i < CHAR_TABLES_PER_CATEGORY_TABLE; i++)
-    write_fmt_string_lisp (printcharfun, " %s", 1,
+    write_fmt_string_lisp (printcharfun, " %s",
 			   XCATEGORY_TABLE_TABLES (obj)[i]);
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
