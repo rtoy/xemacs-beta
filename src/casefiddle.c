@@ -25,6 +25,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "buffer.h"
 #include "insdel.h"
 #include "syntax.h"
+#include "extents.h"
 
 enum case_action {CASE_UP, CASE_DOWN, CASE_CAPITALIZE, CASE_CAPITALIZE_UP,
                   CASE_CANONICALIZE};
@@ -60,7 +61,7 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 
   if (STRINGP (string_or_char))
     {
-      Lisp_Object syntax_table = buf->mirror_syntax_table;
+      Lisp_Object syntax_table = buf->mirror_syntax_table, result;
       Ibyte *storage =
 	alloca_ibytes (XSTRING_LENGTH (string_or_char) * MAX_ICHAR_LEN);
       Ibyte *newp = storage;
@@ -101,7 +102,18 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
 	  INC_IBYTEPTR (oldp);
 	}
 
-      return make_string (storage, newp - storage);
+      result = make_string (storage, newp - storage);
+
+      if (string_extent_info (string_or_char) != NULL)
+        {
+          /* Usually copy_string_extents() would be fine, but it is possible
+             for the transformed object to have a different byte length. */
+          stretch_string_extents (result, string_or_char, 0, 0,
+                                  XSTRING_LENGTH (string_or_char),
+                                  XSTRING_LENGTH (result));
+        }
+
+      return result;
     }
 
   string_or_char = wrong_type_argument (Qchar_or_string_p, string_or_char);

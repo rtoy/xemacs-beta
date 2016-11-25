@@ -40,6 +40,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "redisplay.h"
 #include "specifier.h"
 #include "window-impl.h"
+#include "lstream.h"
 
 int menubar_show_keybindings;
 Lisp_Object Vmenubar_configuration;
@@ -369,52 +370,82 @@ The returned string may be the same string as the original.
 */
        (name))
 {
-  Charcount end;
-  int i;
-  Ibyte *name_data;
-  Ibyte *string_result;
-  Ibyte *string_result_ptr;
-  Ichar elt;
-  int expecting_underscore = 0;
+  const Ibyte *name_data, *pend, *lastp;
+  Lisp_Object stream = Qnil;
 
   CHECK_STRING (name);
 
-  end = string_char_length (name);
-  name_data = XSTRING_DATA (name);
+  name_data = lastp = XSTRING_DATA (name);
+  pend = name_data + XSTRING_LENGTH (name);
 
-  string_result = alloca_ibytes (end * MAX_ICHAR_LEN);
-  string_result_ptr = string_result;
-  for (i = 0; i < end; i++)
+  while (name_data < pend)
     {
-      elt = itext_ichar (name_data);
-      if (expecting_underscore)
-	{
-	  expecting_underscore = 0;
-	  switch (elt)
-	    {
-	    case '%':
-	      /* Allow `%%' to mean `%'.  */
-	      string_result_ptr += set_itext_ichar (string_result_ptr, '%');
-	      break;
-	    case '_':
-	      break;
-	    default:
-	      string_result_ptr += set_itext_ichar (string_result_ptr, '%');
-	      string_result_ptr += set_itext_ichar (string_result_ptr, elt);
-	    }
-	}
-      else if (elt == '%')
-	expecting_underscore = 1;
+      name_data = (const Ibyte *) memchr (name_data, '%', pend - name_data);
+
+      if (!name_data)
+        {
+          break;
+        }
+
+      name_data += ichar_len ('%');
+
+      if (name_data >= pend)
+        {
+          break;
+        }
+
+      if (itext_ichar_eql (name_data, '%'))
+        {
+          /* Allow `%%' to mean `%'.  */
+          if (NILP (stream))
+            {
+              /* Writing to this cannot GC. */
+              stream = make_resizing_buffer_output_stream ();
+            }
+
+          Lstream_write_with_extents (XLSTREAM (stream), name, 0,
+                                      name_data - lastp);
+
+          name_data += ichar_len ('%');
+          lastp = name_data;
+        }
+      else if (itext_ichar_eql (name_data, '_'))
+        {
+          if (NILP (stream))
+            {
+              stream = make_resizing_buffer_output_stream ();
+            }
+
+          Lstream_write_with_extents (XLSTREAM (stream), name, 0,
+                                      name_data - lastp -
+                                      ichar_len ('%'));
+
+          name_data += ichar_len ('_');
+          lastp = name_data;
+        }
       else
-	string_result_ptr += set_itext_ichar (string_result_ptr, elt);
-      INC_IBYTEPTR (name_data);
+        {
+          INC_IBYTEPTR (name_data);
+          INC_IBYTEPTR (name_data);
+          /* No need to modify LASTP. */
+	}
     }
 
-  if (string_result_ptr - string_result == XSTRING_LENGTH (name)
-      && !memcmp (string_result, XSTRING_DATA (name), XSTRING_LENGTH (name)))
-    return name;
+  if (NILP (stream))
+    {
+      /* No %_ or %% encountered. */
+      return name;
+    }
 
-  return make_string (string_result, string_result_ptr - string_result);
+  if (lastp < pend)
+    {
+      Lstream_write_with_extents (XLSTREAM (stream), name,
+                                  lastp - XSTRING_DATA (name), pend - lastp);
+    }
+
+  name = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+  return name;
 }
 
 void

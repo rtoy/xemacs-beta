@@ -1,3 +1,8 @@
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test extent propagation by #'split-string-by-char, #'upcase.
+
 2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/hash-table-tests.el:
