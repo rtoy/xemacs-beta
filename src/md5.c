@@ -23,14 +23,12 @@
 
 /* XEmacs frontend written by Ben Wing, Jareth Hein and Hrvoje Niksic.  */
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <config.h>
+#include "lisp.h"
 
-#include <sys/types.h>
-#include <string.h>
-#include <stdio.h>
-#include <limits.h>
+#include "buffer.h"
+#include "lstream.h"
+#include "file-coding.h"
 
 /* The following contortions are an attempt to use the C preprocessor
    to determine an unsigned integral type that is 32 bits wide.  An
@@ -74,11 +72,6 @@ typedef u_int32_t md5_uint32;
 #  endif
 # endif
 #endif
-
-#include "lisp.h"
-#include "buffer.h"
-#include "lstream.h"
-# include "file-coding.h"
 
 /* Structure to save state of computation between the single steps.  */
 struct md5_ctx

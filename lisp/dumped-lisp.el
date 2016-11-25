@@ -21,6 +21,7 @@
 This includes every package that is loaded directly by a package listed
 in dumped-lisp.el and is not itself listed.")
 
+(provide 'use-unidata-case-tables)
 
 ;; WARNING WARNING WARNING: None of the files below, until where it says
 ;; "All files after this can have extended characters in them", can have
@@ -170,20 +171,27 @@ in dumped-lisp.el and is not itself listed.")
        "code-process"
        ;; Provide basic commands to set coding systems to user
        "code-cmds"
+       ;; Initialize Unicode and load the translation tables for
+       ;; the built-in charsets.
        "unicode"
 	;;;;;;;;;;;;;;;;;; MULE support
        (when (featurep 'mule)
-	 '("mule/mule-charset"
+	 '("mule/mule-charset" ;; needs to load after unicode in old-Mule
 	   "mule/mule-cmds" ; to sync with Emacs 20.1
 	   "mule/mule-coding"
 	   "mule/mule-composite-stub"
 	   "mule/mule-composite"
+	   "mule/windows" ; for creating Windows charsets/coding systems
 	   ))
        ;; may initialize coding systems
        (when (and (featurep 'mule) (memq system-type '(windows-nt cygwin32)))
 	 "mule/mule-win32-init")
        "code-init" ; set up defaults
-       ;; All files after this can have extended characters in them.
+
+;;; ***************************************************************************
+;;;           All files after this can have extended characters in them.
+;;; ***************************************************************************
+
        (when (featurep 'mule)
 	 '("mule/mule-category"
 	   "mule/kinsoku"
@@ -208,7 +216,8 @@ in dumped-lisp.el and is not itself listed.")
 ;; compile with -no-packages.
 
        (when (featurep 'mule)
-	 '("mule/arabic"
+	 '("mule/general-early"
+	   "mule/arabic"
 	   "mule/chinese"
 	   "mule/cyrillic"
 	   "mule/english"
@@ -234,9 +243,12 @@ in dumped-lisp.el and is not itself listed.")
        (when (and (featurep 'mule) (valid-console-type-p 'mswindows))
 	 "mule/mule-msw-init-late")
 
-       (when (featurep 'mule)
+       ;; in old-Mule, must be loaded after all charsets created
+       (when (and (featurep 'mule) (featurep 'use-unidata-case-tables))
+	 "mule/uni-case-conv")
+       (when (featurep 'mule) 
 	 '("mule/digit"
-           "mule/general-late"))
+	   "mule/general-late"))
 
 ;;; mule-load.el ends here
 

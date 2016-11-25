@@ -129,8 +129,9 @@ struct specifier_methods
      If this function is not present, then Fcopy_tree is used. */
   Lisp_Object (*copy_instantiator_method) (Lisp_Object instantiator);
 
-  /* Validate-matchspec method: Given a matchspec, verify that it's
-     valid for this specifier type.  If not, signal an error.
+  /* Validate-matchspec method: Given a matchspec (see
+     Fspecifier_matching_instance), verify that it's valid for this
+     specifier type.  If not, signal an error.
 
      If this function is not present, *no* matchspecs are considered
      valid.  Note that this differs from validate_method(). */
@@ -466,17 +467,28 @@ DECLARE_LISP_OBJECT (specifier_caching, struct specifier_caching);
   : (DEVICEP (obj) ? obj					\
   : (IMAGE_INSTANCEP (obj) ? image_instance_device (obj)	\
   : Qnil))))
+#define DOMAIN_XDEVICE(obj)			\
+  (XDEVICE (DOMAIN_DEVICE (obj)))
 
 #define DOMAIN_FRAME(obj)				\
    (WINDOWP (obj) ? WINDOW_FRAME (XWINDOW (obj))	\
   : (FRAMEP  (obj) ? obj				\
   : (IMAGE_INSTANCEP (obj) ? image_instance_frame (obj)	\
   : Qnil)))
+#define DOMAIN_XFRAME(obj)			\
+  (XFRAME (DOMAIN_FRAME (obj)))
 
 #define DOMAIN_WINDOW(obj)					\
    (WINDOWP (obj) ? obj						\
   : (IMAGE_INSTANCEP (obj) ? image_instance_window (obj)	\
   : Qnil))
+#define DOMAIN_XWINDOW(obj)			\
+  (XWINDOW (DOMAIN_WINDOW (obj)))
+
+Lisp_Object MAYBE_DOMAIN_BUFFER (Lisp_Object obj);
+Lisp_Object DOMAIN_BUFFER (Lisp_Object obj);
+
+#define DOMAIN_XBUFFER(obj) XBUFFER (DOMAIN_BUFFER (obj))
 
 #define DOMAIN_LIVE_P(obj)					\
    (WINDOWP (obj) ? WINDOW_LIVE_P (XWINDOW (obj))		\
@@ -484,13 +496,6 @@ DECLARE_LISP_OBJECT (specifier_caching, struct specifier_caching);
   : (DEVICEP (obj) ? DEVICE_LIVE_P (XDEVICE (obj))		\
   : (IMAGE_INSTANCEP (obj) ? image_instance_live_p (obj)	\
   : 0))))
-
-#define DOMAIN_XDEVICE(obj)			\
-  (XDEVICE (DOMAIN_DEVICE (obj)))
-#define DOMAIN_XFRAME(obj)			\
-  (XFRAME (DOMAIN_FRAME (obj)))
-#define DOMAIN_XWINDOW(obj)			\
-  (XWINDOW (DOMAIN_WINDOW (obj)))
 
 EXFUN (Fcopy_specifier, 6);
 EXFUN (Fmake_specifier, 1);

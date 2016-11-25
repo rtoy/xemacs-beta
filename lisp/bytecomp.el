@@ -1,7 +1,7 @@
 ;;; bytecomp.el --- compilation of Lisp code into byte code.
 
 ;;; Copyright (C) 1985-1987, 1991-1994 Free Software Foundation, Inc.
-;;; Copyright (C) 1996 Ben Wing.
+;;; Copyright (C) 1996, 2005 Ben Wing.
 
 ;; Authors: Jamie Zawinski <jwz@jwz.org>
 ;;	Hallvard Furuseth <hbf@ulrik.uio.no>
@@ -1896,7 +1896,15 @@ With prefix arg (noninteractively: 2nd arg), load the file after compiling."
       (setq input-buffer (get-buffer-create " *Compiler Input*"))
       (set-buffer input-buffer)
       (erase-buffer)
-      (insert-file-contents filename)
+      (let ((codesys
+	     (and (featurep 'mule)
+		  (find-coding-system-magic-cookie-in-file filename))))
+	(when codesys
+	  (setq codesys (find-coding-system (intern codesys))))
+	(if (and codesys (eq 'iso2022 (coding-system-type codesys)))
+	    (let ((coding-system-for-read 'iso-2022-8bit-preserve))
+	      (insert-file-contents filename))
+	  (insert-file-contents filename)))
       ;; Run hooks including the uncompression hook.
       ;; If they change the file name, then change it for the output also.
       (let ((buffer-file-name filename)

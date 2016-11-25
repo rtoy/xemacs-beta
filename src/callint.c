@@ -983,7 +983,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.
        (raw))
 {
   if (NILP (raw))
-    return make_fixnum (1);
+    return Qone;
   if (EQ (raw, Qminus))
     return make_fixnum (-1);
   if (FIXNUMP (raw))
@@ -991,7 +991,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.
   if (CONSP (raw) && FIXNUMP (XCAR (raw)))
     return XCAR (raw);
 
-  return make_fixnum (1);
+  return Qone;
 }
 
 void

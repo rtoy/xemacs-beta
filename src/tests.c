@@ -58,11 +58,27 @@ REASON is nil or a string describing the failure (not required).
   Lisp_Object string_foo = make_string (int_foo, sizeof (int_foo) - 1);
 
   Extbyte ext_latin[]  = "f\372b\343\340";
-  Ibyte int_latin1[] = "f\200\372b\200\343\200\340";
-  Ibyte int_latin2[] = "f\201\372b\201\343\201\340";
+#ifdef UNICODE_INTERNAL
+  /* Internal encoding differs between Unicode-internal (UTF-8) and
+     old-Mule */
+  Ibyte int_latin1[] = "f\303\272b\303\243\303\240";
+  Ibyte int_latin2[] = "f\303\272b\304\203\305\225";
+#else /* not UNICODE_INTERNAL */
+  Ibyte int_latin1[] = "f\201\372b\201\343\201\340";
+  Ibyte int_latin2[] = "f\202\372b\202\343\202\340";
+#endif /* (not) UNICODE_INTERNAL */
 #ifdef MULE
+#ifdef UNICODE_INTERNAL
+  /* We also have differences when rendering Latin-1 text in Latin-2 or
+     vice-versa.  Unicode-internal unifies Latin-1 \372 (#xFA) and Latin-2
+     \372 (#xFA) because they both correspond to the same Unicode value
+     (\372 (#xFA), u with an acute accent) */
+  Extbyte ext_latin12[]= "f\372b\033-A\343\340\033-B";
+  Extbyte ext_untranslatable[]  = "f\372b??";
+#else
   Extbyte ext_latin12[]= "f\033-A\372b\343\340\033-B";
-  Extbyte ext_tilde[]  = "f~b~~";
+  Extbyte ext_untranslatable[]  = "f?b??";
+#endif
   Lisp_Object string_latin2 = make_string (int_latin2, sizeof (int_latin2) - 1);
 #endif
   Lisp_Object opaque_latin  = make_opaque (ext_latin,  sizeof (ext_latin) - 1);
@@ -83,6 +99,12 @@ REASON is nil or a string describing the failure (not required).
   NGCPRO4 (string_latin2, opaque_latin, opaque0_latin, string_latin1);
 #else
   NGCPRO3 (opaque_latin, opaque0_latin, string_latin1);
+#endif
+
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+  /* Check to make sure no one changed the internal charset ID's on us */
+  assert (XFIXNUM (Fcharset_id (Vcharset_latin_iso8859_1)) == int_latin1[1]);
+  assert (XFIXNUM (Fcharset_id (Vcharset_latin_iso8859_2)) == int_latin2[1]);
 #endif
 
   /* Check for expected strings before and after conversion.
@@ -163,11 +185,17 @@ REASON is nil or a string describing the failure (not required).
         Fcons (list3 (build_cistring(str1), Qnil, build_ascstring("wrong length")), \
 	       conversion_result)
 
-#define DFC_CHECK_CONTENT(str1,str2,len1,str3)	\
-    else if (memcmp (str1, str2, len1))		\
-      conversion_result =			\
-	Fcons (list3 (build_cistring(str3), Qnil,			\
-		      build_ascstring("octet comparison failed")),	\
+#define DFC_CHECK_CONTENT(str1,str2,len1,str3)				\
+    else if (memcmp (str1, str2, len1))					\
+      conversion_result =						\
+	Fcons (list3 (build_cistring (str3), Qnil,			\
+		      concat2						\
+		      (concat2						\
+		       (build_ascstring ("octet comparison failed: expected "), \
+			build_extstring ((Extbyte *) str2, Qbinary)),	\
+		       concat2						\
+		       (build_ascstring (", got "),			\
+			build_extstring ((Extbyte *) str1, Qbinary)))), \
 	       conversion_result)
 
 #define DFC_RESULT_PASS(str1)		\
@@ -283,7 +311,7 @@ REASON is nil or a string describing the failure (not required).
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2) - 1),
 		      ALLOCA, (ptr, len),
 		      Qbinary);
-  DFC_CHECK_DATA_COND_MULE (ptr, len, ext_tilde, int_latin2,
+  DFC_CHECK_DATA_COND_MULE (ptr, len, ext_untranslatable, int_latin2,
 			    "Latin-2 DATA, ALLOCA, binary");
 
   ptr = NULL, len = rand();
@@ -327,7 +355,7 @@ REASON is nil or a string describing the failure (not required).
   TO_EXTERNAL_FORMAT (DATA, (int_latin2, sizeof (int_latin2)),
 		      MALLOC, (ptr, len),
 		      Qbinary);
-  DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, ext_tilde, int_latin2,
+  DFC_CHECK_DATA_COND_MULE_NUL (ptr, len, ext_untranslatable, int_latin2,
 				"Latin-2 DATA, MALLOC, binary/NUL");
   xfree (ptr);
 
@@ -350,7 +378,8 @@ REASON is nil or a string describing the failure (not required).
 		      LISP_OPAQUE, opaque,
 		      Qbinary);
   DFC_CHECK_DATA_COND_MULE_NUL (XOPAQUE_DATA (opaque),
-				XOPAQUE_SIZE (opaque), ext_tilde, int_latin2,
+				XOPAQUE_SIZE (opaque), ext_untranslatable,
+				int_latin2,
 				"Latin-2 DATA, Lisp opaque, binary");
 
   TO_EXTERNAL_FORMAT (DATA, (int_latin1, sizeof (int_latin1) - 1),
@@ -573,7 +602,11 @@ REASON is nil or a string describing the failure (not required).
   /* Previous string in UTF-8. */
   Extbyte ext_utf_8_unix[]
     = "\n\nfoo\nbar\n\nf\303\272b\303\243\303\240\nfoo\nbar\n";
-  Charcount ext_utf_8_unix_char_len = 25;
+  Extbyte ext_utf_16_be_unix[] =
+    "\x0\xa\x0\xa\x0\x66\x0\x6f\x0\x6f\x0\xa\x0\x62\x0\x61\x0\x72\x0\xa\x0"
+    "\xa\x0\x66\x0\xfa\x0\x62\x0\xe3\x0\xe0\x0\xa\x0\x66\x0\x6f\x0\x6f\x0"
+    "\xa\x0\x62\x0\x61\x0\x72\x0\xa";
+  Charcount ext_utf_8_unix_char_len = 25, ext_utf_16_be_unix_char_len = 25;
   Ibyte shortbuf[13], longbuf[512];
   Lisp_Object stream =
     make_fixed_buffer_input_stream (ext_unix, sizeof (ext_unix) - 1);
@@ -734,6 +767,91 @@ REASON is nil or a string describing the failure (not required).
   Lstream_close (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
 
+  stream
+    = make_fixed_buffer_input_stream (ext_utf_16_be_unix,
+                                      sizeof (ext_utf_16_be_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("utf-16-be-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+
+  bytecount = Lstream_read (XLSTREAM (stream), longbuf, sizeof (longbuf));
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == bytecount_to_charcount (longbuf, bytecount),
+                         "utf-16-be character tell, utf-16-be-unix",
+                         "utf-16-be character tell failed");
+
+  {
+    DECLARE_EISTRING (utf_16_scratch);
+    
+    /* Can't use build_extstring, the null octets confuse it. */
+    eicpy_ext_len (utf_16_scratch, ext_utf_16_be_unix,
+                   sizeof (ext_utf_16_be_unix) - 1,
+                   Ffind_coding_system (intern
+                                        ("utf-16-be-unix")));
+    string = eimake_string (utf_16_scratch);
+  }
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == string_char_length (string),
+                         "repeat utf-16-be character tell, utf-16-be-unix",
+                         "repeat utf-16-be character tell failed with string");
+
+  count = Lstream_character_tell (XLSTREAM (stream));
+
+  CHARACTER_TELL_ASSERT (count == ext_utf_16_be_unix_char_len,
+                         "char count is the expected value, utf-16-be-unix",
+                         "char count not the expected value, utf-16-be-unix");
+
+  Lstream_unread (XLSTREAM (stream), "r\n", 2);
+
+  /* This should give the same result as before the unread. */
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count, "checking post-unread utf-16-be tell",
+                         "post-unread utf-16-be tell failed");
+  bytecount += Lstream_read (XLSTREAM (stream), longbuf + bytecount,
+                             sizeof (longbuf) - bytecount);
+
+  CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
+                         == count + 2,
+                         "checking post-unread+read utf-16-be tell",
+                         "post-unread+read utf-16-be tell failed");
+
+  /* This seems to be buggy for my purposes. */
+  /* Lstream_rewind (XLSTREAM (stream)); */
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
+  stream = make_fixed_buffer_input_stream (ext_utf_16_be_unix,
+                                           sizeof (ext_utf_16_be_unix) - 1);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_set_character_mode (XLSTREAM (stream));
+
+  stream = make_coding_input_stream
+    (XLSTREAM (stream), Ffind_coding_system (intern ("utf-16-be-unix")),
+     CODING_DECODE, 0);
+  Lstream_set_buffering (XLSTREAM (stream), LSTREAM_BLOCKN_BUFFERED, 65536);
+  Lstream_set_character_mode (XLSTREAM (stream));
+
+  bytecount = Lstream_read (XLSTREAM (stream), shortbuf, sizeof (shortbuf));
+
+  CHARACTER_TELL_ASSERT
+    (bytecount == (sizeof (shortbuf) - 1),
+     "utf-16-be Lstream_read, character mode, checking partial char not read",
+     "partial char appars to have been read when it shouldn't");
+
+  CHARACTER_TELL_ASSERT
+    (Lstream_character_tell (XLSTREAM (stream))
+     /* This is shorter, because it's in the middle of a character. */
+     == sizeof (shortbuf) - 1,
+     "utf-16-be tell with short read, character mode, utf-16-be-unix",
+     "utf-16-be read character tell, character mode failed");
+
+  Lstream_close (XLSTREAM (stream));
+  Lstream_delete (XLSTREAM (stream));
+
   UNGCPRO;
   return result;
 }
@@ -795,7 +913,7 @@ REASON is nil or a string describing the failure (not required).
   data.hash_table = make_lisp_hash_table (50, HASH_TABLE_NON_WEAK,
 					  Qequal);
 
-  Fputhash (make_fixnum (1), make_fixnum (2), data.hash_table);
+  Fputhash (Qone, make_fixnum (2), data.hash_table);
   Fputhash (make_fixnum (3), make_fixnum (4), data.hash_table);
 
   data.sum = 0;
@@ -981,4 +1099,3 @@ List of all test functions defined in tests.c.
 For use by the automated test suite.  See tests/automated/c-tests.
 */ );
 }
-

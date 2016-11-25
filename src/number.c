@@ -271,7 +271,7 @@ If RATIONAL is an integer, 1 is returned.
 				   (XRATIO_DENOMINATOR (rational)));
     }
 #endif
-  return make_fixnum (1);
+  return Qone;
 }
 
 

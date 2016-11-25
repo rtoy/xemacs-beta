@@ -32,6 +32,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "syssignal.h"
 #include "sysfloat.h"
 #include "syntax.h"
+#include "casetab.h"
 
 Lisp_Object Qnil, Qt, Qlambda, Qunbound;
 Lisp_Object Qerror_conditions, Qerror_message;
@@ -1402,17 +1403,13 @@ Floating point numbers always use base 10.
 }
 
 static int
-find_highest_value (struct chartab_range * range, Lisp_Object UNUSED (table),
-                    Lisp_Object val, void *extra_arg)
+find_highest_value (Lisp_Object UNUSED (table), Ichar UNUSED (from),
+                    Ichar UNUSED (to), Lisp_Object val, void *extra_arg)
 {
   Lisp_Object *highest_pointer = (Lisp_Object *) extra_arg;
   Lisp_Object max_seen = *highest_pointer;
 
   CHECK_FIXNUM (val);
-  if (range->type != CHARTAB_RANGE_CHAR)
-    {
-      invalid_argument ("Not an appropriate char table range", Qunbound);
-    }
 
   if (XFIXNUM (max_seen) < XFIXNUM (val))
     {
@@ -1423,8 +1420,8 @@ find_highest_value (struct chartab_range * range, Lisp_Object UNUSED (table),
 }
 
 static int
-fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
-                  Lisp_Object val, void *extra_arg)
+fill_ichar_array (Lisp_Object UNUSED (table), Ichar start,
+                  Ichar UNUSED (end), Lisp_Object val, void *extra_arg)
 {
   Ichar *cctable = (Ichar *) extra_arg;
   EMACS_INT valint = XFIXNUM (val);
@@ -1432,7 +1429,7 @@ fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
   /* Save the value if it hasn't been seen yet. */
   if (-1 == cctable[valint])
     {
-      cctable[valint] = range->ch;
+      cctable[valint] = start;
     }
   else
     {
@@ -1441,10 +1438,10 @@ fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
 	 one because a) this can be called early before current_buffer is
 	 available and b) it's better to have these independent of particular
 	 buffer case tables. */
-      if (current_buffer != NULL && UPCASE (0, range->ch) == range->ch
+      if (current_buffer != NULL && UPCASE (0, start) == start
           && UPCASE (0, cctable[valint]) != cctable[valint])
 	{
-	  cctable[valint] = range->ch;
+	  cctable[valint] = start;
 	}
       /* Maybe our own case infrastructure is not available yet. Use the C
          library's. */
@@ -1452,17 +1449,17 @@ fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
         {
 	  /* The C library can't necessarily handle values outside of
 	     the range EOF to CHAR_MAX, inclusive. */
-	  assert (range->ch == EOF || range->ch <= CHAR_MAX);
-	  if (isupper (range->ch) && !isupper (cctable[valint]))
+	  assert (start == EOF || start <= CHAR_MAX);
+	  if (isupper (start) && !isupper (cctable[valint]))
 	    {
-	      cctable[valint] = range->ch;
+	      cctable[valint] = start;
 	    }
         }
       /* Otherwise, save it if this character has a numerically lower value
          (preferring ASCII over fullwidth Chinese and so on). */
-      else if (range->ch < cctable[valint])
+      else if (start < cctable[valint])
 	{
-	  cctable[valint] = range->ch;
+	  cctable[valint] = start;
 	}
     }
 
@@ -1694,10 +1691,12 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
       radix_table = Vdigit_fixnum_map;
     }
 
+#ifdef MIRROR_TABLE
   /* This function ignores the current buffer's syntax table.
      Respecting it will probably introduce more bugs than it fixes. */
   update_mirror_syntax_if_dirty (XCHAR_TABLE (Vstandard_syntax_table)->
                                  mirror_table);
+#endif
 
   /* Ignore leading whitespace, if that leading whitespace has no
      numeric value. */
@@ -1706,8 +1705,8 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
       c = itext_ichar (p);
       if (!(((got = get_char_table (c, radix_table), FIXNUMP (got))
              && ((cint = XFIXNUM (got), cint < 0) || cint >= base))
-            && (SYNTAX (XCHAR_TABLE (Vstandard_syntax_table)->mirror_table,
-                        c) == Swhitespace)))
+            && (SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (0), c)
+		== Swhitespace)))
         {
           break;
         }
@@ -1884,7 +1883,7 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
       while (p < lim)
 	{
 	  c = itext_ichar (p);
-	  if (!(SYNTAX (XCHAR_TABLE (Vstandard_syntax_table)->mirror_table, c)
+	  if (!(SYNTAX (BUFFER_MIRROR_SYNTAX_TABLE (0), c)
                 == Swhitespace))
 	    {
 	      break;
@@ -2319,7 +2318,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_fixnum (1);
+      accum = Qone;
     }
   else
     {
@@ -2389,7 +2388,7 @@ arguments: (FIRST &rest ARGS)
   if (nargs == 1)
     {
       i = 0;
-      accum = make_fixnum (1);
+      accum = Qone;
     }
   else
     {
@@ -4110,6 +4109,8 @@ init_errors_once_early (void)
   DEFERROR (Qio_error, "IO Error", Qinvalid_operation);
   DEFERROR_STANDARD (Qfile_error, Qio_error);
   DEFERROR (Qend_of_file, "End of file or stream", Qfile_error);
+  /* #### It's questionable whether conversion-error should be a subclass
+     of io-error or directly of invalid-operation */
   DEFERROR_STANDARD (Qconversion_error, Qio_error);
   DEFERROR_STANDARD (Qtext_conversion_error, Qconversion_error);
 
@@ -4294,15 +4295,16 @@ parsing text formats defined to support only ASCII digits.
 
     for (ii = 0; ii < 10; ++ii)
       {
-        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['0' + ii] = make_fixnum(ii);
+        put_char_table (Vdigit_fixnum_ascii, '0' + ii, '0' + ii,
+                        make_fixnum (ii));
       }
 
     for (ii = 10; ii < 36; ++ii)
       {
-        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['a' + (ii - 10)]
-          = make_fixnum(ii);
-        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['A' + (ii - 10)]
-          = make_fixnum(ii);
+        put_char_table (Vdigit_fixnum_ascii, 'a' + (ii - 10),
+                        'a' + (ii - 10), make_fixnum (ii));
+        put_char_table (Vdigit_fixnum_ascii, 'A' + (ii - 10),
+                        'A' + (ii - 10), make_fixnum (ii));
       }
   }
   LISP_READONLY (Vdigit_fixnum_ascii) = 1;

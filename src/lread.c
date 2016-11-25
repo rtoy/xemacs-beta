@@ -1,7 +1,7 @@
 /* Lisp parsing and input streams.
    Copyright (C) 1985-1989, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1995 Tinker Systems.
-   Copyright (C) 1996, 2001, 2002, 2003, 2010 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2003, 2005, 2009, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -32,7 +32,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lstream.h"
 #include "opaque.h"
 #include "profile.h"
-#include "charset.h"	/* For Funicode_to_char. */
+#include "chartab.h"
 
 #include "sysfile.h"
 #include "sysfloat.h"
@@ -1624,9 +1624,10 @@ read0 (Lisp_Object readcharfun)
 static Ichar
 read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 {
-  REGISTER Ichar i = 0, c;
+  REGISTER Ichar c;
+  REGISTER int i = 0; /* built-up codepoint */
   REGISTER int count = 0;
-  Lisp_Object lisp_char;
+
   while (++count <= unicode_hex_count)
     {
       c = readchar (readcharfun);
@@ -1642,26 +1643,21 @@ read_unicode_escape (Lisp_Object readcharfun, int unicode_hex_count)
 	}
     }
 
-  if (i >= 0x110000 || i < 0)
-    {
-      syntax_error ("Not a Unicode code point", make_fixnum(i));
-    }
+  if (!valid_unicode_codepoint_p (i, UNICODE_OFFICIAL_ONLY))
+    syntax_error ("Invalid Unicode codepoint",
+		  emacs_sprintf_string ("#x%X", i));
 
-  lisp_char = Funicode_to_char(make_fixnum(i), Qnil);
-
-  if (EQ(Qnil, lisp_char))
-    {
-      /* Will happen on non-Mule. Silent corruption is what happens
-         elsewhere, and we used to do that to be consistent, but GNU error,
-         so people writing portable code need to be able to handle that, and
-         given a choice I prefer that behaviour.
-
-         An undesirable aspect to this error is that the code point is shown
-         as a decimal integer, which is mostly unreadable. */
-      syntax_error ("Unsupported Unicode code point", make_fixnum(i));
-    }
-
-  return XCHAR(lisp_char);
+  /* @@#### current_buffer dependency */
+  c = buffer_unicode_to_ichar (i, current_buffer, CONVERR_FAIL);
+  /* Will happen on non-Mule. (On Mule, now, we have just-in-time creation
+     of characters to handle this.)  Silent corruption is what happens
+     elsewhere, and we used to do that to be consistent, but GNU error,
+     so people writing portable code need to be able to handle that, and
+     given a choice I prefer that behaviour. */
+  if (c < 0)
+    syntax_error ("Unicode character can't be converted to a charset",
+		  emacs_sprintf_string ("#x%X", i));
+  return c;
 }
 
 
@@ -1678,8 +1674,8 @@ read_escape (Lisp_Object readcharfun)
     {
     case 'a': return '\007';
     case 'b': return '\b';
-    case 'd': return 0177;
-    case 'e': return 033;
+    case 'd': return 0x7F;
+    case 'e': return 0x1B;
     case 'f': return '\f';
     case 'n': return '\n';
     case 'r': return '\r';
@@ -1698,7 +1694,7 @@ read_escape (Lisp_Object readcharfun)
 	signal_error (Qend_of_file, 0, READCHARFUN_MAYBE (readcharfun));
       if (c == '\\')
 	c = read_escape (readcharfun);
-      return c | 0200;
+      return c | 0x80;
 
       /* Originally, FSF_KEYS provided a degree of FSF Emacs
 	 compatibility by defining character "modifiers" alt, super,
@@ -1731,9 +1727,9 @@ read_escape (Lisp_Object readcharfun)
       /* FSFmacs junk for non-ASCII controls.
 	 Not used here. */
       if (c == '?')
-	return 0177;
+	return 0x7F;
       else
-        return c & (0200 | 037);
+        return c & (0x80 | 0x1F);
 
     case '0':
     case '1':
@@ -1818,10 +1814,10 @@ read_escape (Lisp_Object readcharfun)
       }
     case 'U':
       /* Post-Unicode-2.0: Up to eight hex chars */
-      return read_unicode_escape(readcharfun, 8);
+      return read_unicode_escape (readcharfun, 8);
     case 'u':
       /* Unicode-2.0 and before; four hex chars. */
-      return read_unicode_escape(readcharfun, 4);
+      return read_unicode_escape (readcharfun, 4);
 
     default:
 	return c;
@@ -1840,7 +1836,7 @@ read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
 
   *saw_a_backslash = 0;
 
-  while (c > 040	/* #### - comma should be here as should backquote */
+  while (c > ' '	/* #### - comma should be here as should backquote */
          && !(c == '\"' || c == '\'' || c == ';'
               || c == '(' || c == ')'
               || c == '[' || c == ']' || c == '#'
@@ -2301,7 +2297,7 @@ reader_nextchar (Lisp_Object readcharfun)
     default:
       {
 	/* Ignore whitespace and control characters */
-	if (c <= 040)
+	if (c <= ' ')
 	  goto retry;
 	return c;
       }
@@ -2877,7 +2873,7 @@ retry:
     default:
       {
 	/* Ignore whitespace and control characters */
-	if (c <= 040)
+	if (c <= ' ')
 	  goto retry;
 	return read_atom (readcharfun, c, 0);
       }
