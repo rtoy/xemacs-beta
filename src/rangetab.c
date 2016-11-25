@@ -105,7 +105,7 @@ print_range_table (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     {
       write_fmt_string_lisp (printcharfun, "#s(range-table type %s data (",
-			     1, range_table_type_to_symbol (rt->type));
+			     range_table_type_to_symbol (rt->type));
       maxlen = INT_MAX;
     }
   else

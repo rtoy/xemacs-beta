@@ -1648,7 +1648,7 @@ print_precedence_array (Lisp_Object obj, Lisp_Object printcharfun,
   for (i = 0; i < Dynarr_length (data->precdyn); i++)
     {
       Lisp_Object charset = Dynarr_at (data->precdyn, i);
-      write_fmt_string_lisp (printcharfun, " #%d: %s", 2, make_fixnum (i + 1),
+      write_fmt_string_lisp (printcharfun, " #%d: %s", make_fixnum (i + 1),
 			     XCHARSET_NAME (charset));
     }
   write_fmt_string (printcharfun, " 0x%lx>", (unsigned long) XPNTR (obj));

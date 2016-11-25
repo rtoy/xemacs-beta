@@ -540,7 +540,7 @@ multibyte_print (Lisp_Object codesys, Lisp_Object printcharfun,
   int i;
 
   for (i = 0; i < Dynarr_length (charsets); i++)
-    write_fmt_string_lisp (printcharfun, i == 0 ? "(%s" : " %s", 1,
+    write_fmt_string_lisp (printcharfun, i == 0 ? "(%s" : " %s",
                            XCHARSET_NAME (Dynarr_at (charsets, i)));
   write_ascstring (printcharfun, ")");
 }
@@ -3606,14 +3606,16 @@ iso2022_print (Lisp_Object cs, Lisp_Object printcharfun,
       (XCODING_SYSTEM_ISO2022_INPUT_CONV (cs), 1);
     if (!NILP (val))
       {
-	write_fmt_string_lisp (printcharfun, ", input-charset-conversion=%s", val);
+	write_fmt_string_lisp (printcharfun, ", input-charset-conversion=%s",
+                               val);
       }
     val =
       unparse_charset_conversion_specs
       (XCODING_SYSTEM_ISO2022_OUTPUT_CONV (cs), 1);
     if (!NILP (val))
       {
-	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s", val);
+	write_fmt_string_lisp (printcharfun, ", output-charset-conversion=%s",
+                               val);
       }
     write_ascstring (printcharfun, ")");
   }

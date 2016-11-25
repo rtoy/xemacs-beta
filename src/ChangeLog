@@ -1,3 +1,15 @@
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (print_table_entry):
+	* chartab.c (print_category_table):
+	* mule-charset.c (print_charset):
+	* mule-coding.c (multibyte_print):
+	* mule-coding.c (iso2022_print):
+	* rangetab.c (print_range_table):
+	* unicode.c (print_precedence_array):
+	More merging corrections, drop the no-longer-necessary NARGS
+	argument to write_fmt_string_lisp ().
+
 2016-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c:
