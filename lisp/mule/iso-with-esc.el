@@ -4,6 +4,7 @@
 ;;; 2, Latin 10, (etc) support in XEmacs for so long.
 ;;                      
 ;; Copyright (C) 2006 Free Software Foundation
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Aidan Kehoe
 
@@ -26,9 +27,10 @@
 
 ;;; Code:
 
-;; It is not particularly reasonable that iso-latin-1-with-esc has a
-;; value of t for the safe-charsets property. We discourage its use,
-;; though, and this behaviour is compatible with GNU.
+;; It is not particularly reasonable that iso-latin-1-with-esc processes so
+;; many charsets (rather than just ascii, control-1 and latin-iso8859-1).
+;; We discourage its use, though, and this behaviour is compatible with
+;; GNU.
 
 ;;;###autoload
 (define-coding-system-alias 'iso-latin-1-with-esc 'iso-2022-8)
@@ -40,7 +42,6 @@
    charset-g1 latin-iso8859-2
    charset-g2 t
    charset-g3 t
-   safe-charsets (ascii latin-iso8859-2)
    mnemonic "MIME/Ltn-2"))
 
 ;;;###autoload
@@ -50,7 +51,6 @@
    charset-g1 latin-iso8859-3
    charset-g2 t
    charset-g3 t
-   safe-charsets (ascii latin-iso8859-3)
    mnemonic "MIME/Ltn-3"))
 
 ;;;###autoload
@@ -60,7 +60,6 @@
    charset-g1 latin-iso8859-4
    charset-g2 t
    charset-g3 t
-   safe-charsets (ascii latin-iso8859-4)
    mnemonic "MIME/Ltn-4"))
 
 ;;;###autoload
@@ -68,7 +67,6 @@
  'iso-latin-9-with-esc 'iso2022
   "ISO 4873 conforming 8-bit code (ASCII + Latin 9; aka Latin-1 with Euro)"
   '(mnemonic "MIME/Ltn-9"		; bletch
-    safe-charsets (ascii latin-iso8859-15)
     eol-type nil
     charset-g0 ascii
     charset-g1 latin-iso8859-15
@@ -82,7 +80,6 @@
    charset-g1 latin-iso8859-9
    charset-g2 t
    charset-g3 t
-   safe-charsets (ascii latin-iso8859-9)
    mnemonic "MIME/Ltn-5"))
 
 ;;;###autoload
@@ -93,7 +90,6 @@
    charset-g1 cyrillic-iso8859-5
    charset-g2 t
    charset-g3 t
-   safe-charsets (ascii cyrillic-iso8859-5)
    mnemonic "ISO8/Cyr"))
 
 ;;;###autoload
@@ -103,9 +99,8 @@
  '(charset-g0 ascii
    charset-g1 hebrew-iso8859-8
    charset-g2 t
-  charset-g3 t
+   charset-g3 t
    no-iso6429 t
-   safe-charsets (ascii hebrew-iso8859-8)
    mnemonic "MIME/Hbrw"))
 
 ;;;###autoload
@@ -115,7 +110,6 @@
    charset-g1 greek-iso8859-7
    charset-g2 t
    charset-g3 t
-   safe-charsets (ascii greek-iso8859-7)
    mnemonic "Grk"))
 
 ;;;###autoload
@@ -128,6 +122,5 @@
    charset-g2 t
    charset-g3 t
    no-iso6429 t
-   safe-charsets (ascii arabic-iso8859-6)
    mnemonic "MIME/Arbc"))
 

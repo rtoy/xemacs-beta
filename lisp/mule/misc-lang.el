@@ -1,9 +1,9 @@
-;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: iso-2022-7bit; -*-
+;;; misc-lang.el --- support for miscellaneous languages (characters) -*- coding: utf-8; -*-
 
 ;; Copyright (C) 1995,1999 Electrotechnical Laboratory, JAPAN.
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1997 MORIOKA Tomohiko
-;; Copyright (C) 2001 Ben Wing.
+;; Copyright (C) 2001, 2010 Ben Wing.
 
 ;; Keywords: multilingual, character set, coding system
 
@@ -28,22 +28,25 @@
 ;;; IPA (International Phonetic Alphabet)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; IPA characters for phonetic symbols.
-(make-charset 'ipa "IPA (International Phonetic Association)"
-	      '(dimension
-		1
-		registries ["MuleIPA"]
-		chars 96
-		columns 1
-		direction l2r
-		final ?0
-		graphic 1
-		short-name "IPA"
-		long-name "IPA"))
+;; Fuck this garbage.  Rather than have bogus charsets like this,
+;; just use the Unicode support.
+;;; IPA characters for phonetic symbols.
+;(make-charset
+; 'ipa "IPA (International Phonetic Association)"
+; '(dimension
+;   1
+;   registries ["MuleIPA"]
+;   chars 96
+;   final ?0
+;   graphic 1
+;   unicode-map ("unicode/mule-ucs/ipa.txt")
+;   short-name "IPA"
+;   long-name "IPA"
+;   ))
 
 ;; XEmacs; these are Latin, it's not useful to put word boundaries between
 ;; them and ASCII.
-(modify-category-entry 'ipa ?l nil t)
+(and (find-charset 'ipa) (modify-category-entry 'ipa ?l nil t))
 
 ;; XEmacs; why are these Latin? See the following:
 ;;

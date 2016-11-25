@@ -2077,7 +2077,7 @@ init_system_name (void)
 #   ifdef TRY_AGAIN
 	    if (! (hp == 0 && h_errno == TRY_AGAIN))
 	      break;
-	    Fsleep_for (make_fixnum (1));
+	    Fsleep_for (Qone);
 	  }
 #   endif
 	if (hp)

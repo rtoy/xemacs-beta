@@ -1,6 +1,6 @@
 /* Generic stream implementation -- header file.
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Copyright (C) 1996, 2001, 2002 Ben Wing.
+   Copyright (C) 1996, 2001, 2002, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -191,10 +191,6 @@ typedef struct lstream_implementation
      in an attempt to block (EWOULDBLOCK). If this method does not
      exists, the implementation returns 0 */
   int (*was_blocked_p) (Lstream *stream);
-  /* If the reader or writer method returned LSTREAM_ERROR, the errno
-     associated with the error, or zero if there was no system error or this
-     method is not implemented. */
-  int (*error) (Lstream *stream);
   /* Rewind the stream.  If this is NULL, the stream is not seekable. */
   int (*rewinder) (Lstream *stream);
   /* Indicate whether this stream is seekable -- i.e. it can be rewound.
@@ -254,11 +250,15 @@ typedef struct lstream_implementation
 #define DECLARE_LSTREAM(c_name) \
   extern Lstream_implementation lstream_##c_name[]
 
-#define LSTREAM_FL_IS_OPEN		1
-#define LSTREAM_FL_READ			2
-#define LSTREAM_FL_WRITE		4
-#define LSTREAM_FL_NO_PARTIAL_CHARS	8
-#define LSTREAM_FL_CLOSE_AT_DISKSAVE	16
+/* Flags that can be passed to Lstream_new(). */
+#define LSTR_READ		(1 << 0)
+#define LSTR_WRITE		(1 << 1)
+#define LSTR_NO_PARTIAL_CHARS	(1 << 2)
+#define LSTR_CLOSE_AT_DISKSAVE	(1 << 3)
+#define LSTR_NO_SQUIRREL	(1 << 4)
+
+/* Internal flags that can also be set on the stream. */
+#define LSTR_IS_OPEN	        (1 << 5)
 
 struct lstream
 {
@@ -290,6 +290,12 @@ struct lstream
 
   Bytecount byte_count;
   int flags;
+  /* Whether an error occurred during the most recent operation */
+  unsigned int error_occurred_p:1;
+  /* Whether an error has occurred since the user last reset the
+     error-occurred flag.  This is the value returned by
+     Lstream_error_occurred_p(). */
+  unsigned int public_error_occurred_p:1;
   max_align_t data[1];
 };
 
@@ -322,8 +328,7 @@ error_check_lstream_type (struct lstream *stream,
   (lstream_##type->m = type##_##m)
 
 
-Lstream *Lstream_new (const Lstream_implementation *imp,
-		      const char *mode);
+Lstream *Lstream_new (const Lstream_implementation *imp, int flags);
 void Lstream_reopen (Lstream *lstr);
 void Lstream_set_buffering (Lstream *lstr, Lstream_buffering buffering,
 			    int buffering_size);
@@ -334,9 +339,9 @@ int Lstream_fgetc (Lstream *lstr);
 void Lstream_fungetc (Lstream *lstr, int c);
 Bytecount Lstream_read (Lstream *lstr, void *data, Bytecount size);
 Charcount Lstream_character_tell (Lstream *);
-int Lstream_write (Lstream *lstr, const void *data, Bytecount size);
-int Lstream_write_with_extents (Lstream *lstr, Lisp_Object object,
-                                Bytexpos position, Bytecount len);
+Bytecount Lstream_write (Lstream *lstr, const void *data, Bytecount size);
+Bytecount Lstream_write_with_extents (Lstream *lstr, Lisp_Object object,
+                                      Bytexpos position, Bytecount len);
 int Lstream_errno (Lstream *lstr);
 int Lstream_was_blocked_p (Lstream *lstr);
 void Lstream_unread (Lstream *lstr, const void *data, Bytecount size);
@@ -352,6 +357,11 @@ int Lstream_tls_negotiate (Lstream *instr, Lstream *outstr,
 void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);
 void Lstream_unset_character_mode (Lstream *lstr);
+int Lstream_error_occurred_p (Lstream *lstr);
+void Lstream_clear_error_occurred_p (Lstream *lstr);
+void Lstream_set_error_occurred_p (Lstream *lstr);
+
+int Lstream_is_type (Lstream *lstr, const Lstream_implementation *imp);
 
 /* Lstream_putc: Write out one byte to the stream.  This is a macro
    and so it is very efficient.  The C argument is only evaluated once
@@ -480,20 +490,20 @@ Lstream_unget_ichar (Lstream *stream, Ichar ch)
 /* Flags we can pass to the filedesc and stdio streams. */
 
 /* If set, close the descriptor or FILE * when the stream is closed. */
-#define LSTR_CLOSING 1
+#define LSTR_CLOSING		(1 << 16)
 
 /* If set, allow quitting out of the actual I/O. */
-#define LSTR_ALLOW_QUIT 2
+#define LSTR_ALLOW_QUIT		(1 << 17)
 
 /* If set and filedesc_stream_set_pty_flushing() has been called
    on the stream, do not send more than pty_max_bytes on a single
    line without flushing the data out using the eof_char. */
-#define LSTR_PTY_FLUSHING 4
+#define LSTR_PTY_FLUSHING	(1 << 18)
 
 /* If set, an EWOULDBLOCK error is not treated as an error but
    simply causes the write function to return 0 as the number
    of bytes written out. */
-#define LSTR_BLOCKED_OK 8
+#define LSTR_BLOCKED_OK		(1 << 19)
 
 Lisp_Object make_stdio_input_stream (FILE *stream, int flags);
 Lisp_Object make_stdio_output_stream (FILE *stream, int flags);
@@ -518,8 +528,13 @@ Lisp_Object make_resizing_buffer_output_stream (void);
 const Ibyte *resizing_buffer_stream_ptr (Lstream *stream);
 Lisp_Object resizing_buffer_to_lisp_string (Lstream *stream);
 Lisp_Object make_dynarr_output_stream (unsigned_char_dynarr *dyn);
-#define LSTR_SELECTIVE 1
-#define LSTR_IGNORE_ACCESSIBLE 2
+
+
+/* Flags we can pass to lisp buffer streams. */
+
+#define LSTR_SELECTIVE		(1 << 16)
+#define LSTR_IGNORE_ACCESSIBLE	(1 << 17)
+
 Lisp_Object make_lisp_buffer_input_stream (struct buffer *buf, Charbpos start,
 					   Charbpos end, int flags);
 Lisp_Object make_lisp_buffer_output_stream (struct buffer *buf, Charbpos pos,
@@ -565,8 +580,8 @@ struct fixed_buffer_stream
                                   &lrecord_lstream);                    \
       lname##u.l.imp = lstream_fixed_buffer;                            \
       Lstream_set_buffering (&(lname##u.l), LSTREAM_UNBUFFERED, 0);     \
-      lname##u.l.flags = LSTREAM_FL_IS_OPEN;                            \
-      lname##u.l.flags |= LSTREAM_FL_WRITE;                             \
+      lname##u.l.flags = LSTR_IS_OPEN;                                  \
+      lname##u.l.flags |= LSTR_WRITE;                                   \
       FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->outbuf = buf;           \
       FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->size = size;            \
     } while (0)
