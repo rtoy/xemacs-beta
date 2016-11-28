@@ -1,5 +1,9 @@
 2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* minibuf.el (read-from-minibuffer):
+	Bind `help-form' within this function rather than using
+	help-keymap-with-help-key.
+
 	* help.el (function-really-at-point):
 	Rename this label from #'function-at-point, which should fix the
 	build (the file byte-compiled and ran fine, which is usually
