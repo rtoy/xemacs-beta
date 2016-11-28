@@ -6,6 +6,10 @@
 	GNU-specific keysym names, and don't redundantly check the
 	various symbol objects corresponding to those GNU-specific keysym
 	names when coercing the keysym.
+	(define_key_check_and_coerce_keysym): Sigh, the C++ build doesn't
+	like qxememcmp with Ibyte * arguments, just compare the interned
+	symbols instead when looking for the GNU-specific keysym names,
+	which is cheaper and will placate g++.
 
 2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
 

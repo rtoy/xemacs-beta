@@ -1351,17 +1351,11 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	     same problem as above.  (Gag!)  Maybe we should just silently
 	     accept these as aliases for the "real" names?
 	     */
-          || (XSTRING_LENGTH (name) == 2
-              && !qxememcmp (XSTRING_DATA (name), (const void *)"BS", 2))
+          || (EQ (*keysym, QBS))
           || (XSTRING_LENGTH (name) == 3 &&
-              (!qxememcmp (XSTRING_DATA (name), (const void *)"LFD", 3) ||
-               !qxememcmp (XSTRING_DATA (name), (const void *)"TAB", 3) ||
-               !qxememcmp (XSTRING_DATA (name), (const void *)"RET", 3) ||
-               !qxememcmp (XSTRING_DATA (name), (const void *)"ESC", 3) ||
-               !qxememcmp (XSTRING_DATA (name), (const void *)"DEL", 3) ||
-               !qxememcmp (XSTRING_DATA (name), (const void *)"SPC", 3)))
-          )
-
+              (EQ (*keysym, QLFD) || EQ (*keysym, QTAB) ||
+               EQ (*keysym, QRET) || EQ (*keysym, QESC) ||
+               EQ (*keysym, QDEL) || EQ (*keysym, QSPC))))
         {
           invalid_argument
             ("Invalid (GNU Emacs) key format (see doc of define-key)",
