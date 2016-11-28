@@ -1044,7 +1044,7 @@ Miscellaneous:
   help-map)
 
 (labels
-    ((function-at-point ()
+    ((function-really-at-point ()
        (ignore-errors
          (save-excursion
            (save-restriction
@@ -1098,7 +1098,7 @@ Miscellaneous:
 
   ;; Byte compiler limitations mean each function gets its own copies
   ;; of these, inline them instead.
-  (declare (inline function-at-point function-around-point
+  (declare (inline function-really-at-point function-around-point
 		   transform-function-name guess-c-symbol))
 
   (defun function-called-at-point ()
@@ -1106,7 +1106,7 @@ Miscellaneous:
 If that gives no function, return the function whose name is around point.
 If that doesn't give a function, return nil."
     (or 
-     (function-at-point)
+     (function-really-at-point)
      (function-around-point)
      (and 
       (member major-mode '(c-mode c++-mode c++-c-mode objc-mode java-mode))
@@ -1121,7 +1121,7 @@ If that gives no function, return the function which is called by the
 list containing point.  If that doesn't give a function, return nil."
     (or 
      (function-around-point)
-     (function-at-point)
+     (function-really-at-point)
      (and 
       (member major-mode '(c-mode c++-mode c++-c-mode objc-mode java-mode))
       (intern-soft (transform-function-name (guess-c-symbol))))
