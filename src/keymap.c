@@ -1341,7 +1341,7 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 name-p, but that would interfere with various tricks we do to
 	 sanitize the Sun keyboards, and would make it trickier to
 	 conditionalize a .emacs file for multiple X servers. */
-      if ((XSTRING_LENGTH (name) > 2 &&
+      if ((XSTRING_LENGTH (name) > 2
            && itext_ichar_eql (string_char_addr (name, 1), '-')
            /* Check for a function binding if the symbol looks like c-...,
               otherwise command remapping and C mode interact badly. */
