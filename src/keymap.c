@@ -1325,13 +1325,13 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 
   if (SYMBOLP (*keysym))
     {
-      Ibyte *name = XSTRING_DATA (XSYMBOL (*keysym)->name);
+      Lisp_Object name = XSYMBOL (*keysym)->name;
 
       /* GNU Emacs uses symbols with the printed representation of keysyms in
 	 their names, like `M-x', and we use the syntax '(meta x).  So, to
 	 avoid confusion, notice the M-x syntax and signal an error -
 	 because otherwise it would be interpreted as a regular keysym, and
-	 would even show up in the list-buffers output, causing confusion
+	 would even show up in the describe-bindings output, causing confusion
 	 to the naive.
 
 	 We can get away with this because none of the X keysym names contain
@@ -1340,62 +1340,42 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 It might be useful to reject keysyms which are not x-valid-keysym-
 	 name-p, but that would interfere with various tricks we do to
 	 sanitize the Sun keyboards, and would make it trickier to
-	 conditionalize a .emacs file for multiple X servers.
-	 */
-      if (((int) qxestrlen (name) >= 2 && name[1] == '-'
-	   /* Check for a function binding if the symbol looks like
-	      c-..., otherwise command remapping and C mode interact
-	      badly. */
+	 conditionalize a .emacs file for multiple X servers. */
+      if ((XSTRING_LENGTH (name) > 2 &&
+           && itext_ichar_eql (string_char_addr (name, 1), '-')
+           /* Check for a function binding if the symbol looks like c-...,
+              otherwise command remapping and C mode interact badly. */
            && NILP (Ffunctionp (XSYMBOL_FUNCTION (*keysym))))
-#if 1
-          ||
 	  /* Ok, this is a bit more dubious - prevent people from doing things
 	     like (global-set-key 'RET 'something) because that will have the
 	     same problem as above.  (Gag!)  Maybe we should just silently
 	     accept these as aliases for the "real" names?
 	     */
-	  (XSTRING_LENGTH (XSYMBOL (*keysym)->name) <= 3 &&
-	   (!qxestrcmp_ascii (name, "LFD") ||
-	    !qxestrcmp_ascii (name, "TAB") ||
-	    !qxestrcmp_ascii (name, "RET") ||
-	    !qxestrcmp_ascii (name, "ESC") ||
-	    !qxestrcmp_ascii (name, "DEL") ||
-	    !qxestrcmp_ascii (name, "SPC") ||
-	    !qxestrcmp_ascii (name, "BS")))
-#endif /* unused */
+          || (XSTRING_LENGTH (name) == 2
+              && !qxememcmp (XSTRING_DATA (name), (const void *)"BS", 2))
+          || (XSTRING_LENGTH (name) == 3 &&
+              (!qxememcmp (XSTRING_DATA (name), (const void *)"LFD", 3) ||
+               !qxememcmp (XSTRING_DATA (name), (const void *)"TAB", 3) ||
+               !qxememcmp (XSTRING_DATA (name), (const void *)"RET", 3) ||
+               !qxememcmp (XSTRING_DATA (name), (const void *)"ESC", 3) ||
+               !qxememcmp (XSTRING_DATA (name), (const void *)"DEL", 3) ||
+               !qxememcmp (XSTRING_DATA (name), (const void *)"SPC", 3)))
           )
-	invalid_argument
-          ("Invalid (GNU Emacs) key format (see doc of define-key)",
-	   *keysym);
 
-      /* #### Ok, this is a bit more dubious - make people not lose if they
-	 do things like (global-set-key 'RET 'something) because that would
-	 otherwise have the same problem as above.  (Gag!)  We silently
-	 accept these as aliases for the "real" names.
-	 */
-      else if (!qxestrncmp_ascii (name, "kp_", 3))
+        {
+          invalid_argument
+            ("Invalid (GNU Emacs) key format (see doc of define-key)",
+             *keysym);
+        }
+      else if (XSTRING_LENGTH (name) > 3 &&
+               !qxestrncmp_ascii (XSTRING_DATA (name), "kp_", 3))
 	{
-	  /* Likewise, the obsolete keysym binding of kp_.* should not lose. */
+	  /* The obsolete keysym binding of kp_.* should not lose. */
 	  DECLARE_EISTRING (temp);
-	  eicpy_raw (temp, name, qxestrlen (name));
+	  eicpy_lstr (temp, name);
 	  eisetch_char (temp, 2, '-');
 	  *keysym = Fintern_soft (eimake_string (temp), Qnil, Qnil);
 	}
-      else if (EQ (*keysym, QLFD))
-	*keysym = QKlinefeed;
-      else if (EQ (*keysym, QTAB))
-	*keysym = QKtab;
-      else if (EQ (*keysym, QRET))
-	*keysym = QKreturn;
-      else if (EQ (*keysym, QESC))
-	*keysym = QKescape;
-      else if (EQ (*keysym, QDEL))
-	*keysym = QKdelete;
-      else if (EQ (*keysym, QSPC))
-	*keysym = QKspace;
-      else if (EQ (*keysym, QBS))
-	*keysym = QKbackspace;
-      /* Emacs compatibility */
 #define FROB(num)				\
       else if (EQ(*keysym, Qdown_mouse_##num))	\
         *keysym = Qbutton##num;			\

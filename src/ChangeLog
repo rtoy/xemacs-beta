@@ -1,3 +1,12 @@
+2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (define_key_check_and_coerce_keysym):
+	Don't redundantly call strlen on the keysym name, check the string
+	length of the symbol name before calling qxememcmp on various
+	GNU-specific keysym names, and don't redundantly check the
+	various symbol objects corresponding to those GNU-specific keysym
+	names when coercing the keysym.
+
 2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* casefiddle.c:
