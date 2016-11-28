@@ -1,3 +1,10 @@
+2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (function-really-at-point):
+	Rename this label from #'function-at-point, which should fix the
+	build (the file byte-compiled and ran fine, which is usually
+	enough). Thank you Mats Lidell and the buildbot.
+
 2016-11-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* help.el (function-at-point): New.
