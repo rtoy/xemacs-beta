@@ -3158,45 +3158,73 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
 #endif
 }
 
-#ifdef MULE
-
 /* WARNING: If you modify an existing string, you must call
    CHECK_LISP_WRITEABLE() before and bump_string_modiff() afterwards. */
 void
-set_string_char (Lisp_Object s, Charcount i, Ichar c)
+set_string_char (Lisp_Object ss, Charcount idx, Ichar cc)
 {
-  Ibyte newstr[MAX_ICHAR_LEN];
-  Bytecount bytoff = string_index_char_to_byte (s, i);
-  Bytecount oldlen = itext_ichar_len (XSTRING_DATA (s) + bytoff);
-  Bytecount newlen = set_itext_ichar (newstr, c);
+  Ibyte newstr[MAX_ICHAR_LEN], *data = XSTRING_DATA (ss);
+  Bytecount newlen, oldlen, bytoff;
+  Charcount ii = XSTRING_ASCII_BEGIN (ss);
 
-  sledgehammer_check_ascii_begin (s);
+  sledgehammer_check_ascii_begin (ss);
+
+  if (idx < ii)
+    {
+      data += idx;
+    }
+  else
+    {
+      const Ibyte *endp = data + XSTRING_LENGTH (ss);
+
+      data += ii;
+
+      while (ii < idx && data < endp)
+        {
+          INC_IBYTEPTR (data);
+          ++ii;
+        }
+
+      if (ii != idx)
+        {
+          args_out_of_range (ss, make_integer (idx));
+        }
+    }
+
+  bytoff = data - XSTRING_DATA (ss);
+
+  oldlen = itext_ichar_len (data);
+  newlen = set_itext_ichar (newstr, cc);
+
   if (oldlen != newlen)
-    resize_string (s, bytoff, newlen - oldlen);
-  /* Remember, XSTRING_DATA (s) might have changed so we can't cache it. */
-  memcpy (XSTRING_DATA (s) + bytoff, newstr, newlen);
+    resize_string (ss, bytoff, newlen - oldlen);
+
+  /* XSTRING_DATA (ss) might have changed, reload it. */
+  data = XSTRING_DATA (ss) + bytoff;
+
+  memcpy (data, newstr, newlen);
   if (oldlen != newlen) 
     {
-      if (newlen > 1 && i <= (Charcount) XSTRING_ASCII_BEGIN (s))
+      if (newlen > 1 && idx <= (Charcount) XSTRING_ASCII_BEGIN (ss))
       /* Everything starting with the new char is no longer part of
 	 ascii_begin */
-	XSET_STRING_ASCII_BEGIN (s, i);
-      else if (newlen == 1 && i == (Charcount) XSTRING_ASCII_BEGIN (s))
+	XSET_STRING_ASCII_BEGIN (ss, idx);
+      else if (newlen == 1 && idx == (Charcount) XSTRING_ASCII_BEGIN (ss))
 	/* We've extended ascii_begin, and we have to figure out how much by */
 	{
-	  Bytecount j;
-	  for (j = (Bytecount) i + 1; j < XSTRING_LENGTH (s); j++)
+	  Bytecount jj;
+	  for (jj = (Bytecount) idx + 1; jj < XSTRING_LENGTH (ss); jj++)
 	    {
-	      if (!byte_ascii_p (XSTRING_DATA (s)[j]))
+	      if (!byte_ascii_p (XSTRING_DATA (ss)[jj]))
 		break;
 	    }
-	  XSET_STRING_ASCII_BEGIN (s, min (j, (Bytecount) MAX_STRING_ASCII_BEGIN));
+	  XSET_STRING_ASCII_BEGIN (ss,
+                                   min (jj,
+                                        (Bytecount) MAX_STRING_ASCII_BEGIN));
 	}
     }
-  sledgehammer_check_ascii_begin (s);
+  sledgehammer_check_ascii_begin (ss);
 }
-
-#endif /* MULE */
 
 DEFUN ("make-string", Fmake_string, 2, 2, 0, /*
 Return a new string consisting of LENGTH copies of CHARACTER.
