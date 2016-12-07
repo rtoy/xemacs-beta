@@ -1,3 +1,18 @@
+2016-12-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (set_string_char):
+	Check the index parameter for validity within this function, which
+	is cheaper than in our callers.
+	* data.c (Faref):
+	Make this ON for Mule, not O2N.
+	* data.c (Faset):
+	Use set_string_char()'s new index checking rather than traversing
+	the string needlessly for Mule strings.
+	* lisp.h (struct Lisp_String):
+	Document a problem with the ascii_begin field in strings.
+	* text.h:
+	Make set_string_char available on non-Mule for completeness.
+
 2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (define_key_check_and_coerce_keysym):

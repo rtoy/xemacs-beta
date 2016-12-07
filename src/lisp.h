@@ -2605,7 +2605,11 @@ struct Lisp_String
 	     if and only if this flag is non-zero. */
 	  unsigned int modiffp :1;
 	  /* Number of chars at beginning of string that are one byte in length
-	     (byte_ascii_p) */
+	     (byte_ascii_p)
+
+             This is badly named, in that it is a value that describes the
+             *end* of the ASCII stretch. #### Refactor after merging
+             unicode-internal. */
 	  unsigned int ascii_begin :NUM_ASCII_BEGIN_BITS;
 	} v;
     } u;

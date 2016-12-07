@@ -686,8 +686,35 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
   else if (STRINGP (array))
     {
-      if (idx >= string_char_length (array)) goto range_error;
-      return make_char (string_ichar (array, idx));
+      const Ibyte *data = XSTRING_DATA (array);
+      Charcount ii = XSTRING_ASCII_BEGIN (array);
+
+      sledgehammer_check_ascii_begin (array);
+
+      if (idx < ii)
+        {
+          data += idx;
+        }
+      else
+        {
+          const Ibyte *endp = data + XSTRING_LENGTH (array);
+
+          data += ii;
+
+          while (ii < idx && data < endp)
+            {
+              INC_IBYTEPTR (data);
+              ++ii;
+            }
+          
+          if (ii != idx) goto range_error;
+        }
+
+#ifdef ERROR_CHECK_TEXT
+      assert (itext_ichar (data) == string_ichar (array, idx));
+#endif
+
+      return make_char (itext_ichar (data));
     }
   else
     {
@@ -750,7 +777,9 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
   else if (STRINGP (array))
     {
       CHECK_CHAR_COERCE_INT (newval);
-      if (idx >= string_char_length (array)) goto range_error;
+
+      /* Let it do the range checking, keep it ON rather than O2N
+         for Mule. */
       set_string_char (array, idx, XCHAR (newval));
       bump_string_modiff (array);
     }
