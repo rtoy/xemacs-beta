@@ -1,5 +1,11 @@
 2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c (uint32_t_to_lisp, int32_t_to_lisp):
+	Use better conditions here when deciding whether a C value can fit
+	into a Lisp fixnum.
+
+2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Write to the normal stdio objects, stderr_out(), stdout_out().
 	The only advantage with the previous implementation using
 	write_string_to_external_output_va() was that long-ish output got
