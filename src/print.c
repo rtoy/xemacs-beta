@@ -344,43 +344,6 @@ write_string_to_external_output_va (const CIbyte *fmt, va_list args,
                                    dest);
 }
 
-/* Output portably to stderr or its equivalent (i.e. may be a console
-   window under MS Windows); do external-format conversion and call GETTEXT
-   on the format string.  Automatically flush when done.
-
-   NOTE: CIbyte means "internal format" data.  This includes the "..."
-   arguments.  For numerical arguments, we have to assume that vsprintf
-   will be a good boy and format them as ASCII.  For Mule internal coding
-   (and UTF-8 internal coding, if/when we get it), it is safe to pass
-   string values in internal format to be formatted, because zero octets
-   only occur in the NUL character itself.  Similarly, it is safe to pass
-   pure ASCII literal strings for these functions.  *Everything else must
-   be converted, including all external data.*
-
-   This function is safe to use even when not initialized or when dying --
-   we don't do conversion in such cases. */
-
-void
-stderr_out (const CIbyte *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDERR);
-  va_end (args);
-}
-
-/* Output portably to stdout or its equivalent (i.e. may be a console
-   window under MS Windows).  Works like stderr_out(). */
-
-void
-stdout_out (const CIbyte *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDOUT);
-  va_end (args);
-}
-
 /* Output portably to print destination as specified by DEST. */
 
 void
