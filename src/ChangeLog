@@ -1,3 +1,9 @@
+2016-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (Fwrite_sequence):
+	If END is specified, don't error on a circular list in this
+	function.
+
 2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (uint32_t_to_lisp, int32_t_to_lisp):

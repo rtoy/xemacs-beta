@@ -752,9 +752,9 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
 
   stream = canonicalize_printcharfun (stream);
 
-  if (BIGNUMP (start) || (BIGNUMP (end)))
+  if (BIGNUMP (start) || BIGNUMP (end))
     {
-      /* None of the sequences will have bignum lengths. */
+      /* None of the sequences can have bignum lengths. */
       check_sequence_range (sequence, start, end, Flength (sequence));
 
       RETURN_NOT_REACHED (sequence);
@@ -803,6 +803,46 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
 
       blen = stringp - (XSTRING_DATA (sequence) + bstart);
     }
+  else if (CONSP (sequence))
+    {
+      if (NILP (end))
+        {
+          /* Error on circular list, with an unspecied END. */
+          Lisp_Object length = Flength (sequence);
+          check_sequence_range (sequence, start, end, length);
+          ending = XFIXNUM (length);
+        }
+
+      /* Worst case scenario; all characters, all the longest
+         possible. More likely: lots of small integers. */
+      nonreloc = allptr
+        = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
+      ii = 0;
+      {
+        /* EXTERNAL_LIST_LOOP because this may not be a true list. */
+        EXTERNAL_LIST_LOOP_2 (elt, sequence)
+          {
+            if (ii >= starting)
+              {
+                if (ii >= ending)
+                  {
+                    break;
+                  }
+
+                if (!CHARP (elt))
+                  {
+                    check_integer_range (elt, Qzero, make_fixnum (0xff));
+                  }
+                allptr += set_itext_ichar (allptr,
+                                           XCHAR_OR_CHAR_INT (elt));
+              }
+            ++ii;
+          }
+      }
+
+      bstart = 0;
+      blen = allptr - nonreloc;
+    }
   else
     {
       Lisp_Object length = Flength (sequence);
@@ -813,8 +853,8 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
       if (VECTORP (sequence))
         {
           Lisp_Object *vdata = XVECTOR_DATA (sequence);
-          /* Worst case scenario; all characters, all the longest possible. More
-             likely: lots of small integers. */
+          /* Worst case scenario; all characters, all the longest
+             possible. More likely: lots of small integers. */
           nonreloc = allptr
             = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
 
@@ -828,34 +868,6 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
               allptr += set_itext_ichar (allptr,
                                          XCHAR_OR_CHAR_INT (vdata[ii]));
             }
-        }
-      else if (CONSP (sequence))
-        {
-          /* Worst case scenario; all characters, all the longest
-             possible. More likely: lots of small integers. */
-          nonreloc = allptr
-            = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
-          ii = 0;
-          {
-            EXTERNAL_LIST_LOOP_2 (elt, sequence)
-              {
-                if (ii >= starting)
-                  {
-                    if (ii >= ending)
-                      {
-                        break;
-                      }
-
-                    if (!CHARP (elt))
-                      {
-                        check_integer_range (elt, Qzero, make_fixnum (0xff));
-                      }
-                    allptr += set_itext_ichar (allptr,
-                                               XCHAR_OR_CHAR_INT (elt));
-                  }
-                ++ii;
-              }
-          }
         }
       else if (BIT_VECTORP (sequence))
         {
