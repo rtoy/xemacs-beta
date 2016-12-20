@@ -1,0 +1,40 @@
+ * Sun May 3 1998 Oliver Graf <ograf@fga.de>
+
+This path contains test code for the new XEmacs
+Drag'n'Drop code.
+
+To test the code do the following:
+1) call 'bash droptest.sh' to create the test files in /tmp
+2) load and eval droptest.el in XEmacs
+3) Try to do some internal DnD by using the sources and targets
+   in the new buffer
+4) Do some external DnD:
+   4a) CDE: use dtfile and dtpad
+   4b) MSWindows: well, explorer should do. But only file data
+                  should work, and I don't know if the test
+                  already handles this.
+
+The misc-user-event now also responds as a button-x-event
+to the event-* query functions.
+
+The function of a drag is called dragdrop-drop-dispatch
+as you can see in droptest.el. From within the function
+you can access the actual misc-user-event through the
+current-mouse-event variable.
+
+Short description of the object part of a drop misc-user-event:
+( TYPE . DATA )
+TYPE is either the symbol dragdrop_MIME
+     or the symbol dragdrop_URL
+
+DATA is a list of URL strings if TYPE is dragdrop_URL
+     if TYPE is dragdrop_MIME DATA is either a string
+     which contains the MIME data, or it is a list of
+     ( CONTENT-TYPE CONTENT-ENCODING MIME-DATA )
+     CONTENT-TYPE is encoded for tm-view (list, first element type,
+	rest key.value conses)
+     CONTENT-ENCODING is a string
+     MIME-DATA is a string
+
+     CONTENT-TYPE and -ENCODING can be directly supplied to mime/viewer-mode.
+

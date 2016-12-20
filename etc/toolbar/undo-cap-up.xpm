@@ -1,0 +1,58 @@
+/* XPM */
+
+/* This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
+
+static char * undo[] = {
+"33 33 6 1",
+"X	c Gray75 s backgroundToolBarColor",
+"u	c #000000000000 s foregroundToolBarColor",
+"o	c black",
+"O	c Gray60",
+"+	c Gray90",
+"@	c white",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXooXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXooOOooooXXXXXX",
+"XXXXXXXXXXXXXXXXXooOOOOOOOOooXXXX",
+"XXXXXXXXXXXXXXXooOOOOOOOOOooXXXXX",
+"XXXXXXXXXXXXXoo++ooooOOOooOoXXXXX",
+"XXXXXXXXXXXoo++++++++oooOOoXXXXXX",
+"XXXXXXXXXoo+++++++++oooOOOoXXXXXX",
+"XXXXXXXoo+++++++++oo++oOOoXXXXXXX",
+"XXXXXXoo++++++++oo+++oOooXXXXXXXX",
+"XXXXXo++oooo++oo+++++ooXXXXXXXXXX",
+"XXXXXo++++++oo+++++ooXXXXXXXXXXXX",
+"XXXXo+++++++o++++ooXXXXXXXXXXXXXX",
+"XXXXo+++++++o++ooXXXXXXXXXXXXXXXX",
+"XXXoo++++++o+ooXXXXXXXXXXXXXXXXXX",
+"XXX@@oooo++ooXXXXXXXXXXXXXXXXXXXX",
+"XXX@@@@@@ooXXXXXXXXXXXXXXXXXXXXXX",
+"XXX@@@@@@XXXXXXXXXXXXXXXXXXXXXXXX",
+"XXX@@@@XXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXX@@@XXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXX@XXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXuXXXXXXXXXXXX",
+"XXXXXXuXXXuXXXXXXXXXuXXXXXXXXXXXX",
+"XXXXXXuXXXuXuuuXXXuuuXXuuXXXXXXXX",
+"XXXXXXuXXXuXuXXuXuXXuXuXXuXXXXXXX",
+"XXXXXXuXXXuXuXXuXuXXuXuXXuXXXXXXX",
+"XXXXXXuXXXuXuXXuXuXXuXuXXuXXXXXXX",
+"XXXXXXXuuuXXuXXuXXuuuXXuuXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"};

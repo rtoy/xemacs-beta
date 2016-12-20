@@ -1,0 +1,12 @@
+#!/bin/sh
+emacs_is_beta=t
+emacs_major_version=21
+emacs_minor_version=5
+emacs_beta_version=34
+xemacs_codename="kale"
+emacs_kit_version=
+infodock_major_version=
+infodock_minor_version=
+infodock_build_version=
+xemacs_release_date="2013-06-24"
+xemacs_extra_name=
