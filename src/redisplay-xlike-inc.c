@@ -140,24 +140,24 @@ static void XLIKE_window_output_end (struct window *w);
 struct textual_run
 {
   Lisp_Object charset;
-  unsigned char *ptr;
+  Extbyte *ptr;
   int len;
   int dimension;
 };
 
-/* Separate out the text in STR (an array of Ichars, not a string
-   representation) of length LEN into a series of runs, stored in
-   RUN_STORAGE.  RUN_STORAGE is guaranteed to hold enough space for all
-   runs that could be generated from this text.  Each run points to the a
-   stretch of text given simply by the position codes TEXT_STORAGE into a
-   series of textual runs of a particular charset.  Also convert the
-   characters as necessary into the format needed by XDrawImageString(),
+/* Separate out the text in STR of length LEN into a series of runs, stored in
+   RUN_STORAGE.  RUN_STORAGE is guaranteed to hold enough space for all runs
+   that could be generated from this text.  Each run points to the a stretch
+   of text given simply by the position codes TEXT_STORAGE into a series of
+   textual runs of a particular charset.  Also convert the characters as
+   necessary into the format needed by XDrawImageString(),
    XDrawImageString16(), et al.  This means converting to one or two byte
    format, possibly tweaking the high bits, and possibly running a CCL
-   program.  You must pre-allocate the space used and pass it in. (This is
-   done so you can ALLOCA () the space.) (2 * len) bytes must be allocated
-   for TEXT_STORAGE and (len * sizeof (struct textual_run)) bytes of
-   RUN_STORAGE, where LEN is the length of the dynarr.
+   program.  You must pre-allocate the space used and pass in a pointer,
+   TEXT_STORAGE, and the ALLOCATE_RUNS_TEXT () macro is provided to do this
+   using stack space. Some of the window-system-specific implementations take
+   advantage of this step to do coding sytem translation, and the specific
+   amount of space needed depends on the window system.
 
    bufchar might not be fixed width (in the case of UTF-8).
 
@@ -176,11 +176,17 @@ struct textual_run
 */
 
 #if !defined(USE_XFT) && !defined(MULE)
-static int
-separate_textual_runs_nomule (unsigned char *text_storage,
+
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)      \
+    (storage = alloca_extbytes (len))
+/* Not needed. */
+#define ENSURE_CACHEL_COMPLETE (cachel, str, len) (void)
+
+static Elemcount
+separate_textual_runs_nomule (Extbyte *text_storage,
 			      struct textual_run *run_storage,
-			      const Ichar *str, Charcount len,
-			      struct face_cachel *UNUSED (cachel))
+			      const Ibyte *str, Bytecount len,
+ 			      struct face_cachel *UNUSED (cachel))
 {
   if (!len)
     return 0;
@@ -190,26 +196,40 @@ separate_textual_runs_nomule (unsigned char *text_storage,
   run_storage[0].dimension = 1;
   run_storage[0].charset = Qnil;
 
-  while (len--)
-    *text_storage++ = *str++;
+  memcpy (text_storage, str, len);
+
   return 1;
 }
 #endif
 
+#ifdef USE_XFT
+#ifdef WORDS_BIGENDIAN
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)       \
+       TO_EXTERNAL_FORMAT (DATA, (str, len),                     \
+                           ALLOCA, (storage, storage_len),       \
+                           Qutf_16)
+#else
+extern Lisp_Object Qutf_16_little_endian;
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)       \
+       TO_EXTERNAL_FORMAT (DATA, (str, len),                     \
+                           ALLOCA, (storage, storage_len),       \
+                           Qutf_16_little_endian)
+#endif
+#endif /* USE_XFT */
+
 #if defined(USE_XFT) && !defined(MULE)
+
 /*
   Note that in this configuration the "Croatian hack" of using an 8-bit,
   non-Latin-1 font to get localized display without Mule simply isn't
   available.  That's by design -- Unicode does not aid or abet that kind
   of punning.
   This means that the cast to XftChar16 gives the correct "conversion" to
-  UCS-2.
-  #### Is there an alignment issue with text_storage?
-*/
-static int
-separate_textual_runs_xft_nomule (unsigned char *text_storage,
+  UCS-2. */
+static Elemcount
+separate_textual_runs_xft_nomule (Extbyte *text_storage,
 				  struct textual_run *run_storage,
-				  const Ichar *str, Charcount len,
+				  const Ibyte *str, Bytecount len,
 				  struct face_cachel *UNUSED (cachel))
 {
   int i;
@@ -221,45 +241,51 @@ separate_textual_runs_xft_nomule (unsigned char *text_storage,
   run_storage[0].dimension = 2;
   run_storage[0].charset = Qnil;
 
-  for (i = 0; i < len; i++)
-    {
-      *(XftChar16 *)text_storage = str[i];
-      text_storage += sizeof (XftChar16);
-    }
   return 1;
 }
 #endif
 
 #if defined(USE_XFT) && defined(MULE)
-static int
-separate_textual_runs_xft_mule (unsigned char *text_storage,
+
+extern Lisp_Object Qutf_16_little_endian;
+
+#ifdef WORDS_BIGENDIAN
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)       \
+       TO_EXTERNAL_FORMAT (DATA, (str, len),                     \
+                           ALLOCA, (storage, storage_len),       \
+                           Qutf_16)
+#else
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)       \
+       TO_EXTERNAL_FORMAT (DATA, (str, len),                     \
+                           ALLOCA, (storage, storage_len),       \
+                           Qutf_16_little_endian)
+#endif
+
+static Elemcount
+separate_textual_runs_xft_mule (Extbyte *text_storage,
 				struct textual_run *run_storage,
-				const Ichar *str, Charcount len,
+				const Ibyte *str, Bytecount len,
 				struct face_cachel *UNUSED (cachel))
 {
   Lisp_Object prev_charset = Qunbound;
-  int runs_so_far = 0, i;
+  const Ibyte *end = str + len; 
+  Elemcount runs_so_far = 0;
 
   run_storage[0].ptr = text_storage;
   run_storage[0].len = len;
   run_storage[0].dimension = 2;
   run_storage[0].charset = Qnil;
 
-  for (i = 0; i < len; i++)
+  while (str < end)
     {
-      Ichar ch = str[i];
+      Ichar ch = itext_ichar (str);
       Lisp_Object charset = ichar_charset (ch);
-      int ucs = ichar_to_unicode (ch);
-
-      /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
-	 REPLACMENT CHARACTER. */
-      /* That means we can't handle characters outside of the BMP for now */
-      ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
 
       if (!EQ (charset, prev_charset))
 	{
 	  if (runs_so_far)
-	    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+	    run_storage[runs_so_far-1].len
+              = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
 	  run_storage[runs_so_far].ptr = text_storage;
 	  run_storage[runs_so_far].dimension = 2;
 	  run_storage[runs_so_far].charset = charset;
@@ -267,17 +293,26 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
 	  runs_so_far++;
 	}
 
-      *(XftChar16 *)text_storage = ucs;
+      if (valid_utf_16_first_surrogate (*((XftChar16 *) (text_storage))))
+        {
+          text_storage += sizeof (XftChar16);
+        }
       text_storage += sizeof (XftChar16);
+      INC_IBYTEPTR (str);
     }
 
   if (runs_so_far)
-    run_storage[runs_so_far-1].len = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
+    run_storage[runs_so_far-1].len
+      = (text_storage - run_storage[runs_so_far-1].ptr) >> 1;
   return runs_so_far;
 }
 #endif
 
 #if !defined(USE_XFT) && defined(MULE)
+
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)      \
+  (storage = alloca_extbytes ((storage_len = (2 * len))))
+
 /*
   This is the most complex function of this group, due to the various
   indexing schemes used by different fonts.  For our purposes, they
@@ -288,24 +323,24 @@ separate_textual_runs_xft_mule (unsigned char *text_storage,
   are all translated using `ichar_to_unicode'.  Finally some fonts have
   irregular indexes, and must be translated ad hoc.  In XEmacs ad hoc
   translations are accomplished with CCL programs. */
-static int
-separate_textual_runs_mule (unsigned char *text_storage,
-			    struct textual_run *run_storage,
-			    const Ichar *str, Charcount len,
+static Elemcount
+separate_textual_runs_mule (Extbyte *text_storage,
+                            struct textual_run *run_storage,
+			    const Ibyte *str, Bytecount len,
 			    struct face_cachel *cachel)
 {
-  Lisp_Object prev_charset = Qunbound;
-  int runs_so_far = 0, i;
+  Lisp_Object prev_charset = Qunbound, ccl_prog;
+  int runs_so_far = 0;
   Ibyte charset_leading_byte = LEADING_BYTE_ASCII;
+  const Ibyte *end = str + len;
   int dimension = 1, graphic = 0, need_ccl_conversion = 0;
-  Lisp_Object ccl_prog;
   struct ccl_program char_converter;
 
   int translate_to_ucs_2 = 0;
 
-  for (i = 0; i < len; i++)
+  while (str < end)
     {
-      Ichar ch = str[i];
+      Ichar ch = itext_ichar (str);
       Lisp_Object charset;
       int byte1, byte2;		/* BREAKUP_ICHAR dereferences the addresses
 				   of its arguments as pointer to int. */
@@ -384,7 +419,7 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	{
 	  int ucs = ichar_to_unicode (ch);
 	  /* If UCS is less than zero or greater than 0xFFFF, set ucs2 to
-	     REPLACMENT CHARACTER. */
+	     REPLACEMENT CHARACTER. */
 	  ucs = (ucs & ~0xFFFF) ? 0xFFFD : ucs;
 
 	  byte1 = ucs >> 8;
@@ -401,6 +436,21 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	}
       else if (graphic == 0)
 	{
+	  /* Only do the ASCII optimization if the attributes of the
+	     charset reflect the attributes of the normal ASCII set,
+	     so that the user can override with translate_to_ucs_2 or
+	     a CCL conversion if he or she so wishes. */
+	  if (0 && charset_leading_byte == LEADING_BYTE_ASCII)
+	    {
+	      const Ibyte *nonascii;
+
+	      nonascii = skip_ascii (str, end);
+	      memcpy (text_storage, str, nonascii - str);
+	      text_storage += nonascii - str;
+	      str = nonascii;
+	      continue;
+	    }
+
 	  byte1 &= 0x7F;
 	  byte2 &= 0x7F;
 	}
@@ -410,9 +460,13 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	  byte2 |= 0x80;
 	}
 
-      *text_storage++ = (unsigned char)byte1;
+      *text_storage++ = (Extbyte) byte1;
+      if (2 == dimension)
+	{
+	  *text_storage++ = (Extbyte) byte2;
+	}
 
-      if (2 == dimension) *text_storage++ = (unsigned char)byte2;
+      INC_IBYTEPTR (str);
     }
 
   if (runs_so_far)
@@ -424,14 +478,16 @@ separate_textual_runs_mule (unsigned char *text_storage,
 	run_storage[runs_so_far - 1].len >>= 1;
     }
 
+  assert (runs_so_far < 0xFFFF);
+
   return runs_so_far;
 }
 #endif
 
 static int
-separate_textual_runs (unsigned char *text_storage,
+separate_textual_runs (Extbyte *text_storage,
 		       struct textual_run *run_storage,
-		       const Ichar *str, Charcount len,
+		       const Ibyte *str, Bytecount len,
 		       struct face_cachel *cachel)
 {
 #if defined(USE_XFT) && defined(MULE)
@@ -473,18 +529,10 @@ XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
     {
       static XGlyphInfo glyphinfo;
 
-      if (run->dimension == 2)
-	{
-	  XftTextExtents16 (dpy,
-			    FONT_INSTANCE_X_XFTFONT (fi),
-			    (XftChar16 *) run->ptr, run->len, &glyphinfo);
-	}
-      else
-	{
-	  XftTextExtents8 (dpy,
-			   FONT_INSTANCE_X_XFTFONT (fi),
-			   run->ptr, run->len, &glyphinfo);
-	}
+      assert (run->dimension == 2);
+
+      XftTextExtents16 (dpy, FONT_INSTANCE_X_XFTFONT (fi),
+                        (XftChar16 *) run->ptr, run->len, &glyphinfo);
     
       return glyphinfo.xOff;
     }
@@ -518,18 +566,19 @@ XLIKE_text_width_single_run (XLIKE_DISPLAY USED_IF_XFT (dpy),
 
 static int
 XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
-		  const Ichar *str, Charcount len)
+		  const Ibyte *str, Bytecount len)
 {
-  /* !!#### Needs review */
-  int width_so_far = 0;
-  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
+  Extbyte *text_storage = NULL;
+  int width_so_far = 0, text_storage_len = 0;
   struct textual_run *runs = alloca_array (struct textual_run, len);
   XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
   int nruns;
   int i;
 
-  nruns = separate_textual_runs (text_storage, runs, str, len, 
-				 cachel);
+  ALLOCATE_RUNS_TEXT (text_storage, text_storage_len, str, len);
+  nruns = separate_textual_runs (text_storage, runs, str, len, cachel);
+
+  USED (text_storage_len);
 
   for (i = 0; i < nruns; i++)
     width_so_far += XLIKE_text_width_single_run (dpy, cachel, runs + i);
@@ -583,7 +632,7 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 #ifndef USE_XFT
   struct frame *f = XFRAME (w->frame);
 #endif
-  Ichar_dynarr *buf;
+  Ibyte *buffer, *bufp;
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -610,7 +659,8 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 
   if (end < 0)
     end = Dynarr_length (rba);
-  buf = Dynarr_new (Ichar);
+
+  buffer = bufp = alloca_ibytes (end * MAX_ICHAR_LEN);
 
   while (elt < end)
     {
@@ -620,21 +670,22 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
 	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
 	{
-	  Dynarr_add (buf, rb->object.chr.ch);
+          bufp += set_itext_ichar (bufp, rb->object.chr.ch);
 	  width += rb->width;
 	  elt++;
 	}
       else
 	{
-	  if (Dynarr_length (buf))
+	  if (bufp - buffer)
 	    {
-	      XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos, width,
+	      XLIKE_output_string (w, dl, buffer, bufp - buffer, xpos, 0,
+                                   start_pixpos, width,
 				   findex, 0, cursor_start, cursor_width,
 				   cursor_height);
 	      xpos = rb->xpos;
 	      width = 0;
+              bufp = buffer;
 	    }
-	  Dynarr_reset (buf);
 	  width = 0;
 
 	  if (rb->type == RUNE_CHAR)
@@ -651,12 +702,13 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 		    }
 		  else
 		    {
-		      Dynarr_add (buf, rb->object.chr.ch);
-		      XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos,
+		      XLIKE_output_string (w, dl, buffer, 
+                                           set_itext_ichar (buffer,
+                                                            rb->object.chr.ch),
+                                           xpos, 0, start_pixpos,
 					   rb->width, findex, 1,
 					   cursor_start, cursor_width,
 					   cursor_height);
-		      Dynarr_reset (buf);
 		    }
 
 		  xpos += rb->width;
@@ -725,17 +777,15 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 			/* #### This is way losing.  See the comment in
 			   add_glyph_rune(). */
 			Lisp_Object string =
-			  XIMAGE_INSTANCE_TEXT_STRING (instance);
-			convert_ibyte_string_into_ichar_dynarr
-			  (XSTRING_DATA (string), XSTRING_LENGTH (string),
-			   buf);
+                          XIMAGE_INSTANCE_TEXT_STRING (instance);
 
-			gtk_output_string (w, dl, buf, xpos,
-					   rb->object.dglyph.xoffset,
-					   start_pixpos, -1, findex,
-					   (rb->cursor_type == CURSOR_ON),
-					   cursor_start, cursor_width,
-					   cursor_height);
+                        XLIKE_output_string (w, dl, XSTRING_DATA (string),
+                                             XSTRING_LENGTH (string), xpos,
+                                             rb->object.dglyph.xoffset,
+                                             start_pixpos, -1, findex,
+                                             (rb->cursor_type == CURSOR_ON),
+                                             cursor_start, cursor_width,
+                                             cursor_height);
 			Dynarr_reset (buf);
 		      }
 		      break;
@@ -787,9 +837,10 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 	}
     }
 
-  if (Dynarr_length (buf))
-    XLIKE_output_string (w, dl, buf, xpos, 0, start_pixpos, width, findex,
-			 0, cursor_start, cursor_width, cursor_height);
+  if (bufp - buffer)
+    XLIKE_output_string (w, dl, buffer, bufp - buffer, xpos, 0, start_pixpos,
+                         width, findex, 0, cursor_start, cursor_width,
+                         cursor_height);
 
   if (dl->modeline
       && !EQ (Qzero, w->modeline_shadow_thickness)
@@ -803,8 +854,6 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
 #endif
       )
     bevel_modeline (w, dl);
-
-  Dynarr_free (buf);
 }
 
 /* Called as gtk_get_gc from gtk-glue.c */
@@ -948,8 +997,8 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
  DL		Display line that this text is on.  The values in the
  		structure are used to determine the vertical position and
 		clipping range of the text.
- BUF		Dynamic array of Ichars specifying what is actually to be
-		drawn.
+ BUF		Pointer to those Ibytes to be output.
+ LEN            Number of those Ibytes to be output
  XPOS		X position in pixels where the text should start being drawn.
  XOFFSET	Number of pixels to be chopped off the left side of the
  		text.  The effect is as if the text were shifted to the
@@ -981,7 +1030,8 @@ void gdk_draw_text_image (GdkDrawable *drawable,
 #endif /* THIS_IS_GTK */
 void
 XLIKE_output_string (struct window *w, struct display_line *dl,
-		     Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
+		     const Ibyte *buf, Bytecount len,
+                     int xpos, int xoffset, int clip_start,
 		     int width, face_index findex, int cursor,
 		     int cursor_start, int cursor_width, int cursor_height)
 {
@@ -1006,10 +1056,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   XLIKE_GC bgc, gc;
   int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
   int ypos = XLIKE_DISPLAY_LINE_YPOS (dl);
-  int len = Dynarr_length (buf);
-  unsigned char *text_storage = (unsigned char *) ALLOCA (2 * len);
+  Extbyte *text_storage;
   struct textual_run *runs = alloca_array (struct textual_run, len);
-  int nruns;
+  int nruns, text_storage_len;
   int i;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
@@ -1038,8 +1087,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #endif /* USE_XFT */
 
   if (width < 0)
-    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
-			      Dynarr_length (buf));
+    width = XLIKE_text_width (f, cachel, buf, len);
 
   /* Regularize the variables passed in. */
 
@@ -1103,8 +1151,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			    height);
     }
 
-  nruns = separate_textual_runs (text_storage, runs, Dynarr_begin (buf),
-				 Dynarr_length (buf), cachel);
+  ALLOCATE_RUNS_TEXT (text_storage, text_storage_len, buf, len);
+
+  nruns = separate_textual_runs (text_storage, runs, buf, len, cachel);
+
+  USED (text_storage_len);
 
   for (i = 0; i < nruns; i++)
     {
@@ -1252,29 +1303,21 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 		int rect_height = FONT_INSTANCE_ASCENT (fi)
 				  + FONT_INSTANCE_DESCENT (fi);
 		XGlyphInfo gi;
-		if (run->dimension == 2) {
-		  XftTextExtents16 (dpy,
-				    FONT_INSTANCE_X_XFTFONT (fi),
-				    (XftChar16 *) run->ptr, run->len, &gi);
-		} else {
-		  XftTextExtents8 (dpy,
-				   FONT_INSTANCE_X_XFTFONT (fi),
-				   run->ptr, run->len, &gi);
-		}
-		rect_height = rect_height > gi.height
-			      ? rect_height : gi.height;
+
+                XftTextExtents16 (dpy, FONT_INSTANCE_X_XFTFONT (fi),
+                                  (const XftChar16 *) run->ptr, run->len,
+                                  &gi);
+		rect_height = max (rect_height, gi.height);
 #endif
 
 		XftDrawRect (xftDraw, &bg,
 			     xpos, ypos, rect_width, rect_height);
 	      }
 	
-	    if (runs[i].dimension == 1)
-	      XftDrawString8 (xftDraw, &fg, rf, xpos, dl->ypos,
-			      runs[i].ptr, runs[i].len);
-	    else
-	      XftDrawString16 (xftDraw, &fg, rf, xpos, dl->ypos,
-			       (XftChar16 *) runs[i].ptr, runs[i].len);
+	    assert (runs[i].dimension == 2);
+
+            XftDrawString16 (xftDraw, &fg, rf, xpos, dl->ypos,
+                             (const XftChar16 *) runs[i].ptr, runs[i].len);
 	  }
       }
 #endif /* USE_XFT */
@@ -1466,12 +1509,10 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 			     xpos, ypos, rect_width, rect_height);
 
 		xft_color = XFT_FROB_LISP_COLOR (cursor_cachel->foreground, 0);
-		if (runs[i].dimension == 1)
-		  XftDrawString8 (xftDraw, &xft_color, rf, xpos, dl->ypos,
-				  runs[i].ptr, runs[i].len);
-		else
-		  XftDrawString16 (xftDraw, &xft_color, rf, xpos, dl->ypos,
-				   (XftChar16 *) runs[i].ptr, runs[i].len);
+		assert (runs[i].dimension == 2);
+
+                XftDrawString16 (xftDraw, &xft_color, rf, xpos, dl->ypos,
+                                 (XftChar16 *) runs[i].ptr, runs[i].len);
 	      }
 
 	      XftDrawSetClip (xftDraw, 0);

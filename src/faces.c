@@ -1286,7 +1286,7 @@ ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 
 void
 ensure_face_cachel_complete (struct face_cachel *cachel,
-			     Lisp_Object domain, unsigned char *charsets)
+			     Lisp_Object domain, const Binbyte *charsets)
 {
   int i;
 
@@ -1301,7 +1301,7 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
 
 void
 face_cachel_charset_font_metric_info (struct face_cachel *cachel,
-				      unsigned char *charsets,
+				      const Binbyte *charsets,
 				      struct font_metric_info *fm)
 {
   int i;

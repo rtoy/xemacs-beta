@@ -45,8 +45,8 @@ void cm_cost_init (struct console *c);
 void cmputc (int c);
 void cmgoto (struct frame *f, int row, int col);
 extern struct console *cmputc_console;
-void send_string_to_tty_console (struct console *c, unsigned char *str,
-				 int len);
+void send_string_to_tty_console (struct console *c, const unsigned char *str,
+				 Bytecount len);
 
 /***************     Prototypes from console-tty.c     ****************/
 

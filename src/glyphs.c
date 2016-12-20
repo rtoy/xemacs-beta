@@ -2382,10 +2382,11 @@ string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    helper that is used elsewhere for calculating text geometry. */
 void
 query_string_geometry (Lisp_Object string, Lisp_Object face,
-		       int* width, int* height, int* descent, Lisp_Object domain)
+		       int* width, int* height, int* descent,
+                       Lisp_Object domain)
 {
   struct font_metric_info fm;
-  unsigned char charsets[NUM_LEADING_BYTES];
+  Binbyte charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
   struct face_cachel *the_cachel;
   Lisp_Object window = DOMAIN_WINDOW (domain);
@@ -2393,59 +2394,66 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 
   CHECK_STRING (string);
 
-  /* Compute height */
-  if (height)
+  /* Compute string metric info */
+  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
+                                 XSTRING_LENGTH (string));
+  /* Fallback to the default face if none was provided. */
+  if (!NILP (face))
     {
-      /* Compute string metric info */
-      find_charsets_in_ibyte_string (charsets,
-				       XSTRING_DATA   (string),
-				       XSTRING_LENGTH (string));
+      reset_face_cachel (&cachel);
+      update_face_cachel_data (&cachel,
+                               /* #### NOTE: in fact, I'm not sure if it's
+                                  #### possible to *not* get a window
+                                  #### here, but you never know...
+                                  #### -- dvl */
+                               NILP (window) ? frame : window,
+                               face);
+      the_cachel = &cachel;
+    }
+  else
+    {
+      the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
+                                       DEFAULT_INDEX);
+    }
 
-      /* Fallback to the default face if none was provided. */
-      if (!NILP (face))
-	{
-	  reset_face_cachel (&cachel);
-	  update_face_cachel_data (&cachel,
-				   /* #### NOTE: in fact, I'm not sure if it's
-				      #### possible to *not* get a window
-				      #### here, but you never know...
-				      #### -- dvl */
-				   NILP (window) ? frame : window,
-				   face);
-	  the_cachel = &cachel;
-	}
-      else
-	the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
-					 DEFAULT_INDEX);
+  ensure_face_cachel_complete (the_cachel, domain, charsets);
 
-      ensure_face_cachel_complete (the_cachel, domain, charsets);
+  /* Compute height */
+  if (height || descent)
+    {
       face_cachel_charset_font_metric_info (the_cachel, charsets, &fm);
 
-      *height = fm.ascent + fm.descent;
-      /* #### descent only gets set if we query the height as well. */
+      if (height) 
+        {
+          *height = fm.ascent + fm.descent;
+        }
+
       if (descent)
-	*descent = fm.descent;
+        {
+          *descent = fm.descent;
+        }
     }
 
   /* Compute width */
   if (width)
-    *width = redisplay_text_width_string (domain,
-					  NILP (face) ? Vdefault_face : face,
-					  0, string, 0, -1);
+    {
+      *width = DEVMETH (DOMAIN_XDEVICE (domain), text_width,
+                        (XFRAME (frame), the_cachel, XSTRING_DATA (string),
+                         XSTRING_LENGTH (string)));
+    }
 }
 
 Lisp_Object
 query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
 {
-  unsigned char charsets[NUM_LEADING_BYTES];
+  Binbyte charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
   int i;
   Lisp_Object window = DOMAIN_WINDOW (domain);
   Lisp_Object frame  = DOMAIN_FRAME  (domain);
 
   /* Compute string font info */
-  find_charsets_in_ibyte_string (charsets,
-				 XSTRING_DATA   (string),
+  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
 				 XSTRING_LENGTH (string));
 
   reset_face_cachel (&cachel);

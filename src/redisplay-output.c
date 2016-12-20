@@ -1416,7 +1416,6 @@ redisplay_output_layout (Lisp_Object domain,
 {
   Lisp_Image_Instance *p = XIMAGE_INSTANCE (image_instance);
   Lisp_Object rest, window = DOMAIN_WINDOW (domain);
-  Ichar_dynarr *buf;
   struct window *w = XWINDOW (window);
   struct device *d = DOMAIN_XDEVICE (domain);
   int layout_height, layout_width;
@@ -1432,8 +1431,6 @@ redisplay_output_layout (Lisp_Object domain,
   /* This makes the glyph area fit into the display area. */
   if (!redisplay_normalize_glyph_area (db, dga))
     return;
-
-  buf = Dynarr_new (Ichar);
 
   /* Highly dodgy optimization. We want to only output the whole
      layout if we really have to. */
@@ -1558,7 +1555,7 @@ redisplay_output_layout (Lisp_Object domain,
 			struct display_line dl;	/* this is fake */
 			Lisp_Object string =
 			  IMAGE_INSTANCE_TEXT_STRING (childii);
-			unsigned char charsets[NUM_LEADING_BYTES];
+			Binbyte charsets[NUM_LEADING_BYTES];
 			struct face_cachel *cachel
 			  = WINDOW_FACE_CACHEL (w, findex);
 
@@ -1568,10 +1565,6 @@ redisplay_output_layout (Lisp_Object domain,
 						       XSTRING_DATA (string),
 						       XSTRING_LENGTH (string));
 			ensure_face_cachel_complete (cachel, window, charsets);
-
-			convert_ibyte_string_into_ichar_dynarr
-			  (XSTRING_DATA (string), XSTRING_LENGTH (string),
-			   buf);
 
 			redisplay_normalize_display_box (&cdb, &cdga);
 			/* Offsets are now +ve again so be careful
@@ -1589,11 +1582,11 @@ redisplay_output_layout (Lisp_Object domain,
 			   add the offset to the width so that we
 			   output the full string. */
 			MAYBE_DEVMETH (d, output_string,
-				       (w, &dl, buf, cdb.xpos,
+				       (w, &dl, XSTRING_DATA (string),
+                                        XSTRING_LENGTH (string), cdb.xpos,
 					cdga.xoffset, cdb.xpos,
 					cdga.width + cdga.xoffset,
 					findex, 0, 0, 0, 0));
-			Dynarr_reset (buf);
 		      }
 		  }
 		  break;
@@ -1636,8 +1629,6 @@ redisplay_output_layout (Lisp_Object domain,
   /* Update any display properties. I'm not sure whether this actually
      does anything for layouts except clear the changed flags. */
   redisplay_subwindow (image_instance);
-
-  Dynarr_free (buf);
 }
 
 /****************************************************************************
