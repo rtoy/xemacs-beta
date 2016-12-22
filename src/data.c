@@ -687,8 +687,35 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
   else if (STRINGP (array))
     {
-      if (idx >= string_char_length (array)) goto range_error;
-      return make_char (string_ichar (array, idx));
+      const Ibyte *data = XSTRING_DATA (array);
+      Charcount ii = XSTRING_ASCII_BEGIN (array);
+
+      sledgehammer_check_ascii_begin (array);
+
+      if (idx < ii)
+        {
+          data += idx;
+        }
+      else
+        {
+          const Ibyte *endp = data + XSTRING_LENGTH (array);
+
+          data += ii;
+
+          while (ii < idx && data < endp)
+            {
+              INC_IBYTEPTR (data);
+              ++ii;
+            }
+          
+          if (ii != idx) goto range_error;
+        }
+
+#ifdef ERROR_CHECK_TEXT
+      assert (itext_ichar (data) == string_ichar (array, idx));
+#endif
+
+      return make_char (itext_ichar (data));
     }
   else
     {
@@ -751,7 +778,9 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
   else if (STRINGP (array))
     {
       CHECK_CHAR_COERCE_INT (newval);
-      if (idx >= string_char_length (array)) goto range_error;
+
+      /* Let it do the range checking, keep it ON rather than O2N
+         for Mule. */
       set_string_char (array, idx, XCHAR (newval));
       bump_string_modiff (array);
     }
@@ -1101,9 +1130,9 @@ Return t if NUMBER is zero.
 
 /* Convert between an unsigned 32-bit value and some Lisp value that preserves
    all its bits. Use an integer if the value will fit (that is, if the value
-   is <= MOST_POSITIVE_FIXNUM, or if we have bignums available); otherwise,
-   return a cons of two sixteen-bit values.  Both types of return value need
-   GC protection.
+   is <= MOST_POSITIVE_FIXNUM_UNSIGNED, or if we have bignums available);
+   otherwise, return a cons of two sixteen-bit values.  Both types of return
+   value need GC protection.
 
    This is used to pass 32-bit integers to and from the user.  Use
    make_time() and lisp_to_time() for time_t values.
@@ -1114,7 +1143,7 @@ Return t if NUMBER is zero.
 Lisp_Object
 uint32_t_to_lisp (UINT_32_BIT item)
 {
-  if ((EMACS_INT) item <= MOST_POSITIVE_FIXNUM)
+  if (item <= MOST_POSITIVE_FIXNUM_UNSIGNED) /* Fits in a positive fixnum? */
     {
       return make_fixnum (item);
     }
@@ -1166,8 +1195,7 @@ lisp_to_uint32_t (Lisp_Object item)
 Lisp_Object
 int32_t_to_lisp (INT_32_BIT item)
 {
-  if ((EMACS_INT) item <= MOST_POSITIVE_FIXNUM
-      && (EMACS_INT) item >= MOST_NEGATIVE_FIXNUM)
+  if (NUMBER_FITS_IN_A_FIXNUM ((EMACS_INT) item))
     {
       return make_fixnum (item);
     }

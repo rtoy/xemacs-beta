@@ -425,11 +425,13 @@ With one argument, copy STRING without its properties.
    necessary for ESCAPECHAR to appear once in a substring. */
 
 static Lisp_Object
-split_string_by_ichar_1 (const Ibyte *string, Bytecount size,
-                         Ichar sepchar, int unescape, Ichar escapechar)
+split_string_by_ichar_1 (Lisp_Object reloc, const Ibyte *string,
+                         Bytecount size, Ichar sepchar, int unescape,
+                         Ichar escapechar)
 {
   Lisp_Object result = Qnil;
   const Ibyte *end = string + size;
+  Boolint extentsp = STRINGP (reloc) && string_extent_info (reloc) != NULL;
 
   if (unescape)
     {
@@ -507,10 +509,24 @@ split_string_by_ichar_1 (const Ibyte *string, Bytecount size,
                                            unescape_cursor
                                            - unescape_buffer_ptr),
                               result);
+              if (extentsp)
+                {
+                  stretch_string_extents (XCAR (result), reloc, 0,
+                                          string - XSTRING_DATA (reloc),
+                                          p - string,
+                                          unescape_cursor
+                                          - unescape_buffer_ptr);
+                }
             }
           else
             {
               result = Fcons (make_string (string, p - string), result);
+              if (extentsp)
+                {
+                  copy_string_extents (XCAR (result), reloc, 0,
+                                       string - XSTRING_DATA (reloc),
+                                       p - string);
+                }
             }
           if (p < end)
             {
@@ -533,6 +549,11 @@ split_string_by_ichar_1 (const Ibyte *string, Bytecount size,
               INC_IBYTEPTR (p);
             }
           result = Fcons (make_string (string, p - string), result);
+          if (extentsp)
+            {
+              copy_string_extents (XCAR (result), reloc, 0,
+                                   string - XSTRING_DATA (reloc), p - string);
+            }
           if (p < end)
             {
               string = p;
@@ -565,7 +586,7 @@ split_external_path (const Extbyte *path)
   if (!newlen)
     return Qnil;
 
-  return split_string_by_ichar_1 (newpath, newlen, SEPCHAR, 0, 0);
+  return split_string_by_ichar_1 (Qnil, newpath, newlen, SEPCHAR, 0, 0);
 }
 
 Lisp_Object
@@ -578,7 +599,7 @@ split_env_path (const CIbyte *evarname, const Ibyte *default_)
     path = default_;
   if (!path)
     return Qnil;
-  return split_string_by_ichar_1 (path, qxestrlen (path), SEPCHAR, 0, 0);
+  return split_string_by_ichar_1 (Qnil, path, qxestrlen (path), SEPCHAR, 0, 0);
 }
 
 /* Ben thinks [or thought in 1998] this function should not exist or be
@@ -598,14 +619,15 @@ will be necessary for a single ESCAPE-CHAR to appear in the output string.
 
   CHECK_STRING (string);
   CHECK_CHAR (sepchar);
+
   if (!NILP (escape_char))
     {
       CHECK_CHAR (escape_char);
       escape_ichar = XCHAR (escape_char);
     }
-  return split_string_by_ichar_1 (XSTRING_DATA (string),
-                                  XSTRING_LENGTH (string),
-                                  XCHAR (sepchar),
+
+  return split_string_by_ichar_1 (string, XSTRING_DATA (string),
+                                  XSTRING_LENGTH (string), XCHAR (sepchar),
                                   !NILP (escape_char), escape_ichar);
 }
 

@@ -1,3 +1,24 @@
+2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (read-from-minibuffer):
+	Bind `help-form' within this function rather than using
+	help-keymap-with-help-key.
+
+	* help.el (function-really-at-point):
+	Rename this label from #'function-at-point, which should fix the
+	build (the file byte-compiled and ran fine, which is usually
+	enough). Thank you Mats Lidell and the buildbot.
+
+2016-11-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (function-at-point): New.
+	* help.el (function-at-event): New.
+	* help.el (function-called-at-point): Reworked.
+	* help.el (function-at-point): Reworked.
+	* help.el (help-keymap-with-help-key): Removed, long obsolete.
+	Add support for detecting the current Lisp function if we are in
+	the context of a C file.
+
 2016-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* dumped-lisp.el (preloaded-file-list):

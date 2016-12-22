@@ -203,7 +203,19 @@ This is a naive implementation in Lisp.  "
   ;; Test aset
   (let ((string (string (make-char 'ascii 69) (make-char 'latin-iso8859-2 69))))
     (aset string 0 (make-char 'latin-iso8859-2 42))
-    (Assert (eq (aref string 1) (make-char 'latin-iso8859-2 69))))
+    (Assert (eq (aref string 1) (make-char 'latin-iso8859-2 69)))
+
+    (when (fboundp 'string-char-byte-conversion-info)
+      (let ((latin1 "aufw\xe4ndiges Basteln gef\xe4llt mir wenig"))
+        (Assert (eql (count ?\xe4 latin1) 2))
+        (Assert (eql (position ?\xe4 latin1)
+                     (getf (string-char-byte-conversion-info latin1)
+                           'ascii-begin)))
+        (Assert (eql (aset latin1 4 ?e) ?e))
+        (Assert (eql (count ?\xe4 latin1) 1))
+        (Assert (eql (position ?\xe4 latin1)
+                     (getf (string-char-byte-conversion-info latin1)
+                           'ascii-begin))))))
 
   ;;---------------------------------------------------------------
   ;; Test coding system functions
