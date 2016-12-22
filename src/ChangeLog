@@ -1,3 +1,79 @@
+2016-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (Fwrite_sequence):
+	If END is specified, don't error on a circular list in this
+	function.
+
+2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (uint32_t_to_lisp, int32_t_to_lisp):
+	Use better conditions here when deciding whether a C value can fit
+	into a Lisp fixnum.
+
+2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Write to the normal stdio objects, stderr_out(), stdout_out().
+	The only advantage with the previous implementation using
+	write_string_to_external_output_va() was that long-ish output got
+	truncated, which is not actually an advantage at all. The normal
+	stdio objects don't GC (which is good, because
+	write_string_to_external_output_va() uses them), so there's no
+	GC-safety issue.
+
+	* doprnt.c:
+	* doprnt.c (stderr_out):
+	* doprnt.c (stdout_out):
+	Move these functions here from print.c.
+	* doprnt.c (stderr_out_lisp):
+	Call GETTEXT() on FMT for this function too, for consistency with
+	the others.
+	* print.c:
+	Move stderr_out(), stdout_out() to doprnt.c with the bulk of the
+	rest of the functions that take format strings.
+	* lisp.h: Move their declarations together with the rest of the
+	functions from doprnt.c.
+
+2016-12-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (set_string_char):
+	Check the index parameter for validity within this function, which
+	is cheaper than in our callers.
+	* data.c (Faref):
+	Make this ON for Mule, not O2N.
+	* data.c (Faset):
+	Use set_string_char()'s new index checking rather than traversing
+	the string needlessly for Mule strings.
+	* lisp.h (struct Lisp_String):
+	Document a problem with the ascii_begin field in strings.
+	* text.h:
+	Make set_string_char available on non-Mule for completeness.
+
+2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (define_key_check_and_coerce_keysym):
+	Don't redundantly call strlen on the keysym name, check the string
+	length of the symbol name before calling qxememcmp on various
+	GNU-specific keysym names, and don't redundantly check the
+	various symbol objects corresponding to those GNU-specific keysym
+	names when coercing the keysym.
+	(define_key_check_and_coerce_keysym): Sigh, the C++ build doesn't
+	like qxememcmp with Ibyte * arguments, just compare the interned
+	symbols instead when looking for the GNU-specific keysym names,
+	which is cheaper and will placate g++.
+
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* casefiddle.c:
+	* casefiddle.c (casify_object):
+	* fns.c (split_string_by_ichar_1):
+	* fns.c (split_external_path):
+	* fns.c (split_env_path):
+	* fns.c (Fsplit_string_by_char):
+	* menubar.c:
+	* menubar.c (Fnormalize_menu_text):
+	* menubar.c (syms_of_menubar):
+	Propagate extent information in a few more places.
+
 2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (print_table_entry):

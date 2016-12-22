@@ -597,7 +597,7 @@
                      (search "nimmer" string) string))
      (EE (make-extent (search " mehr" string) (search "!" string)
                       string))
-     (property-name '#:secret-token) substituted pE pEE)
+     (property-name '#:secret-token) substituted pE pEE split)
   (setf (extent-property E 'duplicable) t
         (extent-property E property-name) t
         (extent-property E 'face) 'green
@@ -630,6 +630,47 @@
   
   (Assert (equal (concat ostring "\\{find-file}")
                  (substitute-command-keys (concat ostring
-                                                  "\\=\\{find-file}")))))
+                                                  "\\=\\{find-file}"))))
+
+  (setq split (split-string-by-char ostring ?\x20))
+  (Assert (eql 7 (length split)) "length of split string as expected")
+  (Assert (extentp (setf pE (car (extent-list (fourth split) nil nil nil
+                                              property-name))))
+          "checking extent copied, \"meine\"")
+  (Assert (eql (extent-start-position pE) 0))
+  (Assert (eql (extent-end-position pE) (length (fourth split))))
+  (Assert (extentp (setf pE (car (extent-list (fifth split) nil nil nil
+                                              property-name))))
+          "checking extent copied, \"Tochter\"")
+  (Assert (eql (extent-start-position pE) 0))
+  (Assert (eql (extent-end-position pE) (length (fifth split))))
+
+  (Assert (extentp (setf pEE (car (extent-list (seventh split) nil nil nil
+                                               'count))))
+          "checking extent copied, \"mehr!\"")
+  (Assert (eql (extent-start-position pEE) 0))
+  (Assert (eql (extent-end-position pEE) (1- (length (seventh split)))))
+
+  (let ((TOCHTER (upcase (fifth split))) MEINE
+        (env current-language-environment))
+    (Assert (extentp (setf pE (car (extent-list TOCHTER nil nil nil
+                                                property-name))))
+            "checking extent copied, \"TOCHTER\"")
+    (Assert (eql (extent-start-position pE) 0))
+    (Assert (eql (extent-end-position pE) (length TOCHTER)))
+    (when (featurep 'mule)
+      (unwind-protect
+           (progn
+             ;; Make our case substitution vary byte length.
+             (set-language-environment "Turkish")
+             (setq MEINE (upcase (fourth split)))
+             (Assert (extentp (setf pE (car (extent-list MEINE nil nil nil
+                                                         property-name))))
+                     "checking extent copied, \"MEINE\"")
+             (Assert (eql (extent-start-position pE) 0))
+             (Assert (eql (extent-end-position pE) (length MEINE)))
+             (Assert (equal MEINE
+                            (decode-coding-string "ME\xc4\xb0NE" 'utf-8))))
+        (set-language-environment env)))))
 
 ;;; end of extent-tests.el

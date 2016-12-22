@@ -2746,7 +2746,11 @@ struct Lisp_String
 	     if and only if this flag is non-zero. */
 	  unsigned int modiffp :1;
 	  /* Number of chars at beginning of string that are one byte in length
-	     (byte_ascii_p) */
+	     (byte_ascii_p)
+
+             This is badly named, in that it is a value that describes the
+             *end* of the ASCII stretch. #### Refactor after merging
+             unicode-internal. */
 	  unsigned int ascii_begin :NUM_ASCII_BEGIN_BITS;
 	} v;
     } u;
@@ -4734,6 +4738,10 @@ MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
 MODULE_API void write_fmt_string_lisp_va (Lisp_Object stream,
                                           const CIbyte *fmt, va_list);
 
+void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void stderr_out_lisp (const CIbyte *, ...);
+void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+
 Lisp_Object emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
                                         va_list vargs);
 Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc, ...);
@@ -5860,9 +5868,6 @@ void write_ascstring (Lisp_Object stream, const Ascbyte *str)
 }
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
-void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void stderr_out_lisp (const CIbyte *, ...);
-void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void debug_out_lisp (const CIbyte *, ...);

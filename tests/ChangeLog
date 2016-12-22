@@ -1,3 +1,14 @@
+2016-12-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Minimal testing of the ascii-begin property when
+	#'string-char-byte-conversion-info is available.
+
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test extent propagation by #'split-string-by-char, #'upcase.
+
 2016-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (char-table-with-string):

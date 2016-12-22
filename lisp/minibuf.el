@@ -407,7 +407,8 @@ See also the variable `completion-highlight-first-word-only' for
 	  (mconfig (if (eq frame (selected-frame))
 		       nil (current-window-configuration frame)))
 	  (oconfig (current-window-configuration))
-	  (minibuffer-default default))
+	  (minibuffer-default default)
+          (help-form minibuffer-help-form))
      (unwind-protect
          (progn
            (set-buffer (reset-buffer buffer))
@@ -443,9 +444,7 @@ See also the variable `completion-highlight-first-word-only' for
 		 (insert initial-contents)
 		 (setq current-minibuffer-contents initial-contents
 		       current-minibuffer-point (point))))
-           (use-local-map (help-keymap-with-help-key
-			   (or keymap minibuffer-local-map)
-			   minibuffer-help-form))
+           (use-local-map (or keymap minibuffer-local-map))
            (let ((mouse-grabbed-buffer
 		  (and minibuffer-smart-completion-tracking-behavior
 		       (current-buffer)))

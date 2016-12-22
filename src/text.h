@@ -2100,11 +2100,7 @@ string_char_addr (Lisp_Object s, Charcount idx)
 
 /* WARNING: If you modify an existing string, you must call
    bump_string_modiff() afterwards. */
-#ifdef MULE
 void set_string_char (Lisp_Object s, Charcount i, Ichar c);
-#else
-#define set_string_char(s, i, c) set_string_byte (s, i, c)
-#endif /* not MULE */
 
 /* Return index to character before the one at IDX. */
 DECLARE_INLINE_HEADER (
