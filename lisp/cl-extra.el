@@ -813,7 +813,7 @@ available; see `describe-char-unicode-data'."
 					    (upcase (replace-in-string
 						     name "_" " " t))) nil t)
 		 (unicode-to-char (parse-integer (match-string 1)
-                                                 :radix 16)))))))
+                                                 :radix 16))))))))
 
 (defun upper-case-p (character)
   "Return t if CHARACTER is majuscule in the standard case table."
