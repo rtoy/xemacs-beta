@@ -1,3 +1,9 @@
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar.c (Fnormalize_menu_text):
+	Use the correct offset when writing the slack between the %% or %_
+	sequences encountered to our resizing output stream.
+
 2016-12-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fwrite_sequence):
