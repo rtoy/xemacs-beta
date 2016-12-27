@@ -388,8 +388,8 @@
 			(aref [ "January" "February" "March" "April"
 				"May" "June" "July" "August"
 				"September" "October" "November" "December" ]
-			      (1- (string-to-number
-				   (match-string 2 xemacs-release-date))))
+			      (1- (parse-integer xemacs-release-date
+                                                 :start (match-beginning 2))))
 			(match-string 1 xemacs-release-date))
 	      "February 2005 (defaulted in about.el)"))
 	   (emacs-variant-info (if (and xemacs-extra-name
