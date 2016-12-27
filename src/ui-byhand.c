@@ -166,58 +166,6 @@ Return a cons cell of (PIXMAP . MASK) from GtkPixmap OBJECT.
 }
 #endif
 
-
-  CHECK_GTK_OBJECT (curve);
-  CHECK_FIXNUM (length);
-
-  if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
-    {
-      wtaerror ("Object is not a GtkCurve", curve);
-    }
-
-  vector = alloca_array (gfloat, XFIXNUM (length));
-
-  gtk_curve_get_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), XFIXNUM (length), vector);
-  lisp_vector = make_vector (XFIXNUM (length), Qnil);
-
-  for (i = 0; i < XFIXNUM (length); i++)
-    {
-      XVECTOR_DATA (lisp_vector)[i] = make_float (vector[i]);
-    }
-
-  return (lisp_vector);
-}
-
-DEFUN ("gtk-curve-set-vector", Fgtk_curve_set_vector, 2, 2, 0, /*
-Set the vector of points on CURVE to VECTOR.
-*/
-       (curve, vector))
-{
-  gfloat *c_vector = NULL;
-  Elemcount vec_length = 0, i;
-
-  CHECK_GTK_OBJECT (curve);
-  CHECK_VECTOR (vector);
-
-  vec_length = XVECTOR_LENGTH (vector);
-
-  if (!GTK_IS_CURVE (XGTK_OBJECT (curve)->object))
-    {
-      wtaerror ("Object is not a GtkCurve", curve);
-    }
-
-  c_vector = alloca_array (gfloat, vec_length);
-
-  for (i = 0; i < vec_length; i++)
-    {
-      CHECK_FLOAT (XVECTOR_DATA (vector)[i]);
-      c_vector[i] = extract_float (XVECTOR_DATA (vector)[i]);
-    }
-
-  gtk_curve_set_vector (GTK_CURVE (XGTK_OBJECT (curve)->object), vec_length, c_vector);
-  return (Qt);
-}
-
 DEFUN ("gtk-label-get", Fgtk_label_get, 1, 1, 0, /*
 Return the text of LABEL.
 */

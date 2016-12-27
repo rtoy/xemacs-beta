@@ -1,3 +1,17 @@
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Some by-hand tweaks to get the GTK branch building with recent
+	changes.
+	* glyphs-gtk.c (register_cursor_name):
+	intern_istring()'s calling convention has changed, use the new
+	one.
+	* lisp.h:
+	Declare Fmapconcat here.
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	Be more careful about using DEVICE_XATOM_TIMESTAMP().
+	* ui-byhand.c (Fgtk_label_get):
+	Correct some bad merging here.
+
 2016-12-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* print.c (Fwrite_sequence):
