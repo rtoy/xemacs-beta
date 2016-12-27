@@ -2635,8 +2635,9 @@ You may need to redefine `file-name-sans-versions' as well."
 Uses the free variable `backup-extract-version-start', whose value should be
 the index in the name where the version number begins."
   (if (and (string-match "[0-9]+~$" fn backup-extract-version-start)
-	   (= (match-beginning 0) backup-extract-version-start))
-      (string-to-int (substring fn backup-extract-version-start -1))
+	   (eql (match-beginning 0) backup-extract-version-start))
+      (parse-integer fn :start backup-extract-version-start
+                     :end (- (length fn) 1))
       0))
 
 ;; [[ FSF 21.2 says:

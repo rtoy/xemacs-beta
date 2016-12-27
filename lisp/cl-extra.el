@@ -800,7 +800,7 @@ available; see `describe-char-unicode-data'."
     "Return a character with name NAME, a string."
     (or (car (rassoc* name names :test #'equalp))
 	(if (string-match "^[uU][0-9A-Fa-f]+$" name)
-	    (unicode-to-char (string-to-number (subseq name 1) 16))
+	    (unicode-to-char (parse-integer name :start 1 :radix 16))
 	  (with-current-buffer (get-buffer-create " *Unicode Data*")
 	    (require 'descr-text)
 	    (when (zerop (buffer-size))
@@ -812,7 +812,8 @@ available; see `describe-char-unicode-data'."
 	    (and (re-search-forward (format #r"^\([0-9A-F]\{4,6\}\);%s;"
 					    (upcase (replace-in-string
 						     name "_" " " t))) nil t)
-		 (unicode-to-char (string-to-number (match-string 1) 16))))))))
+		 (unicode-to-char (parse-integer (match-string 1)
+                                                 :radix 16)))))))
 
 (defun upper-case-p (character)
   "Return t if CHARACTER is majuscule in the standard case table."

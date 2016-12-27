@@ -655,7 +655,8 @@ the output of \\[universal-argument] \\[what-cursor-position] .  "
 
 	      ;; Now, store the information.
 	      (setq leading-unicode
-		    (string-to-number (substring leading-unicode 3) 16)
+		    (parse-integer leading-unicode :start 3 :end (match-end 1)
+                                   :radix 16)
 		    leading-unicode (format "%04X" leading-unicode)
 		    character-end (prog2 (end-of-line) (point)))
 	      (put-database leading-unicode
