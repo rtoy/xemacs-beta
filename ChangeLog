@@ -1,3 +1,8 @@
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure:
+	Regenerate for the GTK branch.
+
 2016-11-05  Michael Sperber  <mike@xemacs.org>
 
 	* configure.ac: Disable ASLR on macOS Sierra..

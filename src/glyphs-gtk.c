@@ -546,9 +546,8 @@ gtk_locate_pixmap_file (Lisp_Object name)
 static void
 register_cursor_name (const char *real_name, int value)
 {
-  Ibyte *name = alloca_ibytes (strlen (real_name));
-  int len = strlen (real_name);
-  int i;
+  Bytecount len = strlen (real_name), i;
+  Ibyte *name = alloca_ibytes (len);
 
   /* real_name is an ASCII string. */
   /* strlen ("GDK_") == 4 */
@@ -563,8 +562,8 @@ register_cursor_name (const char *real_name, int value)
     }
   name[i-4] = 0;
   
-  Vgtk_cursor_names = Facons (intern_istring (name), make_fixnum (value),
-                              Vgtk_cursor_names);
+  Vgtk_cursor_names = Facons (intern_istring (name, i - 4, Qnil, Vobarray),
+                              make_fixnum (value), Vgtk_cursor_names);
 }
 
 /*
