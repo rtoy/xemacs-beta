@@ -34,31 +34,34 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* These functions convert from the selection data read from the server into
    something that we can use from elisp, and vice versa.
 
-	Type:	Format:	Size:		Elisp Type:
-	-----	-------	-----		-----------
-	*	8	*		String
-	ATOM	32	1		Symbol
-	ATOM	32	> 1		Vector of Symbols
-	*	16	1		Integer
-	*	16	> 1		Vector of Integers
-	*	32	1		if <=16 bits: Integer
-					if > 16 bits: Cons of top16, bot16
-	*	32	> 1		Vector of the above
+        Type:   Format: Size: Elisp Type:
+        -----   ------- ----- -----------
+        *       8       *     String
+        ATOM    32      1     Symbol
+        ATOM    32      > 1   Vector of Symbols
+        *       16      1     Fixnum
+        *       16      > 1   Vector of fixnums
+        *       32      1     Fixnum, if value fits in FIXNUM_VALBITS
+                              Else bignum, if bignum support available
+                              Else, cons of top 15 bits, bottom 16 bits
+        *       32      > 1   Vector of the above
 
    NOTE NOTE NOTE:
    Format == 32 means that the buffer will be C longs, which need not be
    32-bit quantities.  See the note in select-x.c (x_get_window_property).
 
-   When converting a Lisp number to C, it is assumed to be of format 16 if
-   it is an integer, and of format 32 if it is a cons of two integers.
+   When converting a Lisp integer to C, it is assumed to be of format 16 if it
+   can be represented as a 16-bit twos' complement integer, and of format 32
+   if not.
 
-   When converting a vector of numbers from Elisp to C, it is assumed to be
-   of format 16 if every element in the vector is an integer, and is assumed
-   to be of format 32 if any element is a cons of two integers.
+   When converting a vector of integers from Lisp to C, it is assumed to be of
+   format 16 if every element in the vector can be represented as a 16-bit
+   twos' complement integer, and of format 32 if any element cannot.
 
    When converting an object to C, it may be of the form (SYMBOL . <data>)
    where SYMBOL is what we should claim that the type is.  Format and
-   representation are as above.
+   representation are as above, with the complication that if SYMBOL is
+   TIMESTAMP, an integer in DATA is treated as unsigned.
 
    NOTE: Under Mule, when someone shoves us a string without a type, we
    set the type to `COMPOUND_TEXT' and automatically convert to Compound
@@ -72,14 +75,14 @@ selection_data_to_lisp_data (struct device *d,
 			     const Rawbyte *data,
 			     Bytecount size,
 			     XE_ATOM_TYPE type,
-			     int format)
+			     int fermat)
 {
 #ifdef THIS_IS_X
   if (type == DEVICE_XATOM_NULL (d))
     return QNULL;
 
   /* Convert any 8-bit data to a string, for compactness. */
-  else if (format == 8)
+  else if (fermat == 8)
     return make_extstring ((Extbyte *) data, size,
 			    type == DEVICE_XATOM_TEXT (d) ||
 			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
@@ -93,7 +96,7 @@ selection_data_to_lisp_data (struct device *d,
     return QNULL;
 
   /* Convert any 8-bit data to a string, for compactness. */
-  else if (format == 8)
+  else if (fermat == 8)
     return make_extstring ((Extbyte *) data, size,
 			    ((type == gdk_atom_intern ("TEXT", FALSE)) ||
 			     (type == gdk_atom_intern ("COMPOUND_TEXT", FALSE)))
@@ -112,19 +115,42 @@ selection_data_to_lisp_data (struct device *d,
 	  Elemcount len = size / sizeof (XE_ATOM_TYPE);
 	  Lisp_Object v = Fmake_vector (make_fixnum (len), Qzero);
 	  for (i = 0; i < len; i++)
-	    Faset (v, make_fixnum (i), XE_ATOM_TO_SYMBOL (d, ((XE_ATOM_TYPE *) data) [i]));
+	    Faset (v, make_fixnum (i),
+                   XE_ATOM_TO_SYMBOL (d, ((XE_ATOM_TYPE *) data) [i]));
 	  return v;
 	}
     }
+  /* Convert a single 16 or 32 bit number to a Lisp integer. If bignums are
+     not available, selection_data_to_lisp_data() can return a cons, with the
+     car a fixnum containing the higher-order 16 bits, the cdr the lower-order
+     16 bits. */
+  else if (fermat == 16 && size == sizeof (INT_16_BIT))
+    {
+      return make_fixnum ((EMACS_INT) (((INT_16_BIT *) data) [0]));
+    }
+  else if (fermat == 32 && size == sizeof (INT_32_BIT))
+    {
+      if (type == DEVICE_XATOM_TIMESTAMP (d))
+        {
+          return uint32_t_to_lisp (((UINT_32_BIT *) data) [0]);
+        }
 
-  /* Convert a single 16 or small 32 bit number to a Lisp Int.
-     If the number is > 16 bits, convert it to a cons of integers,
-     16 bits in each half.
-   */
-  else if (format == 32 && size == sizeof (long))
-    return word_to_lisp (((unsigned long *) data) [0]);
-  else if (format == 16 && size == sizeof (short))
-    return make_fixnum ((int) (((unsigned short *) data) [0]));
+      return int32_t_to_lisp (((INT_32_BIT *) data) [0]);
+    }
+  else if (fermat == 32 && size == sizeof (long) &&
+           sizeof (long) != sizeof (INT_32_BIT))
+    {
+#ifdef THIS_IS_X
+      if (type == DEVICE_XATOM_TIMESTAMP (d))
+        {
+          return uint32_t_to_lisp ((UINT_32_BIT)(*((long *) data)));
+        }
+#endif
+
+      /* Sigh. 32 bit values are always passed back as longs, independent of
+         the size of longs. */
+      return int32_t_to_lisp ((INT_32_BIT)(*((long *) data)));
+    }
 
   /* Convert any other kind of data to a vector of numbers, represented
      as above (as an integer, or a cons of two 16 bit integers).
@@ -142,30 +168,48 @@ selection_data_to_lisp_data (struct device *d,
      Right now the fact that the return type was SPAN is discarded before
      lisp code gets to see it.
    */
-  else if (format == 16)
+  else if (fermat == 16)
     {
-      Elemcount i;
-      Lisp_Object v = make_vector (size / 4, Qzero);
-      for (i = 0; i < size / 4; i++)
+      Elemcount i, count = size / 2;
+      Lisp_Object v = make_vector (count, Qzero);
+      for (i = 0; i < count; i++)
 	{
-	  int j = (int) ((unsigned short *) data) [i];
+	  int j = (int) ((INT_16_BIT *) data) [i];
 	  Faset (v, make_fixnum (i), make_fixnum (j));
 	}
       return v;
     }
-  else
+  else if (fermat == 32 && sizeof (long) == 4)
     {
       Elemcount i;
       Lisp_Object v = make_vector (size / 4, Qzero);
       for (i = 0; i < size / 4; i++)
 	{
-	  unsigned long j = ((unsigned long *) data) [i];
-	  Faset (v, make_fixnum (i), word_to_lisp (j));
+	  INT_32_BIT j = ((INT_32_BIT *) data) [i];
+	  XVECTOR_DATA (v) [i] = int32_t_to_lisp (j);
 	}
       return v;
     }
-}
+  else if (fermat == 32)
+    {
+      Elemcount ii, count = size / sizeof (long);
+      Lisp_Object v = make_vector (count, Qzero);
 
+      for (ii = 0; ii < count; ++ii)
+        {
+          INT_32_BIT jj = (INT_32_BIT) (((long *)(data))[ii]);
+          XVECTOR_DATA (v) [ii] = int32_t_to_lisp (jj);
+        }
+
+      return v;
+    }
+
+  warn_when_safe (Vwindow_system, Qselection_conversion_error,
+                  "selection_data_to_lisp_data: format %d: not understood",
+                  fermat);
+
+  return Qnil;
+}
 
 static void
 lisp_data_to_selection_data (struct device *d,
@@ -239,24 +283,53 @@ lisp_data_to_selection_data (struct device *d,
       (*(XE_ATOM_TYPE **) data_ret) [0] = XE_SYMBOL_TO_ATOM (d, obj, 0);
       if (NILP (type)) type = QATOM;
     }
-  else if (FIXNUMP (obj) &&
-	   XFIXNUM (obj) <= 0x7FFF &&
-	   XFIXNUM (obj) >= -0x8000)
+  else if (FIXNUMP (obj) && !((EMACS_UINT) (XREALFIXNUM (obj)) & ~0xFFFF))
     {
+    sixteen_bit_ok:
       *format_ret = 16;
       *size_ret = 1;
-      *data_ret = xnew_rawbytes (sizeof (short) + 1);
-      (*data_ret) [sizeof (short)] = 0;
-      (*(short **) data_ret) [0] = (short) XFIXNUM (obj);
+      *data_ret = xnew_rawbytes (sizeof (INT_16_BIT) + 1);
+      (*data_ret) [sizeof (INT_16_BIT)] = 0;
+      (*(INT_16_BIT **) data_ret) [0] = (INT_16_BIT) XFIXNUM (obj);
       if (NILP (type)) type = QINTEGER;
     }
-  else if (FIXNUMP (obj) || CONSP (obj))
+  else if (EQ (type, QTIMESTAMP) && (INTEGERP (obj) || CONSP (obj)))
     {
+      /* We used to treat all our 32-bit integer values as unsigned, which is
+         wrong according to the X documentation. However, treating 32-bit
+         timestamps as signed isn't practical. Special-case them as
+         unsigned.
+
+         Mozilla and Chrome have special magic so timestamps don't wrap around
+         on long-running processes, and this may be reasonable for us too. */
+      UINT_32_BIT staging = lisp_to_uint32_t (obj);
+
       *format_ret = 32;
       *size_ret = 1;
+      /* Each element in DATA_RET must be sizeof (long) in length, even when
+         FORMAT_RET is 32 and sizeof (long) is e.g. 64. */
       *data_ret = xnew_rawbytes (sizeof (long) + 1);
       (*data_ret) [sizeof (long)] = 0;
-      (*(unsigned long **) data_ret) [0] = lisp_to_word (obj);
+      (*(long **) data_ret) [0] = staging;
+    }
+  else if (INTEGERP (obj) || CONSP (obj))
+    {
+      /* lisp_to_int32_t() can error, call it before allocating anything. */
+      INT_32_BIT staging = lisp_to_int32_t (obj);
+
+      if (!((UINT_32_BIT) staging & ~0xFFFF))
+        {
+          obj = make_fixnum (staging);
+          goto sixteen_bit_ok;
+        }
+
+      *format_ret = 32;
+      *size_ret = 1;
+      /* Each element in DATA_RET must be sizeof (long) in length, even when
+         FORMAT_RET is 32 and sizeof (long) is e.g. 64. */
+      *data_ret = xnew_rawbytes (sizeof (long) + 1);
+      (*data_ret) [sizeof (long)] = 0;
+      (*(long **) data_ret) [0] = staging;
       if (NILP (type)) type = QINTEGER;
     }
   else if (VECTORP (obj))
@@ -270,17 +343,22 @@ lisp_data_to_selection_data (struct device *d,
       if (SYMBOLP (XVECTOR_DATA (obj) [0]))
 	/* This vector is an ATOM set */
 	{
+          /* Type-check before allocation. */
+          for (i = 0; i < XVECTOR_LENGTH (obj); i++)
+            {
+              CHECK_SYMBOL (XVECTOR_DATA (obj)[i]);
+            }
+
 	  if (NILP (type)) type = QATOM;
 	  *size_ret = XVECTOR_LENGTH (obj);
 	  *format_ret = 32;
 	  *data_ret = xnew_rawbytes ((*size_ret) * sizeof (XE_ATOM_TYPE));
 	  for (i = 0; i < *size_ret; i++)
-	    if (SYMBOLP (XVECTOR_DATA (obj) [i]))
-	      (*(XE_ATOM_TYPE **) data_ret) [i] =
-		XE_SYMBOL_TO_ATOM (d, XVECTOR_DATA (obj) [i], 0);
-	    else
-              syntax_error
-		("all elements of the vector must be of the same type", obj);
+            {
+              (*(XE_ATOM_TYPE **) data_ret) [i] =
+                XE_SYMBOL_TO_ATOM (d, XVECTOR_DATA (obj) [i], 0);
+            }
+
 	}
 #if 0 /* #### MULTIPLE doesn't work yet */
       else if (VECTORP (XVECTOR_DATA (obj) [0]))
@@ -312,25 +390,44 @@ lisp_data_to_selection_data (struct device *d,
       else
 	/* This vector is an INTEGER set, or something like it */
 	{
-	  *size_ret = XVECTOR_LENGTH (obj);
-	  if (NILP (type)) type = QINTEGER;
 	  *format_ret = 16;
-	  for (i = 0; i < *size_ret; i++)
-	    if (CONSP (XVECTOR_DATA (obj) [i]))
-	      *format_ret = 32;
-	    else if (!FIXNUMP (XVECTOR_DATA (obj) [i]))
-	      syntax_error
-		("all elements of the vector must be integers or conses of integers", obj);
+	  *size_ret = XVECTOR_LENGTH (obj);
 
-	  *data_ret = xnew_rawbytes (*size_ret * (*format_ret/8));
 	  for (i = 0; i < *size_ret; i++)
-	    if (*format_ret == 32)
-	      (*((unsigned long **) data_ret)) [i] =
-		lisp_to_word (XVECTOR_DATA (obj) [i]);
-	    else
-	      (*((unsigned short **) data_ret)) [i] =
-		(unsigned short) lisp_to_word (XVECTOR_DATA (obj) [i]);
-	}
+            {
+              /* Dry-run conversion for type checking, so we error before any
+                 allocation. */
+              INT_32_BIT checked = lisp_to_int32_t (XVECTOR_DATA (obj)[i]);
+
+              if ((UINT_32_BIT) checked & ~0xFFFF)
+                {
+                  *format_ret = 32;
+                }
+            }
+
+	  if (NILP (type)) type = QINTEGER;
+	  *data_ret = xnew_rawbytes (*size_ret *
+                                     (*format_ret == 16 ? 2 : sizeof (long)));
+
+          if (*format_ret == 32)
+            {
+              for (i = 0; i < *size_ret; i++)
+                {
+                  /* Yes, this is intentionally long **. See
+                     select-x.c and the XChangeProperty man page. */
+                  (*((long **) data_ret)) [i] =
+                    lisp_to_int32_t (XVECTOR_DATA (obj) [i]);
+                }
+            }
+          else
+            {
+              for (i = 0; i < *size_ret; i++)
+                {
+                  (*((INT_16_BIT **) data_ret)) [i] =
+                    (INT_16_BIT) lisp_to_int32_t (XVECTOR_DATA (obj) [i]);
+                }
+            }
+        }
     }
   else
     invalid_argument ("unrecognized selection data", obj);

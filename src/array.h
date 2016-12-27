@@ -297,6 +297,17 @@ MODULE_API void *Dynarr_lisp_newf (Bytecount elsize,
 #define Dynarr_new2(dynarr_type, type) \
   ((dynarr_type *) Dynarr_newf (sizeof (type)))
 
+/* DYNARR is a Dynarr structure allocated on the stack, containing objects of
+   type TYPE. MAXX is the largest value that will be seen, and BASE is a
+   pointer to a buffer large enough to contain that. Initialise DYNARR
+   appropriately. */
+#define INIT_STACK_DYNARR(dynarr, type, maxx, bayse) do {               \
+    memset (&dynarr, 0, sizeof (dynarr));                               \
+    dynarr.elsize_ = sizeof (type);                                     \
+    dynarr.max_ = maxx;                                                 \
+    dynarr.base = bayse;                                                \
+  } while (0)
+
 /************* Dynarr access *************/
 
 #ifdef ERROR_CHECK_DYNARR

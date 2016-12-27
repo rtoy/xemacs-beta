@@ -218,14 +218,14 @@ or if you change your font path, you can call this to re-initialize the menus."
       (menu-split-long-menu
        (mapcar
 	(lambda (item)
-	  (setq f (menu-item-strip-accelerator-spec (aref item 0))
-		entry (vassoc f (aref dcache 0)))
-	  (if (and (or (member weight (aref entry 1))
+	  (setq f (menu-item-strip-accelerator-spec (elt item 0))
+		entry (assoc f (aref dcache 0)))
+	  (if (and (or (member weight (elt entry 1))
 		       ;; mswindows often allows any weight
-		       (member "" (aref entry 1)))
-		   (or (member size (aref entry 2))
+		       (member "" (elt entry 1)))
+		   (or (member size (elt entry 2))
 		       (and (not font-menu-ignore-scaled-fonts)
-			    (member 0 (aref entry 2)))))
+			    (member 0 (elt entry 2)))))
 	      (enable-menu-item item)
 	    (disable-menu-item item))
 	  (if (string-equal family f)
@@ -257,9 +257,9 @@ or if you change your font path, you can call this to re-initialize the menus."
       (mapcar
        (lambda (item)
 	 (setq s (nth 3 (aref item 1)))
-	 (if (or (member s (aref entry 2))
+	 (if (or (member s (elt entry 2))
 		 (and (not font-menu-ignore-scaled-fonts)
-		      (member 0 (aref entry 2))))
+		      (member 0 (elt entry 2))))
 	     (enable-menu-item item)
 	   (disable-menu-item item))
 	 ;; #### God save the Queen!
@@ -290,7 +290,7 @@ or if you change your font path, you can call this to re-initialize the menus."
       (mapcar
        (lambda (item)
 	 (setq w (aref item 0))
-	 (if (member w (aref entry 1))
+	 (if (member w (elt entry 1))
 	     (enable-menu-item item)
 	   (disable-menu-item item))
 	 (if (string-equal weight w)

@@ -31,64 +31,6 @@ MINT *bignum_min_long, *bignum_max_long, *bignum_max_ulong;
 MINT *bignum_min_llong, *bignum_max_llong, *bignum_max_ullong;
 short div_rem;
 
-char *
-bignum_to_string (bignum b, int base)
-{
-  REGISTER unsigned int i;
-  unsigned int bufsize = 128U, index = 0U;
-  int sign;
-  char *buffer = xnew_array (char, 128), *retval;
-  MINT *quo = MP_ITOM (0);
-  short rem;
-
-  /* FIXME: signal something if base is < 2 or doesn't fit into a short. */
-
-  /* Save the sign for later */
-  sign = bignum_sign (b);
-
-  if (sign == 0)
-    {
-      XREALLOC_ARRAY (buffer, char, 2);
-      buffer[0] = '0';
-      buffer[1] = '\0';
-      return buffer;
-    }
-  /* Copy abs(b) into quo for destructive modification */
-  else if (sign < 0)
-    MP_MSUB (bignum_zero, b, quo);
-  else
-    MP_MOVE (b, quo);
-
-  /* Loop over the digits of b (in BASE) and place each one into buffer */
-  for (i = 0U; MP_MCMP(quo, bignum_zero) > 0; i++)
-    {
-      MP_SDIV (quo, base, quo, &rem);
-      if (index == bufsize)
-	{
-	  bufsize <<= 1;
-	  XREALLOC_ARRAY (buffer, char, bufsize);
-	}
-      buffer[index++] = rem < 10 ? rem + '0' : rem - 10 + 'a';
-    }
-  MP_MFREE (quo);
-
-  /* Reverse the digits, maybe add a minus sign, and add a null terminator */
-  bufsize = index + (sign < 0 ? 1 : 0) + 1;
-  retval = xnew_array (char, bufsize);
-  if (sign < 0)
-    {
-      retval[0] = '-';
-      i = 1;
-    }
-  else
-    i = 0;
-  for (; i < bufsize - 1; i++)
-    retval[i] = buffer[--index];
-  retval[bufsize - 1] = '\0';
-  xfree (buffer);
-  return retval;
-}
-
 #define BIGNUM_TO_TYPE(type,accumtype) do {	\
     if (0 == sign)				\
       {						\

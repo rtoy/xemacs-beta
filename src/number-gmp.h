@@ -81,7 +81,10 @@ extern gmp_randstate_t random_state;
    mpz_sizeinbase (b, 2) <= (sizeof(unsigned long long) << 3))
 
 /***** Bignum: conversions *****/
-#define bignum_to_string(b,base)        mpz_get_str (NULL, base, b)
+#define bignum_size_decimal(b) ((mpz_sizeinbase (b, 10) + 2) * MAX_ICHAR_LEN)
+#define bignum_size_octal(b) ((mpz_sizeinbase (b, 8) + 2) * MAX_ICHAR_LEN)
+#define bignum_size_hex(b) ((mpz_sizeinbase (b, 16) + 2) * MAX_ICHAR_LEN)
+#define bignum_size_binary(b) ((mpz_sizeinbase (b, 2) + 2) * MAX_ICHAR_LEN)
 #define bignum_to_int(b)                ((int) mpz_get_si (b))
 #define bignum_to_uint(b)               ((unsigned int) mpz_get_ui (b))
 #define bignum_to_long(b)               mpz_get_si (b)
@@ -124,6 +127,15 @@ extern void bignum_set_llong(bignum b, long long l);
 #define bignum_gcd(res,b1,b2)           mpz_gcd (res, b1, b2)
 #define bignum_lcm(res,b1,b2)           mpz_lcm (res, b1, b2)
 
+/* For converting to numbers with an arbitrary base. */
+DECLARE_INLINE_HEADER (
+UINT_16_BIT
+bignum_div_rem_uint_16_bit (bignum res, bignum numerator, UINT_16_BIT denom)
+)
+{
+  return (UINT_16_BIT) mpz_tdiv_q_ui (res, numerator, denom);
+}
+
 /***** Bignum: bit manipulations *****/
 #define bignum_and(res,b1,b2)           mpz_and (res, b1, b2)
 #define bignum_ior(res,b1,b2)           mpz_ior (res, b1, b2)
@@ -155,7 +167,9 @@ extern void bignum_set_llong(bignum b, long long l);
 #define ratio_canonicalize(r)           mpq_canonicalize (r)
 
 /***** Ratio: conversions *****/
-#define ratio_to_string(r,base)         mpq_get_str (NULL, base, r)
+#define ratio_size_in_base(r, b)                                        \
+  ((mpz_sizeinbase (mpq_numref (r), b) + 2 + \
+    (mpz_sizeinbase (mpq_denref (r), b))) * MAX_ICHAR_LEN)
 #define ratio_to_int(r)                 ((int) (mpq_get_d (r)))
 #define ratio_to_uint(r)                ((unsigned int) (mpq_get_d (r)))
 #define ratio_to_long(r)                ((long) (mpq_get_d (r)))

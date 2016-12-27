@@ -387,8 +387,7 @@ check_if_suppressed (Ibyte *nonreloc, Lisp_Object reloc)
 void
 ebolify_bytecode_constants (Lisp_Object vector)
 {
-  int len = XVECTOR_LENGTH (vector);
-  int i;
+  Elemcount len = XVECTOR_LENGTH (vector), i;
 
   for (i = 0; i < len; i++)
     {
@@ -1760,10 +1759,13 @@ read_escape (Lisp_Object readcharfun)
 	  }
 	if (i >= 0400)
 	  {
-	    read_syntax_error ((Ascbyte *) emacs_sprintf_malloc
-			       (NULL,
-				"Non-ISO-8859-1 octal character escape, "
-				"?\\%.3o", i));
+#define OVERLONG_OCTAL_INFO "Non-ISO-8859-1 octal character escape, ?\\%.3o"
+            Ascbyte buf[sizeof (OVERLONG_OCTAL_INFO) + MAX_ICHAR_LEN * 3];
+            emacs_snprintf ((Ibyte *) buf, sizeof (buf),
+                            OVERLONG_OCTAL_INFO, i);
+            read_syntax_error (buf);
+
+#undef OVERLONG_OCTAL_INFO
 	  }
 	return i;
       }
@@ -1876,14 +1878,21 @@ read_atom (Lisp_Object readcharfun,
   Ibyte *read_ptr
     = (Ibyte *) resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
 
+  /* If a token was preceded by #:, it's always a symbol. */
+  if (uninterned_symbol)
+    {
+      /* SBCL errors if an uninterned symbol has numeric
+         syntax. Maybe we should too. GNU doesn't, CLISP doesn't,
+         we never have. */
+      return Fmake_symbol (make_string (read_ptr, len));
+    }
+
   /* Is it an integer?
 
      If a token had any backslashes in it, it is disqualified from being an
      integer or a float.  This means that 123\456 is a symbol, as is \123
-     (which is the way (intern "123") prints).  Also, if token was preceded by
-     #:, it's always a symbol. */
-
-  if (!(saw_a_backslash || uninterned_symbol))
+     (which is the way (intern "123") prints). */
+  if (!saw_a_backslash)
     {
       Lisp_Object got = get_char_table (firstchar, Vdigit_fixnum_map);
       Fixnum fixval = FIXNUMP (got) ? XREALFIXNUM (got) : -1;
@@ -1897,13 +1906,24 @@ read_atom (Lisp_Object readcharfun,
          parse_integer() on every symbol we see. */
       if (starts_like_an_int_p)
         {
-          num = parse_integer (read_ptr, &endp, len, 10, 1, Qnil);
+          num = parse_integer (read_ptr, &endp, len, 10,
+                               JUNK_ALLOWED | CHECK_OVERFLOW_SYNTAX,
+                               Qnil);
         }
 
-      if (INTEGERP (num))
+      if (!NILP (num))
         {
           if (endp == (read_ptr + len))
             {
+#ifndef HAVE_BIGNUM
+              if (UNBOUNDP (num))
+                {
+                  return Fsignal (Qunsupported_type,
+                                  list3 (build_ascstring ("bignum"),
+                                         make_string (read_ptr, len),
+                                         make_fixnum (10)));
+                }
+#endif
               /* We consumed the whole atom, it's definitely an integer. */
               return num;
             }
@@ -1914,6 +1934,15 @@ read_atom (Lisp_Object readcharfun,
               INC_IBYTEPTR (endp);
               if (endp == (read_ptr + len))
                 {
+#ifndef HAVE_BIGNUM
+                  if (UNBOUNDP (num))
+                    {
+                      return Fsignal (Qunsupported_type,
+                                      list3 (build_ascstring ("bignum"),
+                                             make_string (read_ptr, len),
+                                             make_fixnum (10)));
+                    }
+#endif
                   return num;
                 }
             }
@@ -1933,11 +1962,13 @@ read_atom (Lisp_Object readcharfun,
                     {
                       denom = parse_integer (endp, &endp,
                                              len - (endp - read_ptr), 10,
-                                             1, Qnil);
+                                             JUNK_ALLOWED |
+                                             CHECK_OVERFLOW_SYNTAX,
+                                             Qnil);
                     }
                 }
 
-              if (INTEGERP (denom) && endp == (read_ptr + len))
+              if (!NILP (denom) && endp == (read_ptr + len))
                 {
                   if (ZEROP (denom))
                     {
@@ -1947,20 +1978,24 @@ read_atom (Lisp_Object readcharfun,
                                       make_string (read_ptr, len)));
                     }
 #ifndef HAVE_RATIO
-                  /* Support a couple of trivial ratios in the reader to allow
-                     people to test ratio syntax: */
-                  if (EQ (denom, make_fixnum (1)))
+                  if (!(UNBOUNDP (num) || UNBOUNDP (denom)))
                     {
-                      return num;
-                    }
-                  if (!NILP (Fequal (num, denom)))
-                    {
-                      return make_fixnum (1);
+                      /* Support a couple of trivial ratios in the reader to
+                         allow people to test ratio syntax: */
+                      if (EQ (denom, make_fixnum (1)))
+                        {
+                          return num;
+                        }
+                      if (!NILP (Fequal (num, denom)))
+                        {
+                          return make_fixnum (1);
+                        }
                     }
 
                   return Fsignal (Qunsupported_type,
                                   list3 (build_ascstring ("ratio"),
-                                         num, denom));
+                                         make_string (read_ptr, len),
+                                         make_fixnum (10)));
 #else
                   switch (promote_args (&num, &denom))
                     {
@@ -1992,17 +2027,9 @@ read_atom (Lisp_Object readcharfun,
         }
     }
 
-  {
-    Lisp_Object sym;
-    if (uninterned_symbol)
-      sym = Fmake_symbol ( make_string ((Ibyte *) read_ptr, len));
-    else
-      {
-	Lisp_Object name = make_string ((Ibyte *) read_ptr, len);
-	sym = Fintern (name, Qnil);
-      }
-    return sym;
-  }
+  /* XEmacs change; delay allocating the Lisp string until we're sure we need
+     to. */
+  return intern_istring (read_ptr, len, Qnil, Vobarray);
 }
 
 static Lisp_Object
@@ -2010,21 +2037,22 @@ read_rational (Lisp_Object readcharfun, Fixnum base)
 {
   /* This function can GC */
   int saw_a_backslash;
-  Ibyte *buf_end, *buf_ptr, *slash;
+  const Ibyte *buf_end, *buf_ptr, *slash;
   Bytecount len = read_atom_0 (readcharfun, -1, &saw_a_backslash);
   Lisp_Object num = Qnil, denom = Qzero;
 
   buf_ptr = resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
 
-  if ((slash = (Ibyte *) memchr (buf_ptr, '/', len)) == NULL)
+  if ((slash = (const Ibyte *) memchr (buf_ptr, '/', len)) == NULL)
     {
       /* Can't be a ratio, parse as as an integer. */ 
-      return parse_integer (buf_ptr, &buf_end, len, base, 0, Qnil);
+      return parse_integer (buf_ptr, (Ibyte **) &buf_end, len, base, 0, Qnil);
     }
 
   /* No need to call isratio_string, the detailed parsing (and erroring, as
      necessary) will be done by parse_integer. */
-  num = parse_integer (buf_ptr, &buf_end, slash - buf_ptr, base, 0, Qnil);
+  num = parse_integer (buf_ptr, (Ibyte **) &buf_end, slash - buf_ptr, base,
+                       CHECK_OVERFLOW_SYNTAX, Qnil);
 
   INC_IBYTEPTR (slash);
   if (slash < (buf_ptr + len))
@@ -2032,8 +2060,9 @@ read_rational (Lisp_Object readcharfun, Fixnum base)
       Ichar cc = itext_ichar (slash);
       if (cc != '+' && cc != '-')
         {
-          denom = parse_integer (slash, &buf_end, len - (slash - buf_ptr),
-                                 base, 0, Qnil);
+          denom = parse_integer (slash, (Ibyte **) &buf_end,
+                                 len - (slash - buf_ptr), base,
+                                 CHECK_OVERFLOW_SYNTAX, Qnil);
         }
     }
 
@@ -2047,19 +2076,24 @@ read_rational (Lisp_Object readcharfun, Fixnum base)
     }
 
 #ifndef HAVE_RATIO
-  /* Support a couple of trivial ratios in the reader to allow people to test
-     ratio syntax: */
-  if (EQ (denom, make_fixnum (1)))
+
+  if (!(UNBOUNDP (num) || UNBOUNDP (denom)))
     {
-      return num;
-    }
-  if (!NILP (Fequal (num, denom)))
-    {
-      return make_fixnum (1);
+      /* Support a couple of trivial ratios in the reader to allow people to
+         test ratio syntax: */
+      if (EQ (denom, make_fixnum (1)))
+        {
+          return num;
+        }
+      if (!NILP (Fequal (num, denom)))
+        {
+          return make_fixnum (1);
+        }
     }
 
   return Fsignal (Qunsupported_type, list3 (build_ascstring ("ratio"),
-                                            num, denom));
+                                            make_string (buf_ptr, len),
+                                            make_fixnum (base)));
 #else
   switch (promote_args (&num, &denom))
     {

@@ -1153,19 +1153,18 @@ unicode_to_ichar (int code, Lisp_Object_dynarr *charsets)
 	  qxesprintf(setname, "jit-ucs-charset-%d", number_of_jit_charsets);
 
 	  Vcurrent_jit_charset = Fmake_charset 
-	    (intern_istring (setname), Vcharset_descr, 
+	    (intern ((const CIbyte *) setname), Vcharset_descr, 
 	     /* Set encode-as-utf-8 to t, to have this character set written
 		using UTF-8 escapes in escape-quoted and ctext. This
 		sidesteps the fact that our internal character -> Unicode
 		mapping is not stable from one invocation to the next.  */
-	     nconc2 (list2(Qencode_as_utf_8, Qt),
-		     nconc2 (list6(Qcolumns, make_fixnum(1), Qchars, make_fixnum(96),
-				   Qdimension, make_fixnum(2)),
-			     list6(Qregistries, Qunicode_registries,
-				   Qfinal, make_char(last_jit_charset_final),
-				   /* This CCL program is initialised in
-				      unicode.el. */
-				   Qccl_program, Qccl_encode_to_ucs_2))));
+	     listu (Qencode_as_utf_8, Qt, Qcolumns, make_fixnum (1),
+		    Qchars, make_fixnum (96), Qdimension, make_fixnum (2),
+		    Qregistries, Qunicode_registries,
+		    Qfinal, make_char (last_jit_charset_final),
+		    /* This CCL program is initialised in
+		       unicode.el. */
+		    Qccl_program, Qccl_encode_to_ucs_2, Qunbound));
 
 	  /* Record for the Unicode infrastructure that we've created
 	     this character set.  */
@@ -2834,7 +2833,7 @@ static void
 unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
 	       int UNUSED (escapeflag))
 {
-  write_fmt_string_lisp (printcharfun, "(%s", 1,
+  write_fmt_string_lisp (printcharfun, "(%s",
                          unicode_getprop (cs, Qunicode_type));
   if (XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (cs))
     write_ascstring (printcharfun, ", little-endian");

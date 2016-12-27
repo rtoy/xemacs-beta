@@ -297,7 +297,7 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
     print_internal (the_specs, printcharfun, 1);
   if (!NILP (sp->fallback))
     {
-      write_fmt_string_lisp (printcharfun, " fallback=%S", 1, sp->fallback);
+      write_fmt_string_lisp (printcharfun, " fallback=%S", sp->fallback);
     }
   unbind_to (count);
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));

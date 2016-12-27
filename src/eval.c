@@ -4705,7 +4705,7 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
 
   write_fmt_string (printcharfun,
-                    "#<INTERNAL OBJECT (XEmacs bug?) %d multiple values,"
+                    "#<INTERNAL OBJECT (XEmacs bug?) %ld multiple values,"
                     " data (", count);
 
   for (index = 0; index < count;)
@@ -4714,7 +4714,7 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
           (index < first_desired ||
            index >= (first_desired + (allocated_count - 1))))
         {
-          write_fmt_string (printcharfun, "#<discarded-multiple-value %d>",
+          write_fmt_string (printcharfun, "#<discarded-multiple-value %ld>",
                             index);
         }
       else
@@ -5778,7 +5778,6 @@ maybe_get_trapping_problems_backtrace (void)
       GCPRO1 (lstream);
       lstream = make_resizing_buffer_output_stream ();
       Fbacktrace (lstream, Qt);
-      Lstream_flush (XLSTREAM (lstream));
       backtrace = resizing_buffer_to_lisp_string (XLSTREAM (lstream));
       Lstream_delete (XLSTREAM (lstream));
       UNGCPRO;
@@ -5847,7 +5846,6 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	    emacs_sprintf_string_lisp
 	    ("%s: Attempt to throw outside of function:"
 	     "To catch `%s' with value `%s'\n\nBacktrace follows:\n\n%s",
-	     Qnil, 4,
 	     build_msg_cistring (warning_string ? warning_string : "error"),
 	     p->thrown_tag, p->thrown_value, p->backtrace);
 	  warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
@@ -5862,7 +5860,6 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	  errstr =
 	    emacs_sprintf_string_lisp
 	    ("%s: (%s %s)\n\nBacktrace follows:\n\n%s",
-	     Qnil, 4,
 	     build_msg_cistring (warning_string ? warning_string : "error"),
 	     p->error_conditions, p->data, p->backtrace);
 

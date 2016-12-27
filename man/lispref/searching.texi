@@ -448,21 +448,22 @@ assigned as a second meaning to the same @samp{\( @dots{} \)} construct
 because there is no conflict in practice between the two meanings.
 Here is an explanation of this feature:
 
-@item \@var{digit}
-matches the same text that matched the @var{digit}th occurrence of a
+@item \@var{num}
+matches the same text that matched the @var{num}th occurrence of a
 @samp{\( @dots{} \)} construct.
 
 In other words, after the end of a @samp{\( @dots{} \)} construct, the
 matcher remembers the beginning and end of the text matched by that
 construct.  Then, later on in the regular expression, you can use
-@samp{\} followed by @var{digit} to match that same text, whatever it
+@samp{\} followed by @var{num} to match that same text, whatever it
 may have been.
 
 The strings matching the first nine @samp{\( @dots{} \)} constructs
 appearing in a regular expression are assigned numbers 1 through 9 in
 the order that the open parentheses appear in the regular expression.
 So you can use @samp{\1} through @samp{\9} to refer to the text matched
-by the corresponding @samp{\( @dots{} \)} constructs.
+by the corresponding @samp{\( @dots{} \)} constructs, and so on past
+@samp{\10} up to the implementation-defined limit, at least @samp{\100}.
 
 For example, @samp{\(.*\)\1} matches any newline-free string that is
 composed of two identical halves.  The @samp{\(.*\)} matches the first

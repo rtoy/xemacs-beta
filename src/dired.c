@@ -806,20 +806,6 @@ make_directory_hash_table (Lisp_Object path)
     return Qnil;
 }
 
-#if 0
-/* ... never used ... should use list2 directly anyway ... */
-/* NOTE: This function can never return a negative value. */
-Lisp_Object
-wasteful_word_to_lisp (unsigned int item)
-{
-  /* Compatibility: in other versions, file-attributes returns a LIST
-     of two 16 bit integers... */
-  Lisp_Object cons = word_to_lisp (item);
-  XCDR (cons) = Fcons (XCDR (cons), Qnil);
-  return cons;
-}
-#endif
-
 DEFUN ("file-attributes", Ffile_attributes, 1, 2, 0, /*
 Return a list of attributes of file FILENAME.
 Value is nil if specified file cannot be opened.

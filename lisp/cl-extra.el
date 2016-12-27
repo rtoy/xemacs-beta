@@ -364,17 +364,7 @@ If STATE is t, return a new state object seeded from the time of day."
 
 ;;; Sequence functions.
 
-;; XEmacs; #'subseq is in C.
-
-(defun concatenate (type &rest seqs)
-  "Concatenate, into a sequence of type TYPE, the argument SEQUENCES."
-  ;; XEmacs change: use case instead of cond for clarity
-  (case type
-    (vector (apply 'vconcat seqs))
-    (string (apply 'concat seqs))
-    (list   (reduce 'append seqs :from-end t :initial-value nil))
-    (bit-vector (apply 'bvconcat seqs))
-    (t (coerce (reduce 'append seqs :from-end t :initial-value nil) type))))
+;; XEmacs; #'subseq, #'concatenate are in C.
 
 ;;; List functions.
 
@@ -619,6 +609,17 @@ This also does some trivial optimizations to make the form prettier."
 (eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
 
 ;; XEmacs, functions from Common Lisp.
+(defun streamp (object)
+  "Return non-nil if OBJECT is a stream.
+
+This is something accepted as the OUTPUT-STREAM argument to `write-string' and
+created with, e.g., `make-string-output-stream'.
+
+This function returns nil for the symbols `t', `nil' or `standard-output',
+despite that these values are accepted as the OUTPUT-STREAM argument to
+`write-string'."
+  (eq (type-of object) 'stream))
+
 (defun* write-string (string &optional output-stream &key (start 0) end)
   "Output STRING to stream OUTPUT-STREAM.
 
@@ -649,6 +650,11 @@ OUTPUT-STREAM)."
   (prog1
       (write-sequence string output-stream :start start :end end)
     (terpri output-stream)))
+
+(defun terpri (&optional stream)
+  "Output a newline to STREAM.  Return t.
+If STREAM is omitted or nil, the value of `standard-output' is used."
+  (not (not (write-char ?\n stream))))
 
 ;; Implementation limits.
 

@@ -371,12 +371,14 @@ init_tls (void)
   /* Set options on the model socket */
   if (SSL_OptionSet (nss_model, SSL_SECURITY, PR_TRUE) != SECSuccess)
     signal_error (Qtls_error, "NSS cannot enable model socket", NSS_ERRSTR);
+#if NSS_VMAJOR < 3 || (NSS_VMAJOR == 3 && NSS_VMINOR < 24)
   if (SSL_OptionSet (nss_model, SSL_ENABLE_SSL2, PR_FALSE) != SECSuccess)
     signal_error (Qtls_error, "NSS unable to disable SSLv2", NSS_ERRSTR);
   if (SSL_OptionSet (nss_model, SSL_V2_COMPATIBLE_HELLO, PR_FALSE)
       != SECSuccess)
     signal_error (Qtls_error, "NSS unable to disable SSLv2 handshake",
 		  NSS_ERRSTR);
+#endif
   if (SSL_OptionSet (nss_model, SSL_ENABLE_DEFLATE, PR_FALSE) != SECSuccess)
     signal_error (Qtls_error, "NSS unable to disable deflate", NSS_ERRSTR);
   if (SSL_OptionSet (nss_model, SSL_HANDSHAKE_AS_CLIENT, PR_TRUE)
@@ -718,7 +720,7 @@ gnutls_pk11_password (void * UNUSED (userdata), int UNUSED (attempt),
   args[2] = build_ascstring (" (");
   args[3] = build_extstring (token_url, Qnative);
   args[4] = build_ascstring (")");
-  lsp_password = call1 (Qread_passwd, Fconcat (5, args));
+  lsp_password = call1 (Qread_passwd, concatenate (5, args, Qstring, 0));
   c_password = LISP_STRING_TO_EXTERNAL (lsp_password, Qnative);
 
   /* Insert the password */
@@ -799,7 +801,7 @@ openssl_error_string (void)
   args[2] = build_ascstring (ERR_func_error_string (err));
   args[3] = build_ascstring (":");
   args[4] = build_ascstring (ERR_reason_error_string (err));
-  return Fconcat (5, args);
+  return concatenate (countof (args), args, Qstring, 0);
 }
 
 static unsigned long
@@ -1089,9 +1091,37 @@ openssl_password (char *buf, int size, int UNUSED (rwflag),
   return (int) strlen (buf);
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x1010000fL
+static void *
+openssl_malloc (size_t size, const char * UNUSED (file), int UNUSED (line))
+{
+  return xmalloc (size);
+}
+
+static void *
+openssl_realloc (void *ptr, size_t size, const char * UNUSED (file),
+		 int UNUSED (line))
+{
+  return xrealloc (ptr, size);
+}
+
+static void
+openssl_free (void *ptr, const char * UNUSED (file), int UNUSED (line))
+{
+  xfree (ptr);
+}
+#endif
+
 void
 init_tls (void)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x1010000fL
+  /* Load the default configuration */
+  OPENSSL_init_crypto (OPENSSL_INIT_LOAD_CONFIG, NULL);
+
+  /* Tell openssl to use our memory allocation functions */
+  CRYPTO_set_mem_functions (openssl_malloc, openssl_realloc, openssl_free );
+#else
   /* Load the default configuration */
   OPENSSL_config (NULL);
 
@@ -1099,6 +1129,7 @@ init_tls (void)
   CRYPTO_set_mem_functions ((void * (*)(size_t)) xmalloc,
 			    (void * (*)(void *, size_t)) xrealloc,
 			    xfree_1);
+#endif
 
   /* Load human-readable error messages */
   SSL_load_error_strings ();

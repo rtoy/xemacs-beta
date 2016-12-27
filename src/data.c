@@ -68,7 +68,9 @@ Lisp_Object Qerror_lacks_explanatory_string;
 Lisp_Object Qfloatp;
 Lisp_Object Q_junk_allowed,  Q_radix, Q_radix_table;
 
-Lisp_Object Vdigit_fixnum_map, Vfixnum_to_char_map;
+Lisp_Object Vdigit_fixnum_map, Vdigit_fixnum_ascii;
+Lisp_Object Vfixnum_to_majuscule_map, Vfixnum_to_minuscule_map;
+Lisp_Object Vfixnum_to_majuscule_ascii;
 
 Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
 
@@ -416,35 +418,6 @@ nil is returned.
   else
     return Qnil;
 }
-
-DEFUN ("char-int-p", Fchar_int_p, 1, 1, 0, /*
-Return t if OBJECT is an integer that can be converted into a character.
-See `char-int'.
-*/
-       (object))
-{
-  return CHAR_INTP (object) ? Qt : Qnil;
-}
-
-DEFUN ("char-or-char-int-p", Fchar_or_char_int_p, 1, 1, 0, /*
-Return t if OBJECT is a character or an integer that can be converted into one.
-*/
-       (object))
-{
-  return CHAR_OR_CHAR_INTP (object) ? Qt : Qnil;
-}
-
-DEFUN ("char-or-string-p", Fchar_or_string_p, 1, 1, 0, /*
-Return t if OBJECT is a character (or a char-int) or a string.
-It is semi-hateful that we allow a char-int here, as it goes against
-the name of this function, but it makes the most sense considering the
-other steps we take to maintain compatibility with the old character/integer
-confoundedness in older versions of E-Lisp.
-*/
-       (object))
-{
-  return CHAR_OR_CHAR_INTP (object) || STRINGP (object) ? Qt : Qnil;
-}
 
 DEFUN ("fixnump", Ffixnump, 1, 1, 0, /*
 Return t if OBJECT is a fixnum.
@@ -466,30 +439,6 @@ On builds without bignum support, this function is identical to `fixnump'.
        (object))
 {
   return INTEGERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("integer-or-marker-p", Finteger_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is an integer or a marker (editor pointer).
-*/
-       (object))
-{
-  return INTEGERP (object) || MARKERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("integer-or-char-p", Finteger_or_char_p, 1, 1, 0, /*
-Return t if OBJECT is an integer or a character.
-*/
-       (object))
-{
-  return INTEGERP (object) || CHARP (object) ? Qt : Qnil;
-}
-
-DEFUN ("integer-char-or-marker-p", Finteger_char_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is an integer, character or a marker (editor pointer).
-*/
-       (object))
-{
-  return INTEGERP (object) || CHARP (object) || MARKERP (object) ? Qt : Qnil;
 }
 
 DEFUN ("natnump", Fnatnump, 1, 1, 0, /*
@@ -529,23 +478,6 @@ Return t if OBJECT is a number (floating point or integer).
        (object))
 {
   return NUMBERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("number-or-marker-p", Fnumber_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is a number or a marker.
-*/
-       (object))
-{
-  return NUMBERP (object) || MARKERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("number-char-or-marker-p", Fnumber_char_or_marker_p, 1, 1, 0, /*
-Return t if OBJECT is a number, character or a marker.
-*/
-       (object))
-{
-  return (NUMBERP (object) || CHARP (object) || MARKERP (object))
-    ? Qt : Qnil;
 }
 
 DEFUN ("floatp", Ffloatp, 1, 1, 0, /*
@@ -754,8 +686,35 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
     }
   else if (STRINGP (array))
     {
-      if (idx >= string_char_length (array)) goto range_error;
-      return make_char (string_ichar (array, idx));
+      const Ibyte *data = XSTRING_DATA (array);
+      Charcount ii = XSTRING_ASCII_BEGIN (array);
+
+      sledgehammer_check_ascii_begin (array);
+
+      if (idx < ii)
+        {
+          data += idx;
+        }
+      else
+        {
+          const Ibyte *endp = data + XSTRING_LENGTH (array);
+
+          data += ii;
+
+          while (ii < idx && data < endp)
+            {
+              INC_IBYTEPTR (data);
+              ++ii;
+            }
+          
+          if (ii != idx) goto range_error;
+        }
+
+#ifdef ERROR_CHECK_TEXT
+      assert (itext_ichar (data) == string_ichar (array, idx));
+#endif
+
+      return make_char (itext_ichar (data));
     }
   else
     {
@@ -818,7 +777,9 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
   else if (STRINGP (array))
     {
       CHECK_CHAR_COERCE_INT (newval);
-      if (idx >= string_char_length (array)) goto range_error;
+
+      /* Let it do the range checking, keep it ON rather than O2N
+         for Mule. */
       set_string_char (array, idx, XCHAR (newval));
       bump_string_modiff (array);
     }
@@ -1166,88 +1127,119 @@ Return t if NUMBER is zero.
     }
 }
 
-/* Convert between a 32-bit value and a cons of two 16-bit values.
-   This is used to pass 32-bit integers to and from the user.
-   Use time_to_lisp() and lisp_to_time() for time values.
+/* Convert between an unsigned 32-bit value and some Lisp value that preserves
+   all its bits. Use an integer if the value will fit (that is, if the value
+   is <= MOST_POSITIVE_FIXNUM_UNSIGNED, or if we have bignums available);
+   otherwise, return a cons of two sixteen-bit values.  Both types of return
+   value need GC protection.
+
+   This is used to pass 32-bit integers to and from the user.  Use
+   make_time() and lisp_to_time() for time_t values.
 
    If you're thinking of using this to store a pointer into a Lisp Object
    for internal purposes (such as when calling record_unwind_protect()),
    try using make_opaque_ptr()/get_opaque_ptr() instead. */
 Lisp_Object
-word_to_lisp (unsigned int item)
+uint32_t_to_lisp (UINT_32_BIT item)
 {
+  if (item <= MOST_POSITIVE_FIXNUM_UNSIGNED) /* Fits in a positive fixnum? */
+    {
+      return make_fixnum (item);
+    }
+
+#ifdef HAVE_BIGNUM
+  return make_unsigned_integer ((EMACS_UINT) item);
+#else
   return Fcons (make_fixnum (item >> 16), make_fixnum (item & 0xffff));
+#endif
 }
 
-unsigned int
-lisp_to_word (Lisp_Object item)
+UINT_32_BIT
+lisp_to_uint32_t (Lisp_Object item)
 {
-  if (FIXNUMP (item))
-    return XFIXNUM (item);
+  if (INTEGERP (item))
+    {
+      check_integer_range (item, Qzero,
+#ifdef HAVE_BIGNUM
+                           make_unsigned_integer (MAKE_32_BIT_UNSIGNED_CONSTANT
+                                                  (0xffffffff))
+#else
+                           Vmost_positive_fixnum
+#endif
+                           );
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (item))
+        {
+          /* EMACS_UINT will have at least 32 value bits, and we've checked
+             the range above, this value is not greater than #xFFFFFFFF. */
+          return (UINT_32_BIT) bignum_to_emacs_uint (XBIGNUM_DATA (item));
+        }
+#endif
+      return XFIXNUM (item);
+    }
   else
     {
       Lisp_Object top = Fcar (item);
       Lisp_Object bot = Fcdr (item);
-      CHECK_FIXNUM (top);
-      CHECK_FIXNUM (bot);
+
+      check_integer_range (top, Qzero, make_fixnum (0xFFFF));
+      check_integer_range (bot, Qzero, make_fixnum (0xFFFF));
+
+      type_checking_assert (FIXNUMP (top) && FIXNUMP (bot));
+
       return (XFIXNUM (top) << 16) | (XFIXNUM (bot) & 0xffff);
     }
 }
 
-
-DEFUN ("number-to-string", Fnumber_to_string, 1, 1, 0, /*
-Convert NUMBER to a string by printing it in decimal.
-Uses a minus sign if negative.
-NUMBER may be an integer or a floating point number.
-If supported, it may also be a ratio.
-*/
-       (number))
+Lisp_Object
+int32_t_to_lisp (INT_32_BIT item)
 {
-  CHECK_NUMBER (number);
-
-  if (FLOATP (number))
+  if (NUMBER_FITS_IN_A_FIXNUM ((EMACS_INT) item))
     {
-      Ascbyte pigbuf[350];	/* see comments in float_to_string */
-
-      float_to_string (pigbuf, XFLOAT_DATA (number));
-      return build_ascstring (pigbuf);
+      return make_fixnum (item);
     }
+
 #ifdef HAVE_BIGNUM
-  if (BIGNUMP (number))
-    {
-      Ascbyte *str = bignum_to_string (XBIGNUM_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
-      xfree (str);
-      return retval;
-    }
+  return make_integer ((EMACS_INT) item);
+#else
+  return Fcons (make_fixnum ((UINT_32_BIT) item >> 16),
+                make_fixnum (item & 0xffff));
 #endif
-#ifdef HAVE_RATIO
-  if (RATIOP (number))
-    {
-      Ascbyte *str = ratio_to_string (XRATIO_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
-      xfree (str);
-      return retval;
-    }
-#endif
-#ifdef HAVE_BIGFLOAT
-  if (BIGFLOATP (number))
-    {
-      Ascbyte *str = bigfloat_to_string (XBIGFLOAT_DATA (number), 10);
-      Lisp_Object retval = build_ascstring (str);
-      xfree (str);
-      return retval;
-    }
-#endif
-
-  {
-    Ascbyte buffer[DECIMAL_PRINT_SIZE (long)];
-
-    long_to_string (buffer, XFIXNUM (number));
-    return build_ascstring (buffer);
-  }
 }
 
+INT_32_BIT
+lisp_to_int32_t (Lisp_Object item)
+{
+  if (INTEGERP (item))
+    {
+#if (FIXNUM_VALBITS > 32) || defined(HAVE_BIGNUM)
+      check_integer_range (item, make_integer ((INT_32_BIT) (~0x7FFFFFFF)),
+                           make_integer (0x7fffffff));
+#endif
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (item))
+        {
+          /* EMACS_INT will have at least 32 value bits, and we've checked the
+             range above, this value fits 32 bits. */
+          return (INT_32_BIT) bignum_to_emacs_int (XBIGNUM_DATA (item));
+        }
+#endif
+      return XFIXNUM (item);
+    }
+  else
+    {
+      Lisp_Object top = Fcar (item);
+      Lisp_Object bot = XCDR (item);
+
+      check_integer_range (top, Qzero, make_fixnum (0xFFFF));
+      check_integer_range (bot, Qzero, make_fixnum (0xFFFF));
+
+      type_checking_assert (FIXNUMP (top) && FIXNUMP (bot));
+
+      return (XFIXNUM (top) << 16) | (XFIXNUM (bot) & 0xffff);
+    }
+}
+
 #ifndef HAVE_BIGNUM
 static int
 digit_to_number (int character, int base)
@@ -1505,7 +1497,7 @@ fill_ichar_array (struct chartab_range *range, Lisp_Object UNUSED (table),
   return 0;
 }
 
-static Lisp_Object
+Lisp_Object
 build_fixnum_to_char_map (Lisp_Object radix_table)
 {
   Lisp_Object highest_value, result;
@@ -1582,7 +1574,8 @@ RADIX-TABLE itself is not saved, a read-only copy of it is made and returned.
 
   Vdigit_fixnum_map = Fcopy_char_table (radix_table);
   LISP_READONLY (Vdigit_fixnum_map) = 1;
-  Vfixnum_to_char_map = ftctable;
+  Vfixnum_to_majuscule_map = ftctable;
+  Vfixnum_to_minuscule_map = Fcanoncase (ftctable, Qnil);
 
   return Vdigit_fixnum_map;
 }
@@ -1613,7 +1606,7 @@ values. See `parse-integer' and `digit-fixnum-map'.
                               maximum possible value for the radix is
                               available to us now. */
                            make_fixnum
-                           (XSTRING_LENGTH (Vfixnum_to_char_map)
+                           (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
                             / MAX_ICHAR_LEN)
                            /* Otherwise, calculating that is expensive. Check
                               at least that the radix is not a bignum, the
@@ -1654,8 +1647,8 @@ integer of value less than the maximum value in RADIX-TABLE.
 RADIX-TABLE, if non-nil, is a character table describing characters' numeric
 values. It defaults to the value of `digit-fixnum-map'; see the documentation
 for that variable and for `parse-integer'. This is not specified by Common
-Lisp, and using a value other than the default in `digit-char' is expensive,
-since the inverse map needs to be calculated.
+Lisp, and using a value other than the default, or `digit-fixnum-ascii' is
+expensive, since the inverse map needs to be calculated.
 */
        (weight, radix, radix_table))
 {
@@ -1668,13 +1661,20 @@ since the inverse map needs to be calculated.
   if (!NILP (radix_table) && !EQ (radix_table, Vdigit_fixnum_map))
     {
       CHECK_CHAR_TABLE (radix_table);
-      /* The result of this isn't GCPROd, but the rest of this function
-	 won't GC and continue. */
-      fixnum_to_char_table = build_fixnum_to_char_map (radix_table);
+      if (EQ (Vdigit_fixnum_ascii, radix_table))
+        {
+          fixnum_to_char_table = Vfixnum_to_majuscule_ascii;
+        }
+      else
+        {
+          /* The result of this isn't GCPROd, but the rest of this function
+             won't GC and continue. */
+          fixnum_to_char_table = build_fixnum_to_char_map (radix_table);
+        }
     }
   else
     {
-      fixnum_to_char_table = Vfixnum_to_char_map;
+      fixnum_to_char_table = Vfixnum_to_majuscule_map;
     }
 
   if (!NILP (radix))
@@ -1686,7 +1686,7 @@ since the inverse map needs to be calculated.
     }
 
   /* If weight is in its canonical form (and there's no reason to think it
-     isn't), Vfixnum_to_char_map can't be long enough to handle
+     isn't), Vfixnum_to_majuscule_map can't be long enough to handle
      this. */
   if (BIGNUMP (weight))
     {
@@ -1707,7 +1707,7 @@ since the inverse map needs to be calculated.
 
 Lisp_Object
 parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
-               EMACS_INT base, Boolint junk_allowed, Lisp_Object radix_table)
+               EMACS_INT base, int flags, Lisp_Object radix_table)
 {
   const Ibyte *lim = buf + len, *p = buf;
   EMACS_UINT num = 0, onum = (EMACS_UINT) -1;
@@ -1814,6 +1814,39 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 
  overflow:
 #ifndef HAVE_BIGNUM
+  if ((flags & CHECK_OVERFLOW_SYNTAX))
+    {
+      /* No bignum support, but our callers want our syntax checking, rather
+         than simply erroring on overflow. */
+      result = Qunbound;
+
+      while (p < lim)
+        {
+          c = itext_ichar (p);    
+
+          got = get_char_table (c, radix_table);
+          if (!FIXNUMP (got))
+            {
+              goto loser;
+            }
+
+          cint = XFIXNUM (got);
+          if (cint < 0 || cint >= base)
+            {
+              goto loser;
+            }
+
+          /* Nothing to do in terms of checking for overflow, just advance
+             through the string. */
+
+          INC_IBYTEPTR (p);
+        }
+
+      *buf_end_out = (Ibyte *)  p;
+
+      return result;
+    }
+
   return Fsignal (Qunsupported_type,
                   list3 (build_ascstring ("bignum"), make_string (buf, len),
                          make_fixnum (base)));
@@ -1867,7 +1900,7 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 #endif /* HAVE_BIGNUM */
  loser:
 
-  if (p < lim && !junk_allowed)
+  if (p < lim && !(flags & JUNK_ALLOWED))
     {
       /* JUNK-ALLOWED is zero. If we have stopped parsing because we
 	 encountered whitespace, then we need to check that the rest if the
@@ -1891,12 +1924,12 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
 
   *buf_end_out = (Ibyte *) p;
 
-  if (junk_allowed || (p == lim && onum != (EMACS_UINT) -1))
+  if ((flags & JUNK_ALLOWED) || (p == lim && onum != (EMACS_UINT) -1))
     {
-
-#ifdef HAVE_BIGNUM
       if (!NILP (result))
         {
+
+#ifdef HAVE_BIGNUM
           /* Bignum terminated by whitespace or by non-digit. */
           if (negativland)
             {
@@ -1904,9 +1937,10 @@ parse_integer (const Ibyte *buf, Ibyte **buf_end_out, Bytecount len,
               bignum_mul (XBIGNUM_DATA (result), XBIGNUM_DATA (result),
                           scratch_bignum);
             }
+#endif
+          /* When HAVE_BIGNUM is not defined, this can be Qunbound. */
           return result;
         }
-#endif
 
       if (onum == (EMACS_UINT) -1)
         {
@@ -1993,7 +2027,7 @@ arguments: (STRING &key (START 0) end (RADIX 10) junk-allowed radix-table)
 
   check_integer_range (radix, Qzero,
                        EQ (radix_table, Vdigit_fixnum_map) ?
-                       make_fixnum (XSTRING_LENGTH (Vfixnum_to_char_map)
+                       make_fixnum (XSTRING_LENGTH (Vfixnum_to_majuscule_map)
                                     / MAX_ICHAR_LEN)
                        /* Non-default radix table; calculating the upper limit
                           is is expensive. Check at least that the radix is
@@ -2023,7 +2057,8 @@ arguments: (STRING &key (START 0) end (RADIX 10) junk-allowed radix-table)
     }
 
   result = parse_integer (startp, &end_read, cursor - startp, radixing,
-                          !NILP (junk_allowed), radix_table);
+                          !NILP (junk_allowed) ? JUNK_ALLOWED : 0,
+                          radix_table);
 
   /* This code hasn't been written to handle relocating string data. */ 
   assert (saved_start == XSTRING_DATA (string));
@@ -4171,20 +4206,12 @@ syms_of_data (void)
   DEFSUBR (Ftrue_list_p);
   DEFSUBR (Fconsp);
   DEFSUBR (Fatom);
-  DEFSUBR (Fchar_or_string_p);
   DEFSUBR (Fcharacterp);
-  DEFSUBR (Fchar_int_p);
   DEFSUBR (Fchar_to_int);
   DEFSUBR (Fint_to_char);
-  DEFSUBR (Fchar_or_char_int_p);
   DEFSUBR (Ffixnump);
   DEFSUBR (Fintegerp);
-  DEFSUBR (Finteger_or_marker_p);
-  DEFSUBR (Finteger_or_char_p);
-  DEFSUBR (Finteger_char_or_marker_p);
   DEFSUBR (Fnumberp);
-  DEFSUBR (Fnumber_or_marker_p);
-  DEFSUBR (Fnumber_char_or_marker_p);
   DEFSUBR (Ffloatp);
   DEFSUBR (Fnatnump);
   DEFSUBR (Fnonnegativep);
@@ -4212,7 +4239,6 @@ syms_of_data (void)
   DEFSUBR (Faref);
   DEFSUBR (Faset);
 
-  DEFSUBR (Fnumber_to_string);
   DEFSUBR (Fstring_to_number);
   DEFSUBR (Fset_digit_fixnum_map);
   DEFSUBR (Fdigit_char_p);
@@ -4282,6 +4308,33 @@ The fixnum closest in value to positive infinity.
 */);
   Vmost_positive_fixnum = MOST_POSITIVE_FIXNUM;
 
+  DEFVAR_CONST_LISP ("digit-fixnum-ascii", &Vdigit_fixnum_ascii /*
+Version of `digit-fixnum-map' supporting only ASCII digits.
+
+See the documentation for that variable, and for `parse-integer',
+`digit-char-p', and `digit-char'.  `digit-fixnum-ascii' is most useful for
+parsing text formats defined to support only ASCII digits.
+*/);
+  Vdigit_fixnum_ascii = Fmake_char_table (Qgeneric);
+  set_char_table_default (Vdigit_fixnum_ascii, make_fixnum (-1));
+  {
+    int ii = 0;
+
+    for (ii = 0; ii < 10; ++ii)
+      {
+        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['0' + ii] = make_fixnum(ii);
+      }
+
+    for (ii = 10; ii < 36; ++ii)
+      {
+        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['a' + (ii - 10)]
+          = make_fixnum(ii);
+        XCHAR_TABLE (Vdigit_fixnum_ascii)->ascii['A' + (ii - 10)]
+          = make_fixnum(ii);
+      }
+  }
+  LISP_READONLY (Vdigit_fixnum_ascii) = 1;
+
   DEFVAR_CONST_LISP ("digit-fixnum-map", &Vdigit_fixnum_map /*
 Table used to determine a character's numeric value when parsing.
 
@@ -4289,24 +4342,7 @@ This is a character table with fixnum values. A value of -1 indicates this
 character does not have an assigned numeric value. See `parse-integer',
 `digit-char-p', and `digit-char'.
 */);
-  Vdigit_fixnum_map = Fmake_char_table (Qgeneric);
-  set_char_table_default (Vdigit_fixnum_map, make_fixnum (-1));
-  {
-    int ii = 0;
-
-    for (ii = 0; ii < 10; ++ii)
-      {
-        XCHAR_TABLE (Vdigit_fixnum_map)->ascii['0' + ii] = make_fixnum(ii);
-      }
-
-    for (ii = 10; ii < 36; ++ii)
-      {
-        XCHAR_TABLE (Vdigit_fixnum_map)->ascii['a' + (ii - 10)]
-          = make_fixnum(ii);
-        XCHAR_TABLE (Vdigit_fixnum_map)->ascii['A' + (ii - 10)]
-          = make_fixnum(ii);
-      }
-  }
+  Vdigit_fixnum_map = Fcopy_char_table (Vdigit_fixnum_ascii);
   {
     Ascbyte *fixnum_tab = alloca_ascbytes (36 * MAX_ICHAR_LEN), *ptr;
     int ii;
@@ -4326,9 +4362,25 @@ character does not have an assigned numeric value. See `parse-integer',
        this is too early in the boot sequence to map across a char table. Do
        it by hand. */
     ASSERT_ASCTEXT_ASCII_LEN (fixnum_tab, 36 * MAX_ICHAR_LEN);
-    Vfixnum_to_char_map
-	    = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
-    staticpro (&Vfixnum_to_char_map);
+    Vfixnum_to_majuscule_map
+      = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
+    staticpro (&Vfixnum_to_majuscule_map);
+
+    /* For those occasional times we don't want localised numbers. */
+    Vfixnum_to_majuscule_ascii
+      = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
+    staticpro (&Vfixnum_to_majuscule_ascii);
+
+    memset ((void *)fixnum_tab, 0, 36 * MAX_ICHAR_LEN);
+
+    for (ii = 0, ptr = fixnum_tab; ii < 36; ++ii, ptr += MAX_ICHAR_LEN)
+      {
+	cc = ii < 10 ? '0' + ii : 'a' + (ii - 10);
+	set_itext_ichar ((Ibyte *) ptr, cc);
+      }
+    Vfixnum_to_minuscule_map 
+      = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
+    staticpro (&Vfixnum_to_minuscule_map);
   }
 
 #ifdef DEBUG_XEMACS

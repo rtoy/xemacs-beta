@@ -724,7 +724,6 @@ Future Work
 * Future Work -- Menu API Changes::  
 * Future Work -- Removal of Misc-User Event Type::  
 * Future Work -- Mouse Pointer::  
-* Future Work -- Extents::      
 * Future Work -- Version Number and Development Tree Organization::  
 * Future Work -- Improvements to the @code{xemacs.org} Website::  
 * Future Work -- Keybindings::  
@@ -747,10 +746,6 @@ Future Work -- Mouse Pointer
 
 * Future Work -- Abstracted Mouse Pointer Interface::  
 * Future Work -- Busy Pointer::  
-
-Future Work -- Extents
-
-* Future Work -- Everything should obey duplicable extents::  
 
 Future Work -- Keybindings
 
@@ -814,6 +809,7 @@ Old Future Work
 * Old Future Work -- RTF Clipboard Support::  
 * Old Future Work -- xemacs.org Mailing Address Changes::  
 * Old Future Work -- Lisp callbacks from critical areas of the C code::  
+* Old Future Work -- Everything should obey duplicable extents::  
 
 @end detailmenu
 @end menu
@@ -23393,7 +23389,6 @@ The DOC file contents should probably end up in the dump file.
 * Future Work -- Menu API Changes::  
 * Future Work -- Removal of Misc-User Event Type::  
 * Future Work -- Mouse Pointer::  
-* Future Work -- Extents::      
 * Future Work -- Version Number and Development Tree Organization::  
 * Future Work -- Improvements to the @code{xemacs.org} Website::  
 * Future Work -- Keybindings::  
@@ -24987,7 +24982,7 @@ the other fields in the event type be dependent on this sub-type.  But
 then in essence, we'd just be reimplementing the whole event-type scheme
 inside of misc-user events, which would be rather pointless.
 
-@node Future Work -- Mouse Pointer, Future Work -- Extents, Future Work -- Removal of Misc-User Event Type, Future Work
+@node Future Work -- Mouse Pointer, Future Work -- Version Number and Development Tree Organization, Future Work -- Removal of Misc-User Event Type, Future Work
 @section Future Work -- Mouse Pointer
 @cindex future work, mouse pointer
 @cindex mouse pointer, future work
@@ -25071,53 +25066,8 @@ wait pointer, but trigger the removal of it when we dispatch a user
 event).
 @end enumerate
 
-@node Future Work -- Extents, Future Work -- Version Number and Development Tree Organization, Future Work -- Mouse Pointer, Future Work
-@section Future Work -- Extents
-@cindex future work, extents
-@cindex extents, future work
 
-@menu
-* Future Work -- Everything should obey duplicable extents::  
-@end menu
-
-@node Future Work -- Everything should obey duplicable extents,  , Future Work -- Extents, Future Work -- Extents
-@subsection Future Work -- Everything should obey duplicable extents
-@cindex future work, everything should obey duplicable extents
-@cindex everything should obey duplicable extents, future work
-
-Author: @uref{mailto:ben@@xemacs.org,Ben Wing}
-
-A lot of functions don't properly track duplicable extents.  For
-example, the @code{concat} function does, but the @code{format} function
-does not, and extents in keymap prompts are not displayed either.  All
-of the functions that generate strings or string-like entities should
-track the extents that are associated with the strings.  Currently this
-is difficult because there is no general mechanism implemented for doing
-this.  I propose such a general mechanism, which would not be hard to
-implement, and would be easy to use in other functions that build up
-strings.
-
-The basic idea is that we create a C structure that is analogous to a
-Lisp string in that it contains string data and lists of extents for
-that data.  Unlike standard Lisp strings, however, this structure (let's
-call it @code{lisp_string_struct}) can be incrementally updated and its
-allocation is handled explicitly so that no garbage is generated.  (This
-is important for example, in the event-handling code which would want to
-use this structure, but needs to not generate any garbage for efficiency
-reasons).  Both the string data and the list of extents in this string
-are handled using dynarrs so that it is easy to incrementally update
-this structure.  Functions should exist to create and destroy instances
-of @code{lisp_string_struct} to generate a Lisp string from a
-@code{lisp_string_struct} and vice-versa to append a sub-string of a
-Lisp string to a @code{lisp_string_struct}, to just append characters to
-a @code{lisp_string_struct}, etc.  The only thing possibly tricky about
-implementing these functions is implementing the copying of extents from
-a Lisp string into a @code{lisp_string_struct}.  However, there is
-already a function @code{copy_string_extents()} that does basically this
-exact thing, and it should be easy to create a modified version of this
-function.
-
-@node Future Work -- Version Number and Development Tree Organization, Future Work -- Improvements to the @code{xemacs.org} Website, Future Work -- Extents, Future Work
+@node Future Work -- Version Number and Development Tree Organization, Future Work -- Improvements to the @code{xemacs.org} Website, Future Work -- Mouse Pointer
 @section Future Work -- Version Number and Development Tree Organization
 @cindex future work, version number and development tree organization
 @cindex version number and development tree organization, future work
@@ -33009,6 +32959,7 @@ work still to be done.
 * Old Future Work -- RTF Clipboard Support::  
 * Old Future Work -- xemacs.org Mailing Address Changes::  
 * Old Future Work -- Lisp callbacks from critical areas of the C code::  
+* Old Future Work -- Everything should obey duplicable extents::  
 @end menu
 
 @node Old Future Work -- A Portable Unexec Replacement, Old Future Work -- Indirect Buffers, Old Future Work, Old Future Work
@@ -33429,7 +33380,7 @@ up and to remain.
 
 @uref{../../www.666.com/ben/default.htm,Ben Wing}
 
-@node Old Future Work -- Lisp callbacks from critical areas of the C code,  , Old Future Work -- xemacs.org Mailing Address Changes, Old Future Work
+@node Old Future Work -- Lisp callbacks from critical areas of the C code, Old Future Work -- Everything should obey duplicable extents, Old Future Work -- xemacs.org Mailing Address Changes, Old Future Work
 @section Old Future Work -- Lisp callbacks from critical areas of the C code
 @cindex old future work, lisp callbacks from critical areas of the c code
 @cindex lisp callbacks from critical areas of the c code, old future work
@@ -33535,6 +33486,43 @@ redisplay. (in such a case, all of the bit flags need to be set).  The
 reason that I thought of this is that some coding system translations
 might cause Lisp code to be invoked and C code often invokes these
 translations in sensitive places.
+
+@node Old Future Work -- Everything should obey duplicable extents, Old Future Work -- Lisp callbacks from critical areas of the C code, , Old Future Work
+@subsection Old Future Work -- Everything should obey duplicable extents
+@cindex old future work, everything should obey duplicable extents
+@cindex everything should obey duplicable extents, old future work
+
+Author: @uref{mailto:ben@@xemacs.org,Ben Wing}
+
+A lot of functions don't properly track duplicable extents.  For
+example, the @code{concat} function does, but the @code{format} function
+does not, and extents in keymap prompts are not displayed either.  All
+of the functions that generate strings or string-like entities should
+track the extents that are associated with the strings.  Currently this
+is difficult because there is no general mechanism implemented for doing
+this.  I propose such a general mechanism, which would not be hard to
+implement, and would be easy to use in other functions that build up
+strings.
+
+The basic idea is that we create a C structure that is analogous to a
+Lisp string in that it contains string data and lists of extents for
+that data.  Unlike standard Lisp strings, however, this structure (let's
+call it @code{lisp_string_struct}) can be incrementally updated and its
+allocation is handled explicitly so that no garbage is generated.  (This
+is important for example, in the event-handling code which would want to
+use this structure, but needs to not generate any garbage for efficiency
+reasons).  Both the string data and the list of extents in this string
+are handled using dynarrs so that it is easy to incrementally update
+this structure.  Functions should exist to create and destroy instances
+of @code{lisp_string_struct} to generate a Lisp string from a
+@code{lisp_string_struct} and vice-versa to append a sub-string of a
+Lisp string to a @code{lisp_string_struct}, to just append characters to
+a @code{lisp_string_struct}, etc.  The only thing possibly tricky about
+implementing these functions is implementing the copying of extents from
+a Lisp string into a @code{lisp_string_struct}.  However, there is
+already a function @code{copy_string_extents()} that does basically this
+exact thing, and it should be easy to create a modified version of this
+function.
 
 @c Indexing guidelines
 

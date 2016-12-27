@@ -1,7 +1,1910 @@
+2016-12-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (Fwrite_sequence):
+	If END is specified, don't error on a circular list in this
+	function.
+
+2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (uint32_t_to_lisp, int32_t_to_lisp):
+	Use better conditions here when deciding whether a C value can fit
+	into a Lisp fixnum.
+
+2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Write to the normal stdio objects, stderr_out(), stdout_out().
+	The only advantage with the previous implementation using
+	write_string_to_external_output_va() was that long-ish output got
+	truncated, which is not actually an advantage at all. The normal
+	stdio objects don't GC (which is good, because
+	write_string_to_external_output_va() uses them), so there's no
+	GC-safety issue.
+
+	* doprnt.c:
+	* doprnt.c (stderr_out):
+	* doprnt.c (stdout_out):
+	Move these functions here from print.c.
+	* doprnt.c (stderr_out_lisp):
+	Call GETTEXT() on FMT for this function too, for consistency with
+	the others.
+	* print.c:
+	Move stderr_out(), stdout_out() to doprnt.c with the bulk of the
+	rest of the functions that take format strings.
+	* lisp.h: Move their declarations together with the rest of the
+	functions from doprnt.c.
+
+2016-12-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (set_string_char):
+	Check the index parameter for validity within this function, which
+	is cheaper than in our callers.
+	* data.c (Faref):
+	Make this ON for Mule, not O2N.
+	* data.c (Faset):
+	Use set_string_char()'s new index checking rather than traversing
+	the string needlessly for Mule strings.
+	* lisp.h (struct Lisp_String):
+	Document a problem with the ascii_begin field in strings.
+	* text.h:
+	Make set_string_char available on non-Mule for completeness.
+
+2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (define_key_check_and_coerce_keysym):
+	Don't redundantly call strlen on the keysym name, check the string
+	length of the symbol name before calling qxememcmp on various
+	GNU-specific keysym names, and don't redundantly check the
+	various symbol objects corresponding to those GNU-specific keysym
+	names when coercing the keysym.
+	(define_key_check_and_coerce_keysym): Sigh, the C++ build doesn't
+	like qxememcmp with Ibyte * arguments, just compare the interned
+	symbols instead when looking for the GNU-specific keysym names,
+	which is cheaper and will placate g++.
+
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* casefiddle.c:
+	* casefiddle.c (casify_object):
+	* fns.c (split_string_by_ichar_1):
+	* fns.c (split_external_path):
+	* fns.c (split_env_path):
+	* fns.c (Fsplit_string_by_char):
+	* menubar.c:
+	* menubar.c (Fnormalize_menu_text):
+	* menubar.c (syms_of_menubar):
+	Propagate extent information in a few more places.
+
+2016-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* charset.h:
+	* charset.h (LEADING_BYTE_ASCII):
+	* charset.h (ichar_charset):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c (fixnum_to_string):
+	* doprnt.c (bignum_to_string_1):
+	* doprnt.c (ratio_to_string_1):
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (emacs_doprnt):
+	* print.c (print_internal):
+	* text.h:
+	* text.h (ichar_len_fmt):
+	Rename ichar_itext_len() to ichar_len() for forward-compatibility
+	with the unicode-internal branch.
+	The latter name (with the same functionality) existed previously
+	in charset.h, make it generally available on non-Mule builds.
+
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (intern_istring):
+	Only enlarge the hash table after we're done with PROBE, which is
+	a htentry * pointing into the pre-enlargement hash table. Thank
+	you Mats Lidell and the XEmacs package smoketest.
+
+	* abbrev.c (abbrev_oblookup):
+	Check that abbrev table objects are hash tables, not vectors
+	(something missed on merging my code).
+	* doc.c:
+	#include "elhash.h" to give a declaration for elisp_maphash() and
+	quiet the C++ build.
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (write_fmt_string_va):
+	Parse the format string into a stack-allocated SPECS dynarr in
+	this function, as was done with emacs_vsnprintf, since we need to
+	do a strlen() on the format string anyway and can check the number
+	of %-signs in passing.
+	Cast the argument to write_string_1() for the sake of the C++
+	build.
+	(parse_doprnt_spec):
+	Don't use Vdigit_fixnum_ascii for the gross plausibility check for
+	repositioning specifiers, minimum widths, there's no loss of
+	flexibility (we only accept the ASCII digits anyway) and we're a
+	little more robust when called with very early errors.
+
+	* doprnt.c (write_fmt_string):
+	Implement this in terms of write_fmt_string_va() now that the
+	latter is cheaper than previously.
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Implement obarray as a Lisp hash table object, rather than a vector.
+
+	* abbrev.c:
+	* abbrev.c (abbrev_match_mapper):
+	* abbrev.c (abbrev_match):
+	* abbrev.c (abbrev_oblookup):
+	Move abbrev tables to being implemented in terms of Lisp hash
+	table objects rather than the old-school obarray.
+	* alloc.c:
+	* alloc.c (Fmake_symbol):
+	No need any more for the symbol next slot, obarray is implemented
+	as a hash table with linear probing.
+	* alloc.c (alloc_managed_lcrecord):
+	list->free can be Qnull_pointer for objects allocated before Qnil
+	is correctly initialised, handle this correctly.
+	* doc.c (Fverify_documentation):
+	elisp_maphash() rather than map_obarray(), now Vobarray is a hash
+	table object.
+	* elhash.c:
+	* elhash.c (mark_hash_table_test):
+	No need to have Qnil marked one more time, return http->name
+	instead.
+	* elhash.c (HASH_TABLE_DEFAULT_REHASH_THRESHOLD):
+	* elhash.c (HASHCODE):
+	* elhash.c (KEYS_EQUAL_P):
+	Rename Vhash_table_test_eql, Vhash_table_test_eq to
+	Veq_hash_table_test, Veql_hash_table_test.
+
+	* elhash.c (oblookup): Moved here from symbols.c.
+	Re-implement in terms of our Lisp hash tables, make it possible to
+	use #'equalp as well as #'equal as a test.
+	* elhash.c (intern_istring):
+	Moved here from symbols.c. Use the new Lisp hash table
+	implementation.
+	* elhash.c (intern):
+	Moved here from symbols.c.
+	* elhash.c (intern_massaging_name):
+	Ditto.
+	* elhash.c (Fintern):
+	Move here from symbols.c, support a Lisp hash table
+	obarray. Support a vector PACKAGE by calling out to the autoloaded
+	Lisp #'xemacs-intern-in-vector.
+	* elhash.c (Fintern_soft):
+	Move here from symbols.c, support a Lisp hash table
+	obarray. Support a vector PACKAGE by calling out to the autoloaded
+	Lisp #'xemacs-intern-soft-in-vector.
+	* elhash.c (Funintern):
+	Move here from symbols.c, support a Lisp hash table
+	obarray. Support a vector PACKAGE by calling out to the autoloaded
+	Lisp #'xemacs-unintern-in-vector.
+	* elhash.c (hash_string):
+	Move this here from symbols.c
+	* elhash.c (Fmapatoms):
+	Ditto.
+	* elhash.c (itext_equalp_hash):
+	Change string_equalp_hash to not necessarily use a Lisp string
+	object, useful for symbols encountered by the Lisp reader.
+	* elhash.c (string_equalp_hash):
+	Implement this as a #define.
+	* elhash.c (syms_of_elhash):
+	Initialise the basic hash table tests here, make Fintern,
+	Fintern_soft, Funintern, Fmapatoms available.
+	Make obarray available here.
+	* elhash.c (init_elhash_once_early):
+	Create Vequal_hash_table_test very early; create Vobarray once it
+	is created.
+	* emacs.c (main_1):
+	Call init_elhash_once_early() earlier in the startup sequence,
+	since it now creates obarray.
+	* general-slots.h:
+	Make the symbols for the various default hash table tests
+	available here.
+	* lisp.h (struct Lisp_Symbol):
+	* lisp.h (symbol_name):
+	* lisp.h (XSYMBOL_NAME):
+	No need for the symbol next pointers any more.
+	* minibuf.c:
+	* minibuf.c (map_completion_trad_obarray): New. Map FUNCTION
+	across a traditional emacs obarray, with help from the Lisp
+	#'xemacs-next-iteration-in-vector function.
+	* minibuf.c (map_completion):
+	Use it.
+	* minibuf.c (ignore_completion_p):
+	Since obarray (and presumably other packages) is (are) now a hash table,
+	PREDICATE may be called with either one or two arguments if
+	HASH_TABLE_P. Decide depending on how many arguments PREDICATE
+	takes.
+	* minibuf.c (Ftest_completion):
+	Update the documentation here.
+	* minibuf.c (syms_of_minibuf):
+	We need the symbol xemacs-next-iteration-in-vector available to C.
+	* minibuf.c (reinit_vars_of_minibuf):
+	* symbols.c:
+	* symbols.c (mark_symbol):
+	No more need to mark through sym->next.
+	Move most of the functions dealing with obarrays to elhash.c
+	* symbols.c (Fapropos_internal):
+	Implement this with the hash table code.
+	* symbols.c (flush_all_buffer_local_cache_mapper): New.
+	* symbols.c (flush_all_buffer_local_cache):
+	Implement this using elisp_maphash_unsafe, rather then using our
+	own implementation of mapatoms().
+	* symbols.c (init_symbols_once_early):
+	Intern Qnil using #'puthash.
+	* symbols.c (syms_of_symbols):
+	Remove Fintern and friends from here, they're in elhash.c
+	* symbols.c (vars_of_symbols):
+	Remove this, obarray is now in elhash.c
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fns.c (maplist):
+	Fix a bug in #'mapcon when FUNCTION returns nil.
+
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Further build fixes:
+
+	1. Don't use format as a local variable name, now it is the name of a
+	globally-visible function.
+	2. Move the recently-inlined fixup_internal_substring() to lisp.h
+	from insdel.h, turns out a decent number of the places that used
+	it didn't necessarily #include insdel.h, and it's fine to have it
+	in lisp.h
+	3. Put a declaration for build_fixnum_to_char_map() in lisp.h
+
+	* device-x.c (x_init_device):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c:
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (emacs_vsprintf_string):
+	* doprnt.c (emacs_sprintf_string):
+	* doprnt.c (emacs_vasprintf):
+	* doprnt.c (emacs_asprintf):
+	* doprnt.c (emacs_vsnprintf):
+	* doprnt.c (emacs_snprintf):
+	* frame-x.c (x_wm_hack_wm_protocols):
+	* glyphs.c (decode_device_ii_format):
+	* glyphs.c (decode_image_instantiator_format):
+	* glyphs.c (valid_image_instantiator_format_p):
+	* insdel.h:
+	* lisp.h:
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lisp.h (qxestrcoll):
+	* print.c (debug_out_lisp):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* strftime.c (strftime):
+	* text.c (qxesprintf):
+
+	* text.h (ichar_ascii_p):
+	Make this available on non-MULE builds, always giving 1.
+	
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (print_char_table):
+	typename seems to be a reserved word in C++, rename this
+	variable.
+	* doc.c (Fsubstitute_command_keys):
+	Do some casting here to placate the C++ compiler.
+	* doprnt.c (emacs_doprnt):
+	RETURN_UNGCPRO is only appropriate when returning a Lisp_Object,
+	thank you the C++ compiler.
+	* extents.h:
+	#include "buffer.h" for the sake of stream_extent_position().
+	* lread.c (read_rational):
+	Do some casts to placate the C++ compiler.
+	* number.h:
+	Remove the declarations for {bignum,ratio}_to_string() now they're
+	in lisp.h
+	* redisplay.c (decode_mode_spec):
+	Do some casts to placate the C++ compiler.
+	* search.c (Freplace_match):
+	Ditto.
+	* sequence.c:
+	Remove a couple of symbol declarations that are now in
+	general-slots.h.
+	* tls.h (tls_open):
+	When there's no TLS support, make the stub implementations into
+	legal C.
+
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c:
+	Document why we haven't yet implemented #'format-message or
+	`text-quoting-style'.
+
+2016-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c:
+	* print.c (long_to_string):
+	Fix a bug here when supplied with LONG_MIN, since negation of that
+	value fails.
+	* tests.c (Ftest_long_to_string):
+	Test this.
+	* tests.c (syms_of_tests):
+	Make the test available.
+
+2016-10-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove the now-obsolete long_to_string(), ulong_to_bit_string ().
+	* doprnt.c (emacs_doprnt_1):
+	Remove the separate case for ?i, implement it with the same code
+	as ?d.
+	Use fixnum_to_string_base_10() when writing a float spec to pass
+	to snprintf (), now long_to_string() is gone.
+	* lisp.h:
+	* lisp.h (DECIMAL_PRINT_SIZE): Take account of MAX_ICHAR_LEN in
+	this value, since our number-to-string functions now support
+	non-ASCII.
+	Remove declarations for long_to_string(), ulong_to_bit_string().
+	* number-mp.h (bignum_size_decimal):
+	Update this to reflect the new definition of DECIMAL_PRINT_SIZE.
+	* print.c:
+	Remove implementations of long_to_string, ulong_to_bit_string.
+
+2016-10-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (syms_of_data):
+	Move the DEFSUBR() for #'number-to-string to doprnt.c, with its
+	implementation.
+	* doprnt.c:
+	Document relative performance of fixnum_to_string_base_10 vs. the
+	old long_to_string.
+	* doprnt.c (Fnumber_to_string):
+	* doprnt.c (parse_doprnt_spec):
+	Don't support the enhanced-number-types-specific format
+	converters when being called on C objects.
+	* doprnt.c (get_doprnt_args):
+	* doprnt.c (rewrite_rational_spec): New, refactored out.
+	If SPEC reflects a rational number, rewrite it according to the
+	type of *OBJ, if necessary.
+	* doprnt.c (rewrite_floating_spec): New, refactored out.
+	If SPEC reflects a float or a bigfloat, rewrite according to the
+	type of *OBJ, if necessary.
+	* doprnt.c (emacs_doprnt_1):
+	Restructure this, make a big switch statement on the value of
+	SPEC->CONVERTER, commonest cases first. Only adjust CONVERTER
+	based on the type of OBJ if OBJ is not the expected Lisp type.
+	* doprnt.c (emacs_doprnt):
+	* doprnt.c (syms_of_doprnt):
+	Move the DEFSUBR for #'number-to-string here.
+	* redisplay.c (window_line_number):
+	Return Ibyte * now, as does fixnum_to_string ().
+	* tests.c (Ftest_fixnum_to_string):
+	Update this with a correct value in the flag to
+	fixnum_to_string().
+
+2016-10-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add functionality to convert rationals to strings of arbitrary
+	base to doprnt.c, in preparation for integrating that
+	functionality into #'format.
+
+	* data.c:
+	* data.c (digit_to_number):
+	Move to doprnt.c.
+	* doprnt.c:
+	* doprnt.c (fixnum_to_string_rshift_1):
+	New; convert a fixnum to a printed representation with radix a
+	power of two.
+	* doprnt.c (emacs_uint_to_string_rshift_1):
+	New; convert an EMACS_UINT to a printed representation with radix
+	a power of two.
+	* doprnt.c (fixnum_to_string_general_1):
+	New; convert a fixnum to a printed representation of arbitrary
+	base.
+	* doprnt.c (fixnum_to_string_base_10):
+	New; convert a fixnum to a printed representation base ten, same
+	algorithm as long_to_string ().
+	* doprnt.c (fixnum_to_string):
+	New general function, subsuming the functionality of
+	long_to_string().
+	* doprnt.c (bignum_to_string_1):
+	New; converted a bignum to a string using Vfixnum_to_majuscule_map.
+	* doprnt.c (bignum_to_string):
+	Move this function here, extend it to allow its buffer to be
+	stack-allocated.
+	* doprnt.c (ratio_to_string_1):
+	New; converted a ratio to a string using Vfixnum_to_majuscule_map.
+	* doprnt.c (ratio_to_string):
+	Move this function here, extend it to allow its buffer to be
+	stack-allocated.
+	* doprnt.c (Fnumber_to_string):
+	Move this function here, use the _1 functions for ratios, bignums,
+	and fixnums.
+	* doprnt.c (emacs_doprnt_1):
+	Use the new calling convention for bignum_to_string(),
+	ratio_to_string(). 
+	* lisp.h:
+	Make {fixnum,bignum,ratio}_to_string() available here.
+	* number-gmp.h:
+	Make macros to size a buffer for text output available.
+	Make mpz_tdiv_q_ui accessible, useful for the calculations for
+	converting a bignum to a string in a given base.
+	* number-mp.h:
+	* number.c (bignum_print):
+	Allocate the text to print on the stack when appropriate.
+	* number.c (bignum_convert):
+	Serialise this object more cheaply using base 16 rather than base 10.
+	* number.c (bignum_deconvert):
+	Deserialise this object using base 16.
+	* number.c (ratio_print):
+	Allocate the text for this on the stack.
+	* print.c (print_internal):
+	Use fixnum_to_string() when printing fixnums and checking for
+	recursive structures.
+	* redisplay.c (add_disp_table_entry_runes_1):
+	Update documentation to use fixnum_to_string().
+	* redisplay.c (window_line_number):
+	Use fixnum_to_string() instead of long_to_string()
+	* redisplay.c (decode_mode_spec):
+	Ditto.
+	* tests.c (Ftest_fixnum_to_string):
+	Rename this from Ftest_long_to_string().
+	* tooltalk.c (tt_message_arg_ival_string):
+	Use fixnum_to_string () here.
+	* tooltalk.c (tt_message_arg_bval_vector):
+	Ditto.
+
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c:
+	* data.c (Fset_digit_fixnum_map):
+	* data.c (Fdigit_char_p):
+	* data.c (Fdigit_char):
+	Update this to use Vfixnum_to_majuscule_ascii if appropriate.
+	* data.c (Fparse_integer):
+	* data.c (vars_of_data):
+	Rename Vfixnum_to_char_map to Vfixnum_to_majuscule_map; add 
+	Vfixnum_to_minuscule_map, for %x format strings, and
+	Vfixnum_to_majuscule_ascii, for those cases where using the
+	non-ASCII digits will definitely lead to errors.
+	* lisp.h:
+	Make Vfixnum_to_majuscule_map, Vfixnum_to_minuscule_map,
+	Vfixnum_to_majuscule_ascii available to other files.
+
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.h (itext_copy_ichar):
+	Revise to be simpler and faster.
+	* text.h (itext_ichar_eql): New.
+	Return non-zero if a given Ichar is equivalent to that Ichar
+	stored at a text address.
+	* text.h (ichar_itext_len): New.
+	Return the length in octets of an Ichar when represented as an
+	Ibyte array.
+	* text.c: (non_ascii_itext_copy_ichar): Removed.
+
+2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
+	Separate the clauses handling 's' and 'S', part of a broader
+	simplification, of which more details coming later.
+
+2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Fnumber_to_string):
+	Use make_string here, now float_to_string returns the string
+	length of the float.
+	* elhash.c (print_hash_table):
+	Be less complex and demanding here, use write_string_1 with
+	float_to_string instead of calling write_fmt_string() and firing
+	up the code in doprnt.c that is involved in that.
+	* lisp.h:
+	* print.c (float_to_string):
+	float_to_string now returns a bytecount, the number of octets of
+	output.
+	* print.c (print_float):
+	Use the return value of float_to_string() in this function.
+
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c:
+	* doprnt.c (Fformat_into): New.
+	* doprnt.c (syms_of_doprnt): Make it available.
+	Provide #'format-into, allowing callers to provide the
+	resizing-buffer lstream object now that is visible from
+	Lisp. Similar in concept to the first argument to Common Lisp
+	#'format, though not (yet) as general.
+
+2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c:
+	* alloc.c (make_uninit_vector): Rename make_vector_internal() to
+	make_uninit_vector(), by analogy to its string homologue.
+	* alloc.c (make_vector):
+	Use the new name.
+	* alloc.c (Fvector):
+	Use the new name; use memcpy() in the implementation of this
+	function, which should scream.
+	* lisp.h:
+	Provide a declaration for make_uninit_vector here.
+	* sequence.c (concatenate):
+	By analogy with the string code, if we know we're creating a
+	vector, stage into the result rather than allocating space on the
+	stack.
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c:
+	* data.c (Fchar_or_string_p, Fchar_int_p, Fchar_or_char_int_p):
+	* data.c (Finteger_or_marker_p, Finteger_or_char_p):
+	* data.c (Finteger_char_or_marker_p, Fnumber_or_marker_p):
+	* data.c (Fnumber_char_or_marker_p):
+	* data.c (syms_of_data):
+	None of these functions are loop hotspots, they are all easily
+	implemented in Lisp, and doing it that way is more economic of
+	memory with NEW_GC. Move them to Lisp.
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame.c (Fmake_frame):
+	Don't fire up the regexp engine to look for a dot in the frame
+	name, Fposition() is perfectly fine.
+	* lisp.h:
+	Declare Fposition() in this file.
+
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove the badly-named word_to_lisp(), lisp_to_word(). Add
+	{u,}int32_t_to_lisp and its inverse.
+
+	* data.c:
+	* data.c (uint32_t_to_lisp): New.
+	* data.c (lisp_to_uint32_t): New.
+	* data.c (int32_t_to_lisp): New.
+	* data.c (lisp_to_int32_t): New.
+	General functions to convert between Lisp values and thirty-two
+	bit C integers. Use fixnums if they fit, otherwise bignums (if
+	available), otherwise the traditional cons of two fixnums.
+	Replace the badly-named word_to_lisp(), lisp_to_word() functions,
+	used especially in the X11 code, where the C
+	word-width-depends-on-the-machine-type constraint doesn't apply.
+	* dired.c:
+	Remove the #if 0'd wasteful_word_to_lisp() function, not used in
+	decades.
+	* editfns.c:
+	* editfns.c (lisp_to_time):
+	Accept bignums and fixnums in this function, for XEmacs builds
+	where there is no need for the cons implementation.
+	time_to_lisp(); removed.
+	* editfns.c (Fformat_time_string):
+	localtime(), gmtime() can return NULL, don't crash with this.
+	* editfns.c (Fdecode_time):
+	Ditto.
+	* editfns.c (make_time):
+	Just use a cons, not a list, for these time values.
+	* editfns.c (Fcurrent_time_zone):
+	Don't crash if localtime() gives NULL, as it may well.
+	* fileio.c:
+	* fileio.c (Fvisited_file_modtime):
+	Use make_time () here, not the duplicated time_to_lisp ().
+	* lisp-disunion.h:
+	* lisp-disunion.h (make_fixnum):
+	* lisp-disunion.h (FIXNUMP):
+	Cast to EMACS_UINT before left-shifting a signed fixnum.
+	* lisp.h:
+	Document our new conversion functions.
+	* number.h (bignum_to_emacs_uint):
+	New #define.
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-gtk.c (emacs_gtk_selection_clear_event_handle):
+	* select-gtk.c (gtk_own_selection):
+	* select-gtk.c (gtk_disown_selection):
+	Use our new functions converting to 32-bit C integers.
+	* select-x.c:
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (x_handle_selection_clear):
+	* select-x.c (x_disown_selection):
+	Use our new convert-to-32-bits functions, don't faff around with
+	our own implementations of this.
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* select-xlike-inc.c (lisp_data_to_selection_data):
+	Use our new convert-to-32-bits functions for selection data.
+	* select.c (get_selection_raw_time):
+	* select.c (Fget_selection_timestamp):
+	No longer use word_to_lisp() in this file.
+
+2016-11-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Call emacs_vsnprintf() from
+	write_string_to_external_output_va(), and:
+	2. Minimize non-stack allocation in emacs_vsnprintf() to make that
+	workable, given that write_string_to_external_output_va() is
+	called from various contexts where XEmacs is crashing and we may
+	not have a working C heap or Lisp object allocation system.
+
+	* lstream.h (DECLARE_STACK_FIXED_BUFFER_LSTREAM):
+	Make various details of the fixed buffer lstream implementation
+	visible here, but only if specifically requested.
+	* lstream.c:
+	* lstream.c (EXPOSE_FIXED_BUFFER_INTERNALS):
+	* lstream.c (make_fixed_buffer_input_stream):
+	* lstream.c (make_fixed_buffer_output_stream):
+	* lstream.c (fixed_buffer_input_stream_ptr):
+	* lstream.c (fixed_buffer_output_stream_ptr):
+	Make the fixed buffer internal pointers into Ibyte pointers
+	rather than unsigned char *. Move much of the implementation of
+	this stream type to lstream.h, now doprnt.c uses it.
+	* doprnt.c:
+	#define EXPOSE_FIXED_BUFFER_INTERNALS before including lstream.h
+	so emacs_vsnprintf() can force stack allocation of its
+	fixed-buffer lstream.
+	* doprnt.c (parse_doprnt_spec):
+	Take a new SPECS argument, the specs Dynarr into which to write
+	the parsed specs.  Allow a NULL value to specify that we should
+	allocate it ourselves.
+	* doprnt.c (write_fmt_string_va):
+	* doprnt.c (write_fmt_string):
+	* doprnt.c (write_fmt_string_lisp_va):
+	* doprnt.c (write_fmt_string_lisp):
+	* doprnt.c (format_into):
+	Call parse_doprnt_spec with its new argument.
+	* doprnt.c (emacs_vsnprintf):
+	Revise this significantly, since it's now called from
+	write_string_to_external_output_va() and is more likely to be
+	called when XEmacs is crashing.
+	In particular: count the number of percent signs in FORMAT, when
+	checking for its string length.
+	If there are no percent signs, just memmove the format string,
+	don't even call emacs_doprnt().
+	If there are percent signs, allocate the corresponding SPECS
+	dynarr on the stack, so no heap allocation needs to take place.
+	Then allocate the fixed-buffer lstream that emacs_doprnt() needs
+	to write to on the stack, too, together with the ARGS array.
+	This avoids relying on the C heap or on Lisp object allocation
+	when printing, useful when preparing for armageddon.
+	* print.c:
+	* print.c (write_string_to_external_output_va):
+	Use emacs_vsnprintf() here, rather than vsprintf(). Allocate a
+	smaller buffer for it on the stack, though one certainly large enough to
+	saturate the usual terminal emulator scrollback buffer.
+
+	An old comment here mentions the idea of creating a new lstream
+	that outputs using mswindows_output_console_string(), but it was
+	written before we had the current reasonable code that calls that
+	function.
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Rename the emacs_v?sprintf_malloc* functions analogously to their
+	usual Unix equivalents, asprintf and vasprintf. Update their
+	callers appropriately.
+
+	* doprnt.c:
+	* doprnt.c (emacs_vasprintf_lisp): Renamed from
+	emacs_vsprintf_malloc_lisp().
+	* doprnt.c (emacs_asprintf_lisp): Renamed from
+	emacs_sprintf_malloc_lisp().
+	* doprnt.c (emacs_vasprintf): Renamed from
+	emacs_vsprintf_malloc().
+	* doprnt.c (emacs_asprintf): Renamed from emacs_sprintf_malloc().
+	* lisp.h:
+	Update the corresponding prototypes.
+	* lread.c (OVERLONG_OCTAL_INFO):
+	* lread.c (read_escape):
+	Don't leak a string when erroring with a non-ISO-8859-1 octal
+	character escape.
+	* print.c (debug_out_lisp):
+	Use emacs_vsprintf_malloc_lisp()'s new name.
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (Fformat_into):
+	Be a little clearer in documenting the STREAM argument.
+
+2016-10-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (mark_vector):
+	* alloc.c (vector_equal):
+	* alloc.c (internal_bit_vector_equalp_hash):
+	* alloc.c (tree_memory_usage_1):
+	* bytecode.c (check_constants_index):
+	* callint.c (Fcall_interactively):
+	* event-Xt.c (x_event_to_emacs_event):
+	* event-stream.c (extract_vector_nth_mouse_event):
+	* events.c (Fdeallocate_event):
+	* fontcolor-xlike-inc.c (XFUN):
+	* fontcolor.c (face_boolean_instantiate):
+	* glyphs-widget.c (substitute_keyword_value):
+	* glyphs.c (find_keyword_in_vector_or_given):
+	* glyphs.c (find_instantiator_differences):
+	* glyphs.c (if):
+	* glyphs.c (tagged_vector_to_alist):
+	* glyphs.c (image_validate):
+	* glyphs.c (image_copy_vector_instantiator):
+	* gui.c (make_gui_item_from_keywords_internal):
+	* gui.c (widget_gui_parse_item_keywords):
+	* keymap.c (Fdefine_key):
+	* keymap.c (get_relevant_keymaps):
+	* keymap.c (accessible_keymaps_mapper_1):
+	* lread.c (ebolify_bytecode_constants):
+	* macros.c (store_kbd_macro_event):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* mule-ccl.h:
+	* print.c (print_vector):
+	Remove print_vector_internal(), no need for it.
+	* print.c (debug_p4):
+	* select.c:
+	* sequence.c (safe_copy_tree):
+	* symbols.c (map_obarray):
+	* symbols.c (flush_all_buffer_local_cache):
+	* toolbar.c (update_toolbar_button):
+	* ui-byhand.c (Fgtk_curve_set_vector):
+	Don't store the result of vector_length (), XVECTOR_LENGTH () into
+	an int, it needs to be an Elemcount, which is the width of an
+	EMACS_INT.
+
+2016-11-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (bytebpos_to_charbpos_func):
+	Differentiate between char->byte and byte->char conversion when
+	profiling.
+	* text.c (dfc_convert_to_external_format):
+	* text.c (dfc_convert_to_internal_format):
+	Ditto, differentiate between external->internal and
+	internal->external conversion when profiling.
+	* text.c (vars_of_text):
+	Two new profiling strings, for byte->char and external->internal
+	conversion.
+
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Give the compiler a chance to do strlen() at compile time,
+	write_ascstring().
+
+	* lisp.h:
+	Move the string translation macros and inline functions to the end
+	of the file, since they now need access to write_string_1(),
+	qxestrlen().
+	Make write_istring(), write_ascstring(), write_cistring() inline,
+	since they are just wrappers around write_string_1() + strlen(),
+	their arguments are often constant, and there is no prospect of
+	our moving to a non-ASCII internal encoding soon.
+	Move the DECIMAL_PRINT_SIZE() define beside fixnum_to_string (),
+	for which it's most relevant.
+	* print.c (write_istring, write_cistring, write_ascstring,
+	write_msg_istring, write_msg_cistring, write_msg_ascstring):
+	Move all these functions to lisp.h, make them inline.
+	* print.c (print_string):
+	No need to strlen() when writing an escaped backslash or double
+	quote, just call write_string_1().
+
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Handle integer default promotions, non-fixnum rationals better,
+	write_fmt_string ().
+
+	* doprnt.c:
+	Make the various converter strings into #defines, now they're
+	mostly not used and the compiler complains about unused
+	variables.
+	* doprnt.c (parse_doprnt_spec):
+	Document that we don't accept the u modifier for explicit-bignum
+	converters, something only really relevant to C-level
+	arguments. Document why.
+	* doprnt.c (get_doprnt_args):
+	Handle default integer promotions correctly according to the C
+	specs, something that the old code did too.
+	Treat a %S spec as pointing to a Lisp object, with C-style args as
+	well as Lisp style args.
+	Handle the explicit bignum, ratio, and bigfloat converters, should
+	C code need to use them.
+	* doprnt.c (rewrite_rational_spec):
+	With bit length flags and explicit bignum conversion specifiers,
+	rewrite to the fixnum conversion specifiers when we're truncating
+	the value.
+	Use our 64-bit string conversion function when supplied with a bit
+	length flag and the value may not fit in a fixnum.
+	* doprnt.c (FIXNUM_SPEC_PREAMBLE):
+	Handle the unsigned flag better when a C-level untagged integer is
+	supplied.
+	* doprnt.c (emacs_doprnt):
+	Correct the optimisation for %S, print the object with quoting
+	characters.
+	When bit length flags are supplied with explicit bignum conversion
+	specifiers, rewrite to a fixnum call as appropriate.
+	* number.c (bignum_print):
+	Use Vfixnum_to_majuscule_map correctly here.
+	* number-mp.c (bignum_to_int): 
+	Remove this, it's now in doprnt.c
+	* number.c (bignum_convert):
+	* number.c (ratio_print):
+	Use Vfixnum_to_majuscule_map correctly here.
+	* casetab.c (print_case_table):
+	Use %S, now that's cheaper than %s for Lisp objects.
+
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Add RADIX, RADIX-TABLE optional arguments to
+	Fnumber_to_string().
+	2. Extend the documentation comments in doprnt.c.
+	3. With %S and no modifiers, call print_internal directly rather
+	than prin1_to_string, saving a little memory.
+	* data.c (build_fixnum_to_char_map):
+	Make this function available to doprnt.c.
+	* doprnt.c:
+	Document the broad strokes of this file a bit better.
+	* doprnt.c (fixnum_to_string):
+	* doprnt.c (bignum_to_string):
+	* doprnt.c (ratio_to_string):
+	Revise these, no longer take a flags argument, take the fixnum ->
+	char table explicitly, or Qnil for the default.
+	Correct a check for a power-of-two radix in fixnum_to_string ().
+	Correct a buffer-size calculation, fixnum_to_string ().
+	* doprnt.c (Fnumber_to_string):
+	Extend this to take optional RADIX, RADIX_TABLE arguments, as does
+	#'digit-char.  Error if we're supplied a radix and a float, this
+	is unimplemented.
+	* doprnt.c (parse_doprnt_spec, rewrite_rational_spec,
+	rewrite_floating_spec): Give docstrings for these functions.
+	* doprnt.c (emacs_doprnt):
+	When handling %S without any modifiers, call print_internal with
+	STREAM as the PRINTCHARFUN argument, rather than creating and then
+	immediately GCing a string.
+	* doprnt.c (format_into):
+	Call #'number-to-string with its new args.
+	* file-coding.c (make_coding_system_1):
+	Ditto.
+	* lisp.h:
+	Update the declarations for Fnumber_to_string(),
+	fixnum_to_string(), bignum_to_string(), ratio_to_string().
+	* number.h:
+	Ditto.
+	* print.c (print_internal):
+	Call Fnumber_to_string with its new args.
+	* process.c (status_message):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* redisplay.c (window_line_number):
+	* redisplay.c (decode_mode_spec):
+	* tests.c (Ftest_fixnum_to_string):
+	* tooltalk.c (tt_message_arg_ival_string):
+	Call fixnum_to_string() with its new calling convention in these
+	files.
+
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	Call write_fmt_string_lisp_va() here, not
+	write_fmt_string_lisp(), fix a bug.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* insdel.c:
+	* insdel.h:
+	fixup_internal_substring() is very short and called every time
+	output_string() is called; make it inline.
+	* print.c (output_string):
+	There's no need to GC protect with an lstream FUNCTION; remove
+	it, document why.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fsubstitute_command_keys):
+	Use our resizing_buffer output stream rather than a Lisp buffer
+	here. This preserves non-duplicable extents, as described below,
+	and avoids side effects from Lisp code that runs in every buffer
+	created.
+	* keymap.c:
+	* keymap.c (describe_map_tree):
+	Rename the BUFFER argument to STREAM.
+	* keymap.c (describe_command):
+	Use the generic stream functions, no need to make this specific to
+	a buffer.
+	* keymap.c (describe_map):
+	Do the column accounting previously done within describe_command()
+	here, so the output doesn't have to be a Lisp buffer.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c:
+	* doc.c (Fsubstitute_command_keys):
+	Revise this to pass through extent information when doing the
+	substitution. This cut of the change does it by extending the use
+	of the Lisp buffer, already used in this function, but has the
+	problem that non-duplicable extents are not preserved (#'concat
+	preserves them, as (now) does #'format, but most buffer-string
+	interaction situations don't), and Lisp buffers the problem that
+	too much of their implementation is exposed to Lisp; see GNU's
+	problem with inhibit-modification-hooks.
+
+2016-10-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Refactor functions in doprnt.c so emacs_doprnt_1 does less work
+	and is cleaner, moving all the vargs parsing into its callers.
+
+	2. Remove emacs_doprnt(), emacs_doprnt_va(), nothing outside this
+	file calls them. Now the corresponding area of the XEmacs
+	namespace is available, make emacs_doprnt_1() into emacs_doprnt(),
+	doprnt_2() into doprnt_1().
+	
+	3. Remove get_args_needed(), its calculation can be done in
+	passing by parse_doprnt_spec().
+
+	4. Don't leak the specs dynarr when giving a syntax error in
+	parse_doprnt_spec().
+
+	5. Move the write_fmt_string{,_lisp} functions into doprnt.c from
+	print.c.
+	Make their implementations less expensive now emacs_doprnt() can
+	write to an arbitrary stream itself, so no malloc() needed for
+	every constructed string.
+	Remove the need for an NARGS argument, now write_fmt_string_lisp
+	calls parse_doprnt_spec itself.
+	Update all the callers to write_fmt_string_lisp to no longer
+	specify the NARGS argument.
+
+	6. Remove emacs_sprintf, emacs_vsprintf, there was never any way
+	to call them safely. Provide emacs_snprintf, emacs_vsnprintf
+	instead.
+
+	* doprnt.c:
+	Remove the printf_arg_dynarr typedef, since we always know the
+	length needed it's perfectly practical to allocate it on the
+	stack.
+	* doprnt.c (write_lisp_string_lstream):
+	Update a comment here.
+	Remove write_string_1_buffer(), write_lisp_string_buffer(), 
+	write_string_1_marker(), write_lisp_string_marker(), they're
+	overkill.
+	* doprnt.c (doprnt_1):
+	Rename this function from doprnt_2().
+	* doprnt.c (NEXT_ASCBYTE):
+	When throwing a syntax error, free the specs dynarr, don't leak it.
+	* doprnt.c (parse_doprnt_spec):
+	Return the maximum argnum seen into a new ARGS_NEEDED_OUT pointer.
+	When throwing a syntax error, free the specs dynarr, don't leak
+	it.
+	Remove get_args_needed (), its logic is easily incorporated into
+	parse_doprnt_spec().
+	* doprnt.c (get_doprnt_args):
+	No longer return a dynarr, instead write into the fixed-length
+	buffer supplied, since we know how many args we need.
+	* doprnt.c (emacs_doprnt):
+	Remove the old emacs_doprnt, rename emacs_doprnt_1() to
+	emacs_doprnt().
+	Move much of the logic of this function to our callers.  In
+	particular, all the vargs parsing and spec parsing is now
+	performed by our callers, since the vargs parsing is dependent on
+	the spec parsing to determine the number of arguments needed.
+	GCPRO the local variable OBJ, since it may reflect a
+	freshly-allocated string from prin1_to_string(), or a fresh bignum.
+	Rename doprnt_2() to doprnt_1()
+	Remove emacs_doprnt_va() and the old emacs_doprnt().
+	* doprnt.c (format_into):
+	New. The implementation of #'format-into.
+	* doprnt.c (format):
+	New. The implementation of #'format.
+	* doprnt.c (write_fmt_string_va):
+	New. Write a constructed string made from a C format string and C
+	vargs to a given stream.
+	* doprnt.c (write_fmt_string):
+	Moved here from print.c. Write a constructed string made from a C
+	format string and C args to a given stream.	
+	* doprnt.c (write_fmt_string_lisp_va):
+	New. Write a constructed string made from a C format string and
+	Lisp_Object vargs to a given stream.
+	* doprnt.c (write_fmt_string_lisp):
+	Moved here from print.c. Write a constructed string made from a C
+	format string and C args to a given stream.	
+	* doprnt.c (stderr_out_lisp):
+	Moved here from print.c, adjusted to no longer take an NARGS
+	argument.
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	API changed; return a Lisp string reflecting a C format string and
+	an array of Lisp objects supplied using vargs.
+	* doprnt.c (emacs_sprintf_string_lisp):
+	API changed here to no longer need an NARGS argument.
+	* doprnt.c (emacs_vsprintf_malloc_lisp):
+	API changed here to no longer need an NARGS argument.
+	* doprnt.c (emacs_sprintf_malloc_lisp):
+	API changed here to no longer need an NARGS argument.
+	* doprnt.c (emacs_vsprintf_string):
+	Implementation changed slightly to call write_fmt_string_va ().
+	* doprnt.c (emacs_sprintf_string):
+	Implementation not changed.
+	* doprnt.c (emacs_vsprintf_malloc):
+	Implementation changed slightly.
+	* doprnt.c (emacs_sprintf_malloc):
+	Implementation not changed here.
+	* doprnt.c (emacs_vsnprintf): New.  Remove emacs_vsprintf, writing
+	to a fixed C buffer, since there is no way to call it safely. Add
+	emacs_vsnprintf, which refuses to write beyond the specified end of the
+	fixed C buffer, instead.
+	* doprnt.c (emacs_snprintf):
+	Remove emacs_sprintf, since there is no way to call it
+	safely. Provide emacs_snprintf() instead.
+	* doprnt.c (Fformat):
+	Implement this in terms of format_into (), rather than the
+	poorly-chosen emacs_vsprintf_string_lisp API.
+	* doprnt.c (Fformat_into):
+	Expand on the docstring for this a little.
+
+	* callint.c:
+	* callint.c (callint_prompt):
+	Call the new format() now, not the badly-named
+	emacs_vsprintf_string_lisp().
+
+	* print.c:
+	Move write_fmt_string(), write_fmt_string_lisp(),
+	stderr_out_lisp() to doprnt.c.
+
+	* print.c (Fprin1_to_string):
+	No need to flush before calling resizing_buffer_to_lisp_string().
+	* print.c (debug_out_lisp):
+	Change this to no longer take the argument count, now we've
+	updated doprnt.c to better handle that case.
+
+	* lstream.c:
+	* lstream.c (Lstream_write_with_extents):
+	Change this to only accept string object arguments.
+	* lstream.c (resizing_buffer_write_with_extents):
+	Update this to only accept string object arguments.
+	* lstream.c (resizing_buffer_to_lisp_string):
+	* lstream.c (lisp_buffer_write_with_extents):
+	New, write a string to a buffer with its extents.
+	* lstream.c (lstream_type_create):
+	Make this available.
+	* lstream.h (lstream_implementation):
+	Update the documentation for the write_with_extents() method to
+	reflect the changed decision.
+
+	* buffer.c (print_buffer):
+	* bytecode.c (print_compiled_function):
+	* casetab.c (print_case_table):
+	* chartab.c (print_table_entry):
+	* chartab.c (print_char_table):
+	* console.c:
+	* console.c (print_console):
+	* database.c (print_database):
+	* device-msw.c (print_devmode):
+	* device-msw.c (finalize_devmode):
+	* device.c:
+	* device.c (print_device):
+	* elhash.c (print_hash_table_data):
+	* elhash.c (print_hash_table):
+	* eval.c (maybe_get_trapping_problems_backtrace):
+	* eval.c (issue_call_trapping_problems_warning):
+	* event-Xt.c (describe_event_window):
+	* event-Xt.c (XEvent_mode_to_string):
+	* events.c (print_event):
+	* extents.c (print_extent_1):
+	* extents.c (print_extent):
+	* faces.c (print_face):
+	* file-coding.c (print_coding_system_properties):
+	* file-coding.c (print_coding_system):
+	* file-coding.c (print_coding_system_in_print_method):
+	* file-coding.c (detect_coding_type):
+	* file-coding.c (detected_coding_system):
+	* file-coding.c (undecided_init_coding_stream):
+	* file-coding.c (undecided_rewind_coding_stream):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP1):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP2):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP3):
+	* fontcolor-xlike-inc.c (DEBUG_FONTS_LISP4):
+	* fontcolor.c (print_color_instance):
+	* fontcolor.c (print_font_instance):
+	* glyphs.c:
+	* glyphs.c (print_image_instance):
+	* glyphs.c (incompatible_image_types):
+	* glyphs.c (print_glyph):
+	* intl-win32.c (mswindows_multibyte_to_unicode_print):
+	* keymap.c (print_keymap):
+	* mule-charset.c (print_charset):
+	* mule-coding.c (FROB):
+	* mule-coding.c (iso2022_print):
+	* process.c (print_process):
+	* rangetab.c (print_range_table):
+	* specifier.c (print_specifier):
+	* symsinit.h:
+	* ui-gtk.c (ffi_object_printer):
+	* unicode.c (unicode_print):
+	* window.c (print_window):
+	Remove the NARGS argument from the write_fmt_string_lisp() calls
+	in these files.
+
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Accept any output stream (as accepted by #'write-sequence,
+	#'print, etc) in #'format-into.
+	2. Implement stretching of string extents for text written to
+	buffers as well as strings, lstreams.
+	Correct the implementation for strings, lstreams.
+	Add tests.
+	* doprnt.c:
+	* doprnt.c (struct printf_spec):
+	Reorder this slightly given changed frequency of field access.
+	* doprnt.c (HANDLE_SIGN_FLAG):
+	* doprnt.c (HANDLE_SIGN_AND_NUMBER):
+	Implement both of these with buffering local to doprnt_2(), rather
+	than relying than relying on the lstream buffering as we used to.
+	* doprnt.c (write_string_1_lstream):
+	* doprnt.c (write_lisp_string_lstream):
+	* doprnt.c (write_string_1_buffer):
+	* doprnt.c (write_lisp_string_buffer):
+	* doprnt.c (write_string_1_marker):
+	* doprnt.c (write_lisp_string_marker):
+	Static functions called by doprnt_2(), avoiding calls to
+	output_string that make #'format needlessly slow for these common
+	cases.
+	* doprnt.c (doprnt_2):
+	Buffer the padding, sign info with a local alloca'd array, rather
+	than using the lstream buffering. This makes it possible to pass
+	output to any stream accepted by #'write-sequence or
+	write_string_1().
+	When writing a string and not truncating it, use
+	write_lisp_string() and thence copy_string_extents() rather than
+	stretch_string_extents ().
+	* doprnt.c (emacs_doprnt_1):
+	Check text_before_len is non-zero before attempting to output the
+	text before this format sequence.
+	* doprnt.c (Fformat_into):
+	Update this to avoid rejection of non-LSTREAMs, update the
+	docstring accordingly. We will error now on a lower level.
+	* extents.c:
+	* extents.c (struct copy_string_extents_arg):
+	* extents.c (copy_string_extents_mapper):
+	* extents.c (copy_string_extents):
+	Revert to the old implementation of this function, separate out
+	copy_string_extents() and stretch_string_extents().
+	* extents.c (struct stretch_string_extents_arg): New.
+	* extents.c (stretch_string_extents_buffer_mapper): New.
+	Mapper to copy extents where the source and the destination have
+	differing byte lengths, and the target is a buffer.
+	* extents.c (stretch_string_extents_mapper):
+	Mapper to copy extents where the source and the destination have
+	differing byte lengths, and the target is an lstream or a string.
+	* extents.c (stretch_string_extents):
+	Call the above two functions when appropriate.
+	* extents.h (stream_extent_position): New.
+	Return a bytecount appropriate for use when creating an extent
+	with STREAM's current position as its end position or its start
+	position.
+	* lisp.h (write_lisp_string): New. Alternative to #'princ that
+	doesn't require the preparation the Lisp printer does and doesn't
+	truncate your string according to print-string-length.
+	* lstream.h:
+	extents.h now #includes this file, don't #include it, just declare
+	struct extent info.
+	* print.c:
+	* print.c (write_lisp_string): New.
+	* print.c (write_string_1): Make a text checking assertion a bit
+	more idiomatic.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	1. Make most of the fixnum conversion functions in doprnt.c take
+	unsigned arguments, since emacs_doprnt_1() isn't interested in the
+	minus sign anyway and that's simpler to implement.
+	2. Add support for a pad character alternative to space, as
+	implemented in SXEmacs.
+	3. Document SXEmacs-compatible flags already implemented.
+	4. Actually implement the h and l flags for Lisp arguments, where
+	previously they were silently ignored. Implement hh and ll flags
+	too.
+	5. Now that %x, %o, and %b are signed by default, add an unsigned
+	modifier u, and make %u on its own an alias for %ud.
+
+	* doprnt.c (fixnum_to_string_rshift_1):
+	Removed, in favour of emacs_uint_to_string_rshift_1().
+	* doprnt.c (emacs_uint_to_string_rshift_1):
+	Correct the comment documenting this function, fix some
+	indentation.
+	* doprnt.c (emacs_uint_to_string_general_1):
+	Renamed and reworked from fixnum_to_string_general_1; take an
+	unsigned argument, since our callers are not necessarily
+	interested in the minus sign and the range is bigger.
+	* doprnt.c (uint_64_bit_to_string):
+	Make this available for supporting the ll bit length portably.
+	* doprnt.c (fixnum_to_string):
+	Adjust this to match the changed APIs of its called functions.
+	* doprnt.c (bignum_to_string_1):
+	Document this.
+	* doprnt.c (bignum_to_string):
+	Document this.
+	* doprnt.c (ratio_to_string_1):
+	* doprnt.c (ratio_to_string):
+	Document these, wrap them in #ifdef HAVE_RATIO, implement code to
+	allocate the buffer on the heap if that's appropriate.
+	* doprnt.c (struct printf_spec):
+	Order this more mercilessly from widest to narrowest, hopefully
+	minimising padding needed.
+	* doprnt.c (union printf_arg):
+	Change the type of the l element to EMACS_INT and the type of the
+	ul element to EMACS_UINT.
+	Add a u64 element to this, for an explicitly-64-bit unsigned
+	integer, used in implementing the combination of the unsigned
+	modifier and the bit length.
+	* doprnt.c (enum sign_flag): Rename SIGN_FLAG_SPACE to
+	SIGN_FLAG_PADCHAR, now we support an explicit pad character.
+	* doprnt.c (enum hl_flag): New.
+	Parse C's length specifiers into this new enum.
+	* doprnt.c (HANDLE_SIGN_FLAG):
+	Support the pad character.
+	* doprnt.c (HANDLE_SIGN_AND_NUMBER):
+	Use ichar_itext_len here, so no need to set a second character
+	buffer at runtime.
+	* doprnt.c (doprnt_2):
+	Rename the various variables that referred to spaces to reflect
+	that they now mean an explicit pad character.
+	* doprnt.c (NEXT_ASCBYTE):
+	Rename this from NEXT_ASCII_BYTE, choosing a name with commonality
+	with, e.g. write_ascbyte (), emphasising that I've thought
+	carefully about it from a Mule perspective and it's fine as it is.
+	Be a bit clearer in our error message.
+	* doprnt.c (RESOLVE_FLAG_CONFLICTS):
+	Update this to reflect the pad character.
+	* doprnt.c (parse_doprnt_spec):
+	On creating the specs dynarr, immediately size it such that it
+	shouldn't need expansion the vast majority of the time.
+	Add pad char handling.
+	Use itext_ichar_eql, rather than uncleanly directly dereferencing
+	an Ibyte *.
+	Instead of calling parse_integer() on every converter seen, do a
+	gross plausibility check for a possible digit first.
+	Handle the new padchar flag, API taken from SXEmacs.
+	Since we're examining the flag characters exhaustively, don't
+	redundantly call strchr() on every iteration of the loop.
+	Back up within the loop when we encounter an unknown character.
+	Add support for the hh and ll flags.
+	Accept u as a modifier, no longer as a converter character on its
+	own; compromise on this for compatibility with C and with old
+	XEmacs code by rewriting a non-modifier 'u' to "ud".
+	* doprnt.c (get_doprnt_args):
+	Be more internally consistent within XEmacs in the size of the
+	arguments read when a length modifier is supplied, even if that is
+	not consistent with the machine's C compiler.
+	* doprnt.c (rewrite_rational_spec):
+	Update this to do the work of supporting the bit length
+	modifiers, relevant with fixnums and bignums.
+	* doprnt.c (rewrite_floating_spec):
+	rewrite_floating_spec() is only called from one place, it can be
+	made simpler than I had planned originally.
+	* doprnt.c (FIXNUM_SPEC_PREAMBLE_1): New. Refactored out from
+	FIXNUM_SPEC_PREAMBLE(), to allow better handling of the bit length
+	flags.
+	* doprnt.c (emacs_doprnt_1):
+	Make *largs const again, rewrite_rational_spec now modifies OBJ.
+	Initialize OBJ, ARG outside the switch ().
+	Call the fixnum conversion functions with their new calling
+	conventions.
+	Explicitly have a case to handle unsigned fixnum <= 64 bits in
+	width, for the sake of the bit length support.
+	* doprnt.c (Fformat):
+	Extend the documentation of this function to include the new flag
+	characters, the pad character, the newly-implemented (but not new)
+	length modifiers, and the new unsigned modifier.
+	* number.h (bignum_to_emacs_uint):
+	Add this #define.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-gmp.c (bignum_to_llong):
+	Correct the sense of the initialisation of the sign mask. I will
+	have tests for this code soon.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* number-gmp.c (bignum_to_llong):
+	* number-gmp.c (bignum_to_ullong):
+	Don't implement this in terms of mpz_export(), since that always
+	exports the whole bignum, and we don't actually want that, we only
+	want those low-order bits that will fit into a long long.
+	
+	This hasn't caused any problems so far because we only
+	called bignum_to_{u,}llong() in contexts where the bignum *fit* into
+	the long long, but is an incompatiblity with what the MP bignum
+	support does, with what one expects coming from C, and it has
+	caused me a problem in some other (new) code.
+
+2016-10-13  Jerry James  <james@xemacs.org>
+
+	* tls.c (openssl_malloc): New function for use with OpenSSL >= 1.1.0.
+	(openssl_realloc): Ditto.
+	(openssl_free): Ditto.
+	(init_tls): New initialization sequence for OpenSSL >= 1.1.0.
+
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c (re_wctype):
+	Take a new LENGTH argument.
+	Update the implementation of the function to take into account
+	the relative frequencies of the various character classes.
+
+	This change is from Micha Nazarewicz introduced in GNU changeset
+	4538a5e37, of 20160717, thank you Micha.
+	* regex.c (regex_compile):
+	Call re_wctype with its new argument.
+	* regex.c (re_match_2_internal):
+	Order the CLASS_BITS check to take into account relevant
+	frequencies of the various character classes.
+	* regex.h:
+	Declare re_wctype with its new argument.
+	Remove CHAR_CLASS_MAX_LENGTH, now it's no longer used.
+	Add to the clarity of this file by defining ISALNUM to be
+	equivalent in implementation to ISWORD, something it already was
+	in regexp searches,
+	* search.c (skip_chars):
+	Use re_wctype()'s new calling convention.
+
+2016-08-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (maybe_echo_keys):
+	If there is nothing to echo in command_builder->echo_buf, don't
+	echo from it.
+	* event-stream.c (Fnext_event):
+	Don't echo mouse wheel events, this adds nothing to the user's
+	decision as to what to type next.
+	* events.h (event_mouse_wheel_p): New.
+	Return non-zero if an event is a mouse wheel event.
+
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Handle reading numbers better on builds without bignum support,
+	read_atom ().
+
+	* lisp.h:
+	* lisp.h (enum parse_integer_flags): New.
+	Add a new flag to parse_integer (), CHECK_OVERFLOW_SYNTAX. This is
+	useful on builds without bignum support, where it tells
+	parse_integer () to continue to check syntax rather than erroring
+	immediately when it would otherwise overflow.
+	parse_integer () can return Qunbound when this flag is set.
+	* data.c (parse_integer):
+	Change JUNK_ALLOWED to be FLAGS, instead.
+	When we would overflow without bignum support, if
+	CHECK_OVERFLOW_SYNTAX is non-zero, keep looking at the string, and
+	return Qunbound if it is syntactically a valid integer.
+	* data.c (Fparse_integer):
+	Use parse_integer()'s new calling convention.
+	* lread.c (read_atom):
+	When reading a ratio, check for Qunbound, which we may see on
+	non-bignum builds.
+
+2016-08-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Create less garbage when reading symbols, lread.c.
+	To support this, move intern_istring to taking LEN and RELOC
+	arguments in the same way output_string() does.
+	Implement Fintern () in terms of intern_istring (), not the other
+	way around, since most symbols created are created by the Lisp
+	reader, no point making Fintern () the cheaper path.
+
+	* file-coding.c (find_coding_system):
+	* file-coding.c (setup_eol_coding_systems):
+	* file-coding.c (snarf_coding_system):
+	Use intern() instead of intern_istring () in these functions.
+	* file-coding.c (make_coding_system_1):
+	Use Fintern() with emacs_sprintf_string_lisp() in this function to
+	create symbols in a couple of places, since we're going to need a
+	Lisp string anyway no need to output to malloc ().
+	* fontcolor-tty.c (tty_initialize_font_instance):
+	* fontcolor-x.c (x_font_instance_properties):
+	* keymap.c (make_key_description):
+	Use intern () in these functions rather than intern_istring ().
+	* lisp.h:
+	Provide intern_istring's new declaration.
+	* lread.c (read_atom):
+	Return early if we see an uninterned symbol.
+	Don't cons up the symbol's name as a string if the symbol would be
+	interned, leave that to intern_istring() if necessary.
+
+	* select-gtk.c (atom_to_symbol):
+	* select-x.c (x_atom_to_symbol):
+	Usee intern() in these functions as appropriate.
+	* symbols.c (intern_istring):
+	Change to take a bytecount, a Lisp string, and a package
+	argument.
+	* symbols.c (intern):
+	* symbols.c (intern_massaging_name):
+	Call intern_istring() from these two functions.
+	* symbols.c (Fintern):
+	Call intern_istring() from this function, the implementation has
+	been moved there.
+	* unicode.c (unicode_to_ichar):
+	Call intern () as appropriate, use listu () rather than awkwardly
+	nconc'ing together sublists for the call to #'make-charset.
+
+2016-09-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Add digit-fixnum-ascii, a version of digit-fixnum-map supporting
+	only the ASCII digits; use this in parsing format specification
+	offsets, width, and in regular expression parsing.
+	* data.c:
+	* data.c (Vdigit_fixnum_ascii): New.
+	Version of `digit-fixnum-map' that supports only ASCII, used in
+	parsing regular expressions and format specifications.
+	* doprnt.c:
+	* doprnt.c (struct printf_spec):
+	ARGNUM is now an Elemcount, fitting better with the fact that it 
+	* doprnt.c (parse_off_posnum): Delete.
+	* doprnt.c (parse_doprnt_spec):
+	Use parse_integer (), not parse_off_posnum in this function.
+	* doprnt.c (syms_of_doprnt):
+	* file-coding.c (find_coding_system_for_text_file):
+	Add a dash to the end of the PREFIX arg to
+	make_coding_system_internal.
+	* file-coding.c (setup_eol_coding_systems):
+	Ditto.
+	* file-coding.c (make_coding_system_1):
+	Call concat3 () rather than firing up the functions from doprnt.c
+	before e.g. the syntax tables are available.
+	Don't intern the name of our internal coding system when there's
+	no need to; the symbol is reachable from
+	Vcoding_system_hash_table, the coding system is reachable through
+	of the non-internal coding system.
+	* file-coding.c (chain_canonicalize_after_coding):
+	Add a trailing dash here to the PREFIX argument of
+	make_internal_coding_system.
+	* lisp.h:
+	Make Vdigit_fixnum_ascii available here.
+	* regex.c (GET_UNSIGNED_NUMBER):
+	Don't explicitly check for non-ASCII characters, leave that to
+	parse_integer.
+	* search.c (Freplace_match):
+	Ditto.
+
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c:
+	* doprnt.c (struct printf_spec):
+	In this structure minwidth and precision are Charcounts; declare
+	them as such, rearrange things a little to group similary-sized
+	objects together. There is still more scope for this, but I don't
+	plan to do it now.
+	New field, format_length, a bytecount describing the size of this
+	format spec.
+	* doprnt.c (doprnt_2):
+	Revise this function significantly to support passing extent info
+	to STREAM.
+	Take new arguments, analogous to output_string() in print.c.
+	Be lazy about counting characters except when absolutely
+	necessary. Be lazy about padding except when absolutely
+	necessary.
+	Copy extent information across using the new
+	stretch_string_extents.
+	* doprnt.c (parse_doprnt_spec):
+	Fill the spec.format_length field in SPEC in this function.
+	* doprnt.c (emacs_doprnt_1):
+	Call doprnt_2 with its new arguments.
+	* doprnt.c (Fformat): Move this here from editfns.c.
+	* doprnt.c (syms_of_doprnt): New. Now necessary.
+	* emacs.c (main_1): Call syms_of_doprnt();
+	* editfns.c (Fformat): Move to doprnt.c.
+	* editfns.c (syms_of_editfns): Fformat removed from here.
+	* extents.c:
+	* extents.c (struct copy_string_extents_arg):
+	Extend this to allow a difference in byte length between the new
+	and the old object.
+	* extents.c (copy_string_extents_mapper):
+	Calculate the delta between the new and old byte length; if
+	positive, insert the new text, conceptually, just after the new
+	position, moving later extents even later in the string.
+	Apply existing extent info as appropriate.
+	* extents.c (copy_string_extents): Use the new fields in
+	copy_string_extents_arg here.
+	* extents.c (stretch_string_extents): New. Like
+	copy_string_extents(), but the new length and the old_length can
+	differ.
+	* extents.h:
+	Declare stretch_string_extents ();
+	* lstream.c:
+	* general-slots.h:
+	Move Qstreamp here from lstream.c
+	* symsinit.h:
+	Add syms_of_doprnt here.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
+	Our long_to_string () is documented as being faster than sprintf's
+	%d, and that remains the case with my testing today (about 20%
+	faster for sixteen-bit numbers than the C library implementation
+	on this OS X machine). Use long_to_string() instead of calling
+	sprintf for fixnums within #'format.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_1):
+	%c does not specify a number, handle it separate from the
+	numbers. Accept a fixnum argument that is a valid character code,
+	but do no accept other number values, in particular, fail on
+	floats (instead of printing a random subset of the bit values as
+	we did previously), ratios and bignums.
+	Error when supplied with a precision, this makes no sense for a
+	character value.
+	* editfns.c (Fformat):
+	Update the docstring of this to reflect a new restriction, that %c
+	does not accept non-integer arguments.
+
+2016-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doprnt.c (emacs_doprnt_va):
+	Use the new bytecount result of long_to_string instead of calling
+	strlen on its result.
+	* lisp.h:
+	New declaration for long_to_string, return a bytecount, not
+	void. Change the type of the BUFFER argument to be Ascbyte *
+	rather than char *.
+	* print.c (long_to_string):
+	Implement this change, returning the length of the string without
+	the terminating '\0'.
+	* print.c (print_internal):
+	Use the new return value of long_to_string instead of calling
+	strlen on its result.
+	* redisplay.c (decode_mode_spec):
+	Use the new return value of long_to_string.
+
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Pass extent info to lstreams when writing strings to them.
+
+	Make the resizing_buffer lstream type visible to Lisp using the
+	Common Lisp #'make-string-output-stream API, allowing, for
+	example, gnuserv.el to make much less garbage, and allowing the
+	extent-preservation code to be tested at Lisp level.
+	* buffer.h:
+	buffer_or_string_{bytexpos_to_memxpos,memxpos_to_bytexpos}
+	->object_{bytexpos_to_memxpos,memxpos_to_bytexpos}.
+	* doprnt.c (emacs_vsprintf_string_lisp):
+	* doprnt.c (emacs_vsprintf_string):
+	Use resizing_buffer_to_lisp_string in these functions, preserve
+	extent data.
+	* extents.c:
+	* extents.c (allocate_extent_info):
+	Make this non-static, now it's used in lstream.c.
+	* extents.c (object_bytexpos_to_startind):
+	* extents.c (object_bytexpos_to_endind):
+	* extents.c (object_extent_info):
+	* extents.c (object_extent_list):
+	* extents.c (object_extent_info_force):
+	* extents.c (object_stack_of_extents):
+	* extents.c (object_stack_of_extents_force):
+	* extents.c (detach_all_extents):
+	* extents.c (extent_extent_list):
+	* extents.c (sledgehammer_extent_check):
+	* extents.c (soe_dump):
+	* extents.c (soe_insert):
+	* extents.c (soe_delete):
+	* extents.c (soe_move):
+	* extents.c (soe_invalidate):
+	* extents.c (extent_endpoint_byte):
+	* extents.c (extent_endpoint_char):
+	* extents.c (make_extent_detached):
+	* extents.c (extent_first):
+	* extents.c (extent_e_first):
+	* extents.c (extent_last):
+	* extents.c (extent_e_last):
+	* extents.c (extent_in_region_p):
+	* extents.c (map_extents):
+	* extents.c (adjust_extents):
+	* extents.c (adjust_extents_for_deletion):
+	* extents.c (extent_find_end_of_run):
+	* extents.c (extent_find_beginning_of_run):
+	* extents.c (extent_fragment_update):
+	* extents.c (decode_extent):
+	* extents.c (set_extent_endpoints):
+	* extents.c (Fset_extent_endpoints):
+	* extents.c (verify_extent_modification):
+	* extents.c (process_extents_for_insertion_mapper):
+	* extents.c (process_extents_for_deletion):
+	* extents.c (run_extent_copy_paste_internal):
+	* extents.c (run_extent_copy_function):
+	* extents.c (run_extent_paste_function):
+	* extents.c (splice_in_string_extents_mapper):
+	* extents.c (splice_in_string_extents_the_hard_way_mapper):
+	* extents.c (struct copy_string_extents_arg):
+	* extents.c (copy_string_extents_mapper):
+	* extents.c (copy_string_extents):
+	Change buffer_or_string -> object in calls to the renamed
+	functions.
+	Be lazier about byte->char offset conversion, only do it when Lisp
+	is definitely going to be called.
+	* extents.h:
+	* lstream.c:
+	* lstream.c (print_lstream):
+	Resizing-buffer lstreams now escape to Lisp, print them as normal
+	Lisp objects. 
+	* lstream.c (Lstream_write_with_extents): New. Like Lstream_write,
+	but preserve any extent information.
+	* lstream.c (Lstream_extent_info): New. Return any extent
+	information for an lstream.
+	* lstream.c (struct resizing_buffer_stream):
+	Rename and re-declare some elements of this structure.
+	* lstream.c (make_resizing_buffer_output_stream):
+	Allocate the extent info in this stream on creating it.
+	* lstream.c (resizing_buffer_writer):
+	* lstream.c (resizing_buffer_write_with_extents): New.
+	Write to this resizing buffer preserving extent info.
+	* lstream.c (resizing_buffer_marker): New. Mark the extent_info object
+	associated with this lstream.
+	* lstream.c (resizing_buffer_to_lisp_string):
+	Copy extent info into the created string in this function.
+	* lstream.c (Fmake_string_output_stream): New.
+	Provide this Common Lisp API, used to access the already-existing
+	resizing_buffer lstream type from Lisp.
+	* lstream.c (Fget_output_stream_string): New.
+	Return the content of a resizing_buffer as a string with extent
+	info, and reset it. API from Common Lisp.
+	* lstream.c (Fclear_output):
+	Reset the contents of a resizing buffer without returning a
+	string. API from Common Lisp.
+	* lstream.c (syms_of_lstream):
+	Make the new Lisp subrs available.
+	* lstream.c (lstream_type_create):
+	Make new Lstream methods available.
+	* lstream.h:
+	* lstream.h (CHECK_LSTREAM):
+	Uncomment this, now resizing_buffer lstreams intentionally escape
+	to Lisp.
+	* lstream.h (lstream_implementation):
+	Make the write_with_extents() and extent_info() lstream methods
+	available outside this file.
+	* print.c (output_string):
+	Use write_with_extents () when ouputting a string to an Lstream,
+	giving the extent info a chance to be preserved.
+	* print.c (print_finish):
+	In the frame kludge code, create a Lisp string from the resizing
+	buffer and print that if that is needed to preserve extent info.
+	* print.c (prin1_to_string):
+	Use resizing_buffer_to_lisp_string() here, preserving extent info.
+	* print.c (Ferror_message_string):
+	Ditto.
+
+2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (Fterpri): Move this to cl-extra.el, no need to have it
+	in C, it's perfectly fine in performance terms and takes less
+	space in the binary to have it in Lisp.
+	* print.c (syms_of_print): Remove it from here too.
+
+2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (struct merge_string_extents_struct):
+	Drop ENTRY_LENGTH from this structure, we always use the string's
+	length, and we have the string available.
+	* sequence.c (concatenate):
+	Only look for string extent info once, in the main loop, avoiding
+	possible confusion and assertion failures if garbage (or worse,
+	valid string pointers that were not expected to be there) end up
+	in args_mse.  Thank you for the bug report, Stephen Turnbull.
+
+2016-06-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move #'concatenate to C, improve the implementation and
+	algorithmic complexity of #'concat.
+	* bytecode.c:
+	* event-msw.c (dde_eval_string):
+	* gc.c (show_gc_cursor_and_message):
+	* gc.c (remove_gc_cursor_and_message):
+	* gutter.c (construct_window_gutter_spec):
+	* tls.c (gnutls_pk11_password):
+	* tls.c (openssl_error_string):
+	Call concatenate(), not Fconcat(), in these files.
+
+	* fns.c (concat2, concat3, vconcat2, vconcat3, Fappend, Fconcat):
+	Move these to sequence.c
+	* fns.c (copy_list):
+	Call concatenate() here, not concat().
+	* fns.c (Also see): Removed.
+	* fns.c (Fcopy_sequence):
+	* fns.c (Fcopy_alist):
+	* fns.c (arguments): Removed.
+	* fns.c (nconc2):
+	bytecode_nconc2() now does its own GCing, no need for us to.
+	* fns.c (bytecode_nconc2):
+	GCPRO in this function, document why.
+	* fns.c (Fnconc):
+	Don't GCPRO in this function, it is not called from C, and any
+	Lisp calls will have their arguments GCPROd automatically.
+	* fns.c (syms_of_fns):
+	Move Fappend to sequence.c; move #'concat, #'vconcat, #'bvconcat
+	to subr.el.
+	* general-slots.h:
+	Move 'bit-vector, 'vector here.
+	* lisp.h:
+	Declare concatenate(), the heavy lifting of #'concat.
+	* sequence.c:
+	* sequence.c (Fmapconcat):
+	Call concatenate() rather than Fconcat().
+	* sequence.c (Fmapcan):
+	GCPRO the arguments to Fnconc() ourselves here.
+	* sequence.c (struct merge_string_extents_struct):
+	Move this here from fns.c().
+	* sequence.c (concatenate):
+	Re-implement concat(), previously in fns.c, in this file; use a
+	much cheaper algorithm for the common case of all-string arguments and
+	a string result, use a cheaper algorithm for append(), only
+	traversing lists and strings once, call #'coerce as necessary.
+	* sequence.c (Fconcatenate):
+	Make concatenate() available to Lisp.
+	* sequence.c (concat2, concat3, vconcat2, vconcat3): Moved here
+	from fns.c.
+	* sequence.c (Fappend): Moved here from fns.c, implemented in
+	terms of concatenate().
+	* sequence.c (syms_of_sequence):
+	Make some subrs available here, move some symbols to
+	general-slots.h.
+
+2016-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (ADJUST_STACK_GCPRO):
+	Rename GCPRO_STACK to the less misleading ADJUST_STACK_GCPRO.
+	Clarify what it does in a comment.
+	Remove commented-out, confusing calls to GCPRO_STACK from before
+	the active stack was systematically GCPRO'd.
+
+2016-06-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal):
+	If the Lstream character count info wasn't available for one
+	buffer read, don't assume it will never be available again for
+	this stream, keep checking. We may be in the middle of a character
+	in a Unicode coding system, which can throw off our calculation
+	briefly.
+	* insdel.c (buffer_insert_string_1):
+	Ben changed the semantics of assertions on builds without
+	assertions enabled--the statement is now always executed--so wrap
+	an assertion that, when enabled, misses the point of the Lstream
+	character count infrastructure entirely, in #ifdef
+	ERROR_CHECK_TEXT.
+
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c:
+	* regex.c (regex_compile):
+	Improve support for high-numbered backreferences here.
+	* search.c (Freplace_match):
+	Support backreferences greater than 9 in this function.
+
+2016-05-31  Jerry James  <james@xemacs.org>
+
+	* process-unix.c (unix_create_process): Move setsid call back to
+	its original location for non-Cygwin platforms to fix M-x shell
+	breakage under tcsh.
+
+2016-05-31  Jerry James  <james@xemacs.org>
+
+	* tls.c (init_tls): Do no attempt to disable SSLv2 with NSS 3.24.0
+	and newer, where SSLv2 cannot be enabled.
+
+2016-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (Freduce):
+	Behave sensibly with a cons sequence, :from-end non-nil, and a
+	zero-length range, avoid a crash in this context.
+
+2016-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (sublis): GC protect the results returned by
+	invocations of sublis(), if TEST does fancy things with ALIST they
+	can become garbage behind our back.
+	* sequence.c (subst): Document why GC protection not needed.
+
+2016-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Fix a bug where a fixnum used as a key in a string's plist was
+	silently corrupted.
+	* alloc.c:
+	* alloc.c (string_plist_ptr):
+	Check a flag in the header to find out whether this string was
+	ever modified, rather than assuming based on the type of the
+	corresponding entry of the plist.
+	* alloc.c (string_extent_info):
+	New function, encapsulate access to the string's plist.
+	* alloc.c (bump_string_modiff):
+	Move this accessor here.
+	* alloc.c (make_uninit_string):
+	Clear the MODIFFP header flag on allocation.
+	* alloc.c (Fstring_modified_tick):
+	Move this here from fns.c, it's an accessor function, it makes
+	more sense to have it here.
+	* alloc.c (syms_of_alloc):
+	* extents.c:
+	* extents.c (buffer_or_string_extent_info):
+	Use string_extent_info () here.
+	* fns.c:
+	* fns.c (syms_of_fns):
+	Remove #'string-modified-tick, bump_string_modiff() from this
+	file.
+	* lisp.h:
+	* lisp.h (struct Lisp_String):
+	Add a header flag here, documenting whether a string has ever been
+	modified.
+	* lisp.h (MAX_STRING_ASCII_BEGIN): New definition.
+	* lisp.h (XSTRING_MODIFFP):
+	Make the flag available.
+
+2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (output_string):
+	When RELOC is a string and FUNCTION is a function, be more careful
+	about FUNCTION possibly modifying RELOC and making our offset data
+	invalid.
+	Don't call bytecount_to_charcount when that is not necessary.
+	* print.c (print_string):
+	Check whether PRINTCHARFUN has made our string indices invalid,
+	update as appropriate.
+	Don't get the string char length when there's no need to.
+	Operate in terms of Ichars, don't assume internal-format text is
+	ASCII compatible.
+	* print.c (print_symbol):
+	Check whether PRINTCHARFUN has modified NAME's byte length, making
+	sure we don't run off the end.
+	Operate in terms of Ichars, don't assume internal-format text is
+	ASCII compatible.
+
+2016-03-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Clean up and finish the implementation of regular expression
+	searching within relocating Lisp buffers. As well as relocating
+	local pointers within re_match_2_internal() and re_search_2(),
+	relocate pointers to regular expression register begin and end
+	values, and pointers that are saved in the failure stack.
+
+	* regex.c:
+	* regex.c (offset_post_relocation): Make this inline.
+	* regex.c (DEBUG_RUNTIME_FLAGS): New #define, zero on a non-debug
+	build, reflects debug_regexps on a debug build, makes various
+	things cheaper on a debug build.
+	* regex.c (malloc_checking_assert): Make this available and empty
+	if this is not XEmacs.
+	* regex.c (PUSH_FAILURE_POINTER_1): New. This was previously
+	PUSH_FAILURE_POINTER(). 
+	* regex.c (PUSH_FAILURE_POINTER): Sanity-check the argument here
+	when the relevant assertions are turned on.
+	* regex.c (PUSH_FAILURE_RELOCATABLE): New. Push a relocatable
+	pointer onto the failure stack; sanity-check its value when the
+	relevant assertions are turned on.
+	* regex.c (pop_failure_relocatable_1): New. Sanity-check a
+	relocatable pointer, then pop and return it from the failure
+	stack.
+	* regex.c (POP_FAILURE_RELOCATABLE): New. Pop a relocatable
+	pointer from the failure stack, calling
+	pop_failure_relocatable_1() if appropriate.
+	* regex.c (PUSH_FAILURE_POINT):
+	Reorganise this to keep debugging code more to itself, making it
+	easier to see what actual non-debug code is being excude.
+	* regex.c (POP_FAILURE_POINT): Ditto.
+	* regex.c (MAYBE_START_OVER_WITH_EXTENDED): Change the syntax of
+	this macro to something clang prefers, in passing.
+	* regex.c (re_match_2_internal):
+	Initialise best_regstart, best_regend here too, with the rest of
+	the register information.
+
+2016-02-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* print.c (print_symbol):
+	Small bugfix, recognise that a trailing sign excludes a symbol
+	from potentially having number syntax.
+
 2015-06-22  Michael Sperber  <mike@xemacs.org>
 
 	* redisplay-xlike-inc.c (XFT_FROB_LISP_COLOR): Use
 	`xft_convert_color_1' instead of `xft_convert_color'.
+
+2014-06-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* device-x.c (x_IO_error_handler):  Check errno for a real error.
+
+	On Mac OS X 10.9 "Mavericks" and 10.10 "Yosemite", x_IO_error_handler
+	gets triggered by Cmd-W or clicking on the WM's close button:
+
+	 xemacs: Fatal I/O Error 0 (Undefined error: 0) on display connection \
+	 "/tmp/launch-HpN0rX/org.macosforge.xquartz:0.0"
+	 after 3746329 requests (3746329 known processed) \
+	with 0 events remaining.
+
+	This is inappropriate because there are other frames open on the
+	device.
 
 2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -403,7 +2306,7 @@
 	(with some extensions, to allow us to support non ASCII digit
 	characters).
 
-2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
+2015-01-01  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar.c (update_frame_toolbars_geometry): Only clear the
 	frame's toolbar if the frame size has changed.

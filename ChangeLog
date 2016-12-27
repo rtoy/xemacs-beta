@@ -1,3 +1,20 @@
+2016-11-05  Michael Sperber  <mike@xemacs.org>
+
+	* configure.ac: Disable ASLR on macOS Sierra..
+	* configure: Rebuild.
+
+2016-10-13  Jerry James  <james@xemacs.org>
+
+	* configure.ac: Fix OpenSSL detection for versions >= 1.1.0.
+	* configure: Regenerate.
+
+2016-09-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* src/doprnt.c (doprnt_2): Increase the complexity of this
+	function, handle flags as appropriate for rationals (not just
+	strings). We don't take rationals as arguments just yet, this is
+	an incremental change.
+
 2015-10-28  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Disable ASLR on El Capitan.
@@ -54,6 +71,10 @@
 
 	* configure.ac (TLS): Prevent unintended fall-through to OpenSSL.
 	* configure: Rebuild.
+
+2015-01-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Xft): Remove dupes from pkg-config --cflags.
 
 2015-01-10  Stephen J. Turnbull  <stephen@xemacs.org>
 

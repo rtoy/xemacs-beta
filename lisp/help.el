@@ -1043,58 +1043,94 @@ Miscellaneous:
 )
   help-map)
 
-(defun function-called-at-point ()
-  "Return the function which is called by the list containing point.
+(labels
+    ((function-really-at-point ()
+       (ignore-errors
+         (save-excursion
+           (save-restriction
+             (narrow-to-region (max (point-min) (- (point) 1000))
+                               (point-max))
+             (backward-up-list 1)
+             (forward-char 1)
+             (let (obj)
+               (setq obj (read (current-buffer)))
+               (and (functionp obj) obj))))))
+     (function-around-point ()
+       (ignore-errors
+         (with-syntax-table emacs-lisp-mode-syntax-table
+           (save-excursion
+             (or (not (zerop (skip-syntax-backward "_w")))
+                 (memq (char-syntax (char-after (point)))
+                       '(?w ?_))
+                 (forward-sexp -1))
+             (skip-chars-forward "`'")
+             (let ((obj (read (current-buffer))))
+               (and (functionp obj) obj))))))
+     (transform-function-name (string)
+       (and string
+            (setq string (substitute ?* ?X (substitute ?- ?_ string))
+                  string (if (member (aref string 0) '(?F ?Q))
+                             (subseq string 1)
+                           string))))
+     (guess-c-symbol ()
+       ;; This is info-lookup-guess-c-symbol, from info-look.el
+       (ignore-errors
+         (skip-syntax-backward "w_")
+         (let ((start (point)) prefix name)
+           ;; Test for a leading `struct', `union', or `enum' keyword
+           ;; but ignore names like `foo_struct'.
+           (setq prefix (and (< (skip-chars-backward " \t\n") 0)
+                             (< (skip-chars-backward "_a-zA-Z0-9") 0)
+                             (looking-at
+                              "\\(struct\\|union\\|enum\\)\\s ")
+                             (concat (match-string 1) " ")))
+           (goto-char start)
+           (and (looking-at "[_a-zA-Z][_a-zA-Z0-9]*")
+                (setq name (match-string 0)))
+           ;; Caveat!  Look forward if point is at `struct' etc.
+           (and (not prefix)
+                (or (equal name "struct") (equal name "union")
+                    (equal name "enum"))
+                (looking-at "[a-z]+\\s +\\([_a-zA-Z][_a-zA-Z0-9]*\\)")
+                (setq prefix (concat name " ")
+                      name (match-string 1)))
+           (and (or prefix name) (concat prefix name))))))
+
+  ;; Byte compiler limitations mean each function gets its own copies
+  ;; of these, inline them instead.
+  (declare (inline function-really-at-point function-around-point
+		   transform-function-name guess-c-symbol))
+
+  (defun function-called-at-point ()
+    "Return the function which is called by the list containing point.
 If that gives no function, return the function whose name is around point.
 If that doesn't give a function, return nil."
-  (or (ignore-errors
-	(save-excursion
-	  (save-restriction
-	    (narrow-to-region (max (point-min) (- (point) 1000))
-			      (point-max))
-	    (backward-up-list 1)
-	    (forward-char 1)
-	    (let (obj)
-	      (setq obj (read (current-buffer)))
-	      (and (symbolp obj) (fboundp obj) obj)))))
-      (ignore-errors
-	(with-syntax-table emacs-lisp-mode-syntax-table
-	  (save-excursion
-	    (or (not (zerop (skip-syntax-backward "_w")))
-		(eq (char-syntax (char-after (point))) ?w)
-		(eq (char-syntax (char-after (point))) ?_)
-		(forward-sexp -1))
-	    (skip-chars-forward "`'")
-	    (let ((obj (read (current-buffer))))
-	      (and (symbolp obj) (fboundp obj) obj)))))))
+    (or 
+     (function-really-at-point)
+     (function-around-point)
+     (and 
+      (member major-mode '(c-mode c++-mode c++-c-mode objc-mode java-mode))
+      (intern-soft (transform-function-name (guess-c-symbol))))
+     (and
+      (fboundp 'add-log-current-defun)
+      (intern-soft (transform-function-name (add-log-current-defun))))))
 
-(defun function-at-point ()
-  "Return the function whose name is around point.
+  (defun function-at-point ()
+    "Return the function whose name is around point.
 If that gives no function, return the function which is called by the
 list containing point.  If that doesn't give a function, return nil."
-  (or (ignore-errors
-	(with-syntax-table emacs-lisp-mode-syntax-table
-	  (save-excursion
-	    (or (not (zerop (skip-syntax-backward "_w")))
-		(eq (char-syntax (char-after (point))) ?w)
-		(eq (char-syntax (char-after (point))) ?_)
-		(forward-sexp -1))
-	    (skip-chars-forward "`'")
-	    (let ((obj (read (current-buffer))))
-	      (and (symbolp obj) (fboundp obj) obj)))))
-      (ignore-errors
-	(save-excursion
-	  (save-restriction
-	    (narrow-to-region (max (point-min) (- (point) 1000))
-			      (point-max))
-	    (backward-up-list 1)
-	    (forward-char 1)
-	    (let (obj)
-	      (setq obj (read (current-buffer)))
-	      (and (symbolp obj) (fboundp obj) obj)))))))
+    (or 
+     (function-around-point)
+     (function-really-at-point)
+     (and 
+      (member major-mode '(c-mode c++-mode c++-c-mode objc-mode java-mode))
+      (intern-soft (transform-function-name (guess-c-symbol))))
+     (and
+      (fboundp 'add-log-current-defun)
+      (intern-soft (transform-function-name (add-log-current-defun))))))
 
-(defun function-at-event (event)
-  "Return the function whose name is around the position of EVENT.
+  (defun function-at-event (event)
+    "Return the function whose name is around the position of EVENT.
 EVENT should be a mouse event.  When calling from a popup or context menu,
 use `last-popup-menu-event' to find out where the mouse was clicked.
 \(You cannot use (interactive \"e\"), unfortunately.  This returns a
@@ -1102,11 +1138,11 @@ misc-user event.)
 
 If the event contains no position, or the position is not over text, or
 there is no function around that point, nil is returned."
-  (if (and event (event-buffer event) (event-point event))
-      (save-excursion
-	(set-buffer (event-buffer event))
-	(goto-char (event-point event))
-	(function-at-point))))
+    (and event (event-buffer event) (event-point event)
+         (save-excursion
+           (set-buffer (event-buffer event))
+           (goto-char (event-point event))
+           (function-at-point)))))
 
 ;; Default to nil for the non-hackers?  Not until we find a way to
 ;; distinguish hackers from non-hackers automatically!
@@ -1930,20 +1966,6 @@ after the listing is made.)"
 		(setq cmd (cdr cmd))
 		(if cmd (princ " ")))))
 	  (terpri))))))
-
-;; Stop gap for 21.0 until we do help-char etc properly.
-(defun help-keymap-with-help-key (keymap form)
-  "Return a copy of KEYMAP with an help-key binding according to help-char
- invoking FORM like help-form.  An existing binding is not overridden.
- If FORM is nil then no binding is made."
-  (let ((map (copy-keymap keymap))
-	(key (if (characterp help-char)
-		 (vector (character-to-event help-char))
-	       help-char)))
-    (when (and form key (not (lookup-key map key)))
-      (define-key map key
-	`(lambda () (interactive) (help-print-help-form ,form))))
-    map))
 
 (defun help-print-help-form (form)
   (let ((string (eval form)))

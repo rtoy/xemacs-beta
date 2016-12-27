@@ -377,3 +377,15 @@
                                          :padding-two (random))
                                         equal-hash
                                         no-entry-found)))))
+
+;; Creating sufficiently many symbols in a hash table that is being treated as
+;; an obarray shouldn't crash:
+
+(Assert
+ (eq (let ((table (make-hash-table :test #'equal :size 20)))
+       (dotimes (count #x100000) (intern (format "hello-%x" count) table))
+       'done)
+     'done)
+ "checking no crash on resizing an obarray when interning into it.")
+
+;; end of hash-table-tests.el

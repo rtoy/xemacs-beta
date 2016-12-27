@@ -1,3 +1,60 @@
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document %u here.
+	Correct the spelling of zeroes.
+	Add documentation of the new &, !, and ~ flags.
+	Add documentation of the length modifiers, specifying truncation
+	to a bit width, newly implemented though long accepted.
+	Document the new u modifier, used to specify that integer
+	converters should treat their arguments as unsigned. (It is new to
+	XEmacs that the non-base-10 converters treat their arguments as
+	signed).
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Be a little clearer in documentation of the STREAM argument to
+	#'format-into.
+
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi :
+	* internals/internals.texi (Old Future Work -- Everything should
+	obey duplicable extents):
+	Move this section to Old Future Work from Future Work, now it is
+	implemented.
+
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document that #'format-into now accepts any stream argument as
+	accepted by #'print.
+
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Describe #'format a little more clearly, don't mislead readers
+	about the algorithm.
+	Describe the newly-added #'format-into, something that makes more
+	sense now the resizing-buffer time is visible from Lisp.
+
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document the new support for extents in control string and in
+	arguments to #'format.
+
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Syntax of Regexps):
+	Clarify that backreferences can use numbers greater than ten.
+
+2014-11-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/strings.texi (String Properties):
+	Note that string properties are separate from extent properties.
+
 2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/numbers.texi (Numbers):

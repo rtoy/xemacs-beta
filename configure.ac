@@ -2843,8 +2843,8 @@ dnl Disable ASLR on systems where it breaks pdump.
 AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
 case `uname -s`:`uname -r` in
 	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion, 10.9 Mavericks,
-	dnl 10.10 Yosemite, 10.11 El Capitan
-    Darwin:1[[12345]].*)
+	dnl 10.10 Yosemite, 10.11 El Capitan, 10.12 Sierra
+    Darwin:1[[123456]].*)
 	AC_MSG_RESULT(yes)
 	XE_APPEND([-Wl,-no_pie], LDFLAGS) 
 	;;
@@ -3294,6 +3294,17 @@ this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29.])
     xft_config_ok=`$xft_config_prog --cflags 2>/dev/null`
     if test "$?" = 0 ; then
 	xft_cflags=`$xft_config_prog --cflags`
+        dnl #### I tried to create XE_REMOVE_DUPS(original,cleaned),
+        dnl but it didn't work.
+        cleaned_xft_cflags=""
+        for xft_cflag in $xft_cflags; do
+          case $xft_cleaned_cflags in
+          *${xft_cflag}* ) ;;
+          * ) xft_cleaned_cflags="$xft_cleaned_cflags $xft_cflag" ;;
+          esac
+        done
+        xft_cflags=$xft_cleaned_cflags
+        unset xft_cflag xft_cleaned_cflags
 	xft_libs=`$xft_config_prog --libs`
 	c_switch_site="$c_switch_site $xft_cflags"
 	ld_switch_site="$ld_switch_site $xft_libs"
@@ -5468,7 +5479,8 @@ elif test "$with_tls" = "nss"; then
 elif test "$with_tls" = "openssl"; then
   AC_CHECK_HEADER([openssl/ssl.h],
     [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl],
-      [XE_DIE("Required openssl support cannot be provided.")])],
+      [AC_CHECK_LIB(ssl, OPENSSL_init_crypto, [with_tls=openssl],
+        [XE_DIE("Required openssl support cannot be provided.")])])],
     [XE_DIE("Required openssl support cannot be provided.")])
 fi
 dnl Autodetection

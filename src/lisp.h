@@ -2592,25 +2592,32 @@ struct Lisp_String
       struct lrecord_header lheader;
       struct
 	{
-	  /* WARNING: Everything before ascii_begin must agree exactly with
+	  /* WARNING: Everything before modiffp must agree exactly with
 	     struct lrecord_header. (Actually, the `free' field in old-GC
-	     overlaps with ascii_begin there; we can get away with this
+	     overlaps with modiffp there; we can get away with this
 	     because in old-GC the `free' field is used only for lcrecords. */
 	  unsigned int type :8;
 #ifdef NEW_GC
 	  unsigned int lisp_readonly :1;
 	  unsigned int free :1;
-	  /* Number of chars at beginning of string that are one byte in length
-	     (byte_ascii_p) */
-	  unsigned int ascii_begin :22;
+#define NUM_ASCII_BEGIN_BITS 21
 #else /* not NEW_GC */
 	  unsigned int mark :1;
 	  unsigned int c_readonly :1;
 	  unsigned int lisp_readonly :1;
-	  /* Number of chars at beginning of string that are one byte in length
-	     (byte_ascii_p) */
-	  unsigned int ascii_begin :21;
+#define NUM_ASCII_BEGIN_BITS 20
 #endif /* not NEW_GC */
+	  /* A flag describing whether this string has ever been
+	     modified; the actual modified tick is stored on the plist
+	     if and only if this flag is non-zero. */
+	  unsigned int modiffp :1;
+	  /* Number of chars at beginning of string that are one byte in length
+	     (byte_ascii_p)
+
+             This is badly named, in that it is a value that describes the
+             *end* of the ASCII stretch. #### Refactor after merging
+             unicode-internal. */
+	  unsigned int ascii_begin :NUM_ASCII_BEGIN_BITS;
 	} v;
     } u;
 #ifdef NEW_GC
@@ -2624,11 +2631,7 @@ struct Lisp_String
 };
 typedef struct Lisp_String Lisp_String;
 
-#ifdef NEW_GC
-#define MAX_STRING_ASCII_BEGIN ((1 << 22) - 1)
-#else /* not NEW_GC */
-#define MAX_STRING_ASCII_BEGIN ((1 << 21) - 1)
-#endif /* not NEW_GC */
+#define MAX_STRING_ASCII_BEGIN ((1 << NUM_ASCII_BEGIN_BITS) - 1)
 
 DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 #define XSTRING(x) XRECORD (x, string, Lisp_String)
@@ -2689,6 +2692,10 @@ XSTRING_DATA (Lisp_Object s)
 #define XSET_STRING_ASCII_BEGIN(s, val) \
   ((void) (XSTRING (s)->u.v.ascii_begin = (val)))
 #define XSTRING_FORMAT(s) FORMAT_DEFAULT
+
+#define XSTRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp + 0)
+#define XSET_STRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp = 1)
+#define XCLEAR_STRING_MODIFFP(s) ((XSTRING (s)->u.v.modiffp = 0), 1)
 
 /* Return the true aligned size of a struct whose last member is a
    variable-length array field.  (this is known as the "struct hack") */
@@ -2874,8 +2881,6 @@ struct Lisp_Symbol
     } v;
   } u;
 
-  /* next symbol in this obarray bucket */
-  Lisp_Symbol *next;
   Lisp_Object name;
   Lisp_Object value;
   Lisp_Object function;
@@ -2897,13 +2902,11 @@ DECLARE_MODULE_API_LISP_OBJECT (symbol, Lisp_Symbol);
 #define CHECK_SYMBOL(x) CHECK_RECORD (x, symbol)
 #define CONCHECK_SYMBOL(x) CONCHECK_RECORD (x, symbol)
 
-#define symbol_next(s) ((s)->next)
 #define symbol_name(s) ((s)->name)
 #define symbol_value(s) ((s)->value)
 #define symbol_function(s) ((s)->function)
 #define symbol_plist(s) ((s)->plist)
 
-#define XSYMBOL_NEXT(s) (XSYMBOL (s)->next)
 #define XSYMBOL_NAME(s) (XSYMBOL (s)->name)
 #define XSYMBOL_VALUE(s) (XSYMBOL (s)->value)
 #define XSYMBOL_FUNCTION(s) (XSYMBOL (s)->function)
@@ -3860,125 +3863,6 @@ Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth,
 
 
 /************************************************************************/
-/*			 String translation				*/
-/************************************************************************/
-
-/* When support for message translation exists, GETTEXT() translates a
-   string from English into the language defined by
-   `current-language-environment'.  This is done by looking the string
-   up in a large predefined table; if no translation is found, the
-   original string is returned, and the failure is possibly logged so
-   that the translation can later be entered into the table.
-
-   In addition to this, there is a mechanism to snarf message strings
-   out of the source code so that they can be entered into the tables.
-   This is what make-msgfile.lex does.
-
-   Handling `format' strings is more difficult: The format string
-   should get translated, but not under all circumstances.  When the
-   format string is a Lisp string, what should happen is that
-   Fformat() should format the untranslated args[0] and return that,
-   and also call Fgettext() on args[0] and, if that is different,
-   format it and store it in the `string-translatable' property of the
-   returned string.  See Fgettext().
-
-   The variations IGETTEXT, CIGETTEXT and ASCGETTEXT operate on
-   Ibyte *, CIbyte *, and Ascbyte * strings, respectively.  The
-   ASCGETTEXT version has an assert check to verify that its string
-   really is pure-ASCII.  Plain GETTEXT is defined as ASCGETTEXT, and
-   so works the same way. (There are no versions that work for Extbyte *.
-   Translate to internal format before working on it.)
-
-   There are similar functions for building a Lisp string from a C
-   string and translating in the process.  They again come in three
-   variants: build_msg_istring(), build_msg_cistring(), and
-   build_msg_ascstring().  Again, build_msg_ascstring() asserts that
-   its text is pure-ASCII, and build_msg_string() is the same as
-   build_msg_ascstring().
-   */
-
-/* Return value NOT Ascbyte, because the result in general will have been
-   translated into a foreign language. */
-DECLARE_INLINE_HEADER (const CIbyte *ASCGETTEXT (const Ascbyte *s))
-{
-  ASSERT_ASCTEXT_ASCII (s);
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const Ibyte *IGETTEXT (const Ibyte *s))
-{
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const CIbyte *CIGETTEXT (const CIbyte *s))
-{
-  return s;
-}
-
-DECLARE_INLINE_HEADER (Lisp_Object LISP_GETTEXT (Lisp_Object s))
-{
-  return s;
-}
-
-#define GETTEXT ASCGETTEXT
-
-MODULE_API Lisp_Object build_msg_istring (const Ibyte *);
-MODULE_API Lisp_Object build_msg_cistring (const CIbyte *);
-MODULE_API Lisp_Object build_msg_ascstring (const Ascbyte *);
-#define build_msg_string build_msg_ascstring
-
-
-/* DEFER_GETTEXT() and variants are used to identify strings which are not
-   meant to be translated immediately, but instead at some later time.
-   This is used in strings that are stored somewhere at dump or
-   initialization time, at a time when the current language environment is
-   not set.  It is the duty of the user of the string to call GETTEXT or
-   some variant at the appropriate time.  DEFER_GETTTEXT() serves only as a
-   marker that the string is translatable, and will as a result be snarfed
-   during message snarfing (see above).
-
-   build_defer_string() and variants are the deferred equivalents of
-   build_msg_string() and variants.  Similarly to DEFER_GETTEXT(), they
-   don't actually do any translation, but serve as place markers for
-   message snarfing.  However, they may do something more than just build
-   a Lisp string -- in particular, they may store a string property
-   indicating that the string is translatable (see discussion above about
-   this property).
-*/
-
-DECLARE_INLINE_HEADER (const Ascbyte *DEFER_ASCGETTEXT (const Ascbyte *s))
-{
-  ASSERT_ASCTEXT_ASCII (s);
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const Ibyte *DEFER_IGETTEXT (const Ibyte *s))
-{
-  return s;
-}
-
-DECLARE_INLINE_HEADER (const CIbyte *DEFER_CIGETTEXT (const CIbyte *s))
-{
-  return s;
-}
-
-#define DEFER_GETTEXT DEFER_ASCGETTEXT
-
-MODULE_API Lisp_Object build_defer_istring (const Ibyte *);
-MODULE_API Lisp_Object build_defer_cistring (const CIbyte *);
-MODULE_API Lisp_Object build_defer_ascstring (const Ascbyte *);
-
-#define build_defer_string build_defer_ascstring
-
-
-void write_msg_istring (Lisp_Object stream, const Ibyte *str);
-void write_msg_cistring (Lisp_Object stream, const CIbyte *str);
-void write_msg_ascstring (Lisp_Object stream, const Ascbyte *str);
-
-#define write_msg_string write_msg_ascstring
-
-
-/************************************************************************/
 /*		     Garbage collection / GC-protection			*/
 /************************************************************************/
 
@@ -4377,6 +4261,7 @@ MODULE_API Lisp_Object make_vector (Elemcount, Lisp_Object);
 MODULE_API Lisp_Object vector1 (Lisp_Object);
 MODULE_API Lisp_Object vector2 (Lisp_Object, Lisp_Object);
 MODULE_API Lisp_Object vector3 (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object make_uninit_vector (Elemcount);
 Lisp_Object make_bit_vector (Elemcount, Lisp_Object);
 Lisp_Object make_bit_vector_from_byte_vector (unsigned char *, Elemcount);
 Lisp_Object noseeum_make_marker (void);
@@ -4414,6 +4299,8 @@ MODULE_API Lisp_Object make_string (const Ibyte *, Bytecount);
 MODULE_API Lisp_Object make_extstring (const Extbyte *, EMACS_INT, Lisp_Object);
 void init_string_ascii_begin (Lisp_Object string);
 Lisp_Object make_uninit_string (Bytecount);
+void bump_string_modiff (Lisp_Object);
+struct extent_info *string_extent_info (Lisp_Object);
 MODULE_API Lisp_Object make_float (double);
 Lisp_Object make_string_nocopy (const Ibyte *, Bytecount);
 void free_cons (Lisp_Object);
@@ -4569,7 +4456,7 @@ EXFUN (Flss, MANY);
 EXFUN (Fmax, MANY);
 EXFUN (Fmin, MANY);
 EXFUN (Fminus, MANY);
-EXFUN (Fnumber_to_string, 1);
+EXFUN (Fnumber_to_string, 3);
 EXFUN (Fplus, MANY);
 EXFUN (Fquo, MANY);
 EXFUN (Frem, 2);
@@ -4602,17 +4489,30 @@ enum arith_comparison {
   arith_grtr_or_equal };
 Lisp_Object arithcompare (Lisp_Object, Lisp_Object, enum arith_comparison);
 
-/* Do NOT use word_to_lisp or wasteful_word_to_lisp to decode time_t's
-   unless you KNOW arg is non-negative.  They cannot return negative
-   values!  Use make_time.  */
-Lisp_Object word_to_lisp (unsigned int);
-unsigned int lisp_to_word (Lisp_Object);
+/* Do NOT use uint32_t_to_lisp to decode time_t's unless you KNOW arg is
+   non-negative. They cannot return negative values!  Use make_time. */
+Lisp_Object uint32_t_to_lisp (UINT_32_BIT);
+Lisp_Object int32_t_to_lisp (INT_32_BIT);
+
+/* Use lisp_to_time() for time_t instead of these functions. */
+UINT_32_BIT lisp_to_uint32_t (Lisp_Object);
+INT_32_BIT lisp_to_int32_t (Lisp_Object);
+
+Lisp_Object build_fixnum_to_char_map (Lisp_Object radix_table);
+
+enum parse_integer_flags
+{
+  JUNK_ALLOWED = 1 << 0,
+  CHECK_OVERFLOW_SYNTAX = 1 << 1
+};
 
 Lisp_Object parse_integer (const Ibyte *buf, Ibyte **buf_end_out,
 			   Bytecount len, EMACS_INT base,
-			   Boolint junk_allowed, Lisp_Object base_table);
+			   int flags, Lisp_Object base_table);
 
-extern Lisp_Object Vdigit_fixnum_map;
+extern Lisp_Object Vdigit_fixnum_map, Vdigit_fixnum_ascii;
+extern Lisp_Object Vfixnum_to_majuscule_map, Vfixnum_to_minuscule_map;
+extern Lisp_Object Vfixnum_to_majuscule_ascii;
 
 extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qerror_conditions, Qerror_message, Qinteger_char_or_marker_p,
@@ -4663,36 +4563,72 @@ Lisp_Object read_doc_string (Lisp_Object);
 extern Lisp_Object Vinternal_doc_file_name;
 
 /* Defined in doprnt.c */
-Bytecount emacs_doprnt_va (Lisp_Object stream, const Ibyte *format_nonreloc,
-			   Bytecount format_length, Lisp_Object format_reloc,
-			   va_list vargs);
-Bytecount emacs_doprnt (Lisp_Object stream, const Ibyte *format_nonreloc,
-			Bytecount format_length, Lisp_Object format_reloc,
-			int nargs, const Lisp_Object *largs, ...);
+
+Bytecount fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
+                            UINT_16_BIT radix, Lisp_Object table_or_nil);
+
+/* The number of bytes required to store the decimal printed representation of
+   an integral type.  Add a few bytes for truncation, optional sign prefix,
+   and null byte terminator.  2.40824 == log (256) / log (10).  Appropriate
+   for sizing a buffer for fixnum_to_string ().
+
+   We don't use floating point since Sun cc (buggily?) cannot use floating
+   point computations to define a compile-time integral constant. */
+#define DECIMAL_PRINT_SIZE(integral_type) \
+  ((((2410824 * sizeof (integral_type)) / 1000000) + 3) * MAX_ICHAR_LEN)
+
+#ifdef HAVE_BIGNUM
+Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
+                            bignum number, UINT_16_BIT radix,
+                            Lisp_Object table_or_nil);
+#endif
+#ifdef HAVE_RATIO
+Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
+                           UINT_16_BIT radix, 
+                           Lisp_Object table_or_nil);
+#endif
+
+Lisp_Object format_into (Lisp_Object stream, Lisp_Object format_reloc,
+                         int nargs, const Lisp_Object *largs);
+Lisp_Object format (Lisp_Object format_reloc, int nargs,
+                    const Lisp_Object *largs);
+
+MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
+  PRINTF_ARGS (2, 3);
+MODULE_API void write_fmt_string_va (Lisp_Object stream,
+                                     const CIbyte *fmt, va_list);
+MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
+				       ...);
+MODULE_API void write_fmt_string_lisp_va (Lisp_Object stream,
+                                          const CIbyte *fmt, va_list);
+
+void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+void stderr_out_lisp (const CIbyte *, ...);
+void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+
 Lisp_Object emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
-				   Lisp_Object format_reloc, int nargs,
-				   const Lisp_Object *largs);
-Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc,
-				 Lisp_Object format_reloc, int nargs, ...);
-Ibyte *emacs_vsprintf_malloc_lisp (const CIbyte *format_nonreloc,
-				     Lisp_Object format_reloc, int nargs,
-				     const Lisp_Object *largs,
-				     Bytecount *len_out);
-Ibyte *emacs_sprintf_malloc_lisp (Bytecount *len_out,
-				    const CIbyte *format_nonreloc,
-				    Lisp_Object format_reloc, int nargs, ...);
+                                        va_list vargs);
+Lisp_Object emacs_sprintf_string_lisp (const CIbyte *format_nonreloc, ...);
+
+Bytecount emacs_vasprintf_lisp (Ibyte **retval_out, const CIbyte *format,
+                           va_list vargs);
+Bytecount emacs_asprintf_lisp (Ibyte **retval_out, const CIbyte *format, ...)
+  PRINTF_ARGS (2, 3);
+
 Lisp_Object emacs_vsprintf_string (const CIbyte *format, va_list vargs);
 Lisp_Object emacs_sprintf_string (const CIbyte *format, ...)
      PRINTF_ARGS (1, 2);
-Ibyte *emacs_vsprintf_malloc (const CIbyte *format, va_list vargs,
-				Bytecount *len_out);
-Ibyte *emacs_sprintf_malloc (Bytecount *len_out, const CIbyte *format, ...)
-     PRINTF_ARGS (2, 3);
-Bytecount emacs_vsprintf (Ibyte *output, const CIbyte *format,
-			  va_list vargs);
-Bytecount emacs_sprintf (Ibyte *output, const CIbyte *format, ...)
-     PRINTF_ARGS (2, 3);
 
+Bytecount emacs_vasprintf (Ibyte **retval_out, const CIbyte *format,
+                           va_list vargs);
+Bytecount emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
+  PRINTF_ARGS (2, 3);
+
+Bytecount emacs_vsnprintf (Ibyte *output, Bytecount size,
+                           const CIbyte *format, va_list vargs);
+Bytecount emacs_snprintf (Ibyte *output, Bytecount size,
+                          const CIbyte *format, ...)
+  PRINTF_ARGS (3, 4);
 
 /* Defined in editfns.c */
 EXFUN (Fbobp, 1);
@@ -5377,7 +5313,6 @@ Lisp_Object list_sort (Lisp_Object list,
 		       check_test_func_t check_merge,
                        Lisp_Object predicate, Lisp_Object key_func);
 
-void bump_string_modiff (Lisp_Object);
 Lisp_Object memq_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object assoc_no_quit (Lisp_Object, Lisp_Object);
 Lisp_Object assq_no_quit (Lisp_Object, Lisp_Object);
@@ -5449,10 +5384,8 @@ EXFUN (Freally_free, 1);
 #undef SYMBOL_GENERAL
 #undef SYMBOL_KEYWORD_GENERAL
 
-extern Lisp_Object Qeq;
-extern Lisp_Object Qeql;
-extern Lisp_Object Qequal;
-extern Lisp_Object Qequalp;
+extern Lisp_Object Qeq, Qeql, Qequal, Qequalp;
+extern Lisp_Object Qeq_hash, Qeql_hash, Qequal_hash, Qequalp_hash;
 
 /* Defined in glyphs.c */
 EXFUN (Fmake_glyph_internal, 1);
@@ -5504,6 +5437,31 @@ Charbpos vmotion_pixels (Lisp_Object, Charbpos, int, int, int *);
 
 /* Defined in insdel.c */
 void set_buffer_point (struct buffer *buf, Charbpos pos, Bytebpos bipos);
+
+DECLARE_INLINE_HEADER (
+void
+fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
+			  Bytecount offset, Bytecount *len)
+)
+{
+  text_checking_assert ((nonreloc && NILP (reloc))
+                        || (!nonreloc && STRINGP (reloc)));
+  if (*len < 0)
+    {
+      if (nonreloc)
+	*len = strlen ((const Chbyte *) nonreloc) - offset;
+      else
+	*len = XSTRING_LENGTH (reloc) - offset;
+    }
+#ifdef ERROR_CHECK_TEXT
+  assert (*len >= 0);
+  if (STRINGP (reloc))
+    {
+      assert (offset >= 0 && offset <= XSTRING_LENGTH (reloc));
+      assert (offset + *len <= XSTRING_LENGTH (reloc));
+    }
+#endif
+}
 
 /* Defined in intl.c */
 EXFUN (Fgettext, 1);
@@ -5650,28 +5608,50 @@ void debug_p4 (Lisp_Object obj);
 void debug_p3 (Lisp_Object obj);
 void debug_short_backtrace (int);
 void debug_backtrace (void);
-/* NOTE: Do not call this with the data of a Lisp_String.  Use princ.
- * Note: stream should be defaulted before calling
- *  (eg Qnil means stdout, not Vstandard_output, etc) */
-MODULE_API void write_istring (Lisp_Object stream, const Ibyte *str);
-/* Same goes for this function. */
-MODULE_API void write_cistring (Lisp_Object stream, const CIbyte *str);
-/* Same goes for this function. */
-MODULE_API void write_ascstring (Lisp_Object stream, const Ascbyte *str);
-/* Same goes for this function. */
+MODULE_API void write_lisp_string (Lisp_Object stream, Lisp_Object string,
+                                   Bytecount offset, Bytecount len);
+
+/* NOTE: Do not call the following with the data of a Lisp_String.  Use
+   write_lisp_string().
+
+   If you would like a STREAM value of Qt, Qnil to indicate output to the
+   selected frame, rather than C's standard output, call
+   canonicalize_printcharfun () before calling this function. */
 void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
+
+/* Same goes for this function. */
+DECLARE_INLINE_HEADER (
+void write_istring (Lisp_Object stream, const Ibyte *str)
+)
+{
+  /* This function can GC. We'd like to qxestrlen, but that's not yet
+     available in this file. */
+  write_string_1 (stream, str, strlen ((const char *) str));
+}
+/* Same goes for this function. */
+DECLARE_INLINE_HEADER (
+void write_cistring (Lisp_Object stream, const CIbyte *str)
+)
+{
+  /* This function can GC. We'd like to qxestrlen, but that's not yet
+     available in this file. */
+  write_string_1 (stream, (const Ibyte *) str,
+                  strlen ((const char *) str));
+}
+/* Same goes for this function. */
+DECLARE_INLINE_HEADER (
+void write_ascstring (Lisp_Object stream, const Ascbyte *str)
+)
+{
+  /* This function can GC. */
+  write_string_1 (stream, (const Ibyte *) str,
+                  strlen ((char *) str));
+}
 void write_eistring (Lisp_Object stream, const Eistring *ei);
 
-/* Higher-level (printf-style) ways to output data: */
-MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...);
-MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
-				       int nargs, ...);
-void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void stderr_out_lisp (const CIbyte *, int nargs, ...);
-void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
 void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void debug_out_lisp (const CIbyte *, int nargs, ...);
+void debug_out_lisp (const CIbyte *, ...);
 DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */
@@ -5683,25 +5663,14 @@ void print_vector (Lisp_Object, Lisp_Object, int);
 void print_string (Lisp_Object, Lisp_Object, int);
 void print_symbol (Lisp_Object, Lisp_Object, int);
 void print_float (Lisp_Object, Lisp_Object, int);
-/* The number of bytes required to store the decimal printed
-   representation of an integral type.  Add a few bytes for truncation,
-   optional sign prefix, and null byte terminator.
-   2.40824 == log (256) / log (10).
 
-   We don't use floating point since Sun cc (buggily?) cannot use
-   floating point computations to define a compile-time integral
-   constant. */
-#define DECIMAL_PRINT_SIZE(integral_type) \
-(((2410824 * sizeof (integral_type)) / 1000000) + 3)
-void long_to_string (char *, long);
-void ulong_to_bit_string (char *, unsigned long);
 extern int print_escape_newlines;
 extern MODULE_API int print_readably;
 extern int in_debug_print;
 Lisp_Object internal_with_output_to_temp_buffer (Lisp_Object,
 						 Lisp_Object (*) (Lisp_Object),
 						 Lisp_Object, Lisp_Object);
-void float_to_string (char *, double);
+Bytecount float_to_string (char *, double);
 void internal_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
 			      int UNUSED (escapeflag));
 void external_object_printer (Lisp_Object obj, Lisp_Object printcharfun,
@@ -5806,7 +5775,10 @@ extern Fixnum warn_about_possibly_incompatible_back_references;
 EXFUN (Ffill, MANY);
 EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
-EXFUN (Fmapconcat, MANY);
+EXFUN (Fposition, MANY);
+
+Lisp_Object concatenate (int nsequences, Lisp_Object *sequences,
+                         Lisp_Object result_type, Boolint reuse_last_listp);
 
 /* Defined in signal.c */
 void init_interrupts_late (void);
@@ -5847,7 +5819,8 @@ EXFUN (Fsymbol_plist, 1);
 EXFUN (Fsymbol_value, 1);
 
 unsigned int hash_string (const Ibyte *, Bytecount);
-Lisp_Object intern_istring (const Ibyte *str);
+Lisp_Object intern_istring (const Ibyte *str, Bytecount len,
+			    Lisp_Object reloc, Lisp_Object package);
 MODULE_API Lisp_Object intern (const CIbyte *str);
 Lisp_Object intern_massaging_name (const CIbyte *str);
 Lisp_Object oblookup (Lisp_Object, const Ibyte *, Bytecount);
@@ -6206,11 +6179,11 @@ int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 DECLARE_INLINE_HEADER (int qxesscanf_ascii_1 (Ibyte *buffer,
-					      const Ascbyte *format,
+					      const Ascbyte *fermat,
 					      void *ptr))
 {
   /* #### DAMNIT! No vsscanf! */
-  return sscanf ((Chbyte *) buffer, format, ptr);
+  return sscanf ((Chbyte *) buffer, fermat, ptr);
 }
 
 /* Do not use POSIX locale routines.  Not Mule-correct. */
@@ -6317,5 +6290,151 @@ extern Lisp_Object Vmswindows_downcase_file_names;
 extern Lisp_Object Qwindow_live_p;
 
 END_C_DECLS
+
+
+/************************************************************************/
+/*			 String translation				*/
+/************************************************************************/
+
+/* When support for message translation exists, GETTEXT() translates a
+   string from English into the language defined by
+   `current-language-environment'.  This is done by looking the string
+   up in a large predefined table; if no translation is found, the
+   original string is returned, and the failure is possibly logged so
+   that the translation can later be entered into the table.
+
+   In addition to this, there is a mechanism to snarf message strings
+   out of the source code so that they can be entered into the tables.
+   This is what make-msgfile.lex does.
+
+   Handling `format' strings is more difficult: The format string
+   should get translated, but not under all circumstances.  When the
+   format string is a Lisp string, what should happen is that
+   Fformat() should format the untranslated args[0] and return that,
+   and also call Fgettext() on args[0] and, if that is different,
+   format it and store it in the `string-translatable' property of the
+   returned string.  See Fgettext().
+
+   The variations IGETTEXT, CIGETTEXT and ASCGETTEXT operate on
+   Ibyte *, CIbyte *, and Ascbyte * strings, respectively.  The
+   ASCGETTEXT version has an assert check to verify that its string
+   really is pure-ASCII.  Plain GETTEXT is defined as ASCGETTEXT, and
+   so works the same way. (There are no versions that work for Extbyte *.
+   Translate to internal format before working on it.)
+
+   There are similar functions for building a Lisp string from a C
+   string and translating in the process.  They again come in three
+   variants: build_msg_istring(), build_msg_cistring(), and
+   build_msg_ascstring().  Again, build_msg_ascstring() asserts that
+   its text is pure-ASCII, and build_msg_string() is the same as
+   build_msg_ascstring().
+   */
+
+/* Return value NOT Ascbyte, because the result in general will have been
+   translated into a foreign language. */
+DECLARE_INLINE_HEADER (const CIbyte *ASCGETTEXT (const Ascbyte *s))
+{
+  ASSERT_ASCTEXT_ASCII (s);
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const Ibyte *IGETTEXT (const Ibyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const CIbyte *CIGETTEXT (const CIbyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (Lisp_Object LISP_GETTEXT (Lisp_Object s))
+{
+  return s;
+}
+
+#define GETTEXT ASCGETTEXT
+
+MODULE_API Lisp_Object build_msg_istring (const Ibyte *);
+MODULE_API Lisp_Object build_msg_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_msg_ascstring (const Ascbyte *);
+#define build_msg_string build_msg_ascstring
+
+
+/* DEFER_GETTEXT() and variants are used to identify strings which are not
+   meant to be translated immediately, but instead at some later time.
+   This is used in strings that are stored somewhere at dump or
+   initialization time, at a time when the current language environment is
+   not set.  It is the duty of the user of the string to call GETTEXT or
+   some variant at the appropriate time.  DEFER_GETTTEXT() serves only as a
+   marker that the string is translatable, and will as a result be snarfed
+   during message snarfing (see above).
+
+   build_defer_string() and variants are the deferred equivalents of
+   build_msg_string() and variants.  Similarly to DEFER_GETTEXT(), they
+   don't actually do any translation, but serve as place markers for
+   message snarfing.  However, they may do something more than just build
+   a Lisp string -- in particular, they may store a string property
+   indicating that the string is translatable (see discussion above about
+   this property).
+*/
+
+DECLARE_INLINE_HEADER (const Ascbyte *DEFER_ASCGETTEXT (const Ascbyte *s))
+{
+  ASSERT_ASCTEXT_ASCII (s);
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const Ibyte *DEFER_IGETTEXT (const Ibyte *s))
+{
+  return s;
+}
+
+DECLARE_INLINE_HEADER (const CIbyte *DEFER_CIGETTEXT (const CIbyte *s))
+{
+  return s;
+}
+
+#define DEFER_GETTEXT DEFER_ASCGETTEXT
+
+MODULE_API Lisp_Object build_defer_istring (const Ibyte *);
+MODULE_API Lisp_Object build_defer_cistring (const CIbyte *);
+MODULE_API Lisp_Object build_defer_ascstring (const Ascbyte *);
+
+#define build_defer_string build_defer_ascstring
+
+DECLARE_INLINE_HEADER (
+void
+write_msg_istring (Lisp_Object stream, const Ibyte *str)
+)
+{
+  /* This function can GC */
+  str = IGETTEXT (str);
+  write_string_1 (stream, str, qxestrlen (str));
+}
+
+DECLARE_INLINE_HEADER (
+void
+write_msg_cistring (Lisp_Object stream, const CIbyte *str)
+)
+{
+  /* This function can GC */
+  str = CIGETTEXT (str);
+  write_string_1 (stream, (const Ibyte *) str,
+                  qxestrlen ((const Ibyte *) str));
+}
+
+DECLARE_INLINE_HEADER (
+void
+write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
+)
+{
+  /* This function can GC */
+  str = ASCGETTEXT (str);
+  write_string_1 (stream, (const Ibyte *) str,
+                  strlen ((const Ascbyte *) str));
+}
+
+#define write_msg_string write_msg_ascstring
 
 #endif /* INCLUDED_lisp_h_ */

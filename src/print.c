@@ -310,73 +310,38 @@ write_string_to_external_output (const Ibyte *ptr, Bytecount len,
 #endif
 }
 
-/* #### The following function should make use of a call to the
-   emacs_vsprintf_*() functions rather than just using vsprintf.  This is
-   the only way to ensure that I18N3 works properly (many implementations
-   of the *printf() functions, including the ones included in glibc, do not
-   implement the %###$ argument-positioning syntax).
+/* This function can be called from fatal_error_signal() and so should make as
+   few assumptions as possible about what allocation is
+   available.
 
-   Note, however, that to do this, we'd have to
+   emacs_vsnprintf(), which does the work of formatting, jumps through
+   significant hoops to ensure that all its (usually) dynamic data structures
+   are precalculated and allocated on the stack, and so it sidesteps the
+   typical dependence of the doprnt.c functions on a working C heap (the
+   Dynarr for the parsed specs requires malloc()) and a working Lisp object
+   allocation system (for the lstream objects).
 
-   1) pre-allocate all the lstreams and do whatever else was necessary
-   to make sure that no allocation occurs, since these functions may be
-   called from fatal_error_signal().
+   In addition, if there are actually no format specs in FMT,
+   emacs_vsnprintf() just does an memmove(), which is even less likely to go
+   pear-shaped.
 
-   2) (to be really correct) make a new lstream that outputs using
-   mswindows_output_console_string().
-
-   3) A reasonable compromise might be to use emacs_vsprintf() when we're
-   in a safe state, and when not, use plain vsprintf(). */
-
+   Both emacs_vsnprintf() and write_string_to_external_output_va() will fail
+   if we run out of stack space. Oh well. */
 static void
 write_string_to_external_output_va (const CIbyte *fmt, va_list args,
 				    int dest)
 {
-  Ibyte kludge[8192];
-  Bytecount kludgelen;
+  Ibyte kludge[4096];
+  Bytecount klen;
 
   if (initialized && !inhibit_non_essential_conversion_operations)
     fmt = GETTEXT (fmt);
-  vsprintf ((CIbyte *) kludge, fmt, args);
-  kludgelen = qxestrlen (kludge);
-  write_string_to_external_output (kludge, kludgelen, dest);
-}
 
-/* Output portably to stderr or its equivalent (i.e. may be a console
-   window under MS Windows); do external-format conversion and call GETTEXT
-   on the format string.  Automatically flush when done.
+  klen = emacs_vsnprintf (kludge, sizeof (kludge), fmt, args);
 
-   NOTE: CIbyte means "internal format" data.  This includes the "..."
-   arguments.  For numerical arguments, we have to assume that vsprintf
-   will be a good boy and format them as ASCII.  For Mule internal coding
-   (and UTF-8 internal coding, if/when we get it), it is safe to pass
-   string values in internal format to be formatted, because zero octets
-   only occur in the NUL character itself.  Similarly, it is safe to pass
-   pure ASCII literal strings for these functions.  *Everything else must
-   be converted, including all external data.*
-
-   This function is safe to use even when not initialized or when dying --
-   we don't do conversion in such cases. */
-
-void
-stderr_out (const CIbyte *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDERR);
-  va_end (args);
-}
-
-/* Output portably to stdout or its equivalent (i.e. may be a console
-   window under MS Windows).  Works like stderr_out(). */
-
-void
-stdout_out (const CIbyte *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_STDOUT);
-  va_end (args);
+  write_string_to_external_output (kludge,
+                                   min (klen, (Bytecount) sizeof (kludge)),
+                                   dest);
 }
 
 /* Output portably to print destination as specified by DEST. */
@@ -442,13 +407,12 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
   /* This function can GC */
-  Charcount cclen;
   /* We change the value of nonreloc (fetching it from reloc as
      necessary), but we don't want to pass this changed value on to
      other functions that take both a nonreloc and a reloc, or things
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
-  const Ibyte *newnonreloc = nonreloc;
+  const Ibyte *newnonreloc;
   struct gcpro gcpro1, gcpro2;
 
   /* Emacs won't print while GCing, but an external debugger might */
@@ -459,46 +423,30 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
   /* Perhaps not necessary but probably safer. */
   GCPRO2 (function, reloc);
 
-  fixup_internal_substring (newnonreloc, reloc, offset, &len);
+  fixup_internal_substring (nonreloc, reloc, offset, &len);
 
-  if (STRINGP (reloc))
-    {
-      cclen = string_offset_byte_to_char_len (reloc, offset, len);
-      newnonreloc = XSTRING_DATA (reloc);
-    }
-  else
-    cclen = bytecount_to_charcount (newnonreloc + offset, len);
+  newnonreloc = STRINGP (reloc) ? XSTRING_DATA (reloc) : nonreloc;
 
   if (LSTREAMP (function))
     {
       if (STRINGP (reloc))
 	{
-	  /* Protect against Lstream_write() causing a GC and
-	     relocating the string.  For small strings, we do it by
-	     alloc'ing the string and using a copy; for large strings,
-	     we inhibit GC.  */
-	  if (len < 65536)
-	    {
-	      Ibyte *copied = alloca_ibytes (len);
-	      memcpy (copied, newnonreloc + offset, len);
-	      Lstream_write (XLSTREAM (function), copied, len);
-	    }
-	  else if (gc_currently_forbidden)
-	    {
-	      /* Avoid calling begin_gc_forbidden, which conses.  We can reach
-		 this point from the cons debug code, which will get us into
-		 an infinite loop if we cons again. */
-	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
-	    }
-	  else
-	    {
-	      int speccount = begin_gc_forbidden ();
-	      Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
-	      unbind_to (speccount);
-	    }
+          /* We used to inhibit GC here. There's no need, the only Lstreams
+             that may funcall + GC are the Lisp buffer lstreams, and the
+             buffer insertion code is perfectly able to handle relocation of
+             string data, as we see in the next clause. There used to be a
+             print_stream lstream that called output_string recursively, and
+             that would have tripped the problem, but no more. Plus, we now
+             have write_with_extents (), which knows it has been handed a Lisp
+             string, and can take appropriate action to re-fetch string
+             data. */
+          Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
+                                      len);
 	}
       else
-	Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+        {
+          Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+        }
 
       if (print_unbuffered)
 	Lstream_flush (XLSTREAM (function));
@@ -510,14 +458,13 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     }
   else if (MARKERP (function))
     {
-      /* marker_position() will err if marker doesn't point anywhere.  */
-      Charbpos spoint = marker_position (function);
-
       buffer_insert_string_1 (XMARKER (function)->buffer,
-			      spoint, nonreloc, reloc, offset, len,
-			      -1, 0);
-      Fset_marker (function, make_fixnum (spoint + cclen),
-		   Fmarker_buffer (function));
+			      /* marker_position() will err if marker
+				 doesn't point anywhere.  */
+			      marker_position (function), nonreloc, reloc,
+			      offset, len, -1, 0);
+      set_byte_marker_position (function,
+				byte_marker_position (function) + len);
     }
   else if (FRAMEP (function))
     {
@@ -537,40 +484,41 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
     }
   else if (EQ (function, Qexternal_debugging_output))
     {
-      /* This is not strictly necessary, and somewhat of a hack, but it
-	 avoids having each character passed separately to
-	 `external-debugging-output'. #### Why do we pass each character
-	 separately, anyway?
-	 */
+      /* This is not strictly necessary, and somewhat of a hack, but it avoids
+	 having each character passed separately to
+	 `external-debugging-output'.  The API says to pass each character
+	 separately because that is the Lisp Way. */
       write_string_to_stdio_stream (stderr, 0, newnonreloc + offset, len,
 				    print_unbuffered);
     }
   else
     {
-      Charcount ccoff;
-      Charcount iii;
+      Bytecount end = offset + len;
 
-      if (STRINGP (reloc))
-	ccoff = string_index_byte_to_char (reloc, offset);
-      else
-	ccoff = bytecount_to_charcount (newnonreloc, offset);
+      while (offset < end)
+	{
+	  call1 (function, make_char (itext_ichar (newnonreloc + offset)));
 
-      if (STRINGP (reloc))
-	{
-	  for (iii = ccoff; iii < cclen + ccoff; iii++)
-	    {
-	      call1 (function, make_char (string_ichar (reloc, iii)));
-	      if (STRINGP (reloc))
-		newnonreloc = XSTRING_DATA (reloc);
-	    }
-	}
-      else
-	{
-	  for (iii = ccoff; iii < cclen + ccoff; iii++)
-	    {
-	      call1 (function,
-		     make_char (itext_ichar_n (newnonreloc, iii)));
-	    }
+          if (STRINGP (reloc))
+            {
+              newnonreloc = XSTRING_DATA (reloc);
+
+              /* FUNCTION may have modified the byte length of RELOC and
+                 relocated it, update our pointer. */
+              if (offset >= XSTRING_LENGTH (reloc) || 
+                  !valid_ibyteptr_p (newnonreloc + offset))
+                {
+                  /* Error if we would run off the end of the string, or print
+                     corrupt data. We don't do the character accounting that
+                     print_string does, since we don't have the character
+                     count info available for free, and it doesn't make sense
+                     to add it for something that will happen this rarely. */
+                  invalid_state ("string modified while printing it", reloc);
+                  break;
+                }
+            }
+
+          offset += itext_ichar_len (newnonreloc + offset);
 	}
     }
 
@@ -675,83 +623,68 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
     {
       struct frame *f = XFRAME (frame_kludge);
       Lstream *str = XLSTREAM (stream);
-      CHECK_LIVE_FRAME (frame_kludge);
+      Lisp_Object printed = Qnil;
+      struct gcpro gcpro1;
 
+      CHECK_LIVE_FRAME (frame_kludge);
       Lstream_flush (str);
+
+      GCPRO1 (printed);
+
       if (!EQ (Vprint_message_label, echo_area_status (f)))
 	clear_echo_area_from_print (f, Qnil, 1);
-      echo_area_append (f, resizing_buffer_stream_ptr (str),
-			Qnil, 0, Lstream_byte_count (str),
-			Vprint_message_label);
+
+      if (Lstream_extent_info (str) != NULL)
+        {
+          /* Only create the string if there is associated extent info,
+             otherwise no need to allocate something that will be immediately
+             GCed. */
+          printed = resizing_buffer_to_lisp_string (str);          
+          echo_area_append (f, NULL, printed, 0, XSTRING_LENGTH (printed),
+                            Vprint_message_label);
+        }
+      else
+        {
+          echo_area_append (f, resizing_buffer_stream_ptr (str), Qnil, 0,
+                            Lstream_byte_count (str), Vprint_message_label);
+        }
+          
       Lstream_delete (str);
+      UNGCPRO;
     }
 }
 
+/* Write a Lisp string to STREAM, preserving extent data if STREAM can handle
+   it, and protecting its string data from relocation when appropriate. */
+void
+write_lisp_string (Lisp_Object stream, Lisp_Object string, Bytecount offset,
+                   Bytecount len)
+{
+  /* This function can GC */
+  output_string (stream, NULL, string, offset, len);
+}  
 
 /* Write internal-format data to STREAM.  See output_string() for
    interpretation of STREAM.
 
-   NOTE: Do not call this with the data of a Lisp_String, as
-   printcharfun might cause a GC, which might cause the string's data
-   to be relocated.  To princ a Lisp string, use:
+   NOTE: Do not call this with the data of a Lisp_String, as printcharfun
+   might cause the octet length of the string to be changed, which might cause
+   the string's data to be relocated.  You will also discard any extent data,
+   which is usually the wrong thing to do. To write a Lisp string, use
+   write_lisp_string (), above.
 
-       print_internal (string, printcharfun, 0);
+   You could also use print_internal (string, printcharfun, 0), but that will
+   be truncated depending on the value of PRINT-STRING-LENGTH, which you
+   probably don't want.
 
-   Also note that STREAM should be the result of
-   canonicalize_printcharfun() (i.e. Qnil means stdout, not
-   Vstandard_output, etc.)  */
+   Also note that STREAM should be the result of canonicalize_printcharfun()
+   (i.e. Qnil means stdout, not Vstandard_output, etc.)  */
 void
 write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size)
 {
   /* This function can GC */
-#ifdef ERROR_CHECK_TEXT
-  assert (size >= 0);
-#endif
+  text_checking_assert (size >= 0);
   output_string (stream, str, Qnil, 0, size);
-}
-
-void
-write_istring (Lisp_Object stream, const Ibyte *str)
-{
-  /* This function can GC */
-  write_string_1 (stream, str, qxestrlen (str));
-}
-
-void
-write_cistring (Lisp_Object stream, const CIbyte *str)
-{
-  /* This function can GC */
-  write_istring (stream, (const Ibyte *) str);
-}
-
-void
-write_ascstring (Lisp_Object stream, const Ascbyte *str)
-{
-  /* This function can GC */
-  ASSERT_ASCTEXT_ASCII (str);
-  write_istring (stream, (const Ibyte *) str);
-}
-
-void
-write_msg_istring (Lisp_Object stream, const Ibyte *str)
-{
-  /* This function can GC */
-  write_istring (stream, IGETTEXT (str));
-}
-
-void
-write_msg_cistring (Lisp_Object stream, const CIbyte *str)
-{
-  /* This function can GC */
-  write_msg_istring (stream, (const Ibyte *) str);
-}
-
-void
-write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
-{
-  /* This function can GC */
-  ASSERT_ASCTEXT_ASCII (str);
-  write_msg_istring (stream, (const Ibyte *) str);
 }
 
 void
@@ -759,71 +692,6 @@ write_eistring (Lisp_Object stream, const Eistring *ei)
 {
   write_string_1 (stream, eidata (ei), eilen (ei));
 }
-
-/* Write a printf-style string to STREAM; see output_string(). */
-
-void
-write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
-{
-  va_list va;
-  Ibyte *str;
-  Bytecount len;
-  int count;
-
-  va_start (va, fmt);
-  str = emacs_vsprintf_malloc (fmt, va, &len);
-  va_end (va);
-  count = record_unwind_protect_freeing (str);
-  write_string_1 (stream, str, len);
-  unbind_to (count);
-}
-
-/* Write a printf-style string to STREAM, where the arguments are
-   Lisp objects and not C strings or integers; see output_string().
-
-   #### It shouldn't be necessary to specify the number of arguments.
-   This would require some rewriting of the doprnt() functions, though. */
-
-void
-write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, int nargs, ...)
-{
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
-  va_list va;
-  int i;
-  Ibyte *str;
-  Bytecount len;
-  int count;
-
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
-  va_end (va);
-  str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
-  count = record_unwind_protect_freeing (str);
-  write_string_1 (stream, str, len);
-  unbind_to (count);
-}
-
-void
-stderr_out_lisp (const CIbyte *fmt, int nargs, ...)
-{
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
-  va_list va;
-  int i;
-  Ibyte *str;
-  Bytecount len;
-  int count;
-
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
-  va_end (va);
-  str = emacs_vsprintf_malloc_lisp (fmt, Qnil, nargs, args, &len);
-  count = record_unwind_protect_freeing (str);
-  write_string_1 (Qexternal_debugging_output, str, len);
-  unbind_to (count);
-}
-
 
 DEFUN ("write-char", Fwrite_char, 1, 2, 0, /*
 Output character CHARACTER to stream STREAM.
@@ -884,9 +752,9 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
 
   stream = canonicalize_printcharfun (stream);
 
-  if (BIGNUMP (start) || (BIGNUMP (end)))
+  if (BIGNUMP (start) || BIGNUMP (end))
     {
-      /* None of the sequences will have bignum lengths. */
+      /* None of the sequences can have bignum lengths. */
       check_sequence_range (sequence, start, end, Flength (sequence));
 
       RETURN_NOT_REACHED (sequence);
@@ -935,6 +803,46 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
 
       blen = stringp - (XSTRING_DATA (sequence) + bstart);
     }
+  else if (CONSP (sequence))
+    {
+      if (NILP (end))
+        {
+          /* Error on circular list, with an unspecied END. */
+          Lisp_Object length = Flength (sequence);
+          check_sequence_range (sequence, start, end, length);
+          ending = XFIXNUM (length);
+        }
+
+      /* Worst case scenario; all characters, all the longest
+         possible. More likely: lots of small integers. */
+      nonreloc = allptr
+        = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
+      ii = 0;
+      {
+        /* EXTERNAL_LIST_LOOP because this may not be a true list. */
+        EXTERNAL_LIST_LOOP_2 (elt, sequence)
+          {
+            if (ii >= starting)
+              {
+                if (ii >= ending)
+                  {
+                    break;
+                  }
+
+                if (!CHARP (elt))
+                  {
+                    check_integer_range (elt, Qzero, make_fixnum (0xff));
+                  }
+                allptr += set_itext_ichar (allptr,
+                                           XCHAR_OR_CHAR_INT (elt));
+              }
+            ++ii;
+          }
+      }
+
+      bstart = 0;
+      blen = allptr - nonreloc;
+    }
   else
     {
       Lisp_Object length = Flength (sequence);
@@ -945,8 +853,8 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
       if (VECTORP (sequence))
         {
           Lisp_Object *vdata = XVECTOR_DATA (sequence);
-          /* Worst case scenario; all characters, all the longest possible. More
-             likely: lots of small integers. */
+          /* Worst case scenario; all characters, all the longest
+             possible. More likely: lots of small integers. */
           nonreloc = allptr
             = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
 
@@ -960,34 +868,6 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
               allptr += set_itext_ichar (allptr,
                                          XCHAR_OR_CHAR_INT (vdata[ii]));
             }
-        }
-      else if (CONSP (sequence))
-        {
-          /* Worst case scenario; all characters, all the longest
-             possible. More likely: lots of small integers. */
-          nonreloc = allptr
-            = alloca_ibytes (((ending - starting)) * MAX_ICHAR_LEN);
-          ii = 0;
-          {
-            EXTERNAL_LIST_LOOP_2 (elt, sequence)
-              {
-                if (ii >= starting)
-                  {
-                    if (ii >= ending)
-                      {
-                        break;
-                      }
-
-                    if (!CHARP (elt))
-                      {
-                        check_integer_range (elt, Qzero, make_fixnum (0xff));
-                      }
-                    allptr += set_itext_ichar (allptr,
-                                               XCHAR_OR_CHAR_INT (elt));
-                  }
-                ++ii;
-              }
-          }
         }
       else if (BIT_VECTORP (sequence))
         {
@@ -1101,17 +981,6 @@ arguments: (BUFNAME &rest BODY)
   return unbind_to_1 (speccount, val);
 }
 
-DEFUN ("terpri", Fterpri, 0, 1, 0, /*
-Output a newline to STREAM.
-If STREAM is omitted or nil, the value of `standard-output' is used.
-*/
-       (stream))
-{
-  /* This function can GC */
-  write_ascstring (canonicalize_printcharfun (stream), "\n");
-  return Qt;
-}
-
 DEFUN ("prin1", Fprin1, 1, 2, 0, /*
 Output the printed representation of OBJECT, any Lisp object.
 Quoting characters are printed when needed to make output that `read'
@@ -1145,10 +1014,8 @@ prin1_to_string (Lisp_Object object, int noescape)
   GCPRO3 (object, stream, result);
 
   print_internal (object, stream, !noescape);
-  Lstream_flush (str);
   UNGCPRO;
-  result = make_string (resizing_buffer_stream_ptr (str),
-			Lstream_byte_count (str));
+  result = resizing_buffer_to_lisp_string (str);
   Lstream_delete (str);
   return result;
 }
@@ -1329,9 +1196,7 @@ message is equivalent to the one that would be issued by
   GCPRO1 (stream);
 
   print_error_message (error_object, stream);
-  Lstream_flush (XLSTREAM (stream));
-  result = make_string (resizing_buffer_stream_ptr (XLSTREAM (stream)),
-			Lstream_byte_count (XLSTREAM (stream)));
+  result = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
 
   UNGCPRO;
@@ -1364,16 +1229,17 @@ Lisp_Object Vfloat_output_format;
  * re-writing _doprnt to be more sane)?
  * 			-wsr
  */
-void
+Bytecount
 float_to_string (char *buf, double data)
 {
   Ibyte *cp, c;
   int width;
+  Bytecount plen;
 
   if (NILP (Vfloat_output_format)
       || !STRINGP (Vfloat_output_format))
   lose:
-    sprintf (buf, "%.16g", data);
+    plen = sprintf (buf, "%.16g", data);
   else			/* oink oink */
     {
       /* Check that the spec we have is fully valid.
@@ -1402,8 +1268,8 @@ float_to_string (char *buf, double data)
       if (cp[1] != 0)
 	goto lose;
 
-      sprintf (buf, (char *) XSTRING_DATA (Vfloat_output_format),
-	       data);
+      plen = sprintf (buf, (char *) XSTRING_DATA (Vfloat_output_format),
+                      data);
     }
 
   /* added by jwz: don't allow "1.0" to print as "1"; that destroys
@@ -1424,6 +1290,7 @@ float_to_string (char *buf, double data)
     *s++ = '.';
     *s++ = '0';
     *s = 0;
+    plen += 2;
   }
  DONE_LABEL:
 
@@ -1431,169 +1298,30 @@ float_to_string (char *buf, double data)
   if (buf [0] == '.' || (buf [0] == '-' && buf [1] == '.'))
     {
       int i;
-      for (i = strlen (buf) + 1; i >= 0; i--)
+      for (i = plen + 1; i >= 0; i--)
 	buf [i+1] = buf [i];
       buf [(buf [0] == '-' ? 1 : 0)] = '0';
-    }
-}
-
-#define ONE_DIGIT(figure) *p++ = (char) (n / (figure) + '0')
-#define ONE_DIGIT_ADVANCE(figure) (ONE_DIGIT (figure), n %= (figure))
-
-#define DIGITS_1(figure) ONE_DIGIT (figure)
-#define DIGITS_2(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_1 ((figure) / 10)
-#define DIGITS_3(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_2 ((figure) / 10)
-#define DIGITS_4(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_3 ((figure) / 10)
-#define DIGITS_5(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_4 ((figure) / 10)
-#define DIGITS_6(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_5 ((figure) / 10)
-#define DIGITS_7(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_6 ((figure) / 10)
-#define DIGITS_8(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_7 ((figure) / 10)
-#define DIGITS_9(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_8 ((figure) / 10)
-#define DIGITS_10(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_9 ((figure) / 10)
-
-/* DIGITS_<11-20> are only used on machines with 64-bit longs. */
-
-#define DIGITS_11(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_10 ((figure) / 10)
-#define DIGITS_12(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_11 ((figure) / 10)
-#define DIGITS_13(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_12 ((figure) / 10)
-#define DIGITS_14(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_13 ((figure) / 10)
-#define DIGITS_15(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_14 ((figure) / 10)
-#define DIGITS_16(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_15 ((figure) / 10)
-#define DIGITS_17(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_16 ((figure) / 10)
-#define DIGITS_18(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_17 ((figure) / 10)
-#define DIGITS_19(figure) ONE_DIGIT_ADVANCE (figure); DIGITS_18 ((figure) / 10)
-
-/* Print NUMBER to BUFFER in base 10.  This is completely equivalent
-   to `sprintf(buffer, "%ld", number)', only much faster.
-
-   The speedup may make a difference in programs that frequently
-   convert numbers to strings.  Some implementations of sprintf,
-   particularly the one in GNU libc, have been known to be extremely
-   slow compared to this function.
-
-   BUFFER should accept as many bytes as you expect the number to take
-   up.  On machines with 64-bit longs the maximum needed size is 24
-   bytes.  That includes the worst-case digits, the optional `-' sign,
-   and the trailing \0.  */
-
-void
-long_to_string (char *buffer, long number)
-{
-  char *p = buffer;
-  long n = number;
-
-#if (SIZEOF_LONG != 4) && (SIZEOF_LONG != 8)
-  /* We are running in a strange or misconfigured environment.  Let
-     sprintf cope with it.  */
-  sprintf (buffer, "%ld", n);
-#else  /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
-
-  if (n < 0)
-    {
-      *p++ = '-';
-      n = -n;
+      plen += 1;
     }
 
-  if      (n < 10)                   { DIGITS_1 (1); }
-  else if (n < 100)                  { DIGITS_2 (10); }
-  else if (n < 1000)                 { DIGITS_3 (100); }
-  else if (n < 10000)                { DIGITS_4 (1000); }
-  else if (n < 100000)               { DIGITS_5 (10000); }
-  else if (n < 1000000)              { DIGITS_6 (100000); }
-  else if (n < 10000000)             { DIGITS_7 (1000000); }
-  else if (n < 100000000)            { DIGITS_8 (10000000); }
-  else if (n < 1000000000)           { DIGITS_9 (100000000); }
-#if SIZEOF_LONG == 4
-  /* ``if (1)'' serves only to preserve editor indentation. */
-  else if (1)                        { DIGITS_10 (1000000000); }
-#else  /* SIZEOF_LONG != 4 */
-  else if (n < 10000000000L)         { DIGITS_10 (1000000000L); }
-  else if (n < 100000000000L)        { DIGITS_11 (10000000000L); }
-  else if (n < 1000000000000L)       { DIGITS_12 (100000000000L); }
-  else if (n < 10000000000000L)      { DIGITS_13 (1000000000000L); }
-  else if (n < 100000000000000L)     { DIGITS_14 (10000000000000L); }
-  else if (n < 1000000000000000L)    { DIGITS_15 (100000000000000L); }
-  else if (n < 10000000000000000L)   { DIGITS_16 (1000000000000000L); }
-  else if (n < 100000000000000000L)  { DIGITS_17 (10000000000000000L); }
-  else if (n < 1000000000000000000L) { DIGITS_18 (100000000000000000L); }
-  else                               { DIGITS_19 (1000000000000000000L); }
-#endif /* SIZEOF_LONG != 4 */
-
-  *p = '\0';
-#endif /* (SIZEOF_LONG == 4) || (SIZEOF_LONG == 8) */
+  return plen;
 }
-
-#undef ONE_DIGIT
-#undef ONE_DIGIT_ADVANCE
-
-#undef DIGITS_1
-#undef DIGITS_2
-#undef DIGITS_3
-#undef DIGITS_4
-#undef DIGITS_5
-#undef DIGITS_6
-#undef DIGITS_7
-#undef DIGITS_8
-#undef DIGITS_9
-#undef DIGITS_10
-#undef DIGITS_11
-#undef DIGITS_12
-#undef DIGITS_13
-#undef DIGITS_14
-#undef DIGITS_15
-#undef DIGITS_16
-#undef DIGITS_17
-#undef DIGITS_18
-#undef DIGITS_19
 
 void
-ulong_to_bit_string (char *p, unsigned long number)
-{
-  int i, seen_high_order = 0;;
-  
-  for (i = ((SIZEOF_LONG * 8) - 1); i >= 0; --i)
-    {
-      if (number & (unsigned long)1 << i)
-        {
-          seen_high_order = 1;
-          *p++ = '1';
-        }
-      else
-        {
-          if (seen_high_order)
-            {
-              *p++ = '0';
-            }
-        }
-    }
-
-  if (!seen_high_order)
-    {
-      *p++ = '0';
-    }
-
-  *p = '\0';
-}
-
-static void
-print_vector_internal (const char *start, const char *end,
-                       Lisp_Object obj,
-                       Lisp_Object printcharfun, int escapeflag)
+print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   /* This function can GC */
-  int i;
-  int len = XVECTOR_LENGTH (obj);
-  int last = len;
+  Elemcount i, len = XVECTOR_LENGTH (obj), last = len;
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
   if (FIXNUMP (Vprint_length))
     {
-      int max = XFIXNUM (Vprint_length);
+      Elemcount max = XFIXNUM (Vprint_length);
       if (max < len) last = max;
     }
 
-  write_cistring (printcharfun, start);
+  write_ascstring (printcharfun, "[");
   for (i = 0; i < last; i++)
     {
       Lisp_Object elt = XVECTOR_DATA (obj)[i];
@@ -1603,7 +1331,7 @@ print_vector_internal (const char *start, const char *end,
   UNGCPRO;
   if (last != len)
     write_ascstring (printcharfun, " ...");
-  write_cistring (printcharfun, end);
+  write_ascstring (printcharfun, "]");
 }
 
 void
@@ -1701,49 +1429,41 @@ print_cons (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 void
-print_vector (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
-{
-  print_vector_internal ("[", "]", obj, printcharfun, escapeflag);
-}
-
-void
 print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
-  /* We distinguish between Bytecounts and Charcounts, to make
-     Vprint_string_length work correctly under Mule.  */
-  Charcount size = string_char_length (obj);
-  Charcount max = size;
-  Bytecount bcmax = XSTRING_LENGTH (obj);
+  Bytecount bcmax = XSTRING_LENGTH (obj), bcsize = bcmax;
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (obj, printcharfun);
 
-  if (FIXNUMP (Vprint_string_length) &&
-      XFIXNUM (Vprint_string_length) < max)
+  if (FIXNUMP (Vprint_string_length)
+      && XFIXNUM (Vprint_string_length) < bcmax)
     {
-      max = XFIXNUM (Vprint_string_length);
-      bcmax = string_index_char_to_byte (obj, max);
-    }
-  if (max < 0)
-    {
-      max = 0;
-      bcmax = 0;
+      /* The byte length of OBJ is an inclusive upper bound on its character
+	 length. If PRINT-STRING-LENGTH is less than BCMAX, check OBJ's
+	 character length to get an exact length to print. Otherwise, print
+	 the entire string without worrying about its character length. */
+      Charcount cmax = min (string_char_length (obj),
+			    max (0, XREALFIXNUM (Vprint_string_length)));
+      bcmax = string_index_char_to_byte (obj, cmax);
     }
 
   if (!escapeflag)
     {
       /* This deals with GC-relocation and Mule. */
       output_string (printcharfun, 0, obj, 0, bcmax);
-      if (max < size)
+      if (bcmax < XSTRING_LENGTH (obj))
 	write_ascstring (printcharfun, " ...");
     }
   else
     {
       Bytecount i, last = 0;
+      Charcount ci = 0;
 
       write_ascstring (printcharfun, "\"");
-      for (i = 0; i < bcmax; i++)
+      for (i = 0; i < bcmax;
+           i += itext_ichar_len (string_byte_addr (obj, i)), ci++)
 	{
-	  Ibyte ch = string_byte (obj, i);
+	  Ichar ch = itext_ichar (string_byte_addr (obj, i));
 	  if (ch == '\"' || ch == '\\'
 	      || (ch == '\n' && print_escape_newlines))
 	    {
@@ -1758,14 +1478,37 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		}
 	      else
 		{
-		  Ibyte temp[2];
-		  write_ascstring (printcharfun, "\\");
-		  /* This is correct for Mule because the
-		     character is either \ or " */
-		  temp[0] = string_byte (obj, i);
-		  temp[1] = '\0';
-		  write_istring (printcharfun, temp);
+		  /* This is correct for Mule because the character is either
+		     \ or " */
+		  Ibyte temp[] = { '\\', string_byte (obj, i) };
+                  write_string_1 (printcharfun, temp, sizeof (temp));
 		}
+
+              /* If PRINTCHARFUN modified OBJ's byte length, attempt to ensure
+                 we print the right number of characters, ensure we don't run
+                 off the end.
+
+                 PRINTCHARFUN could also have silently added characters of
+                 varying byte length at different positions, maintaining the
+                 byte length of OBJ but corrupting our calculation of
+                 BCMAX. If it does that, our misbehaviour is its own damn
+                 fault.  PRINTCHARFUN really shouldn't be modifying OBJ at
+                 all, cf. the MAPPING-DESTRUCTIVE-INTERACTION Common Lisp
+                 issue. */
+              if (XSTRING_LENGTH (obj) != bcsize)
+                {
+                  bcmax = bcsize = XSTRING_LENGTH (obj);
+                  i = string_index_char_to_byte (obj, ci);
+
+                  if (FIXNUMP (Vprint_string_length)
+                      && XFIXNUM (Vprint_string_length) < bcmax)
+                    {
+                      Charcount cmax =
+                        min (string_char_length (obj),
+                             max (0, XREALFIXNUM (Vprint_string_length)));
+                      bcmax = string_index_char_to_byte (obj, cmax);
+                    }
+                }
 	      last = i + 1;
 	    }
 	}
@@ -1774,7 +1517,7 @@ print_string (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  output_string (printcharfun, 0, obj, last,
 			 bcmax - last);
 	}
-      if (max < size)
+      if (bcmax < XSTRING_LENGTH (obj))
 	write_ascstring (printcharfun, " ...");
       write_ascstring (printcharfun, "\"");
     }
@@ -2107,7 +1850,7 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
         }
       else if (XFIXNUM (seen) & PRINT_NUMBER_PRINTED_MASK)
         {
-          write_fmt_string (printcharfun, "#%d#",
+          write_fmt_string (printcharfun, "#%ld#",
                             (XFIXNUM (seen) & PRINT_NUMBER_ORDINAL_MASK)
                             >> PRINT_NUMBER_ORDINAL_SHIFT);
 
@@ -2116,13 +1859,14 @@ print_gensym_or_circle (Lisp_Object obj, Lisp_Object printcharfun)
         }
       else
         {
-          write_fmt_string (printcharfun, "#%d=",
+          write_fmt_string (printcharfun, "#%ld=",
                             (XFIXNUM (seen) & PRINT_NUMBER_ORDINAL_MASK)
                             >> PRINT_NUMBER_ORDINAL_SHIFT);
 
           /* We set PRINT_NUMBER_PRINTED_MASK immediately here, so the
              object itself is written as #%d# when printing its contents. */
-          Fputhash (obj, make_fixnum (XFIXNUM (seen) | PRINT_NUMBER_PRINTED_MASK),
+          Fputhash (obj,
+                    make_fixnum (XFIXNUM (seen) | PRINT_NUMBER_PRINTED_MASK),
                     Vprint_number_table);
 
           /* This is the first time the object has been seen while
@@ -2261,9 +2005,10 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     case Lisp_Type_Fixnum_Even:
     case Lisp_Type_Fixnum_Odd:
       {
-	Ascbyte buf[DECIMAL_PRINT_SIZE (EMACS_INT)];
-	long_to_string (buf, XFIXNUM (obj));
-	write_ascstring (printcharfun, buf);
+	Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum)];
+        write_string_1 (printcharfun, buf,
+                        fixnum_to_string (buf, sizeof (buf),
+                                          XREALFIXNUM (obj), 10, Qnil));
 	break;
       }
 
@@ -2479,10 +2224,14 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	    for (i = 0; i < print_depth - 1; i++)
 	      if (EQ (obj, being_printed[i]))
 		{
-		  Ascbyte buf[DECIMAL_PRINT_SIZE (long) + 1];
-		  *buf = '#';
-		  long_to_string (buf + 1, i);
-		  write_ascstring (printcharfun, buf);
+		  Ibyte buf[DECIMAL_PRINT_SIZE (long) + MAX_ICHAR_LEN];
+
+		  set_itext_ichar (buf, '#');
+                  write_string_1 (printcharfun, buf, 
+                                  ichar_len ('#')
+                                  + fixnum_to_string (buf + ichar_len ('#'),
+                                                      sizeof (buf), i, 10,
+                                                      Qnil));
 		  break;
 		}
 	    if (i < print_depth - 1) /* Did we print something? */
@@ -2544,8 +2293,8 @@ print_float (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Ascbyte pigbuf[350];	/* see comments in float_to_string */
 
-  float_to_string (pigbuf, XFLOAT_DATA (obj));
-  write_ascstring (printcharfun, pigbuf);
+  write_string_1 (printcharfun, (const Ibyte *) pigbuf,
+                  float_to_string (pigbuf, XFLOAT_DATA (obj)));
 }
 
 void
@@ -2605,15 +2354,15 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
         switch (cc)
           {
-            /* A symbol like 2e10 cound be confused with a float: */
+            /* A symbol like 2e10 could be confused with a float: */
           case 'e':
           case 'E':
-            /* As can one like 123/456: */
+            /* And one like 123/456 could be confused with a ratio: */
           case '/':
             nondigits++;
             confusing = nondigits < 2
               /* If it starts with an E or a slash, that's fine, it can't be a
-                 float. */
+                 number. */
               && data != XSTRING_DATA (name)
               /* And if it ends with an e or a slash that's fine too. */
               && (data + itext_ichar_len (data)) != pend;
@@ -2621,12 +2370,13 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 
             /* There can be a sign in the exponent. Such a sign needs to be
                directly after an e and to have trailing digits after it to be
-               valid float syntax. */
+               valid float syntax. Common Lisp does not allow signs in the
+               denominator in its ratio syntax, so this cannot be a ratio. */
           case '+':
           case '-':
             confusing = (1 == nondigits)
               && data != XSTRING_DATA (name)
-              && (data + itext_ichar_len (data));
+              && (data + itext_ichar_len (data)) != pend;
             if (confusing)
               {
                 Ibyte *lastp = data;
@@ -2659,15 +2409,13 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   }
 
   {
-    Bytecount i;
-    Bytecount last = 0;
+    Bytecount i, last = 0;
+    Charcount ci = 0;
 
-    for (i = 0; i < size; i++)
+    for (i = 0; i < size;
+         i += itext_ichar_len (string_byte_addr (name, i)), ci++)
       {
-        /* In the event that we adopt a non-ASCII-compatible internal format,
-           this will no longer be Mule-safe. As of May 2015, that is very,
-           very unlikely. */
-	switch (string_byte (name, i))
+	switch (itext_ichar (string_byte_addr (name, i)))
 	  {
 	  case  0: case  1: case  2: case  3:
 	  case  4: case  5: case  6: case  7:
@@ -2682,8 +2430,18 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 	  case ',': case '.' : case '`' :
 	  case '[': case ']' : case '?' :
 	    if (i > last)
-	      output_string (printcharfun, 0, name, last, i - last);
+              output_string (printcharfun, 0, name, last, i - last);
+
 	    write_ascstring (printcharfun, "\\");
+
+            /* If PRINTCHARFUN modified NAME's byte length, ensure we don't
+               run off the end, attempt to ensure we print the right number of
+               characters.  Cf. similar issues with print_string, above. */
+            if (XSTRING_LENGTH (name) != size)
+              {
+                size = XSTRING_LENGTH (name);
+                i = string_index_char_to_byte (name, ci);
+              }
 	    last = i;
 	  }
       }
@@ -3000,9 +2758,7 @@ debug_p4 (Lisp_Object obj)
     }
   else if (VECTORP (obj))
     {
-      int size = XVECTOR_LENGTH (obj);
-      int i;
-      int first = 1;
+      Elemcount size = XVECTOR_LENGTH (obj), i, first = 1;
 
       for (i = 0; i < size; i++)
 	{
@@ -3088,26 +2844,24 @@ debug_print (Lisp_Object debug_print_obj)
 /* Printf-style output when the objects being printed are Lisp objects.
    Calling style is e.g.
 
-   debug_out_lisp ("Called foo(%s %s)\n", 2, arg0, arg1)
+   debug_out_lisp ("Called foo(%s %s)\n", arg0, arg1)
 */
 
 void
-debug_out_lisp (const CIbyte *format, int nargs, ...)
+debug_out_lisp (const CIbyte *fermat, ...)
 {
   /* This function cannot GC, since GC is forbidden */
   struct debug_bindings bindings;
   int specdepth = debug_print_enter (&bindings);
-  Lisp_Object *args = alloca_array (Lisp_Object, nargs);
+  Bytecount len;
   va_list va;
-  int i;
   Ibyte *msgout;
 
-  va_start (va, nargs);
-  for (i = 0; i < nargs; i++)
-    args[i] = va_arg (va, Lisp_Object);
+  va_start (va, fermat);
+  len = emacs_vasprintf_lisp (&msgout, fermat, va);
   va_end (va);
-  msgout = emacs_vsprintf_malloc_lisp (format, Qnil, nargs, args, NULL);
-  debug_out ("%s", msgout);
+
+  write_string_to_external_output (msgout, len, EXT_PRINT_ALL);
   xfree (msgout);
   unbind_to (specdepth);
 }
@@ -3214,7 +2968,6 @@ syms_of_print (void)
   DEFSUBR (Fprint);
   DEFSUBR (Ferror_message_string);
   DEFSUBR (Fdisplay_error);
-  DEFSUBR (Fterpri);
   DEFSUBR (Fwrite_char);
   DEFSUBR (Fwrite_sequence);
   DEFSUBR (Falternate_debugging_output);

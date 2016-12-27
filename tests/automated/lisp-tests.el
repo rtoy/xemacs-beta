@@ -988,6 +988,18 @@ will be used to make debugging easier."
   (Assert (let* ((x (a)) (y (remrassq  "6" x))) (and (eq x y) (equal y (a))))))
 
 ;;-----------------------------------------------------
+;; Check a specific bug in #'mapcon has been fixed.
+;;-----------------------------------------------------
+
+(Assert (equal
+         (mapcon
+          #'(lambda (tail)
+              (unless (eq (car tail) '&optional)
+                (list (cons (car tail) 4))))
+          '(opcode stack-adjust opname &optional docstring))
+         '((opcode . 4) (stack-adjust . 4) (opname . 4) (docstring . 4))))
+
+;;-----------------------------------------------------
 ;; function-max-args, function-min-args
 ;;-----------------------------------------------------
 (defmacro check-function-argcounts (fun min max)
@@ -1043,7 +1055,7 @@ will be used to make debugging easier."
 ;; Test `type-of'
 ;;-----------------------------------------------------
 (Assert (eq (type-of load-path) 'cons))
-(Assert (eq (type-of obarray) 'vector))
+(Assert (eq (type-of obarray) 'hash-table))
 (Assert (eq (type-of 42) 'fixnum))
 (Assert (eq (type-of ?z) 'character))
 (Assert (eq (type-of "42") 'string))
@@ -1347,11 +1359,12 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (eq t (remprop obj ?3)) obj)
   (when (or (stringp obj) (symbolp obj))
     (Assert (eq '() (object-plist obj)) obj))
-  (Assert (eq nil (remprop obj ?3)) obj)
-  (when (or (stringp obj) (symbolp obj))
-    (Assert (eq '() (object-plist obj)) obj))
+  (Assert (eql 200 (put obj most-positive-fixnum 200)))
+  (Assert (eql (get obj most-positive-fixnum) 200))
   (Assert (eq 5 (get obj ?3 5)) obj)
-  )
+  (Assert (eq t (remprop obj most-positive-fixnum)))
+  (when (or (stringp obj) (symbolp obj))
+    (Assert (eq '() (object-plist obj)) obj)))
 
 (Check-Error-Message
  error "Object type has no properties"
@@ -1406,125 +1419,6 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;; Time-related tests
 ;;-----------------------------------------------------
 (Assert (= (length (current-time-string)) 24))
-
-;;-----------------------------------------------------
-;; format test
-;;-----------------------------------------------------
-(Assert (string= (format "%d" 10) "10"))
-(Assert (string= (format "%o" 8) "10"))
-(Assert (string= (format "%b" 2) "10"))
-(Assert (string= (format "%x" 31) "1f"))
-(Assert (string= (format "%X" 31) "1F"))
-(Assert (string= (format "%b" 0) "0"))
-(Assert (string= (format "%b" 3) "11"))
-;; MS-Windows uses +002 in its floating-point numbers.  #### We should
-;; perhaps fix this, but writing our own floating-point support in doprnt.c
-;; is very hard.
-(Assert (or (string= (format "%e" 100) "1.000000e+02")
-	    (string= (format "%e" 100) "1.000000e+002")))
-(Assert (or (string= (format "%E" 100) "1.000000E+02")
-	    (string= (format "%E" 100) "1.000000E+002")))
-(Assert (or (string= (format "%E" 100) "1.000000E+02")
-	    (string= (format "%E" 100) "1.000000E+002")))
-(Assert (string= (format "%f" 100) "100.000000"))
-(Assert (string= (format "%7.3f" 12.12345) " 12.123"))
-(Assert (string= (format "%07.3f" 12.12345) "012.123"))
-(Assert (string= (format "%-7.3f" 12.12345) "12.123 "))
-(Assert (string= (format "%-07.3f" 12.12345) "12.123 "))
-(Assert (string= (format "%g" 100.0) "100"))
-(Assert (or (string= (format "%g" 0.000001) "1e-06")
-	    (string= (format "%g" 0.000001) "1e-006")))
-(Assert (string= (format "%g" 0.0001) "0.0001"))
-(Assert (string= (format "%G" 100.0) "100"))
-(Assert (or (string= (format "%G" 0.000001) "1E-06")
-	    (string= (format "%G" 0.000001) "1E-006")))
-(Assert (string= (format "%G" 0.0001) "0.0001"))
-
-(Assert (string= (format "%2$d%1$d" 10 20) "2010"))
-(Assert (string= (format "%-d" 10) "10"))
-(Assert (string= (format "%-4d" 10) "10  "))
-(Assert (string= (format "%+d" 10) "+10"))
-(Assert (string= (format "%+d" -10) "-10"))
-(Assert (string= (format "%+4d" 10) " +10"))
-(Assert (string= (format "%+4d" -10) " -10"))
-(Assert (string= (format "% d" 10) " 10"))
-(Assert (string= (format "% d" -10) "-10"))
-(Assert (string= (format "% 4d" 10) "  10"))
-(Assert (string= (format "% 4d" -10) " -10"))
-(Assert (string= (format "%0d" 10) "10"))
-(Assert (string= (format "%0d" -10) "-10"))
-(Assert (string= (format "%04d" 10) "0010"))
-(Assert (string= (format "%04d" -10) "-010"))
-(Assert (string= (format "%*d" 4 10) "  10"))
-(Assert (string= (format "%*d" 4 -10) " -10"))
-(Assert (string= (format "%*d" -4 10) "10  "))
-(Assert (string= (format "%*d" -4 -10) "-10 "))
-(Assert (string= (format "%#d" 10) "10"))
-(Assert (string= (format "%#o" 8) "010"))
-(Assert (string= (format "%#x" 16) "0x10"))
-(Assert (or (string= (format "%#e" 100) "1.000000e+02")
-	    (string= (format "%#e" 100) "1.000000e+002")))
-(Assert (or (string= (format "%#E" 100) "1.000000E+02")
-	    (string= (format "%#E" 100) "1.000000E+002")))
-(Assert (string= (format "%#f" 100) "100.000000"))
-(Assert (string= (format "%#g" 100.0) "100.000"))
-(Assert (or (string= (format "%#g" 0.000001) "1.00000e-06")
-	    (string= (format "%#g" 0.000001) "1.00000e-006")))
-(Assert (string= (format "%#g" 0.0001) "0.000100000"))
-(Assert (string= (format "%#G" 100.0) "100.000"))
-(Assert (or (string= (format "%#G" 0.000001) "1.00000E-06")
-	    (string= (format "%#G" 0.000001) "1.00000E-006")))
-(Assert (string= (format "%#G" 0.0001) "0.000100000"))
-(Assert (string= (format "%.1d" 10) "10"))
-(Assert (string= (format "%.4d" 10) "0010"))
-;; Combination of `-', `+', ` ', `0', `#', `.', `*'
-(Assert (string= (format "%-04d" 10) "10  "))
-(Assert (string= (format "%-*d" 4 10) "10  "))
-;; #### Correctness of this behavior is questionable.
-;; It might be better to signal error.
-(Assert (string= (format "%-*d" -4 10) "10  "))
-;; These behavior is not specified.
-;; (format "%-+d" 10)
-;; (format "%- d" 10)
-;; (format "%-01d" 10)
-;; (format "%-#4x" 10)
-;; (format "%-.1d" 10)
-
-(Assert (string= (format "%01.1d" 10) "10"))
-(Assert (string= (format "%03.1d" 10) " 10"))
-(Assert (string= (format "%01.3d" 10) "010"))
-(Assert (string= (format "%1.3d" 10) "010"))
-(Assert (string= (format "%3.1d" 10) " 10"))
-
-;;; The following two tests used to use 1000 instead of 100,
-;;; but that merely found buffer overflow bugs in Solaris sprintf().
-(Assert (= 102 (length (format "%.100f" 3.14))))
-(Assert (= 100 (length (format "%100f" 3.14))))
-
-;;; Check for 64-bit cleanness on LP64 platforms.
-(Assert (= (read (format "%d"  most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%u"  most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
-(Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
-
-;; These used to crash. 
-(Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))
-(Assert (eql (read (format "%.1000d" 1)) 1))
-
-;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
-;;; What to do if "%u" is used with a negative number?
-;;; For non-bignum XEmacsen, the most reasonable thing seems to be to print an
-;;; un-read-able number.  The printed value might be useful to a human, if not
-;;; to Emacs Lisp.
-;;; For bignum XEmacsen, we make %u with a negative value throw an error.
-(if (featurep 'bignum)
-    (progn
-      (Check-Error wrong-type-argument (format "%u" most-negative-fixnum))
-      (Check-Error wrong-type-argument (format "%u" -1)))
-  (Check-Error invalid-argument (read (format "%u" most-negative-fixnum)))
-  (Check-Error invalid-argument (read (format "%u" -1))))
 
 ;; Check all-completions ignore element start with space.
 (Assert (not (all-completions "" '((" hidden" . "object")))))
@@ -2136,23 +2030,39 @@ via the hepatic alpha-tocopherol transfer protein")))
 			      1)))
   (when (featurep 'ratio)
     (Assert-rounding (read "4/3") (read "8/7")
-     :one-floor-result '(1 1/3) :two-floor-result '(1 4/21)
-     :one-ffloor-result '(1.0 1/3) :two-ffloor-result '(1.0 4/21)
-     :one-ceiling-result '(2 -2/3) :two-ceiling-result '(2 -20/21)
-     :one-fceiling-result '(2.0 -2/3) :two-fceiling-result '(2.0 -20/21)
-     :one-round-result '(1 1/3) :two-round-result '(1 4/21)
-     :one-fround-result '(1.0 1/3) :two-fround-result '(1.0 4/21)
-     :one-truncate-result '(1 1/3) :two-truncate-result '(1 4/21)
-     :one-ftruncate-result '(1.0 1/3) :two-ftruncate-result '(1.0 4/21))
+     :one-floor-result `(1 ,(read "1/3"))
+     :two-floor-result `(1 ,(read "4/21"))
+     :one-ffloor-result `(1.0 ,(read "1/3"))
+     :two-ffloor-result `(1.0 ,(read "4/21"))
+     :one-ceiling-result `(2 ,(read "-2/3"))
+     :two-ceiling-result `(2 ,(read "-20/21"))
+     :one-fceiling-result `(2.0 ,(read "-2/3"))
+     :two-fceiling-result `(2.0 ,(read "-20/21"))
+     :one-round-result `(1 ,(read "1/3"))
+     :two-round-result `(1 ,(read "4/21"))
+     :one-fround-result `(1.0 ,(read "1/3"))
+     :two-fround-result `(1.0 ,(read "4/21"))
+     :one-truncate-result `(1 ,(read "1/3"))
+     :two-truncate-result `(1 ,(read "4/21"))
+     :one-ftruncate-result `(1.0 ,(read "1/3"))
+     :two-ftruncate-result `(1.0 ,(read "4/21")))
     (Assert-rounding (read "-4/3") (read "8/7")
-     :one-floor-result '(-2 2/3) :two-floor-result '(-2 20/21)
-     :one-ffloor-result '(-2.0 2/3) :two-ffloor-result '(-2.0 20/21)
-     :one-ceiling-result '(-1 -1/3) :two-ceiling-result '(-1 -4/21)
-     :one-fceiling-result '(-1.0 -1/3) :two-fceiling-result '(-1.0 -4/21)
-     :one-round-result '(-1 -1/3) :two-round-result '(-1 -4/21)
-     :one-fround-result '(-1.0 -1/3) :two-fround-result '(-1.0 -4/21)
-     :one-truncate-result '(-1 -1/3) :two-truncate-result '(-1 -4/21)
-     :one-ftruncate-result '(-1.0 -1/3) :two-ftruncate-result '(-1.0 -4/21))))
+     :one-floor-result `(-2 ,(read "2/3"))
+     :two-floor-result `(-2 ,(read "20/21"))
+     :one-ffloor-result `(-2.0 ,(read "2/3"))
+     :two-ffloor-result `(-2.0 ,(read "20/21"))
+     :one-ceiling-result `(-1 ,(read "-1/3"))
+     :two-ceiling-result `(-1 ,(read "-4/21"))
+     :one-fceiling-result `(-1.0 ,(read "-1/3"))
+     :two-fceiling-result `(-1.0 ,(read "-4/21"))
+     :one-round-result `(-1 ,(read "-1/3"))
+     :two-round-result `(-1 ,(read "-4/21"))
+     :one-fround-result `(-1.0 ,(read "-1/3"))
+     :two-fround-result `(-1.0 ,(read "-4/21"))
+     :one-truncate-result `(-1 ,(read "-1/3"))
+     :two-truncate-result `(-1 ,(read "-4/21"))
+     :one-ftruncate-result `(-1.0 ,(read "-1/3"))
+     :two-ftruncate-result `(-1.0 ,(read "-4/21")))))
 
 ;; Run this function in a Common Lisp with two arguments to get results that
 ;; we should compare against, above. Though note the dancing-around with the
@@ -2368,23 +2278,27 @@ via the hepatic alpha-tocopherol transfer protein")))
      `(,@(when (featurep 'bignum)
 	  (read "((111111111111111111111111111111111111111111111111111
 		111111111111111111111111111111111111111111111111111.0))"))
-       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio) '(0/5 -0/5)))
+       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio)
+                                               (read "(0/5 -0/5)")))
        (21845 #b101010101010101 #x5555)
        (1.5 1.500000000000000000000000000000000000000000000000000000000
-	    ,@(when (featurep 'ratio) '(3/2)))
+	    ,@(when (featurep 'ratio) (read "(3/2)")))
        ;; Can't use this, these values aren't `='.
        ;;(-12345678901234567890123457890123457890123457890123457890123457890
        ;; -12345678901234567890123457890123457890123457890123457890123457890.0)
-       (-55 -55.000 ,@(when (featurep 'ratio) '(-110/2)))))
+       (-55 -55.000 ,@(when (featurep 'ratio) (read "(-110/2)")))))
     (equalp-diff-list-tests
      `(0 1 2 3 1000 5000000000
        ,@(when (featurep 'bignum)
 	   (read "(5555555555555555555555555555555555555
                        -5555555555555555555555555555555555555)"))
        -1 -2 -3 -1000 -5000000000 
-       1/2 1/3 2/3 8/2 355/113
-       ,@(when (featurep 'ratio) (mapcar* #'/ '(3/2 3/2) '(0.2 0.7)))
-       55555555555555555555555555555555555555555/2718281828459045
+       ,@(if (featurep 'ratio) 
+             (list
+              (read "(1/2 1/3 2/3 8/2 355/113)")
+              (mapcar* #'/ (read "(3/2 3/2)") '(0.2 0.7))
+              (read
+               "55555555555555555555555555555555555555555/2718281828459045")))
        0.111111111111111111111111111111111111111111111111111111111111111
        1e+300 1e+301 -1e+300 -1e+301))
 
@@ -2587,6 +2501,11 @@ via the hepatic alpha-tocopherol transfer protein")))
 				     (garbage-collect))))))
  "checking we can amputate lists without crashing #'reduce")
 
+(Assert (eq 'placeholder (reduce #'cons '(a b c d e f g h i j)
+                                 :from-end t :start 0 :end 0
+                                 :initial-value 'placeholder))
+        "checking :from-end and zero-length ranges don't crash, #'reduce")
+
 (Assert (not (eq t (canonicalize-inst-list
 		    `(((mswindows) . [string :data ,(make-string 20 0)])
 		      ((tty) . [string :data " "])) 'image t)))
@@ -2617,9 +2536,9 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;; in series rather than in parallel.
 
 (when (featurep 'ratio)
-  (Assert (not (eql '1/2 (read (prin1-to-string (intern "1/2")))))
+  (Assert (not (eql (div 1 2) (read (prin1-to-string (intern "1/2")))))
 	  "checking symbols with ratio-like names are printed distinctly")
-  (Assert (not (eql '1/5 (read (prin1-to-string (intern "2/10")))))
+  (Assert (not (eql (div 1 5) (read (prin1-to-string (intern "2/10")))))
 	  "checking symbol named \"2/10\" not eql to ratio 1/5 on read"))
 
 (let* ((count 0)
@@ -3173,6 +3092,35 @@ via the hepatic alpha-tocopherol transfer protein")))
                 (y (substitute 300 1 x :key #'1-)))
            (and (equal nomodif x) y))
          '(1 300 3 300 6 1 300 4 1 3 300 7)))
+
+;; Test a bug fixed in #'sublis. Again, Paul Dietz has much more
+;; comprehensive tests.
+(let ((tree-alist (list (cons 'old 'new)))
+      box1 box2)
+  (Assert
+   (equal
+    (sublis tree-alist 
+	    '(baa baa ("black1" sheep ("have2" you any wool) yes sir))
+	    :test #'(lambda (new old)
+		      (garbage-collect) ; Attempt to GC the
+					; replacement for "black1"
+					; just created
+		      (cond
+		       ((and (stringp old) (find ?1 old))
+			(setf (cdar tree-alist)
+			      (string ?a ?b ?c ?d ?e)
+			      box1 (make-weak-box (cdar tree-alist)))
+			t)
+		       ((and (stringp old) (find ?2 old))
+			(setf (cdar tree-alist)
+			      (string ?f ?g ?h ?i ?j)
+			      box2 (make-weak-box (cdar tree-alist)))
+			t))))
+    '(baa baa ("abcde" sheep ("fghij" you any wool) yes sir))))
+  (Assert (equal (weak-box-ref box1) "abcde")
+	  "checking first string newly-created inside #'sublis not GCed")
+  (Assert (equal (weak-box-ref box2) "fghij")
+	  "checking second string newly-created inside #'sublis not GCed"))
 
 ;; Test labels and inlining.
 (labels
@@ -3939,5 +3887,22 @@ via the hepatic alpha-tocopherol transfer protein")))
 (Check-Error wrong-type-argument
              (check-type (+ 600 1000) (integer 0 20))
              "checking #'check-type errors properly, non-setfable PLACE")
+
+;; Probe some limits with #'decode-time.
+
+(Assert (progn
+	  (ignore-errors (decode-time '(#x3fffffff . #xffff)))
+	  t))
+
+(when (ignore-errors (coerce 2147483647.0 'integer))
+  (Assert (consp (decode-time (coerce 2147483647.0 'integer))))
+  (when (ignore-errors (coerce 1099511627776.0 'integer))
+    (Assert (progn 
+	      (ignore-errors (decode-time
+			      (cons
+			       (coerce 1099511627776.0 'integer)
+			       0)))
+	      t)
+	    "checking we haven't crashed, localtime returning NULL")))
 
 ;;; end of lisp-tests.el

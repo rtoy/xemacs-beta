@@ -202,6 +202,70 @@ ELT must be a string.  Upper-case and lower-case letters are treated as equal."
            (the (and list (satisfies (lambda (list) (every 'stringp list))))
                 list)
            :test 'equalp))
+
+(defun concat (&rest args)
+  "Concatenate all the arguments and make the result a string.
+The result is a string whose elements are the elements of all the arguments.
+Each argument may be a string or a list or vector of characters.
+
+As of XEmacs 21.0, this function does NOT accept individual integers
+as arguments.  Old code that relies on, for example, (concat \"foo\" 50)
+returning \"foo50\" will fail.  To fix such code, either apply
+`int-to-string' to the integer argument, or use `format'."
+  (apply #'concatenate 'string args))
+
+(defun vconcat (&rest args)
+  "Concatenate all the arguments and make the result a vector.
+The result is a vector whose elements are the elements of all the arguments.
+Each argument may be a list, vector, bit vector, or string."
+  (apply #'concatenate 'vector args))
+
+(defun bvconcat (&rest args)
+  "Concatenate all the arguments and make the result a bit vector.
+The result is a bit vector whose elements are the elements of all the
+arguments.  Each argument may be a list, vector, bit vector, or string."
+  (apply #'concatenate 'bit-vector args))
+
+;; XEmacs; move these non-basic predicates that can be easily implemented in
+;; Lisp from data.c.
+
+(defun char-int-p (object)
+  "Return t if OBJECT is an integer that can be converted into a character.
+See `char-int'."
+  (and (fixnump object) (int-to-char object) t))
+
+(defun char-or-char-int-p (object)
+  "Return t if OBJECT is a character or a fixnum that can be converted to one."
+  (or (and (fixnump object) (int-to-char object) t) (characterp object)))
+
+(defun char-or-string-p (object)
+  "Return t if OBJECT is a character (or a char-int) or a string.
+It is semi-hateful that we allow a char-int here, as it goes against
+the name of this function, but it makes the most sense considering the
+other steps we take to maintain compatibility with the old character/integer
+confoundedness in older versions of E-Lisp."
+  (or (stringp object) (and (fixnump object) (int-to-char object) t)
+      (characterp object)))
+
+(defun integer-or-marker-p (object)
+  "Return t if OBJECT is an integer or a marker (editor pointer)."
+  (or (integerp object) (markerp object)))
+
+(defun integer-or-char-p (object)
+  "Return t if OBJECT is an integer or a character."
+  (or (integerp object) (characterp object)))
+
+(defun integer-char-or-marker-p (object)
+  "Return t if OBJECT is an integer, character or a marker (editor pointer)."
+  (or (integerp object) (markerp object) (characterp object)))
+
+(defun number-or-marker-p (object)
+  "Return t if OBJECT is a number or a marker."
+  (or (numberp object) (markerp object)))
+
+(defun number-char-or-marker-p (object)
+  "Return t if OBJECT is a number, character or a marker."
+  (or (numberp object) (characterp object) (markerp object)))
 
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el
@@ -560,14 +624,9 @@ See also `with-temp-file' and `with-output-to-string'."
 
 (defmacro with-output-to-string (&rest body)
   "Execute BODY, return the text it sent to `standard-output', as a string."
-  `(let ((standard-output
-	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
-     (let ((standard-output standard-output))
-       ,@body)
-     (with-current-buffer standard-output
-       (prog1
-	   (buffer-string)
-	 (kill-buffer nil)))))
+  `(get-output-stream-string 
+    (let ((standard-output (make-string-output-stream)))
+      (prog1 standard-output ,@body))))
 
 (defmacro with-local-quit (&rest body)
   "Execute BODY with `inhibit-quit' temporarily bound to nil."

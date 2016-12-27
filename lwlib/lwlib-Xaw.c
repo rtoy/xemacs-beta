@@ -613,10 +613,10 @@ xaw_scrollbar_scroll (Widget widget, XtPointer closure, XtPointer call_data)
     return;
 
   id = instance->info->id;
-  event_data.slider_value = (int) call_data;
+  event_data.slider_value = (int) (long) call_data;
   event_data.time = 0;
 
-  if ((int) call_data > 0)
+  if ((int) (long) call_data > 0)
     /* event_data.action = SCROLLBAR_PAGE_DOWN;*/
     event_data.action = SCROLLBAR_LINE_DOWN;
   else

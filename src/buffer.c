@@ -308,7 +308,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else if (!BUFFER_LIVE_P (b))
     write_ascstring (printcharfun, "#<killed buffer>");
   else if (escapeflag)
-    write_fmt_string_lisp (printcharfun, "#<buffer %S>", 1, b->name);
+    write_fmt_string_lisp (printcharfun, "#<buffer %S>", b->name);
   else
     print_internal (b->name, printcharfun, 0);
 }

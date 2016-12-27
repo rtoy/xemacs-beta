@@ -331,26 +331,26 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	break;
       }
     case process_event:
-	write_fmt_string_lisp (printcharfun, "#<process-event %S", 1,
+	write_fmt_string_lisp (printcharfun, "#<process-event %S",
 			       XEVENT_PROCESS_PROCESS (obj));
 	break;
     case timeout_event:
-	write_fmt_string_lisp (printcharfun, "#<timeout-event %S", 1,
+	write_fmt_string_lisp (printcharfun, "#<timeout-event %S",
 			       XEVENT_TIMEOUT_OBJECT (obj));
 	break;
     case empty_event:
 	write_ascstring (printcharfun, "#<empty-event");
 	break;
     case misc_user_event:
-	write_fmt_string_lisp (printcharfun, "#<misc-user-event (%S", 1,
+	write_fmt_string_lisp (printcharfun, "#<misc-user-event (%S",
 			       XEVENT_MISC_USER_FUNCTION (obj));
-	write_fmt_string_lisp (printcharfun, " %S)", 1,
+	write_fmt_string_lisp (printcharfun, " %S)",
 			       XEVENT_MISC_USER_OBJECT (obj));
 	break;
     case eval_event:
-	write_fmt_string_lisp (printcharfun, "#<eval-event (%S", 1,
+	write_fmt_string_lisp (printcharfun, "#<eval-event (%S",
 			       XEVENT_EVAL_FUNCTION (obj));
-	write_fmt_string_lisp (printcharfun, " %S)", 1,
+	write_fmt_string_lisp (printcharfun, " %S)",
 			       XEVENT_EVAL_OBJECT (obj));
 	break;
     case dead_event:
@@ -869,7 +869,7 @@ that it is safe to do so.
 
 #if 0
   {
-    int i, len;
+    Elemcount i, len;
 
     assert (!(EQ (event, Vlast_command_event) ||
 	      EQ (event, Vlast_input_event)   ||
@@ -880,7 +880,7 @@ that it is safe to do so.
       assert (!EQ (event, XVECTOR_DATA (Vthis_command_keys) [i]));
     if (!NILP (Vrecent_keys_ring))
       {
-	int recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
+	Elemcount recent_ring_len = XVECTOR_LENGTH (Vrecent_keys_ring);
 	for (i = 0; i < recent_ring_len; i++)
 	  assert (!EQ (event, XVECTOR_DATA (Vrecent_keys_ring) [i]));
       }

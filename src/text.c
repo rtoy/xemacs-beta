@@ -1319,8 +1319,8 @@ static int composite_char_col_next;
 
 #endif /* MULE */
 
-Lisp_Object QSin_char_byte_conversion;
-Lisp_Object QSin_internal_external_conversion;
+Lisp_Object QSin_char_byte_conversion, QSin_byte_char_conversion;
+Lisp_Object QSin_internal_external_conversion, QSin_external_internal_conversion;
 
 Fixnum Vchar_code_limit;
 
@@ -1331,13 +1331,13 @@ Fixnum Vchar_code_limit;
 /* Most are inline functions in lisp.h */
 
 int
-qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
+qxesprintf (Ibyte *buffer, const CIbyte *fermat, ...)
 {
   va_list args;
   int retval;
 
-  va_start (args, format);
-  retval = vsprintf ((Chbyte *) buffer, format, args);
+  va_start (args, fermat);
+  retval = vsprintf ((Chbyte *) buffer, fermat, args);
   va_end (args);
 
   return retval;
@@ -2956,7 +2956,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 
   PROFILE_DECLARE ();
 
-  PROFILE_RECORD_ENTERING_SECTION (QSin_char_byte_conversion);
+  PROFILE_RECORD_ENTERING_SECTION (QSin_byte_char_conversion);
 
   best_above = BUF_Z (buf);
   best_above_byte = BYTE_BUF_Z (buf);
@@ -3373,7 +3373,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 #endif /* OLD_BYTE_CHAR */
 
 done:
-  PROFILE_RECORD_EXITING_SECTION (QSin_char_byte_conversion);
+  PROFILE_RECORD_EXITING_SECTION (QSin_byte_char_conversion);
 
   return retval;
 }
@@ -4240,7 +4240,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
   PROFILE_DECLARE ();
 
   assert (!inhibit_non_essential_conversion_operations);
-  PROFILE_RECORD_ENTERING_SECTION (QSin_internal_external_conversion);
+  PROFILE_RECORD_ENTERING_SECTION (QSin_external_internal_conversion);
 
   count = begin_gc_forbidden ();
 
@@ -4453,7 +4453,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       sink->data.ptr = Dynarr_begin (conversion_in_dynarr);
     }
 
-  PROFILE_RECORD_EXITING_SECTION (QSin_internal_external_conversion);
+  PROFILE_RECORD_EXITING_SECTION (QSin_external_internal_conversion);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -4749,20 +4749,6 @@ non_ascii_valid_ichar_p (Ichar ch)
       return ((f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F) ||
 	      XCHARSET_CHARS (charset) == 96);
     }
-}
-
-/* Copy the character pointed to by SRC into DST.  Do not call this
-   directly.  Use the macro itext_copy_ichar() instead.
-   Return the number of bytes copied.  */
-
-Bytecount
-non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
-{
-  Bytecount bytes = rep_bytes_by_first_byte (*src);
-  Bytecount i;
-  for (i = bytes; i; i--, dst++, src++)
-    *dst = *src;
-  return bytes;
 }
 
 #endif /* MULE */
@@ -5140,9 +5126,14 @@ vars_of_text (void)
 {
   QSin_char_byte_conversion = build_defer_string ("(in char-byte conversion)");
   staticpro (&QSin_char_byte_conversion);
+  QSin_byte_char_conversion = build_defer_string ("(in byte-char conversion)");
+  staticpro (&QSin_byte_char_conversion);
   QSin_internal_external_conversion =
     build_defer_string ("(in internal-external conversion)");
   staticpro (&QSin_internal_external_conversion);
+  QSin_external_internal_conversion =
+    build_defer_string ("(in external-internal conversion)");
+  staticpro (&QSin_external_internal_conversion);
 
   DEFVAR_CONST_INT ("char-code-limit", &Vchar_code_limit /*
 Exclusive upper bound on the values return by `char-int'.

@@ -31,7 +31,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* Structure to hold information about running CCL code.  Read
    comments in the file ccl.c for the detail of each field.  */
 struct ccl_program {
-  int size;			/* Size of the compiled code.  */
+  Elemcount size;		/* Size of the compiled code.  */
   Lisp_Object *prog;		/* Pointer into the compiled code.  */
   int ic;			/* Instruction Counter (index for PROG).  */
   int eof_ic;			/* Instruction Counter for end-of-file

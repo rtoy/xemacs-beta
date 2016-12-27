@@ -889,6 +889,23 @@ set_event_type (struct Lisp_Event *event, emacs_event_type t)
     x = wrong_type_argument (Qevent_live_p, (x));       \
 } while (0)
 
+DECLARE_INLINE_HEADER (
+Boolint
+event_mouse_wheel_p (Lisp_Object event)
+)
+{
+  switch (XEVENT_TYPE (event))
+    {
+    case button_press_event:
+    case button_release_event:
+      {
+        int button = XEVENT_BUTTON_BUTTON (event);
+        return button >= 4 && button <= 7;
+      }
+    default:
+      return 0;
+    }
+}
 
 EXFUN (Fcharacter_to_event, 4);
 EXFUN (Fdeallocate_event, 1);

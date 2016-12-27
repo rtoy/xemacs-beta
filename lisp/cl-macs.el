@@ -3934,6 +3934,13 @@ does."
 	                  ,@(if (nth 3 object) `((:end ,(nth 3 object))))))
 	(t form)))
 
+;; No point doing this, if terpri is a loop hotspot the Lisp programmer is
+;; doing something wrong. We win relatively by having one symbol plus a
+;; funcall instruction in the compiled function rather than a symbol, a
+;; funcall instruction, a character, and two not instructions.
+;(define-compiler-macro terpri (&whole form &optional stream)
+;  `(not (not (write-char ?\n ,@(cdr form)))))
+
 (map nil
      #'(lambda (function)
          ;; There are byte codes for the two-argument versions of these

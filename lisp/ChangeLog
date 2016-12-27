@@ -1,7 +1,432 @@
+2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (read-from-minibuffer):
+	Bind `help-form' within this function rather than using
+	help-keymap-with-help-key.
+
+	* help.el (function-really-at-point):
+	Rename this label from #'function-at-point, which should fix the
+	build (the file byte-compiled and ran fine, which is usually
+	enough). Thank you Mats Lidell and the buildbot.
+
+2016-11-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* help.el (function-at-point): New.
+	* help.el (function-at-event): New.
+	* help.el (function-called-at-point): Reworked.
+	* help.el (function-at-point): Reworked.
+	* help.el (help-keymap-with-help-key): Removed, long obsolete.
+	Add support for detecting the current Lisp function if we are in
+	the context of a C file.
+
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* obarray.el (obarray-map):
+	Correct the spelling of #'maphash when marking this for
+	compatibility.
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.el:
+	* abbrev.el (defining-abbrev-turns-on-abbrev-mode):
+	* abbrev.el (make-abbrev-table):
+	* abbrev.el (clear-abbrev-table):
+	* abbrev.el (define-abbrev-table):
+	* abbrev.el (define-abbrev):
+	* abbrev.el (inverse-add-abbrev):
+	* abbrev.el (expand-region-abbrevs):
+	Implement abbrev tables as hash-table objects, not as vectors.
+
+	* derived.el:
+	* derived.el (derived):
+	Ditto.
+
+	* obarray.el: New.
+	* obarray.el (xemacs-intern-in-vector):
+	* obarray.el (xemacs-intern-soft-in-vector):
+	* obarray.el (xemacs-unintern-in-vector):
+	* obarray.el (xemacs-mapatoms-in-vector):
+	* obarray.el (xemacs-next-iteration-in-vector):
+	For compatibility with all the emacs code out there that expects
+	that #'intern and friends can take vector arguments, provide a
+	non-dumped but autoloaded implementation of traditional emacs
+	obarrays, with the buckets implemented as individual slots in a
+	non-resizing vector and each entry in a bucket chained through a
+	symbol's next pointer.
+
+	* obarray.el (obarray-default-size): New.
+	* obarray.el (obarray-make): New.
+	* obarray.el (obarrayp): New.
+	* obarray.el (obarray-get): New.
+	* obarray.el (obarray-put): New.
+	* obarray.el (obarray-remove): New.
+	* obarray.el (obarray-map): New.
+	Import these ill-conceived GNU functions, mark them compatible.
+
+	* obsolete.el:
+	Provide autoloads for the traditional-obarray compatibility
+	functions.
+
+2016-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fontconfig.el (fc-define-property):
+	Supply the right number of arguments to #'format when creating the
+	fc-pattern-del- functions, now we have diagnostics that complain
+	when too many arguments are supplied.
+
+2016-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* about.el (about-finish-buffer):
+	Restore an omitted arglist here.
+	* bytecomp.el (byte-compile-output-docform):
+	No need for char= here, use #'eql which will compile to a byte code.
+	* bytecomp.el (byte-compile-lambda):
+	Check for a likely interactive spec when examining the arglist
+	here, warn if encountered, the programmer probably omitted the
+	arglist (see the above about.el change for context).
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (char-int-p): New.
+	* subr.el (char-or-char-int-p): New.
+	* subr.el (char-or-string-p): New.
+	* subr.el (integer-or-marker-p): New.
+	* subr.el (integer-or-char-p): New.
+	* subr.el (integer-char-or-marker-p): New.
+	* subr.el (number-or-marker-p): New.
+	* subr.el (number-char-or-marker-p): New.
+	Move these basic predicates to subr.el from data.c
+
+2016-10-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dumped-lisp.el (preloaded-file-list):
+	Dump (preload) "font-menu" when the menubar is available,
+	"x-font-menu" when X and the menubar is available.
+	* font-menu.el (font-menu-family-constructor):
+	* font-menu.el (font-menu-size-constructor):
+	* font-menu.el (font-menu-weight-constructor):
+	* gtk-font-menu.el (gtk-reset-device-font-menus):
+	* gtk-font-menu.el (gtk-font-menu-font-data):
+	* msw-font-menu.el (mswindows-reset-device-font-menus):
+	* msw-font-menu.el (mswindows-font-menu-font-data):
+	* x-font-menu.el (x-reset-device-font-menus-core):
+	* x-font-menu.el (x-font-menu-font-data-xft):
+	* x-font-menu.el (x-font-menu-font-data-core):
+	Use #'assoc, which has a native implementation, instead of
+	#'vassoc, which is implemented in non-dumped Lisp, for the font
+	menu device cache.
+	Dump the font menu implementation code when the relevant features
+	are compiled in.
+	Makes the font face menu a little faster, though the bottleneck is
+	still loading the faces from the X server.
+
+2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.el (abbrev-symbol):
+	Use a label rather than binding a lambda when examining the local
+	and global tables.
+	* about.el (about-finish-buffer):
+	Use a label instead of binding a lambda.
+	* gtk-password-dialog.el (gtk-password-dialog-new):
+	Ditto.
+	* minibuf.el (minibuffer-complete-word):
+	Use a label rather than binding a lambda here; don't needlessly
+	bind something to the value of last-command-char.
+	* minibuf.el (read-file-name-internal-1):
+	Use #'file-name-absolute-p here, as an old comment suggested.
+	* minibuf.el (read-directory-name-internal):
+	Use a label rather than binding a lambda here.
+	* minibuf.el (mouse-read-file-name-1):
+	Ditto.
+	* mouse.el (default-mouse-track-cleanup-hook):
+	Ditto.
+	* mouse.el (default-mouse-track-cleanup-extent):
+	Ditto.
+
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select.el:
+	* select.el (select-convert-in):
+	Pass through VALUE if it is non-nil and there is no handler, don't
+	discard it.  Useful for TARGETS, timestamps.
+	* select.el (select-convert-from-cf-unicodetext):
+	Supply this with an implementation even when mswindows-unicode
+	isn't available as a coding system.
+	* select.el (selection-converter-out-alist):
+	* select.el (selection-converter-in-alist):
+	Only include CF_TEXT in these alists conditionally (at dump time),
+	if the relevant coding system is available.
+
+2016-09-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gutter-items.el (buffers-tab-switch-to-buffer):
+	Don't walk windows and cons up the windows-of-buffers list twice,
+	needlessly, we only need one window and #'get-buffer-window does
+	the same thing without consing.
+	* gutter-items.el (select-buffers-tab-buffers-by-mode):
+	Use the regexp engine a little less in this function.
+	* gutter-items.el (format-buffers-tab-line):
+	Don't use the regexp engine in this function. Don't repeatedly
+	call #'buffer-name, save its result.
+	* gutter-items.el (build-buffers-tab-internal): Move this to being
+	a label within #'buffers-tab-items.
+	* gutter-items.el (buffers-tab-items):
+	Be more idiomatic in checking buffers-tab-filter-function, no need
+	to traverse the list twice.
+	Improve the algorithmic complexity of the code to implement the
+	buffers-tab-max-size functionality.
+	* menubar.el (check-menu-syntax):
+	* menubar.el (menu-item-strip-accelerator-spec):
+	Don't use the regexp engine in this function, we're called a good
+	deal in long menus and it's easy to implement it with functions
+	that have bytecodes.
+	* menubar.el (menu-item-generate-accelerator-spec):
+	Make this function's implementation faster in the common case
+	where OMIT-CHARS-LIST is nil.
+
+2016-08-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mwheel.el:
+	Sync functionality (though surprisingly little code) from
+	GNU. Thank you GNU.
+	Remove some unneeded compatibility code.
+	
+	* mwheel.el (mwheel-scroll-amount): Removed.
+	* mwheel.el (mouse-wheel-scroll-amount): New.
+	Use GNU's newer, more sensible name for this variable.
+	
+	* mwheel.el (mouse-wheel-click-event): New.
+	Event to ignore for a brief period after using the mouse wheel.
+	* mwheel.el (mouse-wheel-inhibit-click-time): New.
+	Numbeer of seconds to inhibit `mouse-wheel-click-event' after
+	using the mouse wheel.
+
+	* mwheel.el (mouse-wheel-progressive-speed): New.
+	Should the mouse wheel scroll more quickly if it is moved more
+	energetically?
+	
+	* mwheel.el (mwheel-follow-mouse): Removed.
+	* mwheel.el (mouse-wheel-follow-mouse): New.
+	Rename the former to the latter.
+
+	* mwheel.el (mouse-wheel-scroll-up-function): New variable, the
+	command to call when scrolling up using the wheel, defaulting to
+	#'scroll-up-command.
+	* mwheel.el (mouse-wheel-scroll-down-function): New variable,
+	defaulting to #'scroll-down-command.
+	* mwheel.el (mwheel-install):
+	Support
+	* mwheel.el (mwheel-scroll): 
+	* mwheel.el (mouse-wheel-scroll): Rename `mwheel-scroll' to
+	`mouse-wheel-scroll', something GNU (oddly) haven't, but something
+	that is clearer and more sensible.
+
+	* mwheel.el (mouse-wheel-scroll, mwheel-install):
+	Add autoload forms for these, since the auto-autoload code doesn't
+	understand how to parse symbol-macrolet.
+
+	* obsolete.el:
+	* obsolete.el ('mwheel-scroll): Make this available as an obsolete
+	alias for #'mouse-wheel-scroll.
+	* obsolete.el ('mwheel-scroll-amount): New.
+	Make this available as an obsolete variable alias for
+	mouse-wheel-scroll-amount.
+	* obsolete.el ('mwheel-follow-mouse): New.
+	Make this available as an obsolete variable alias for
+	mouse-wheel-follow-mouse.
+
+	* behavior-defs.el:
+	* behavior-defs.el (mwheel): Move the mwheel behavior here from
+	mwheel.el, so users can disable it from their init file.
+	* keydefs.el:
+	Be a little clearer in the implementation of this, bind the mouse
+	wheel events to #'mouse-wheel-scroll, which is autoloaded.
+
+	Incorporates the following GNU changes:
+
+    2002-12-02  Andreas Schwab  <schwab@suse.de>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Fix customize type.
+
+    2002-11-29  Markus Rost  <rost@math.ohio-state.edu>
+
+	* mwheel.el (mouse-wheel-inhibit-click-time): Fix custom type.
+
+    2002-11-29  Kim F. Storm  <storm@cua.dk>
+
+	* mwheel.el: Avoid accidental yanking of text while scrolling with
+	the mouse wheel.  This adds a short period after each mouse wheel
+	scroll event where a click on the mouse wheel button is ignored.
+	(mouse-wheel-click-event, mouse-wheel-inhibit-click-time): New customs.
+	(mouse-wheel-click-button, mwheel-inhibit-click-event-timer): New vars.
+	(mwheel-inhibit-click-timeout, mwheel-filter-click-events): New defuns.
+	(mwheel-scroll): Add mwheel-filter-click-events as pre-command-hook.
+	Start mwheel-inhibit-click-event-timer with timeout handler
+	mwheel-inhibit-click-timeout.
+
+    2002-11-11  Markus Rost  <rost@math.ohio-state.edu>
+
+	* mwheel.el (mouse-wheel-down-button, mouse-wheel-up-button):
+	Declare with defvar, not with defcustom.
+
+    2002-08-29  John Paul Wallington  <jpw@shootybangbang.com>
+
+	* mwheel.el (mouse-wheel-up-button): Doc fix.
+
+    2002-06-27  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* mwheel.el (mouse-wheel-change-button): Deactivate before changing.
+	(mouse-wheel-up-button, mouse-wheel-down-button): Obsolete.
+	(mouse-wheel-up-event, mouse-wheel-down-event): New vars.
+	(mouse-wheel-follow-mouse): Change default to t.
+	(mwheel-event-button): Return the basic event symbol.
+	(mwheel-scroll): Work with non-mouse events.
+	(mouse-wheel-mode): Use the new vars.
+	(mwheel-install): Obey `uninstall'.
+
+    2002-06-24  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* mwheel.el (mouse-wheel-scroll-amount, mwheel-scroll)
+	(mouse-wheel-mode): Don't require the first element to be modifier-free.
+
+    2002-02-19  Sam Steingold  <sds@gnu.org>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Can specify different
+	scroll amounts for different modifiers now.
+	(mwheel-scroll): Handle the new `mouse-wheel-scroll-amount'
+	format properly.
+	(mouse-wheel-mode): Ditto.
+
+    2001-11-19  Stefan Monnier  <monnier@cs.yale.edu>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Allow float values.
+	(mouse-wheel-progressive-speed): New var.
+	(mwheel-scroll): Use it and handle float values.
+
+    2004-11-11  Stefan Monnier  <monnier@iro.umontreal.ca>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Allow float values.
+	(mouse-wheel-progressive-speed): New var.
+	(mwheel-scroll): Use it and handle float values.
+
+    2006-02-14  Juanma Barranquero  <lekktu@gmail.com>
+
+	* help.el (where-is): Fix message for remapped commands.
+
+	* mwheel.el (mouse-wheel-click-event, mouse-wheel-mode):
+	Fix typos in docstrings.
+
+    2006-02-11  Martin Rudalics  <rudalics@gmx.at>
+
+	* mwheel.el (mouse-wheel-up-event): Doc fix.
+
+    2008-06-12  Glenn Morris  <rgm@gnu.org>
+
+	* mwheel.el (mouse-wheel-follow-mouse, mwheel-event-window):
+	Evaluate definitions when compiling.  Reverse tests.
+
+    2009-11-25  Juri Linkov  <juri@jurta.org>
+
+	Mouse-wheel scrolling for DocView Continuous mode.  (Bug#4896)
+
+	* mwheel.el (mwheel-scroll-up-function)
+	(mwheel-scroll-down-function): New defvars.
+	(mwheel-scroll): Funcall `mwheel-scroll-up-function' instead of
+	`scroll-up', and `mwheel-scroll-down-function' instead of
+	`scroll-down'.
+
+    2000-11-06  Miles Bader  <miles@lsi.nec.co.jp>
+
+	* mwheel.el (mouse-wheel-scroll-amount): Rename from
+	`mwheel-scroll-amount'.
+	(mouse-wheel-follow-mouse): Rename from `mwheel-follow-mouse'.
+	(mouse-wheel-mode): Use (featurep 'xemacs) instead of
+	string-matching against the version string.
+	
+2016-07-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar-items.el (build-buffers-menu-internal): Move to being a
+	label within #'buffers-menu-filter.
+	* menubar-items.el (buffers-menu-filter):
+	Implement #'build-buffers-menu-filter as an inlined label. Remove
+	a compatibility hack in its implementation.
+	Use backquotes to construct the individual menu items, making
+	things a little clearer.
+	Avoid uselessly calling #'length a few times, where #'nthcdr is
+	appropriate to determine if a list's length is larger than a given
+	value.
+	Avoid uselessly calling #'nreverse twice if dealing with groups.
+	* menubar-items.el (coding-system-menu-filter):
+	Correct a docstring in passing.
+	* menubar-items.el (buffers-menu-format-buffer-line-function):
+	Update the documentation of this function to document that we've
+	removed a compatibility hack.
+
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuserv.el (gnuserv-string): Removed.
+	* gnuserv.el (gnuserv-request-stream): New.
+	Replace gnuserv-string with gnuserv-request-stream, now we have
+	native support for string output streams.
+	* gnuserv.el (gnuserv-process-filter):
+	Avoid using the regexp engine in this function. Avoid using the
+	Lisp reader, use #'parse-integer, it's cheaper when parsing
+	integers.
+	* gnuserv.el (gnuserv-start-1):
+	Use #'clear-output here.
+	* subr.el (with-output-to-string):
+	Implement this using #'make-string-output-stream.
+
+2016-07-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (terpri): Move this here from print.c.
+	* cl-macs.el: Document why there's no benefit to a compiler macro
+	for #'terpri.
+	* make-docfile.el:
+	* make-docfile.el (message):
+	* make-docfile.el (docfile-out-of-date):
+	Don't use #'terpri at build time, it's no longer available,
+	(write-char ?\n) instead.
+
+2016-06-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (concatenate): Implement #'concatenate in
+	sequence.c, implement #'concat, #'vconcat, #'bvconcat in terms of
+	it rather than the other way around.
+
+	* find-paths.el (paths-no-lisp-directory-regexp):
+	* find-paths.el (paths-construct-path):
+	* find-paths.el (paths-construct-emacs-directory):
+	* find-paths.el (construct-emacs-version-name):
+	* find-paths.el (paths-directories-which-exist):
+	* loadup.el (really-early-error-handler):
+	* make-docfile.el (process-args):
+	* packages.el (packages-add-suffix):
+	* packages.el (packages-list-autoloads-path):
+	* update-elc.el (preloaded-file-list):
+	* update-elc.el (do-autoload-commands):
+	Use #'concatenate rather than #'concat in these files run at build
+	time, where #'concat's new implementation from subr.el is not
+	available.
+	* subr.el:
+	* subr.el (concat): Moved here from fns.c.
+	* subr.el (vconcat): Moved here from fns.c.
+	* subr.el (bvconcat): Moved here from fns.c.
+	Implement all three in terms of #'concatenate. Maintain the
+	#'concat bytecode for the moment.
+
+2016-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* cl-seq.el (delete-if): Fix typo in docstring.
+
 2015-09-26  Michael Sperber  <mike@xemacs.org>
 
 	* info.el (Info-read-subfile): Follow change in Makeinfo 5.0 with
 	arithmetic of node positions.
+
+2015-06-22  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* itimer-autosave.el (auto-save-timeout): Customize in group 'auto-save.
 
 2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
 

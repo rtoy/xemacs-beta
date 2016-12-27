@@ -1150,9 +1150,9 @@ print_devmode (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object (obj, 0);
   write_ascstring (printcharfun, "#<msprinter-settings");
   if (!NILP (dm->printer_name))
-    write_fmt_string_lisp (printcharfun, " for %S", 1, dm->printer_name);
+    write_fmt_string_lisp (printcharfun, " for %S", dm->printer_name);
   if (!NILP (dm->device))
-    write_fmt_string_lisp (printcharfun, " (currently on %s)", 1, dm->device);
+    write_fmt_string_lisp (printcharfun, " (currently on %s)", dm->device);
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
