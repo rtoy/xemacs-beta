@@ -111,7 +111,16 @@ extern short div_rem;
 				     MP_MCMP (b, bignum_max_ullong) <= 0)
 
 /***** Bignum: conversions *****/
-extern char *bignum_to_string(bignum, int);
+extern Bytecount bignum_to_string (Ibyte **buffer_inout, Bytecount size,
+                                   bignum number, UINT_16_BIT radix,
+                                   int flags);
+#ifdef BN_num_bytes
+#define bignum_size_decimal(b) (DECIMAL_PRINT_SIZE (BN_num_bytes (b)))
+#define bignum_size_octal(b) (BN_num_bytes (b) * MAX_ICHAR_LEN * 3)
+#define bignum_size_hex(b) (BN_num_bytes (b) * MAX_ICHAR_LEN * 2)
+#define bignum_size_binary(b) (BN_num_bytes (b) * MAX_ICHAR_LEN * 4)
+#endif
+
 extern int bignum_to_int(bignum);
 extern unsigned int bignum_to_uint(bignum);
 extern long bignum_to_long(bignum);
@@ -153,6 +162,17 @@ extern void bignum_floor(bignum, bignum, bignum);
 extern void bignum_pow(bignum, bignum, unsigned long);
 #define bignum_gcd(res,b1,b2)       MP_GCD (b1, b2, res)
 extern void bignum_lcm(bignum, bignum, bignum);
+
+/* For converting to numbers with an arbitrary base. */
+DECLARE_INLINE_HEADER (
+UINT_16_BIT
+bignum_div_rem_uint_16_bit (bignum res, bignum numerator, UINT_16_BIT denom)
+)
+{
+  UINT_16_BIT rem = 0;
+  MP_SDIV (res, denom, numerator, &rem);
+  return rem;
+}
 
 /***** Bignum: bit manipulations *****/
 extern void bignum_and(bignum, bignum, bignum);

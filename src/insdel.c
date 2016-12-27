@@ -1027,29 +1027,6 @@ prepare_to_modify_buffer (struct buffer *buf, Charbpos start, Charbpos end,
 /*                        Insertion of strings                          */
 /************************************************************************/
 
-void
-fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
-			  Bytecount offset, Bytecount *len)
-{
-  assert ((nonreloc && NILP (reloc)) || (!nonreloc && STRINGP (reloc)));
-
-  if (*len < 0)
-    {
-      if (nonreloc)
-	*len = strlen ((const char *) nonreloc) - offset;
-      else
-	*len = XSTRING_LENGTH (reloc) - offset;
-    }
-#ifdef ERROR_CHECK_TEXT
-  assert (*len >= 0);
-  if (STRINGP (reloc))
-    {
-      assert (offset >= 0 && offset <= XSTRING_LENGTH (reloc));
-      assert (offset + *len <= XSTRING_LENGTH (reloc));
-    }
-#endif
-}
-
 /* Insert a string into BUF at Charbpos POS.  The string data comes from one
    of two sources: constant, non-relocatable data (specified in NONRELOC),
    or a Lisp string object (specified in RELOC), which is relocatable and
@@ -1142,12 +1119,14 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
     }
   else
     {
+#ifdef ERROR_CHECK_TEXT
       text_checking_assert (cclen > 0 && cclen
                             == (STRINGP (reloc) ?
                                 string_offset_byte_to_char_len (reloc, offset,
                                                                 length)
                                 : bytecount_to_charcount (nonreloc + offset,
                                                           length)));
+#endif /* ERROR_CHECK_TEXT */
     }
 
   /* &&#### Here we check if the text can't fit into the format of the buffer,

@@ -1305,32 +1305,21 @@ also works, because the behavior is emulated."
 (defun default-mouse-track-cleanup-hook ()
   (if zmacs-regions
       (funcall 'default-mouse-track-cleanup-extents-hook)
-    (let ((extent default-mouse-track-extent)
-	  (func #'(lambda (e)
-		    (and (extent-live-p e)
-			 (set-extent-face e 'primary-selection)))))
+    (labels ((make-things-pretty (e)
+               (and (extent-live-p e) (set-extent-face e 'primary-selection))))
       (add-hook 'pre-command-hook 'default-mouse-track-cleanup-extents-hook)
-      (if (consp extent)		; rectangle-p
-	  (mapc func extent)
-	(if extent
-	    (funcall func extent)))))
+      (if (consp default-mouse-track-extent) ; rectangle-p
+	  (mapc #'make-things-pretty default-mouse-track-extent)
+	(if default-mouse-track-extent
+	    (make-things-pretty default-mouse-track-extent)))))
   t)
 
 (defun default-mouse-track-cleanup-extent ()
-  (let ((dead-func
-	 (function (lambda (x)
-		     (or (not (extent-live-p x))
-			 (extent-detached-p x)))))
-	(extent default-mouse-track-extent))
-    (if (consp extent)
-	(if (funcall dead-func extent)
-	    (let (newval)
-	      (mapc (function (lambda (x)
-                                (if (not (funcall dead-func x))
-                                    (setq newval (cons x newval)))))
-                    extent)
-	      (setq default-mouse-track-extent (nreverse newval))))
-      (if (funcall dead-func extent)
+  (labels ((deadp (x) (or (not (extent-live-p x)) (extent-detached-p x))))
+    (if (consp default-mouse-track-extent)
+        (setq default-mouse-track-extent
+              (delete-if #'deadp default-mouse-track-extent))
+      (if (deadp default-mouse-track-extent)
 	  (setq default-mouse-track-extent nil)))))
 
 (defun default-mouse-track-drag-hook (event click-count was-timeout)

@@ -1587,9 +1587,9 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 	  && CONSP (XCDR (entry))
 	  && STRINGP (XCAR (XCDR (entry))))
 	{
-	  Lisp_Object format = XCAR (XCDR (entry));
-	  Bytebpos len = XSTRING_LENGTH (format);
-	  Ibyte *src = XSTRING_DATA (format), *end = src + len;
+	  Lisp_Object fermat = XCAR (XCDR (entry));
+	  Bytebpos len = XSTRING_LENGTH (fermat);
+	  Ibyte *src = XSTRING_DATA (fermat), *end = src + len;
 	  Ibyte *result = alloca_ibytes (len);
 	  Ibyte *dst = result;
 
@@ -1606,7 +1606,8 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 		  switch (c)
 		    {
 		      /*case 'x':
-		      dst += long_to_string_base ((char *)dst, data->ch, 16);
+		      dst += fixnum_to_string ((char *)dst, len - dst - result,
+                                               c, 16, Qnil);
 		      break;*/
 		    case '%':
 		      dst += set_itext_ichar (dst, '%');
@@ -7313,7 +7314,7 @@ eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
    line-number-mode is on.  The first line in the buffer is counted as
    1.  If narrowing is in effect, the lines are counted from the
    beginning of the visible portion of the buffer.  */
-static Ascbyte *
+static Ibyte *
 window_line_number (struct window *w, int type)
 {
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
@@ -7333,9 +7334,10 @@ window_line_number (struct window *w, int type)
   line = buffer_line_number (b, pos, 1, 1);
 
   {
-    static Ascbyte window_line_number_buf[DECIMAL_PRINT_SIZE (long)];
+    static Ibyte window_line_number_buf[DECIMAL_PRINT_SIZE (Fixnum)];
 
-    long_to_string (window_line_number_buf, line + 1);
+    fixnum_to_string (window_line_number_buf, sizeof (window_line_number_buf),
+                      line + 1, 10, Qnil);
 
     return window_line_number_buf;
   }
@@ -7382,13 +7384,11 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 		    ? BUF_PT (b)
 		    : marker_position (w->pointm[type]);
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
-	Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
+	Ibyte buf[DECIMAL_PRINT_SIZE (long)];
 
-	long_to_string (buf, col);
-
-	Dynarr_add_many (mode_spec_ibyte_string,
-			 (const Ibyte *) buf, strlen (buf));
-
+	Dynarr_add_many (mode_spec_ibyte_string, buf,
+                         fixnum_to_string (buf, sizeof (buf), col, 10,
+                                           Vfixnum_to_majuscule_ascii));
 	goto decode_mode_spec_done;
       }
       /* print the file coding system */
@@ -7407,7 +7407,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 
       /* print the current line number */
     case 'l':
-      str = window_line_number (w, type);
+      str = (const Ascbyte *) window_line_number (w, type);
       break;
 
       /* print value of mode-name (obsolete) */
@@ -7420,12 +7420,20 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 #ifdef HAVE_TTY
       {
 	struct frame *f = XFRAME (w->frame);
-	if (FRAME_TTY_P (f) && f->order_count > 1 && f->order_count <= 99999999)
+	if (FRAME_TTY_P (f) && f->order_count > 1
+            && f->order_count <= 99999999)
 	  {
 	    /* Naughty, naughty */
-	    Ascbyte *writable_str = alloca_array (Ascbyte, 10);
-	    sprintf (writable_str, "-%d", f->order_count);
-	    str = writable_str;
+	    Ibyte writable_str[DECIMAL_PRINT_SIZE (f->order_count)];
+
+            Dynarr_add_many (mode_spec_ibyte_string, writable_str,
+                             fixnum_to_string (writable_str,
+                                               sizeof (writable_str),
+                                               /* Put a minus before the
+                                                  number. */
+                                               -(f->order_count), 10,
+                                               Vfixnum_to_majuscule_ascii));
+            goto decode_mode_spec_done;
 	  }
       }
 #endif /* HAVE_TTY */
@@ -7441,10 +7449,8 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print %, * or hyphen, if buffer is read-only, modified or neither */
     case '*':
       str = (!NILP (b->read_only)
-	     ? "%"
-	     : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
-		? "*"
-		: "-"));
+	     ? "%" : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+                      ? "*" : "-"));
       break;
 
       /* print * or hyphen -- XEmacs change to allow a buffer to be

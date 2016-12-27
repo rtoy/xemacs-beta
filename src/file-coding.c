@@ -287,7 +287,7 @@ print_coding_system_properties (Lisp_Object obj, Lisp_Object printcharfun)
   MAYBE_CODESYSMETH (c, print, (obj, printcharfun, 1));
   if (CODING_SYSTEM_EOL_TYPE (c) != EOL_AUTODETECT)
     write_fmt_string_lisp (printcharfun, " eol-type=%s",
-			   1, Fcoding_system_property (obj, Qeol_type));
+			   Fcoding_system_property (obj, Qeol_type));
 }
 
 static void
@@ -298,7 +298,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
+  write_fmt_string_lisp (printcharfun, "#<coding-system %s ", c->name);
   print_coding_system_properties (obj, printcharfun);
   write_ascstring (printcharfun, ">");
 }
@@ -310,7 +310,7 @@ static void
 print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 				     int UNUSED (escapeflag))
 {
-  write_fmt_string_lisp (printcharfun, "%s[", 1, XCODING_SYSTEM_NAME (cs));
+  write_fmt_string_lisp (printcharfun, "%s[", XCODING_SYSTEM_NAME (cs));
   print_coding_system_properties (cs, printcharfun);
   write_ascstring (printcharfun, "]");
 }
@@ -659,7 +659,9 @@ find_coding_system (Lisp_Object coding_system_or_name,
                 }
             }
 
-          coding_system_or_name = intern_istring (eidata (desired_base));
+          coding_system_or_name = intern_istring (eidata (desired_base),
+						  eilen (desired_base),
+						  Qnil, Vobarray);
 
           /* Remove this coding system and its subsidiary coding
              systems from the hash, to avoid calling this code recursively. */
@@ -874,7 +876,7 @@ find_coding_system_for_text_file (Lisp_Object name, int eol_wrap)
           wrapper =
 	    make_internal_coding_system
 	      (coding_system,
-	       "internal-text-file-wrapper",
+	       "internal-text-file-wrapper-",
 	       Qchain,
 	       Qunbound, list4 (Qchain, chain,
 				Qcanonicalize_after_coding, coding_system));
@@ -892,7 +894,7 @@ find_coding_system_for_text_file (Lisp_Object name, int eol_wrap)
   wrapper =
     make_internal_coding_system
       (coding_system,
-       "internal-auto-eol-wrapper",
+       "internal-auto-eol-wrapper-",
        Qundecided, Qunbound,
        list4 (Qcoding_system, coding_system,
 	      Qdo_eol, Qt));
@@ -1086,7 +1088,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
       enum eol_type eol = coding_subsidiary_list[i].eol;
 
       qxestrcpy_ascii (codesys_name + len, extension);
-      codesys_name_sym = intern_istring (codesys_name);
+      codesys_name_sym = intern ((const CIbyte*) codesys_name);
       if (mlen != -1)
 	qxestrcpy_ascii (codesys_mnemonic + mlen, mnemonic_ext);
 
@@ -1103,7 +1105,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
 				     Qconvert_eol_crlf);
 	  Lisp_Object canon =
 	    make_internal_coding_system
-	      (sub_codesys, "internal-subsidiary-eol-wrapper",
+	      (sub_codesys, "internal-subsidiary-eol-wrapper-",
 	       Qchain, Qunbound,
 	       mlen != -1 ?
 	       list6 (Qmnemonic, build_istring (codesys_mnemonic),
@@ -1185,29 +1187,24 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 
   if (prefix)
     {
-      Ibyte *newname =
-	emacs_sprintf_malloc (NULL, "%s-%s-%d",
-			      prefix,
-			      NILP (name_or_existing) ? (Ibyte *) "nil" :
-			      XSTRING_DATA (Fsymbol_name (XCODING_SYSTEM_NAME
-							  (name_or_existing))),
-			      ++coding_system_tick);
-      name_or_existing = intern_istring (newname);
-      xfree (newname);
-      
+      name_or_existing
+        = Fmake_symbol (concat3 (build_ascstring (prefix),
+                                 NILP (name_or_existing) ? Fsymbol_name (Qnil)
+                                 : Fsymbol_name (XCODING_SYSTEM_NAME
+                                                 (name_or_existing)),
+                                 Fnumber_to_string (make_fixnum
+                                                    (++coding_system_tick),
+                                                    Qnil, Qnil)));
       if (UNBOUNDP (description))
 	{
-	  newname =
-	    emacs_sprintf_malloc
-	      (NULL, "For Internal Use (%s)",
-	       XSTRING_DATA (Fsymbol_name (name_or_existing)));
-	  description = build_istring (newname);
-	  xfree (newname);
+          description = concat3 (build_ascstring ("For Internal Use ("),
+                                 Fsymbol_name (name_or_existing),
+                                 build_ascstring (")"));
 	}
 
-      newname = emacs_sprintf_malloc (NULL, "Int%d", coding_system_tick);
-      defmnem = build_istring (newname);
-      xfree (newname);
+      defmnem = concat2 (build_ascstring ("Int"),
+                         Fnumber_to_string (make_fixnum (coding_system_tick),
+                                            Qnil, Qnil));
     }
   else
     CHECK_SYMBOL (name_or_existing);
@@ -1350,19 +1347,18 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	   creating will have canonicalization expansion done on it,
 	   leading to infinite recursion.  So we have to generate a new,
 	   internal coding system with the previous value of CANONICAL. */
-	Ibyte *newname =
-	  emacs_sprintf_malloc
-	    (NULL, "internal-eol-copy-%s-%d",
-	     XSTRING_DATA (Fsymbol_name (name_or_existing)),
-	     ++coding_system_tick);
-	Lisp_Object newnamesym = intern_istring (newname);
+	Lisp_Object newnamesym
+          = Fmake_symbol (concat3 (build_ascstring ("internal-eol-copy-"),
+                                   Fsymbol_name (name_or_existing),
+                                   Fnumber_to_string (make_fixnum
+                                                      (++coding_system_tick),
+                                                      Qnil, Qnil)));
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
-	xfree (newname);
 	
 	XCODING_SYSTEM_CANONICAL (csobj) =
 	  make_internal_coding_system
 	    (csobj,
-	     "internal-eol-wrapper",
+	     "internal-eol-wrapper-",
 	     Qchain, Qunbound,
 	     list4 (Qchain,
 		    list2 (copied,
@@ -2584,7 +2580,7 @@ chain_canonicalize_after_coding (struct coding_stream *str)
   if (!NILP (codesys))
     return codesys;
   return make_internal_coding_system
-    (us, "internal-chain-canonicalizer-wrapper",
+    (us, "internal-chain-canonicalizer-wrapper-",
      Qchain, Qunbound, list2 (Qchain, chain));
 #endif /* 0 */
 }
@@ -3631,7 +3627,6 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
       for (i = 0; i < coding_detector_category_count; i++)
 	stderr_out_lisp
 	  ("%s: %s\n",
-	   2,
 	   coding_category_id_to_symbol (i),
 	   detection_result_number_to_symbol ((enum detection_result)
 					      st->categories[i]));
@@ -3727,7 +3722,7 @@ detected_coding_system (struct detection_state *st)
 		       emacs_sprintf_string_lisp
 		       (
 "Detected coding %s is unlikely to be correct (likelihood == `%s')",
-			Qnil, 2, XCODING_SYSTEM_NAME (retval),
+                        XCODING_SYSTEM_NAME (retval),
 			detection_result_number_to_symbol
 			((enum detection_result) likelihood)));
 		  return retval;
@@ -3771,8 +3766,8 @@ snarf_coding_system (const UExtbyte *p, Bytecount len,
       if (find_coding_system_p)
         {
           return
-            find_coding_system_for_text_file (intern_istring ((Ibyte *) name),
-                                              0);
+            find_coding_system_for_text_file (intern ((const CIbyte *) name),
+					      0);
         }
       else
         {
@@ -3939,7 +3934,7 @@ undecided_init_coding_stream (struct coding_stream *str)
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out_lisp ("detected coding system: %s\n", 1, data->actual);
+    stderr_out_lisp ("detected coding system: %s\n", data->actual);
 #endif /* DEBUG_XEMACS */
 }
 

@@ -101,18 +101,40 @@ DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 #if SIZEOF_EMACS_INT == SIZEOF_LONG
 # define bignum_fits_emacs_int_p(b) bignum_fits_long_p(b)
 # define bignum_to_emacs_int(b) bignum_to_long(b)
+# define bignum_to_emacs_uint(b) bignum_to_ulong(b)
 # define bignum_set_emacs_int bignum_set_long
 # define make_bignum_emacs_uint(b) make_bignum_un(b)
 #elif SIZEOF_EMACS_INT == SIZEOF_INT
 # define bignum_fits_emacs_int_p(b) bignum_fits_int_p(b)
 # define bignum_to_emacs_int(b) bignum_to_int(b)
+# define bignum_to_emacs_uint(b) bignum_to_uint(b)
 # define bignum_set_emacs_int bignum_set_long
 # define make_bignum_emacs_uint(b) make_bignum_un(b)
 #else
 # define bignum_fits_emacs_int_p(b) bignum_fits_llong_p(b)
 # define bignum_to_emacs_int(b) bignum_to_llong(b)
+# define bignum_to_emacs_uint(b) bignum_to_ullong(b)
 # define bignum_set_emacs_int bignum_set_llong
 # define make_bignum_emacs_uint(b) make_bignum_ull(b)
+#endif
+
+#if SIZEOF_LONG == 8
+# define bignum_to_int_64_bit bignum_to_long
+# define bignum_to_uint_64_bit bignum_to_ulong
+# define make_bignum_int_64_bit make_bignum
+# define make_bignum_uint_64_bit make_bignum_un
+#elif SIZEOF_LONG_LONG == 8
+# define bignum_to_int_64_bit bignum_to_llong
+# define bignum_to_uint_64_bit bignum_to_ullong
+# define make_bignum_int_64_bit make_bignum_ll
+# define make_bignum_uint_64_bit make_bignum_ull
+#elif SIZEOF_INT == 8
+# define bignum_to_int_64_bit bignum_to_int
+# define bignum_to_uint_64_bit bignum_to_uint
+# define make_bignum_int_64_bit make_bignum
+# define make_bignum_uint_64_bit make_bignum_un
+#else
+#error "Do you really have no 64-bit integers?"
 #endif
 
 extern Lisp_Object make_bignum (long);
@@ -121,7 +143,6 @@ extern Lisp_Object make_bignum_ll (long long);
 extern Lisp_Object make_bignum_ull (unsigned long long);
 extern Lisp_Object make_bignum_bg (bignum);
 extern bignum scratch_bignum, scratch_bignum2;
-
 #else /* !HAVE_BIGNUM */
 
 #define BIGNUMP(x)         0

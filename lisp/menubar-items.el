@@ -70,9 +70,9 @@ LABEL-LENGTH characters of value."
   "Filter for menu entries with a submenu listing all coding systems.
 This is for operations that take a coding system as an argument.  FUN
 should be a function of one argument, which will be a coding system symbol.
-ACTIVE should be a function one argument (again, a coding system symbol),
-indicating whether the entry is active.  If DOTS is given, the menu entries
-will have three dots appended.
+ACTIVE should be a function of one argument (again, a coding system symbol),
+returning a boolean describing whether the entry is active.  If DOTS is given,
+the menu entries will have three dots appended.
 
 Write your filter like this:
 
@@ -1655,7 +1655,7 @@ begins with a space)."
 (defcustom buffers-menu-format-buffer-line-function 'format-buffers-menu-line
   "*The function to call to return a string to represent a buffer in
 the buffers menu.  The function is passed a buffer and a number
-(starting with 1) indicating which buffer line in the menu is being
+\(starting with 1) indicating which buffer line in the menu is being
 processed and should return a string containing an accelerator
 spec. (Check out `menu-item-generate-accelerator-spec' as a convenient
 way of generating the accelerator specs.) The default value
@@ -1664,11 +1664,8 @@ uses the number as the accelerator.  Also check out
 `slow-format-buffers-menu-line' which returns a whole bunch of info
 about a buffer.
 
-Note: Gross Compatibility Hack: Older versions of this function prototype
-only expected one argument, not two.  We deal gracefully with such
-functions by simply calling them with one argument and leaving out the
-line number.  However, this may go away at any time, so make sure to
-update all of your functions of this type."
+Very old versions of this function prototype only expected one argument, not
+two.  This implementation will fail when supplied with only one argument."
   :type 'function
   :group 'buffers-menu)
 
@@ -1815,53 +1812,6 @@ This groups buffers by major mode.  It only really makes sense if
 		 (format "Write %s to file: "
 			 (buffer-name (current-buffer)))))))
 
-(defsubst build-buffers-menu-internal (buffers)
-  (let (name line (n 0))
-    (mapcar
-     #'(lambda (buffer)
-	 (if (eq buffer t)
-	     "---"
-	   (setq n (1+ n))
-	   (setq line
-		 ; #### a truly Kyle-friendly hack.
-		 (let ((fn buffers-menu-format-buffer-line-function))
-		   (if (= (function-max-args fn) 1)
-		       (funcall fn buffer)
-		     (funcall fn buffer n))))
-	   (if complex-buffers-menu-p
-	       (delete* nil
-		     (list line
-			   (vector "S%_witch to Buffer"
-				   (list buffers-menu-switch-to-buffer-function
-					 (setq name (buffer-name buffer)))
-				   t)
-			   (if (eq buffers-menu-switch-to-buffer-function
-				   'switch-to-buffer)
-			       (vector "Switch to Buffer, Other %_Frame"
-				       (list 'switch-to-buffer-other-frame
-					     (setq name (buffer-name buffer)))
-				       t)
-			     nil)
-			   (if (and (buffer-modified-p buffer)
-				    (buffer-file-name buffer))
-			       (vector "%_Save Buffer"
-				       (list 'buffer-menu-save-buffer name) t)
-			     ["%_Save Buffer" nil nil]
-			     )
-			   (vector "Save %_As..."
-				   (list 'buffer-menu-write-file name) t)
-			   (vector "%_Delete Buffer" (list 'kill-buffer name)
-				   t)))
-	     ;; #### We don't want buffer names to be translated,
-	     ;; #### so we put the buffer name in the suffix.
-	     ;; #### Also, avoid losing with non-ASCII buffer names.
-	     ;; #### We still lose, however, if complex-buffers-menu-p. --mrb
-	     (vector ""
-		     (list buffers-menu-switch-to-buffer-function
-			   (buffer-name buffer))
-		     t line))))
-     buffers)))
-
 (defun buffers-menu-filter (menu)
   "This is the menu filter for the top-level buffers \"Buffers\" menu.
 It dynamically creates a list of buffers to use as the contents of the menu.
@@ -1869,57 +1819,97 @@ Only the most-recently-used few buffers will be listed on the menu, for
 efficiency reasons.  You can control how many buffers will be shown by
 setting `buffers-menu-max-size'.  You can control the text of the menu
 items by redefining the function `format-buffers-menu-line'."
-  (let ((buffers (delete-if buffers-menu-omit-function (buffer-list))))
-    (and (integerp buffers-menu-max-size)
-	 (> buffers-menu-max-size 1)
-	 (> (length buffers) buffers-menu-max-size)
-	 ;; shorten list of buffers (not with submenus!)
+  (let ((buffers (delete-if buffers-menu-omit-function (buffer-list)))
+        (n 0) tail)
+    (and buffers-menu-max-size (> buffers-menu-max-size 1)
 	 (not (and buffers-menu-grouping-function
-		   buffers-menu-submenus-for-groups-p))
-	 (setcdr (nthcdr buffers-menu-max-size buffers) nil))
-    (if buffers-menu-sort-function
-	(setq buffers (sort buffers buffers-menu-sort-function)))
-    (if (and buffers-menu-grouping-function
-	     buffers-menu-submenus-for-groups-p
-	     (or (not (integerp buffers-menu-submenus-for-groups-p))
-		 (> (length buffers) buffers-menu-submenus-for-groups-p)))
-	(let (groups groupnames current-group)
-	  (mapl
-	   #'(lambda (sublist)
-	       (let ((groupname (funcall buffers-menu-grouping-function
-					 (car sublist) (cadr sublist))))
-		 (setq current-group (cons (car sublist) current-group))
-		 (if groupname
-		     (progn
-		       (setq groups (cons (nreverse current-group)
-					  groups))
-		       (setq groupnames (cons groupname groupnames))
-		       (setq current-group nil)))))
-	   buffers)
-	  (setq buffers
-		(mapcar*
-		 #'(lambda (groupname group)
-		     (cons groupname (build-buffers-menu-internal group)))
-		 (nreverse groupnames)
-		 (nreverse groups))))
-      (if buffers-menu-grouping-function
-	  (progn
-	    (setq buffers
-		  (mapcon
-		   #'(lambda (sublist)
-		       (cond ((funcall buffers-menu-grouping-function
-				       (car sublist) (cadr sublist))
-			      (list (car sublist) t))
-			     (t (list (car sublist)))))
-		   buffers))
-	    ;; remove a trailing separator.
-	    (and (>= (length buffers) 2)
-		 (let ((lastcdr (nthcdr (- (length buffers) 2) buffers)))
-		   (if (eq t (cadr lastcdr))
-		       (setcdr lastcdr nil))))))
-      (setq buffers (build-buffers-menu-internal buffers)))
-    (append menu buffers)
-    ))
+                   buffers-menu-submenus-for-groups-p))
+	 ;; Shorten list of buffers (not with submenus!)
+         (setf tail (nthcdr buffers-menu-max-size buffers))
+         (setf (cdr tail) nil)) ;; Only set tail's cdr if tail is non-nil.
+    (labels
+        ((build-buffers-menu-internal-mapper (buffer)
+           (if (eq buffer t)
+               "---"
+             (let ((buffer-name (buffer-name buffer))
+                   (line (funcall buffers-menu-format-buffer-line-function
+                                  buffer (setf n (1+ n)))))
+               (if complex-buffers-menu-p
+                   `(,line
+                     ["S%_witch to Buffer"
+                      (,buffers-menu-switch-to-buffer-function ,buffer-name) t]
+                     ,@(if (eq buffers-menu-switch-to-buffer-function
+                               'switch-to-buffer)
+                           `(["Switch to Buffer, Other %_Frame"
+                              (switch-to-buffer-other-frame ,buffer-name) t]))
+                     ["%_Save Buffer"
+                      ,@(if (and (buffer-modified-p buffer)
+                                 (buffer-file-name buffer))
+                            `((buffer-menu-save-buffer ,buffer-name) t)
+                            (list nil nil))]
+                     ["Save %_As..." (buffer-menu-write-file ,buffer-name) t]
+                     ["%_Delete Buffer" (kill-buffer ,buffer-name) t])
+                 ;; We don't want buffer names to be translated, so we put the
+                 ;; buffer name in the suffix.  Also, avoid losing with
+                 ;; non-ASCII buffer names.
+                 ;; #### We still lose, however, if complex-buffers-menu-p.
+                 ;; --mrb
+                 `["" (,buffers-menu-switch-to-buffer-function ,buffer-name) t
+                   ,line]))))
+         (build-buffers-menu-internal (buffers)
+           (setq n 0) ;; Wouldn't it be nice to have a good implementation of
+		      ;; lexical scope.
+           (mapcar #'build-buffers-menu-internal-mapper buffers)))
+      (declare (inline build-buffers-menu-internal))
+      (if buffers-menu-sort-function
+          (setq buffers (sort buffers buffers-menu-sort-function)))
+      (if (and buffers-menu-grouping-function
+               buffers-menu-submenus-for-groups-p
+               (or (not (fixnump buffers-menu-submenus-for-groups-p))
+                   ;; (> (length buffers)
+                   ;; buffers-menu-submenus-for-groups-p)))
+                   (nthcdr buffers-menu-submenus-for-groups-p buffers)))
+          (let (groups groupnames current-group)
+            (mapl
+             #'(lambda (sublist)
+                 (let ((groupname (funcall buffers-menu-grouping-function
+                                           (car sublist) (cadr sublist))))
+                   (setq current-group (cons (car sublist) current-group))
+                   (if groupname
+                       (progn
+                         (setq groups (cons (nreverse current-group)
+                                            groups))
+                         (setq groupnames (cons groupname groupnames))
+                         (setq current-group nil)))))
+             buffers)
+            (setq buffers
+                  ;; Do build-buffers-menu-internal on each entry, and return
+                  ;; a reversed list with the group name.
+                  (loop for groupname in groupnames
+                        for group in groups
+                        with result = nil
+                        do (push (cons groupname
+                                       (build-buffers-menu-internal group))
+                                 result)
+                        finally return result)))
+          (if buffers-menu-grouping-function
+              (progn
+                (setq buffers
+                      (mapcon
+                       #'(lambda (sublist)
+
+                           (cond ((funcall buffers-menu-grouping-function
+                                           (car sublist) (cadr sublist))
+                                  (list (car sublist) t))
+                                 (t (list (car sublist)))))
+                       buffers))
+                ;; Remove any trailing separator.
+                (when (nthcdr 1 buffers) ;; (>= (length buffers) 2)
+                  (setq tail (nthcdr (- (length buffers) 2) buffers))
+                  (if (eq t (cadr tail))
+                      (setf (cdr tail) nil)))))
+          (setq buffers (build-buffers-menu-internal buffers)))
+      (append menu buffers))))
 
 (defun list-all-buffers ()
   "Display a list of buffers.  Calls `list-all-buffers-function'."

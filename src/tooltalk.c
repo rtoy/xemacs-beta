@@ -523,12 +523,12 @@ tt_opnum_string (int n)
 static Lisp_Object
 tt_message_arg_ival_string (Tt_message m, int n)
 {
-  Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
+  Ibyte buf[DECIMAL_PRINT_SIZE (int)];
   int value;
 
   check_status (tt_message_arg_ival (m, n, &value));
-  long_to_string (buf, value);
-  return build_ascstring (buf);
+  return make_string (buf, fixnum_to_string (buf, sizeof (buf), value,
+                                             10, Qnil));
 }
 
 static Lisp_Object

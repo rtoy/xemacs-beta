@@ -1,3 +1,180 @@
+2016-12-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Minimal testing of the ascii-begin property when
+	#'string-char-byte-conversion-info is available.
+
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test extent propagation by #'split-string-by-char, #'upcase.
+
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	Creating sufficiently many symbols in a hash table that is being
+	treated as an obarray shouldn't crash:
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	obarray is now a hash table, not a vector.
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check a specific bug in #'mapcon has been fixed.
+
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check we don't crash with arguments to #'decode-time where
+	localtime() may return nil.
+
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	* automated/lisp-tests.el:
+	The Lisp reader now errors when it has no ratio support but
+	encounters a ratio. Revise these files to delay calling #'read
+	until we're sure there is ratio support available.
+
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	* automated/format-tests.el (slow-integer-to-string):
+	Extend this to take an optional RADIX argument.
+	* automated/format-tests.el (slow-ratio-to-string):
+	Ditto.
+	* automated/format-tests.el (Assert-formatting-integers):
+	Use this RADIX argument.
+	* automated/format-tests.el:
+	Test %S with a selection of objects.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Correct a couple of details with the #'substitute-command-keys
+	tests.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test #'substitute-command-keys, particularly that extents are
+	passed through.
+
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	* automated/extent-tests.el (Assert-format-into-extents) New.
+	Check the combination of #'format-into, buffer, marker, string
+	arguments, check that extent info is passed through as expected.
+	* automated/format-tests.el (invalid-function):
+	(format-into "hello" "hello") now throws a slightly different
+	error.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (slow-ratio-to-string): New.
+	* automated/format-tests.el:
+	Extent assert-formatting-integers to accept a GUARD argument, a
+	feature to check for before doing some tests.
+	Check formatting of various bignums.
+	Check formatting of various ratios, using #'slow-ratio-to-string.
+	%c is not a number specifier, allow trailing zeroes with it since
+	they do not guarantee misinterpretation in the way they do for
+	numbers.
+	Check the pad char implementation.
+	Check the newly-implemented bit-width modifiers.
+	
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	Refactor out the format tests in lisp-tests.el.
+	Correct the checks for the extent lengths.
+	Add extensive tests from Wine's printf test suite, document the
+	authors and licence.
+	* automated/lisp-tests.el:
+	Move the format tests from here to format-tests.el
+
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (Assert-with-format-extents):
+	Test #'format-into, just added. Not exhaustive, given the overlap
+	in implementation with #'format.
+
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	* automated/format-tests.el (Assert-with-format-extents):
+	Test support for extents in #'format, just added. Not exhaustive.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (slow-integer-to-string): New.
+	* automated/format-tests.el: Test %d in this file.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	New file, initially testing %c and its features and limitations.
+
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el: 
+	Test #'make-string-output-stream, #'get-output-stream-string.
+	Test the associated newly-added support for extents in the
+	underlying resizing_buffer stream implementation.
+	* automated/mule-tests.el:
+	Whoops, #'print, not #'princ here, so surround the output when
+	checked with newlines.
+
+2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Correct a bug in these tests looking at object plists.
+	* automated/mule-tests.el:
+	Correct a bug in this test, I was inaccurate in what I expected to
+	be output with modification of a symbol name while printing it.
+
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Test high-numbered backreferences. Check that non-ASCII decimal
+	digits are not accepted for this syntax.
+
+2016-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'reduce can handle :from-end non-nil and a zero length
+	range, list sequence.
+
+2016-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test for insufficient GCPRO statements in sublis(), a bug just
+	fixed.
+
+2016-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that a fixnum works correctly as a key in a string plist, a
+	bug just fixed.
+
+2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Check that the Lisp printer handles relocation of string data OK, 
+	something that only happens when strings are modified with
+	characters of differing byte lengths.
+
+2016-02-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check that the Lisp printer realises a trailing sign excludes a
+	symbol from potentially having number syntax and so does not need
+	escaping.
+
 2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

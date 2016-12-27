@@ -2385,8 +2385,7 @@ Return index number of the registered CCL program.
 */
        (name, ccl_prog))
 {
-  int len = XVECTOR_LENGTH (Vccl_program_table);
-  int idx;
+  Elemcount len = XVECTOR_LENGTH (Vccl_program_table), idx;
   Lisp_Object resolved;
 
   CHECK_SYMBOL (name);
@@ -2463,8 +2462,7 @@ Return index number of the registered map.
 */
        (symbol, map))
 {
-  int len = XVECTOR_LENGTH (Vcode_conversion_map_vector);
-  int i;
+  Elemcount len = XVECTOR_LENGTH (Vcode_conversion_map_vector), i;
   Lisp_Object idx;
 
   CHECK_SYMBOL (symbol);

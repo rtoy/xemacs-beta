@@ -310,16 +310,16 @@ x_wm_hack_wm_protocols (Widget widget)
 
   {
     Atom type;
-    int format = 0;
+    int fermat = 0;
     unsigned long nitems = 0;
     unsigned long bytes_after;
     Rawbyte *prop_return = 0; /* semantically a void* */
 
     if (Success == XGetWindowProperty (dpy, w, DEVICE_XATOM_WM_PROTOCOLS (d),
 				       0, 100, False, XA_ATOM,
-				       &type, &format, &nitems, &bytes_after,
+				       &type, &fermat, &nitems, &bytes_after,
 				       &prop_return)
-	&& format == 32 && type == XA_ATOM)
+	&& fermat == 32 && type == XA_ATOM)
       while (nitems > 0)
 	{
 	  Atom *atoms = (Atom *) prop_return;

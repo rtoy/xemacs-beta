@@ -64,7 +64,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #endif /* WIN32_NATIVE || CYGWIN */
 
 int lisp_to_time (Lisp_Object, time_t *);
-Lisp_Object time_to_lisp (time_t);
 
 /* Nonzero during writing of auto-save files */
 static int auto_saving;
@@ -1848,7 +1847,7 @@ A prefix arg makes KEEP-TIME non-nil.
 
 	args[i++] = Fchar_to_string (Vdirectory_sep_char);
       args[i++] = Ffile_name_nondirectory (filename);
-      newname = Fconcat (i, args);
+      newname = concatenate (i, args, Qstring, 0);
       NUNGCPRO;
     }
 
@@ -2088,7 +2087,7 @@ This is what happens in interactive use with M-x.
       if (string_byte (newname, XSTRING_LENGTH (newname) - 1) != '/')
 	args[i++] = build_ascstring ("/");
       args[i++] = Ffile_name_nondirectory (filename);
-      newname = Fconcat (i, args);
+      newname = concatenate (i, args, Qstring, 0);
       NUNGCPRO;
     }
 
@@ -3208,13 +3207,12 @@ under Mule, is very difficult.)
 	    break;
 	  }
 
+        this_tell = Lstream_character_tell (XLSTREAM (stream));
 	cc_inserted
           = buffer_insert_string_1 (buf, cur_point, read_buf, Qnil,
-                                    0, this_len, last_tell >= 0
-                                    ? (this_tell
-                                       = Lstream_character_tell (XLSTREAM
-                                                                 (stream)))
-                                    - last_tell : -1,
+                                    0, this_len,
+                                    (last_tell >= 0 && this_tell >= 0) ?
+                                    (this_tell - last_tell) : -1,
                                     !NILP (visit) ? INSDEL_NO_LOCKING : 0);
 	inserted  += cc_inserted;
 	cur_point += cc_inserted;
@@ -3932,7 +3930,7 @@ that `file-attributes' returns.
 */
        ())
 {
-  return time_to_lisp ((time_t) current_buffer->modtime);
+  return make_time ((time_t) current_buffer->modtime);
 }
 
 DEFUN ("set-visited-file-modtime", Fset_visited_file_modtime, 0, 1, 0, /*

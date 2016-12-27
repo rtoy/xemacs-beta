@@ -65,6 +65,8 @@ Lisp_Object Qminibuffer_setup_hook, Vminibuffer_setup_hook;
 Lisp_Object Qappend_message, Qcurrent_message_label,
             Qclear_message, Qdisplay_message;
 
+Lisp_Object Qxemacs_next_iteration_in_vector;
+
 
 DEFUN ("minibuffer-depth", Fminibuffer_depth, 0, 0, 0, /*
 Return current depth of activations of minibuffer, a nonnegative integer.
@@ -269,6 +271,22 @@ map_completion_list (maphash_function_t function, Lisp_Object liszt,
 }
 
 static void
+map_completion_trad_obarray (maphash_function_t function, Lisp_Object vector,
+                             void *extra_arg)
+{
+  Lisp_Object symbol = call1 (Qxemacs_next_iteration_in_vector, vector);
+
+  while (!ZEROP (symbol))
+    {
+      if (function (Fsymbol_name (symbol), symbol, extra_arg))
+        {
+          return;
+        }
+      symbol = call2 (Qxemacs_next_iteration_in_vector, vector, symbol);
+    }
+}
+
+static void
 map_completion (maphash_function_t function, Lisp_Object collection,
                 void *extra_arg, Lisp_Object predicate)
 {
@@ -278,7 +296,7 @@ map_completion (maphash_function_t function, Lisp_Object collection,
     }
   else if (VECTORP (collection))
     {
-      map_obarray (collection, function, extra_arg);
+      return map_completion_trad_obarray (function, collection, extra_arg);
     }
   else if (NILP (predicate))
     {
@@ -311,13 +329,15 @@ regexp_ignore_completion_p (const Ibyte *nonreloc,
   return 0;
 }
 
+EXFUN (Ffunction_max_args, 1);
+
 /* Callers should GCPRO, since this may call eval */
 static int
 ignore_completion_p (Lisp_Object completion_string,
                      Lisp_Object pred, Lisp_Object completion,
                      Boolint hash_tablep)
 {
-  Lisp_Object tem;
+  Lisp_Object tem, max_args;
 
   if (regexp_ignore_completion_p (0, completion_string, 0, -1))
     return 1;
@@ -329,7 +349,8 @@ ignore_completion_p (Lisp_Object completion_string,
 
   /* Ignore this element if there is a predicate and the predicate doesn't
      like it. */
-  if (hash_tablep)
+  if (hash_tablep && ((max_args = Ffunction_max_args (pred)),
+                      FIXNUMP (max_args) && XREALFIXNUM (max_args) > 1))
     {
       tem = call2 (pred, completion_string, completion);
     }
@@ -691,7 +712,7 @@ test_completion_mapper (Lisp_Object eltstring, Lisp_Object value, void *arg)
 DEFUN ("test-completion", Ftest_completion, 2, 3, 0, /*
 Return non-nil if STRING is an exact completion in COLLECTION.
 
-COLLECTION must be a list, a hash table, an obarray, or a function.
+COLLECTION must be a list, a hash table, a vector, or a function.
 
 Each string (or symbol) in COLLECTION is tested to see if it (or its
 name) begins with STRING, until a valid, exact completion is found.
@@ -704,19 +725,19 @@ completions.
 If COLLECTION is a hash-table, all the keys that are strings or symbols
 are the possible completions.
 
-If COLLECTION is an obarray, the names of all symbols in the obarray
-are the possible completions.
+If COLLECTION is a vector, it is treated as a traditional emacs obarray, with
+each element of the vector a symbol comprising the start of a hash table
+bucket, with a linked list chaining bucket entries together.
 
 If COLLECTION is a function, it is called with three arguments: the
 values STRING, PREDICATE and the symbol `lambda'.  Whatever it returns
 is passed back by `test-completion'.
 
-If optional third argument PREDICATE is non-nil, it is used to test
-for possible matches.  The match is a candidate only if PREDICATE
-returns non-nil.  The argument given to PREDICATE is the alist element
-or the symbol from the obarray.  If COLLECTION is a hash table,
-PREDICATE is passed two arguments, the key and the value of the hash
-table entry.
+If optional third argument PREDICATE is non-nil, it is used to test for
+possible matches.  The match is a candidate only if PREDICATE returns non-nil.
+The argument given to PREDICATE is the alist element or the symbol from the
+traditional emacs obarray.  If COLLECTION is a hash table, PREDICATE is passed
+two arguments, the key and the value of the hash table entry.
 */
        (string, collection, predicate))
 {
@@ -1074,6 +1095,8 @@ syms_of_minibuf (void)
   DEFSYMBOL (Qclear_message);
   DEFSYMBOL (Qdisplay_message);
   DEFSYMBOL (Qcurrent_message_label);
+
+  DEFSYMBOL (Qxemacs_next_iteration_in_vector);
 }
 
 void

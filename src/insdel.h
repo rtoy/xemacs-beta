@@ -140,10 +140,6 @@ void buffer_reset_changes (struct buffer *buf);
 Membpos do_marker_adjustment (Membpos mpos, Membpos from,
 			     Membpos to, Bytecount amount);
 
-void fixup_internal_substring (const Ibyte *nonreloc,
-			       Lisp_Object reloc,
-			       Bytecount offset, Bytecount *len);
-
 /* In font-lock.c */
 void font_lock_maybe_update_syntactic_caches (struct buffer *buf,
 					      Charbpos start,

@@ -193,8 +193,7 @@ See `fc-pattern-del' for documentation of patterns and error returns."
 	       property
 	       (if obsolete-p "
 \(Obsolete, only available on systems using Xft version 1.)"
-		 "")
-	       type)
+		 ""))
       (fc-pattern-del pattern ,property))
     ,property))
 

@@ -40,8 +40,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #define ichar_charset(ch) Vcharset_ascii
 #define ichar_leading_byte(ch) LEADING_BYTE_ASCII
-#define ichar_len(ch) 1
-#define ichar_len_fmt(ch, fmt) 1
 #define LEADING_BYTE_ASCII 0x80
 #define NUM_LEADING_BYTES 1
 #define MIN_LEADING_BYTE 0x80
@@ -440,49 +438,6 @@ ichar_leading_byte (Ichar c)
       ABORT();
       return 0;
 #endif /* ENABLE_COMPOSITE_CHARS */
-    }
-}
-
-DECLARE_INLINE_HEADER (
-Bytecount
-ichar_len (Ichar c)
-)
-{
-  if (ichar_ascii_p (c))
-    return 1;
-  else if (c < MIN_CHAR_OFFICIAL_TYPE9NX9N)
-    return 2;
-  else if (c < MIN_CHAR_PRIVATE_TYPE9NX9N)
-    return 3; /* dimension-2 official or dimension-1 private */
-  else if (c < MIN_CHAR_COMPOSITION)
-    return 4;
-  else
-    {
-#ifdef ENABLE_COMPOSITE_CHARS
-#error Not yet implemented
-#else
-      ABORT();
-      return 0;
-#endif /* ENABLE_COMPOSITE_CHARS */
-    }
-}
-
-DECLARE_INLINE_HEADER (
-Bytecount
-ichar_len_fmt (Ichar c, Internal_Format fmt)
-)
-{
-  switch (fmt)
-    {
-    case FORMAT_DEFAULT:
-      return ichar_len (c);
-    case FORMAT_16_BIT_FIXED:
-      return 2;
-    case FORMAT_32_BIT_FIXED:
-      return 4;
-    default:
-      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
-      return 1;
     }
 }
 

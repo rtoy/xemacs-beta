@@ -672,7 +672,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
        does not override resources defined elsewhere */
     const Extbyte *data_dir;
     Extbyte *path;
-    const Extbyte *format;
+    const Extbyte *fermat;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
     Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
@@ -682,13 +682,13 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	LISP_PATHNAME_CONVERT_OUT (Vx_app_defaults_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
-	format = "%s%s/Emacs";
+	fermat = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_PATHNAME_CONVERT_OUT (Vdata_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
-	format = "%sapp-defaults/%s/Emacs";
+	fermat = "%sapp-defaults/%s/Emacs";
       }
     else
       {
@@ -701,14 +701,14 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      * app-defaults file found.
      */
 
-    sprintf (path, format, data_dir, locale);
+    sprintf (path, fermat, data_dir, locale);
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
 
     if ((locale_end = strchr (locale, '.')))
       {
 	*locale_end = '\0';
-	sprintf (path, format, data_dir, locale);
+	sprintf (path, fermat, data_dir, locale);
 
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -717,7 +717,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if ((locale_end = strchr (locale, '_')))
       {
 	*locale_end = '\0';
-	sprintf (path, format, data_dir, locale);
+	sprintf (path, fermat, data_dir, locale);
 
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -1202,6 +1202,11 @@ int
 x_IO_error_handler (Display *disp)
 {
   /* This function can GC */
+  /* I'd like to just check for errno == 0 here and return, but that's
+     too risky.  Returning from an X error handler gives X the chance to
+     abort you.
+     A "goto back_to_toplevel" could be used, but on second thought I
+     decided it was a good idea to get the warning for now. */
   Lisp_Object dev;
   struct device *d = get_device_from_display_1 (disp);
 
@@ -1211,7 +1216,9 @@ x_IO_error_handler (Display *disp)
   assert (d != NULL);
   dev = wrap_device (d);
 
-  if (NILP (find_nonminibuffer_frame_not_on_device (dev)))
+  /* The test against 0 is a hack for Mac OS X 10.9 and 10.10, which
+     invoke this handler on successful deletion of a window. */
+  if (errno != 0 && NILP (find_nonminibuffer_frame_not_on_device (dev)))
     {
       int depth = begin_dont_check_for_quit ();
       /* We're going down. */
@@ -1246,8 +1253,10 @@ x_IO_error_handler (Display *disp)
 
   /* According to X specs, we should not return from this function, or
      Xlib might just decide to exit().  So we mark the offending
-     console for deletion and throw to top level.  */
-  if (d)
+     console for deletion and throw to top level.
+     The test against 0 is a hack for Mac OS X 10.9 and 10.10, which
+     invoke this handler on successful deletion of a window. */
+  if (errno != 0 && d)
     {
       enqueue_magic_eval_event (io_error_delete_device, dev);
       DEVICE_X_BEING_DELETED (d) = 1;

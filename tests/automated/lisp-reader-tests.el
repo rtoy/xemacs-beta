@@ -163,10 +163,11 @@
 ;; passing, check the read and print handling of the associated numbers.
 (Assert (eql (log 1) '0e0) "checking float syntax with e accepted")
 (Assert (eql (log 1) 0.0) "checking float syntax with decimal point accepted")
-(Assert (not (ratiop (read "2/-3")))
-        "ratios can't have a negative sign in the denominator")
-(Assert (not (ratiop (read "2/+3")))
-        "ratios can't have a positive sign in the denominator")
+(when (featurep 'ratio)
+  (Assert (not (ratiop (read "2/-3")))
+	  "ratios can't have a negative sign in the denominator")
+  (Assert (not (ratiop (read "2/+3")))
+	  "ratios can't have a positive sign in the denominator"))
 
 (macrolet
     ((Assert-no-symbol-number-confusion (&rest values)
@@ -335,6 +336,14 @@
     (Check-Error invalid-read-syntax (read "#20000r1234567/0"))
     ;; Unintuitive, but that's the Common Lisp behaviour. Maybe we should
     ;; error.
-    (Assert (symbolp (read "1234/-123")))))
+    (Assert (symbolp (read "1234/-123")))
+    (Assert (symbolp (read "1e+")))
+    (Assert (symbolp (read "20134e-")))))
+
+(Assert (equal "1e+" (prin1-to-string '1e+))
+        "checking Lisp printer recognises non-number syntax, trailing +")
+
+(Assert (equal "20000e-" (prin1-to-string '20000e-))
+        "checking Lisp printer recognises non-number syntax, trailing -")
 
 ;;; end of lisp-reader-tests.el

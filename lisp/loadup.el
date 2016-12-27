@@ -116,7 +116,7 @@ with the exception of `loadup.el'.")
 	;; #### This code is duplicated in two other places.
 	(let ((temp-path (expand-file-name "." (car load-path))))
 	  (setq load-path (nconc (mapcar
-				  #'(lambda (i) (concat i "/"))
+				  #'(lambda (i) (concatenate 'string i "/"))
 				  (directory-files temp-path t "^[^-.]"
 						   nil 'dirs-only))
 				 (cons (file-name-as-directory temp-path)

@@ -879,6 +879,68 @@ while (0)
   return list1 (list3 (build_ascstring ("STORE_VOID_IN_LISP"), Qt, Qnil));
 }
 
+DEFUN ("test-fixnum-to-string", Ftest_fixnum_to_string, 0, 0, "", /*
+Make sure `fixnum_to_string' can print LONG_MIN as a decimal correctly.
+*/
+       ())
+{
+  Ibyte buf[DECIMAL_PRINT_SIZE (Fixnum) + 1];
+  Bytecount res = fixnum_to_string (buf, sizeof (buf), LONG_MIN, 10,
+                                    Vfixnum_to_majuscule_ascii);
+  Ascbyte buf1[DECIMAL_PRINT_SIZE (long) + 1];
+  Bytecount res1 = snprintf (buf1, sizeof (buf1) - 1, "%ld", LONG_MIN);
+  Lisp_Object result = Qnil;
+
+  if (res == res1)
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result length, fixnum_to_string"),
+                             Qt, Qnil), result);
+    }
+  else
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result length, fixnum_to_string"),
+                             Qnil, make_string (buf, res)), result);
+    }
+
+  if (!strcmp ((Ascbyte *) buf, buf1))
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("cross-check against sprintf, fixnum_to_string"),
+                             Qt, Qnil), result);
+    }
+  else
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("cross-check against sprintf, fixnum_to_string"),
+                             Qnil, make_string (buf, res)), result);
+    }
+
+  if (1 
+#if SIZEOF_LONG == 4
+      && !strcmp ((Ascbyte *) buf, "-2147483648")
+#elif SIZEOF_LONG == 8
+      && !strcmp ((Ascbyte *) buf, "-9223372036854775808")
+#else
+#warning "unimplemented"
+      && 0
+#endif
+      && 1)
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result text, fixnum_to_string"),
+                             Qt, Qnil), result);
+    }
+  else
+    {
+      result = Fcons (list3 (build_ascstring
+                             ("checking result text, fixnum_to_string"),
+                             Qnil, make_string (buf, res)), result);
+    }
+
+  return result;
+}
 
 
 #ifdef NEW_GC
@@ -907,6 +969,7 @@ syms_of_tests (void)
   TESTS_DEFSUBR (Ftest_character_tell);
   TESTS_DEFSUBR (Ftest_hash_tables);
   TESTS_DEFSUBR (Ftest_store_void_in_lisp);
+  TESTS_DEFSUBR (Ftest_fixnum_to_string);
   /* Add other test functions here with TESTS_DEFSUBR */
 }
 

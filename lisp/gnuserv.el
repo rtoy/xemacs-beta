@@ -248,8 +248,8 @@ All the slots default to nil."
 (defvar gnuserv-process nil
   "The current gnuserv process.")
 
-(defvar gnuserv-string ""
-  "The last input string from the server.")
+(defvar gnuserv-request-stream (make-string-output-stream)
+  "Buffered gnuserv client request data.")
 
 (defvar gnuserv-current-client nil
   "The client we are currently talking to.")
@@ -329,12 +329,14 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 ;; to communicate to client).
 ;;
 ;; The request string can arrive in several chunks.  As the request
-;; ends with \C-d, we check for that character at the end of string.
-;; If not found, keep reading, and concatenating to former strings.
-;; So, if at first read we receive "5 (gn", that text will be stored
-;; to gnuserv-string.  If we then receive "us)\C-d", the two will be
-;; concatenated, `current-client' will be set to 5, and `(gnus)' form
-;; will be evaluated.
+;; ends with \C-d, we check for that character at the end of the string that
+;; arrives.  If not found, keep reading, and stash the received text in
+;; gnuserv-request-stream.
+;;
+;; So, if at first read we receive "5 (gn", that text will be stashed in
+;; gnuserv-request-stream.  If we then receive "us)\C-d", `current-client'
+;; will be set to 5, the form `(gnus)' will be evaluated, and
+;; gnuserv-request-stream will be cleared.
 ;;
 ;; Server will send the following:
 ;;
@@ -344,34 +346,32 @@ visual screen.  Totally visible frames are preferred.  If none found, return nil
 ;; <text> - the actual contents of the request.
 (defun gnuserv-process-filter (proc string)
   "Process gnuserv client requests to execute Emacs commands."
-  (setq gnuserv-string (concat gnuserv-string string))
+  (write-sequence string gnuserv-request-stream)
   ;; C-d means end of request.
-  (when (string-match "\C-d\n?\\'" gnuserv-string)
-    (cond ((string-match "\\`[0-9]+" gnuserv-string) ; client request id
-	   (let ((header (read-from-string gnuserv-string)))
-	     ;; Set the client we are talking to.
-	     (setq gnuserv-current-client (car header))
-	     ;; Evaluate the expression
-	     (condition-case oops
-		 (eval (car (read-from-string gnuserv-string (cdr header))))
-	       ;; In case of an error, write the description to the
-	       ;; client, and then signal it.
-	       (error (setq gnuserv-string "")
-		      (when gnuserv-current-client
-			(gnuserv-write-to-client gnuserv-current-client oops))
-		      (setq gnuserv-current-client nil)
-		      (signal (car oops) (cdr oops)))
-	       (quit (setq gnuserv-string "")
-		     (when gnuserv-current-client
-		       (gnuserv-write-to-client gnuserv-current-client oops))
-		     (setq gnuserv-current-client nil)
-		     (signal 'quit nil)))
-	     (setq gnuserv-string "")))
-	  (t
-	   (let ((response (subseq gnuserv-string 0
-				   (position ?\C-d gnuserv-string))))
-	     (setq gnuserv-string "")
-	     (error "%s: invalid response from gnuserv" response))))))
+  (when (find ?\C-d string)
+    (let ((gnuserv-string (get-output-stream-string gnuserv-request-stream))
+          offset)
+      (multiple-value-setq (gnuserv-current-client offset)
+        (parse-integer gnuserv-string :junk-allowed t))
+      (when (not gnuserv-current-client)
+        (error 'network-error
+               "Invalid response from gnuserv process"
+               (subseq gnuserv-string 0 (position ?\C-d gnuserv-string))))
+      (labels
+          ((gnuserv-eval-error-handler (oops)
+             (when (or (member 'error (get (car oops) 'error-conditions))
+                       (member 'quit (get (car oops) 'error-conditions)))
+               ;; In case of an error, write the description to the client,
+               ;; and then let the error propagate.
+               (when gnuserv-current-client
+                 (gnuserv-write-to-client gnuserv-current-client oops)
+                 (setq gnuserv-current-client nil)))))
+        (call-with-condition-handler #'gnuserv-eval-error-handler
+            ;; Evaluate the expression, after we have ...
+            #'eval
+          (car (call-with-condition-handler #'gnuserv-eval-error-handler
+                   ;; ... read it.
+                   #'read-from-string gnuserv-string offset)))))))
 
 ;; This function is somewhat of a misnomer.  Actually, we write to the
 ;; server (using `process-send-string' to gnuserv-process), which
@@ -546,7 +546,7 @@ If a flag is `view', view the files read-only."
 ;; list for the particular client.
 ;;
 ;; This hooks into `kill-buffer-hook'.  It is *not* a replacement for
-;; `kill-buffer' (thanks God).
+;; `kill-buffer' (thank God).
 (defun gnuserv-kill-buffer-function ()
   "Remove the buffer from the buffer lists of all the clients it belongs to.
 Any client that remains \"empty\" after the removal is informed that the
@@ -734,8 +734,8 @@ All the clients will be disposed of via the normal methods."
   (gnuserv-shutdown)
   ;; If we already had a server, clear out associated status.
   (unless leave-dead
-    (setq gnuserv-string ""
-	  gnuserv-current-client nil)
+    (setq gnuserv-current-client nil)
+    (clear-output gnuserv-request-stream) ; Reset it
     (let ((process-connection-type t))
       (setq gnuserv-process
 	    (start-process "gnuserv" nil gnuserv-program)))

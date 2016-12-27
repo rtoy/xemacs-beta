@@ -132,13 +132,13 @@ print_face (Lisp_Object obj, Lisp_Object printcharfun, int UNUSED (escapeflag))
 
   if (print_readably)
     {
-      write_fmt_string_lisp (printcharfun, "#s(face :name %S)", 1, face->name);
+      write_fmt_string_lisp (printcharfun, "#s(face :name %S)", face->name);
     }
   else
     {
-      write_fmt_string_lisp (printcharfun, "#<face %S", 1, face->name);
+      write_fmt_string_lisp (printcharfun, "#<face %S", face->name);
       if (!NILP (face->doc_string))
-	write_fmt_string_lisp (printcharfun, " %S", 1, face->doc_string);
+	write_fmt_string_lisp (printcharfun, " %S", face->doc_string);
       write_ascstring (printcharfun, ">");
     }
 }

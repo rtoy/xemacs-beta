@@ -174,7 +174,7 @@ print_process (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
       print_internal (process->name, printcharfun, 1);
       write_ascstring (printcharfun, (netp ? " " : " pid "));
       print_internal (process->pid, printcharfun, 1);
-      write_fmt_string_lisp (printcharfun, " state:%S", 1, process->status_symbol);
+      write_fmt_string_lisp (printcharfun, " state:%S", process->status_symbol);
       MAYBE_PROCMETH (print_process_data, (process, printcharfun));
       write_ascstring (printcharfun, ">");
     }
@@ -1652,7 +1652,7 @@ status_message (Lisp_Process *p)
     {
       if (code == 0)
 	return build_msg_string ("finished\n");
-      string = Fnumber_to_string (make_fixnum (code));
+      string = Fnumber_to_string (make_fixnum (code), Qnil, Qnil);
       if (coredump)
 	string2 = build_msg_string (" (core dumped)\n");
       else

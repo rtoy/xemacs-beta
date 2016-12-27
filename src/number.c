@@ -51,9 +51,22 @@ static void
 bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 	      int UNUSED (escapeflag))
 {
-  Ascbyte *bstr = bignum_to_string (XBIGNUM_DATA (obj), 10);
-  write_ascstring (printcharfun, bstr);
-  xfree (bstr);
+  Ibyte *buf;
+  Bytecount size;
+
+#ifdef bignum_size_decimal
+  size = bignum_size_decimal (XBIGNUM_DATA (obj));
+  buf = alloca_ibytes (size);
+#else
+  size = -1;
+  buf = NULL;
+#endif
+  write_string_1 (printcharfun, buf,
+                  bignum_to_string (&buf, size, XBIGNUM_DATA (obj), 10,
+                                    Qnil));
+#ifndef bignum_size_decimal
+  xfree (buf);
+#endif
 }
 
 #ifdef NEW_GC
@@ -92,9 +105,16 @@ bignum_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 static void
 bignum_convert (const void *object, void **data, Bytecount *size)
 {
-  CIbyte *bstr = bignum_to_string (*(bignum *)object, 10);
+  CIbyte *bstr = mpz_get_str (NULL, 16, *(bignum *)object);
   *data = bstr;
   *size = strlen(bstr)+1;
+
+  return;
+#if 0
+  len = bignum_to_string (&bstr, -1, *(bignum *)object, 16, Qnil);
+  *data = bstr;
+  *size = len + 1;
+#endif
 }
 
 static void
@@ -109,7 +129,7 @@ bignum_deconvert (void *object, void *data, Bytecount UNUSED (size))
 {
   bignum *b = (bignum *) object;
   bignum_init(*b);
-  bignum_set_string(*b, (const char *) data, 10);
+  bignum_set_string(*b, (const char *) data, 16);
   return object;
 }
 
@@ -148,9 +168,11 @@ static void
 ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
-  CIbyte *rstr = ratio_to_string (XRATIO_DATA (obj), 10);
-  write_ascstring (printcharfun, rstr);
-  xfree (rstr);
+  Bytecount size = ratio_size_in_base (XRATIO_DATA (obj), 10);
+  Ibyte *rstr = alloca_ibytes (size);
+
+  write_string_1 (printcharfun, rstr,
+                  ratio_to_string (&rstr, size, XRATIO_DATA (obj), 10, Qnil));
 }
 
 #ifdef NEW_GC

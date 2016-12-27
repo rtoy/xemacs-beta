@@ -53,3 +53,30 @@
   :group 'internet
   :commands
   '(["Send %_Mail..." compose-mail]))
+
+;; Define the mwheel behavior here, so it can be disabled by users' init files
+;; without dumping mwheel.el.
+(define-behavior 'mwheel
+  "Enable the use of the mouse wheel, if present.  On by default.
+
+In XEmacs, wheel events arrive as button4/button5 events, and these are
+automatically set up to do scrolling in the expected way.  The details of how
+the scrolling works can be controlled by `mouse-wheel-scroll-amount',
+`mouse-wheel-follow-mouse', `mouse-wheel-progressive-speed',
+`mouse-wheel-scroll-up-function', `mouse-wheel-down-function'.  See the
+documentation of those variables.
+
+There is normally no need to explicitly configure this behavior.  If as a user
+you would like to disable the mouse wheel, call `(disable-behavior 'mwheel)',
+or `(mwheel-install 'uninstall)'.  The latter syntax is compatible with GNU
+Emacs."
+  :group 'mouse
+  :short-doc "Mouse wheel support for X Windows"
+  :enable 'mwheel-install
+  :disable #'(lambda () (mwheel-install -1)))
+
+;; Don't call #'enable-behavior at dump time, that would needlessly force
+;; dumping of mwheel.el.
+(push 'mwheel enabled-behavior-list)
+
+;;; behavior-defs.el ends here
