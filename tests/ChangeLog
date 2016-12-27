@@ -1,3 +1,8 @@
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el (string):
+	Test #'normalize-menu-text and its preservation of extent data.
+
 2016-12-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
