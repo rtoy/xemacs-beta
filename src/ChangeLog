@@ -1,5 +1,23 @@
 2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Tidy up GTK keysym handling.
+
+	* event-gtk.c (gtk_keysym_to_emacs_keysym):
+	* event-gtk.c (gtk_to_emacs_keysym):
+	Remove the SIMPLE_P argument to these, nothing uses it.
+	* event-gtk.c:
+	* event-gtk.c (keysym_obeys_caps_lock_p):
+	Simplify and generalise this, use gdk_keyval_convert_case(), cf. the
+	X11 change using XConvertCase().
+	* event-gtk.c (gtk_event_to_emacs_event):
+	Clarify and comment on Bill Perry's approach to whether shift
+	should be stripped from graphic keysyms. His approach works quite
+	well and is cheaper than the X11 approach, happily.
+	* event-gtk.c (gtk_reset_key_mapping):
+	Don't use the second argument to gtk_keysym_to_emacs_keysym().
+
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* device-gtk.c (gtk_device_init_x_specific_cruft):
 	Use the X Display *, not the GdkDisplay *, when telling the IO
 	code to pay attention to the SIGIO signals associated with this
