@@ -1,3 +1,10 @@
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h:
+	Move END_C_DECLS after all the function declarations, following
+	9bf84e216bf869, my change of 2016-10-29, which put some of them
+	after it.
+
 2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* menubar.c (Fnormalize_menu_text):

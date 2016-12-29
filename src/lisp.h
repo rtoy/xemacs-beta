@@ -6282,8 +6282,6 @@ extern Lisp_Object Vmswindows_downcase_file_names;
 /* Defined in window.c */
 extern Lisp_Object Qwindow_live_p;
 
-END_C_DECLS
-
 
 /************************************************************************/
 /*			 String translation				*/
@@ -6429,5 +6427,7 @@ write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
 }
 
 #define write_msg_string write_msg_ascstring
+
+END_C_DECLS
 
 #endif /* INCLUDED_lisp_h_ */
