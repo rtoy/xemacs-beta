@@ -1,3 +1,50 @@
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove duplicate (and silently overridden) buffers tab Lisp code,
+	buff-menu.el.
+
+	* buff-menu.el:
+	* buff-menu.el (buffers-tab): Removed.
+	* buff-menu.el (buffers-tab-max-size): Removed.
+	* buff-menu.el (buffers-tab-switch-to-buffer-function): Removed.
+	* buff-menu.el (buffers-tab-omit-function): Removed.
+	* buff-menu.el (buffers-tab-selection-function): Removed.
+	* buff-menu.el (buffers-tab-filter-functions): Removed.
+	* buff-menu.el (buffers-tab-sort-function): Removed.
+	* buff-menu.el (buffers-tab-face): Removed.
+	* buff-menu.el (buffers-tab-grouping-regexp): Removed.
+	* buff-menu.el (buffers-tab-format-buffer-line-function): Removed.
+	* buff-menu.el (buffers-tab-default-buffer-line-length): Removed.
+	* buff-menu.el (buffers-tab-max-buffer-line-length): Removed.
+	* buff-menu.el (buffers-menu-omit-function): New.
+	* buff-menu.el (buffers-tab-switch-to-buffer): Removed.
+	* buff-menu.el (select-buffers-tab-buffers-by-mode): Removed.
+	* buff-menu.el (format-buffers-tab-line): Removed.
+	* buff-menu.el (buffers-tab-items): Removed.
+
+	* files.el (switch-to-next-buffer):
+	* files.el (switch-to-previous-buffer)
+	Use the usually-equivalent buffers-menu-omit-function in
+	#'switch-to-{next,previous}-buffer, since these functions are
+	always dumped and the buffers tab omit-function may well not be.
+
+	* files.el (switch-to-next-buffer-in-group): Removed.
+	* files.el (switch-to-previous-buffer-in-group): Removed.
+	Move #'switch-to-{next,previous}-buffer-in-group to
+	gutter-items.el, given they rely on the buffer tab grouping being
+	available. 
+
+	* gutter-items.el:
+	* gutter-items.el (buffers-tab): New.
+	* gutter-items.el (buffers-tab-omit-some-buffers): New.
+	* gutter-items.el (select-buffers-tab-buffers-by-mode):
+	* gutter-items.el (switch-to-next-buffer-in-group): New.
+	* gutter-items.el (switch-to-previous-buffer-in-group): New.
+
+	* keydefs.el:
+	Only give #'switch-to-{next,previous}-buffer-in-group a keybinding
+	if the gutter is available.
+
 2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* about.el (about-xemacs):
