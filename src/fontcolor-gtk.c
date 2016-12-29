@@ -32,6 +32,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "charset.h"
 #include "device-impl.h"
 #include "insdel.h"
+#include "text.h"
 
 #include "frame-impl.h"
 #include "console-gtk-impl.h"
@@ -368,32 +369,32 @@ static Lisp_Object
 gtk_font_describe_face(const char *name, PangoFontFace *face)
 {
   Lisp_Object result = Qnil;
-  char *full_name = alloca(1024);
-  int *sizes, n_sizes;
+  DECLARE_EISTRING (full_name);
+  int *sizes, n_sizes, ii;
+  Ibyte *face_name;
+  Bytecount face_name_len;
 
-  memset (full_name, 0, 1024);
-  sprintf (full_name, "%s %s", name, pango_font_face_get_face_name (face));
+  eicpy_ext (full_name, name, Qutf_8);
+  eicat_ascii (full_name, " ");
+  TO_INTERNAL_FORMAT (C_STRING, pango_font_face_get_face_name (face),
+                      ALLOCA, (face_name, face_name_len),
+                      Qutf_8);
+  eicat_raw (full_name, face_name, face_name_len);
 
   pango_font_face_list_sizes (face, &sizes, &n_sizes);
+
   if (sizes == 0)
     {
-      /* Not sure Gtk font name encoding would be. */
-      result = list1 (build_extstring (full_name, Qutf_8));
+      return list1 (eimake_string (full_name));
     }
-  else
-    {
-      int i;
-      char *buf = alloca (1024);
 
-      for (i = n_sizes - 1; i >= 0; i--)
-	{
-	  Lisp_Object args[] = { result, Qnil };
-	  sprintf (buf, "%s-%d", full_name, i);
-	  args[1] = build_extstring (buf, Qutf_8);
-	  result = Fappend (countof (args), args);
-	}
-      g_free (sizes);
+  for (ii = n_sizes - 1; ii >= 0; ii--)
+    {
+      result = Fcons (emacs_sprintf_string ("%s-%d", eidata (full_name), ii),
+                      result);
     }
+
+  g_free (sizes);
   return result;
 }
 
@@ -429,10 +430,10 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object device,
       pango_font_family_list_faces (families[i], &faces, &n_faces);
       for (j = n_faces - 1 ; j >= 0; j--)
 	{
-	  Lisp_Object args[] = { result, Qnil };
-	  args[1] = gtk_font_describe_face
-	    (pango_font_family_get_name (families[i]),
-	     faces[j]),
+	  Lisp_Object args[] = { Qnil, result };
+	  args[0]
+            = gtk_font_describe_face (pango_font_family_get_name (families[i]),
+                                      faces[j]),
 	  result = Fappend (countof (args), args);
 	}
       g_free (faces);
