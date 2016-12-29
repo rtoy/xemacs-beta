@@ -78,7 +78,7 @@ static int tty_events_occurred;
 extern SELECT_TYPE input_wait_mask, non_fake_input_wait_mask;
 extern SELECT_TYPE process_only_mask, tty_only_mask;
 
-static Lisp_Object gtk_keysym_to_emacs_keysym (guint keysym, int simple_p);
+static Lisp_Object gtk_keysym_to_emacs_keysym (guint keysym);
 void debug_process_finalization (struct Lisp_Process *p);
 gboolean emacs_gtk_event_handler (GtkWidget *wid /* unused */,
 				  GdkEvent *event,
@@ -401,10 +401,12 @@ emacs_gtk_handle_magic_event (struct Lisp_Event *emacs_event)
 /*                 Gtk to Emacs event conversion                        */
 /************************************************************************/
 
-static int
+static Boolint
 keysym_obeys_caps_lock_p (guint sym, struct device *d)
 {
   struct gtk_device *gd = DEVICE_GTK_DATA (d);
+  guint upper, lower;
+
   /* Eeeeevil hack.  Don't apply Caps_Lock to things that aren't alphabetic
      characters, where "alphabetic" means something more than simply A-Z.
      That is, if Caps_Lock is down, typing ESC doesn't produce Shift-ESC.
@@ -412,27 +414,16 @@ keysym_obeys_caps_lock_p (guint sym, struct device *d)
 #ifdef HAVE_GTK2
   if (gd->lock_interpretation == GDK_Shift_Lock)
     return 1;
-
-  return
-    ((sym >= GDK_A)        && (sym <= GDK_Z))          ||
-    ((sym >= GDK_a)        && (sym <= GDK_z))          ||
-    ((sym >= GDK_Agrave)   && (sym <= GDK_Odiaeresis)) ||
-    ((sym >= GDK_agrave)   && (sym <= GDK_odiaeresis)) ||
-    ((sym >= GDK_Ooblique) && (sym <= GDK_Thorn))      ||
-    ((sym >= GDK_oslash)   && (sym <= GDK_thorn));
 #endif
+
 #ifdef HAVE_GTK3
   if (gd->lock_interpretation == GDK_KEY_Shift_Lock)
     return 1;
-
-  return
-    ((sym >= GDK_KEY_A)        && (sym <= GDK_KEY_Z))          ||
-    ((sym >= GDK_KEY_a)        && (sym <= GDK_KEY_z))          ||
-    ((sym >= GDK_KEY_Agrave)   && (sym <= GDK_KEY_Odiaeresis)) ||
-    ((sym >= GDK_KEY_agrave)   && (sym <= GDK_KEY_odiaeresis)) ||
-    ((sym >= GDK_KEY_Ooblique) && (sym <= GDK_KEY_Thorn))      ||
-    ((sym >= GDK_KEY_oslash)   && (sym <= GDK_KEY_thorn));
 #endif
+
+  gdk_keyval_convert_case (sym, &lower, &upper);
+
+  return !(sym == lower && sym == upper);
 }
 
 static void
@@ -461,7 +452,7 @@ set_last_server_timestamp (struct device *d, GdkEvent *gdk_event)
 }
 
 static Lisp_Object
-gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
+gtk_keysym_to_emacs_keysym (guint keysym)
 {
   Ascbyte *guname = NULL;
   guint32 unicode = 0;
@@ -509,11 +500,6 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
     case 0:                     return Qnil;
 
     default:
-      if (simple_p)
-        {
-  return Qnil;
-        }
-
       unicode = gdk_keyval_to_unicode (keysym);
 
       if (unicode != 0)
@@ -521,7 +507,7 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
           return Funicode_to_char (make_fixnum ((EMACS_INT) unicode), Qnil);
         }
 
-      /* All of the names gdkkeysms-compat.h are ASCII-only, and if keysym
+      /* All of the names in gdkkeysms-compat.h are ASCII-only, and if keysym
          is non-zero this function will never return NULL. */
       guname = (Ascbyte *) gdk_keyval_name (keysym);
 
@@ -544,25 +530,16 @@ gtk_keysym_to_emacs_keysym (guint keysym, int simple_p)
 }
 
 static Lisp_Object
-gtk_to_emacs_keysym (GdkEventKey *event, int simple_p)
-     /* simple_p means don't try too hard (ASCII only) */
+gtk_to_emacs_keysym (GdkEventKey *event)
 {
-#ifdef HAVE_GTK2
-  if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_Mode_switch))
+  if (IS_MODIFIER_KEY (event->keyval))
     {
        return Qnil;
     }
-#endif
-#ifdef HAVE_GTK3
-  if (IS_MODIFIER_KEY (event->keyval) || (event->keyval == GDK_KEY_Mode_switch))
-    {
-      return Qnil;
-    }
-#endif
 
   /* This function used to attempt to handle input methods, but that's no
      longer correct with GTK2.  */
-  return gtk_keysym_to_emacs_keysym (event->keyval, simple_p);
+  return gtk_keysym_to_emacs_keysym (event->keyval);
 }
 
 
@@ -1449,7 +1426,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 
 	    /* Keysym mucking has already been done inside the
                GdkEventKey parsing */
-	    keysym = gtk_to_emacs_keysym (key_event, 0);
+	    keysym = gtk_to_emacs_keysym (key_event);
 
 	    /* If the emacs keysym is nil, then that means that the X
 	       keysym was either a Modifier or NoSymbol, which
@@ -1465,31 +1442,33 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	       the keysym) if the keysym isn't a dual-case alphabetic,
 	       and if the caps lock key was down but the shift key
 	       wasn't, then turn off the shift modifier.  Gag barf */
-	    /* #### type lossage: assuming equivalence of emacs and
-	       X keysyms */
-	    /* !!#### maybe fix for Mule */
 	    if (lock_p && !shift_p &&
-		! (CHAR_OR_CHAR_INTP (keysym)
-		   && keysym_obeys_caps_lock_p
-		   ((guint) XCHAR_OR_CHAR_INT (keysym), d)))
-	      modifiers &= (~XEMACS_MOD_SHIFT);
+		! (key_event->keyval &&
+                   keysym_obeys_caps_lock_p (key_event->keyval, d)))
+              {
+                modifiers &= (~XEMACS_MOD_SHIFT);
+              }
+	    /* [ If this key contains two distinct keysyms, that is, "shift"
+                 generates a different keysym than the non-shifted key, then
+                 don't apply the shift modifier bit: it's implicit.
+                 Otherwise, if there would be no other way to tell the
+                 difference between the shifted and unshifted version of this
+                 key, apply the shift bit.  Non-graphics, like Backspace and
+                 F1 get the shift bit in the modifiers slot.  Neither the
+                 characters "a", "A", "2", nor "@" normally have the shift bit
+                 set.  However, "F1" normally does. ]
 
-	    /* If this key contains two distinct keysyms, that is,
-	       "shift" generates a different keysym than the
-	       non-shifted key, then don't apply the shift modifier
-	       bit: it's implicit.  Otherwise, if there would be no
-	       other way to tell the difference between the shifted
-	       and unshifted version of this key, apply the shift bit.
-	       Non-graphics, like Backspace and F1 get the shift bit
-	       in the modifiers slot.  Neither the characters "a",
-	       "A", "2", nor "@" normally have the shift bit set.
-	       However, "F1" normally does. */
-	    if (modifiers & XEMACS_MOD_SHIFT)
-	      {
-		if (CHAR_OR_CHAR_INTP (keysym))
-		  {
-		    modifiers &= ~XEMACS_MOD_SHIFT;
-		  }
+               The above is very complicated, and the corresponding code in
+               event-Xt.c is complicated too. Bill Perry's late-90s approach,
+               below, however, is much simpler, and I can't find any problems
+               with it. Non-graphic characters won't have XEmacs characters as
+               their keysyms, graphic characters under GTK will have XEmacs
+               characters as their keysyms, and if the platform supplies us
+               with a graphic character, then we should strip the shift
+               mask. Aidan Kehoe, Do 29 Dez 2016 14:23:31 GMT */
+	    else if (CHARP (keysym))
+              {
+                modifiers &= ~XEMACS_MOD_SHIFT;
 	      }
 		
 	    set_event_type (emacs_event, key_press_event);
@@ -1886,7 +1865,7 @@ gtk_reset_key_mapping (struct device *d)
 
       {
 	Extbyte *name = XKeysymToString (keysym[0]);
-	Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[0], 0);
+	Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[0]);
 	if (name)
 	  {
 	    Fputhash (build_extstring (name, Qx_keysym_encoding),
@@ -1901,7 +1880,7 @@ gtk_reset_key_mapping (struct device *d)
 	      keysym[j] != NoSymbol)
 	    {
 	      Extbyte *name = XKeysymToString (keysym[j]);
-	      Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[j], 0);
+	      Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[j]);
 	      if (name && NILP (Fgethash (sym, hashtable, Qnil)))
 		{
 		  Fputhash (build_extstring (name, Qx_keysym_encoding),
