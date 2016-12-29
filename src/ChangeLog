@@ -1,5 +1,16 @@
 2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fontcolor-gtk.c:
+	* fontcolor-gtk.c (gtk_font_describe_face):
+	Build up the list of faces in a more reasonable way, don't try to
+	merge sequences by using a string as the last argument to
+	#'append.
+	* fontcolor-gtk.c (gtk_font_list):
+	Be a little more efficient here, don't traverse the entire
+	constructed list of results with every face added.
+
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Tidy up GTK keysym handling.
 
 	* event-gtk.c (gtk_keysym_to_emacs_keysym):
