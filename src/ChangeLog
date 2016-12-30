@@ -1,5 +1,14 @@
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* glyphs-x.c (x_redisplay_widget):
+	Use a malloc'd external string here, no point stuffing alloca'd
+	data into the lwlib widget's text.
+	* glyphs-x.c (x_widget_instantiate):
+	If this is a text widget, store a malloc'd copy of the text into
+	the lwlib widget.
+
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* src/glyphs-eimage.c:
 	Do some more validation on the GIF's height and width.
 	Document why we won't run past the end of InterlacedOffset[] when
