@@ -1253,7 +1253,9 @@ ichar_len_fmt (Ichar c, Internal_Format fmt)
 
 #define string_char_length(s) \
   string_index_byte_to_char (s, XSTRING_LENGTH (s))
-#define string_byte(s, i) (XSTRING_DATA (s)[i] + 0)
+/* Without the cast, C++ promotes the following expression to an int and then
+   complains about a narrowing cast when it is used as an Ibyte. */
+#define string_byte(s, i) (Ibyte) (XSTRING_DATA (s)[i] + 0)
 /* In case we ever allow strings to be in a different format ... */
 #define set_string_byte(s, i, c) (XSTRING_DATA (s)[i] = (c))
 

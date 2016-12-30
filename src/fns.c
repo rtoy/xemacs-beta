@@ -745,6 +745,8 @@ Otherwise, LIST may be dotted, but not circular.
 
       EXTERNAL_LIST_LOOP_3 (elt, list, tail)
 	{
+          USED (elt); /* Silence the compiler warning. */
+
 	  if (int_n-- < 0)
 	    {
 	      last_cons = XCDR (last_cons);
@@ -793,6 +795,8 @@ converts a dotted into a true list.
 
       EXTERNAL_LIST_LOOP_3 (elt, list, list_tail)
 	{
+          USED (elt); /* Silence the compiler warning. */
+
 	  if (--int_n < 0)
 	    {
 	      if (NILP (retval_tail))
@@ -1922,6 +1926,8 @@ The value is actually the element of ALIST whose car equals KEY.
   /* This function can GC. */
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_cdr); /* Silence the compiler warning. */
+
       if (internal_old_equal (key, elt_car, 0))
 	return elt;
     }
@@ -1939,6 +1945,8 @@ Do not use it.
 {
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_cdr); /* Silence the compiler warning. */
+
       if (HACKEQ_UNSAFE (key, elt_car))
 	return elt;
     }
@@ -1953,6 +1961,8 @@ The value is actually the element of ALIST whose cdr is VALUE.
 {
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_car); /* Silence the compiler warning. */
+
       if (HACKEQ_UNSAFE (value, elt_cdr))
 	return elt;
     }
@@ -1967,6 +1977,8 @@ The value is actually the element of ALIST whose cdr equals VALUE.
 {
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_car); /* Silence the compiler warning. */
+
       if (internal_old_equal (value, elt_cdr, 0))
 	return elt;
     }

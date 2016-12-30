@@ -818,6 +818,8 @@ rangetab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
   /* #### should deal with ERRB */
   EXTERNAL_PROPERTY_LIST_LOOP_3 (range, data, value)
     {
+      USED (data); /* Silence warning. */
+
       if (!FIXNUMP (range) && !CHARP (range)
 	  && !(CONSP (range) && CONSP (XCDR (range))
 	       && NILP (XCDR (XCDR (range)))

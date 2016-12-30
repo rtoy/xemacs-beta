@@ -2170,7 +2170,7 @@ do {									\
 	 (void)								\
 	 ((++len > suspicion_length)					\
 	  &&								\
-	  ((((len & 1) != 0) && (tortoise = XCDR (tortoise), 0)),	\
+	  ((((len & 1) != 0) ? (tortoise = XCDR (tortoise)) : 0),	\
 	   (EQ (hare, tortoise) &&					\
             ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
 
@@ -2218,6 +2218,7 @@ do {									\
   Lisp_Object GELL_elt, GELL_tail;					\
   EXTERNAL_LIST_LOOP_4_NO_DECLARE (GELL_elt, list, GELL_tail, len)	\
     ;									\
+  USED (GELL_elt); /* Silence warning. */                              \
 } while (0)
 
 /* For a list that's known to be in valid list format, where we may
@@ -2688,7 +2689,7 @@ XSTRING_DATA (Lisp_Object s)
 
 #define XSTRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp + 0)
 #define XSET_STRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp = 1)
-#define XCLEAR_STRING_MODIFFP(s) ((XSTRING (s)->u.v.modiffp = 0), 1)
+#define XCLEAR_STRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp = 0)
 
 /* Return the true aligned size of a struct whose last member is a
    variable-length array field.  (this is known as the "struct hack") */
