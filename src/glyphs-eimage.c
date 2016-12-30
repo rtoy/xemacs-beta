@@ -694,18 +694,28 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        format. */
     if (DGifSlurp (unwind.giffile) == GIF_ERROR)
       signal_image_error (gif_decode_error_string (), instantiator);
+
+    /* dgif_lib.c doesn't do any validation on these. */
+    check_integer_range (make_fixnum (1),
+                         make_fixnum (unwind.giffile->SHeight),
+                         Vmost_positive_fixnum);
+    check_integer_range (make_fixnum (1),
+                         make_fixnum (unwind.giffile->SWidth),
+                         Vmost_positive_fixnum);
   }
 
   /* 3. Now create the EImage(s) */
   {
-    ColorMapObject *cmo = (unwind.giffile->Image.ColorMap ? unwind.giffile->Image.ColorMap : unwind.giffile->SColorMap);
-    int i, j, row, pass, interlace, slice;
+    ColorMapObject *cmo
+      = (unwind.giffile->Image.ColorMap ? unwind.giffile->Image.ColorMap
+         : unwind.giffile->SColorMap);
+    int i, j, row, interlace, slice;
     UINT_64_BIT pixels_sq;
     Binbyte *eip;
     /* interlaced gifs have rows in this order:
        0, 8, 16, ..., 4, 12, 20, ..., 2, 6, 10, ..., 1, 3, 5, ...  */
-    static int InterlacedOffset[] = { 0, 4, 2, 1 };
-    static int InterlacedJumps[] = { 8, 8, 4, 2 };
+    static const int InterlacedOffset[] = { 0, 4, 2, 1 };
+    static const int InterlacedJumps[] = { 8, 8, 4, 2 };
 
     if (cmo == NULL)
       signal_image_error ("GIF image has no color map", instantiator);
@@ -718,13 +728,16 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     unwind.eimage =
       xnew_binbytes (width * height * 3 * unwind.giffile->ImageCount);
     if (!unwind.eimage)
-      signal_image_error("Unable to allocate enough memory for image", instantiator);
+      signal_image_error("Unable to allocate enough memory for image",
+                         instantiator);
 
     /* write the data in EImage format (8bit RGB triples) */
 
     for (slice = 0; slice < unwind.giffile->ImageCount; slice++)
       {
-	/* We check here that the current image covers the full "screen" size. */
+	unsigned int pass;
+	/* We check here that the current image covers the full "screen"
+           size. */
 	if (unwind.giffile->SavedImages[slice].ImageDesc.Height != height
 	    || unwind.giffile->SavedImages[slice].ImageDesc.Width != width
 	    || unwind.giffile->SavedImages[slice].ImageDesc.Left != 0
@@ -733,27 +746,41 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 			      instantiator);
 
 	interlace = unwind.giffile->SavedImages[slice].ImageDesc.Interlace;
-	pass = 0;
-	row = interlace ? InterlacedOffset[pass] : 0;
+
+        pass = 0;
+	row = 0; /* interlace ? InterlacedOffset[pass] : 0; */
 	eip = unwind.eimage + (width * height * 3 * slice);
 	for (i = 0; i < height; i++)
 	  {
 	    if (interlace)
 	      if (row >= height) {
-		row = InterlacedOffset[++pass];
+		row = InterlacedOffset[(++pass) & 3];
+                glyph_checking_assert (pass < countof (InterlacedOffset));
 		while (row >= height)
-		  row = InterlacedOffset[++pass];
+                  {
+                    /* We only run into trouble here if height is less than 1
+                       (the last value in InterlacedOffset), and we've checked
+                       for that above.
+
+                       The & 3 is not necessary--see the assertions--but it
+                       quiets compiler warnings about reading beyond the end
+                       of InterlacedOffset. */
+                    row = InterlacedOffset[(++pass) & 3];
+                    glyph_checking_assert (pass < countof (InterlacedOffset));
+                  }
 	      }
-	    eip = unwind.eimage + (width * height * 3 * slice) + (row * width * 3);
+	    eip = unwind.eimage + (width * height * 3 * slice)
+              + (row * width * 3);
 	    for (j = 0; j < width; j++)
 	      {
 		Binbyte pixel =
-		  unwind.giffile->SavedImages[slice].RasterBits[(i * width) + j];
+		  unwind.giffile->SavedImages[slice].RasterBits[(i * width)
+                                                                + j];
 		*eip++ = cmo->Colors[pixel].Red;
 		*eip++ = cmo->Colors[pixel].Green;
 		*eip++ = cmo->Colors[pixel].Blue;
 	      }
-	    row += interlace ? InterlacedJumps[pass] : 1;
+	    row += interlace ? InterlacedJumps[pass & 3] : 1;
 	  }
       }
 

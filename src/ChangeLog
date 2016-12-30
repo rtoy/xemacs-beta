@@ -1,3 +1,12 @@
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* src/glyphs-eimage.c:
+	Do some more validation on the GIF's height and width.
+	Document why we won't run past the end of InterlacedOffset[] when
+	reading an interlaced GIF. Add assertions to check this.
+	Mask the pass count to quiet the compiler warning about running
+	past the end.
+
 2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h:
