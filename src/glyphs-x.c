@@ -2193,10 +2193,9 @@ x_redisplay_widget (Lisp_Image_Instance *p)
   /* Possibly update the text. */
   if (IMAGE_INSTANCE_TEXT_CHANGED (p))
     {
-      Extbyte* str;
       Lisp_Object val = IMAGE_INSTANCE_WIDGET_TEXT (p);
-      str = LISP_STRING_TO_EXTERNAL (val, Qlwlib_encoding);
-      wv->value = str;
+      if (wv->value) free (wv->value);
+      wv->value = LISP_STRING_TO_EXTERNAL_MALLOC (val, Qlwlib_encoding);
     }
 
   /* Possibly update the size. */
@@ -2445,7 +2444,6 @@ x_widget_instantiate (Lisp_Object image_instance,
   struct device* d = XDEVICE (device);
   Lisp_Object frame = DOMAIN_FRAME (domain);
   struct frame* f = XFRAME (frame);
-  char* nm=0;
   Widget wid;
   Arg al [32];
   int ac = 0;
@@ -2460,10 +2458,6 @@ x_widget_instantiate (Lisp_Object image_instance,
      instantiation for a widget. But we can go ahead and do it without
      checking because there is always a generic instantiator. */
   IMAGE_INSTANCE_TYPE (ii) = IMAGE_WIDGET;
-
-  if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
-    nm = LISP_STRING_TO_EXTERNAL (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-				  Qlwlib_encoding);
 
   ii->data = xnew_and_zero (struct x_subwindow_data);
 
@@ -2493,6 +2487,13 @@ x_widget_instantiate (Lisp_Object image_instance,
   /* create a sensible name. */
   if (wv->name == 0 || strcmp(wv->name, "") == 0)
     wv->name = xstrdup (type);
+
+  if (!NILP (IMAGE_INSTANCE_WIDGET_TEXT (ii)))
+    {
+      wv->value
+        = LISP_STRING_TO_EXTERNAL_MALLOC (IMAGE_INSTANCE_WIDGET_TEXT (ii),
+                                          Qlwlib_encoding);
+    }
 
   /* copy any args we were given */
   ac = 0;
