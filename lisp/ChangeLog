@@ -1,3 +1,24 @@
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-macroexpand-all):
+	Shadow symbol macros when the corresponding symbols are
+	encountered in lambda argument lists with the symbol macro body.
+	Previously this was buggy in that the lambda argument lists were
+	left alone and the expansion was applied to the body of the
+	lambda, which no-one intended.
+	Implement a new SHADOW option for individual symbol macros,
+	specifying the Common Lisp behaviour.
+
+	* cl-macs.el (symbol-macrolet):
+	Document this shadowing in the docstring. Document the
+	transformation of `let', `let*' to `letf', `letf*'.
+	Document the new SHADOW option.
+
+	* cl-macs.el (cl-defsubst-expand): 
+	Use the new SHADOW option in our symbol macros, to avoid problems
+	with argument substitution inside let bindings or lambda
+	expressions where that would be inappropriate.
+	
 2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Remove duplicate (and silently overridden) buffers tab Lisp code,

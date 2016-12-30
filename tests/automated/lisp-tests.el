@@ -3905,4 +3905,34 @@ via the hepatic alpha-tocopherol transfer protein")))
 	      t)
 	    "checking we haven't crashed, localtime returning NULL")))
 
+;;-----------------------------------------------------
+;; Test `lexical-let', `lexical-let*'
+;;-----------------------------------------------------
+
+(Assert (eql (lexical-let ((a e)) a) (exp 1)))
+
+;; Fixed bug in 21.5:
+(Assert (eql (lexical-let ((a e)) (funcall #'(lambda (a) a) pi))
+             (* 4 (atan 1))))
+
+;; Changed design decision in 21.5:
+(Assert (eql (lexical-let ((a e)) (let ((a pi)) a)) (* 4 (atan 1))))
+
+(Assert (eql (lexical-let* ((a e)) a) (exp 1)))
+(Assert (eql (lexical-let* ((a e)) (let ((a pi)) a)) (* 4 (atan 1))))
+
+(defun return-a (arg) (values a arg))
+
+(Assert (equal
+         (multiple-value-list
+             (let ((a 20))
+               (lexical-let ((a most-negative-fixnum)) (return-a a))))
+         `(20 ,most-negative-fixnum)))
+
+(Assert (equal
+         (multiple-value-list
+             (let ((a 20))
+               (let ((a most-negative-fixnum)) (return-a a))))
+         `(,most-negative-fixnum ,most-negative-fixnum)))
+
 ;;; end of lisp-tests.el
