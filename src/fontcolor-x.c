@@ -839,7 +839,8 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 			    ALLOCA, (name_str, name_len),
 			    Qx_atom_name_encoding);
 
-      name = (name_str ? intern ((const CIbyte *) name_str) : Qnil);
+      name = (name_str ? intern_istring (name_str, name_len,
+                                         Qnil, Vobarray) : Qnil);
       if (name_str &&
 	  (atom == XA_FONT ||
 	   atom == DEVICE_XATOM_FOUNDRY (d) ||

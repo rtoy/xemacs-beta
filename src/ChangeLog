@@ -1,5 +1,66 @@
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Quiet compiler warnings, recent gcc-5, g++-5, clang-3.5.
+	
+	* buffer.c (cleanup_buffer_undo_lists):
+	* buffer.c (Fget_file_buffer):
+	* chartab.c (chartab_data_validate):
+	* event-Xt.c (x_reset_modifier_mapping):
+	* event-Xt.c (store_modifier):
+	* event-stream.c (execute_help_form):
+	* event-stream.c (Fnext_event):
+	* fns.c (Fnbutlast):
+	* fns.c (Fbutlast):
+	* fns.c (Fold_assoc):
+	* fns.c (Fold_assq):
+	* fns.c (Fold_rassq):
+	* fns.c (Fold_rassoc):
+	* fontcolor-x.c (x_font_instance_properties):
+	* gui-x.c (button_item_to_widget_value):
+	* gutter.c:
+	* gutter.c (gutter_visible_validate):
+	* rangetab.c (rangetab_data_validate):
+	* regex.c (re_match_2_internal):
+	* search.c (search_buffer):
+	* sequence.c (Fcount):
+	* sequence.c (Fassoc):
+	* sequence.c (Fassq):
+	* sequence.c (FassocX):
+	* sequence.c (Frassoc):
+	* sequence.c (Frassq):
+	* sequence.c (FrassocX):
+	* sequence.c (list_delete_duplicates_from_end):
+	* sequence.c (Ffill):
+	* sequence.c (Fnset_exclusive_or):
+	* sound.c (Fplay_sound_file):
+	Silence unused variable warnings, either by removing the
+	corresponding variables or marking them with USED (e.g. in those
+	cases where they are necessary macro arguments). 
+
+	* elhash.c (static const struct sized_memory_description
+	hash_table_test_description_1): Renamed to
+	hash_table_test_description[], the old definition of the former is
+	not used. 
+	
+	* text.h:
+	Cast the result of string_byte() to Ibyte, quieting the C++
+	compiler.
+
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	GCC feels that the result of the first argument to && is unused;
+	switch to the ternary operator to quiet it. 
+	* lisp.h (GET_EXTERNAL_LIST_LENGTH):
+	Mark GELL-elt used to quiet the compiler.
+	* lisp.h (XCLEAR_STRING_MODIFFP):
+	No need for the comma operator, let this macro return 0.
+	* number.h (make_integer, make_unsigned_integer):
+	Sigh, when a C type is greater in size than a long, and so we're
+	calling make_bignum_ll, the compiler complains about the
+	make_bignum call (which will never be executed) with the larger
+	value. Cast this to quiet it.
+
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* glyphs-x.c (x_redisplay_widget):
 	Use a malloc'd external string here, no point stuffing alloca'd
 	data into the lwlib widget's text.

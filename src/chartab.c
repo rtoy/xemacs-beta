@@ -1656,6 +1656,8 @@ chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
     {
       struct chartab_range dummy;
 
+      USED (data); /* Silence warning. */
+
       if (CONSP (range))
 	{
 	  if (!CONSP (XCDR (range))

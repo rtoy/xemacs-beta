@@ -321,6 +321,8 @@ cleanup_buffer_undo_lists (void)
 
   ALIST_LOOP_3 (name, buf, Vbuffer_alist)
     {
+      USED (name); /* Silence warning. */
+
       XBUFFER (buf)->undo_list = truncate_undo_list (XBUFFER (buf)->undo_list,
 						     undo_threshold,
 						     undo_high_threshold);
@@ -544,6 +546,8 @@ the search will still be done on `buffer-file-name'.
 				   ? XBUFFER (buf)->file_truename
 				   : XBUFFER (buf)->filename))))
 	  return buf;
+
+        USED (name); /* Silence warning. */
       }
   }
   return Qnil;
