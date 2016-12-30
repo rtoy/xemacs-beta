@@ -59,6 +59,13 @@
 	make_bignum call (which will never be executed) with the larger
 	value. Cast this to quiet it.
 
+	Couple of more changes flushed out by the union build (thank you
+	Mats Lidell, Raymond Toye and the buildbot):
+	* glyphs-eimage.c (gif_instantiate):
+	Bah, Vmost_positive_fixnum is not a Lisp_Object.
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Massage this to placate the Union build.
+
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* glyphs-x.c (x_redisplay_widget):

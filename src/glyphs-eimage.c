@@ -698,10 +698,10 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     /* dgif_lib.c doesn't do any validation on these. */
     check_integer_range (make_fixnum (1),
                          make_fixnum (unwind.giffile->SHeight),
-                         Vmost_positive_fixnum);
+                         make_fixnum (MOST_POSITIVE_FIXNUM));
     check_integer_range (make_fixnum (1),
                          make_fixnum (unwind.giffile->SWidth),
-                         Vmost_positive_fixnum);
+                         make_fixnum (MOST_POSITIVE_FIXNUM));
   }
 
   /* 3. Now create the EImage(s) */

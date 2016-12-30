@@ -2170,7 +2170,7 @@ do {									\
 	 (void)								\
 	 ((++len > suspicion_length)					\
 	  &&								\
-	  ((((len & 1) != 0) ? (tortoise = XCDR (tortoise)) : 0),	\
+	  ((((len & 1) != 0) ? (tortoise = XCDR (tortoise), 0) : 0),    \
 	   (EQ (hare, tortoise) &&					\
             ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
 
