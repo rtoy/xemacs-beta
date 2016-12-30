@@ -506,18 +506,36 @@ This also does some trivial optimizations to make the form prettier."
 	((memq (car form) '(let let*))
 	 (if (null (nth 1 form))
 	     (cl-macroexpand-all (cons 'progn (cddr form)) env)
-	   (let ((letf nil) (res nil) (lets (cadr form)))
+	   (let ((letf nil) (res nil) (lets (cadr form)) (env env) shadows)
 	     (while lets
-	       (push (if (consp (car lets))
-			    (let ((exp (cl-macroexpand-all (caar lets) env)))
-			      (or (symbolp exp) (setq letf t))
-			      (cons exp (cl-macroexpand-body (cdar lets) env)))
-			  (let ((exp (cl-macroexpand-all (car lets) env)))
-			    (if (symbolp exp) exp
-			      (setq letf t) (list exp nil)))) res)
+	       (push (funcall
+                      #'(lambda (symbol valueform)
+                          (let* ((eq-hash (eq-hash symbol))
+                                 (acons (cdr (assoc* eq-hash env))))
+                            (if (null acons)
+                                ;; No symbol macro encountered.
+                                (cons symbol
+                                      (cl-macroexpand-body valueform env))
+                              ;; OK, there is a symbol macro. Shadow it?
+                              (if (cadr acons)
+                                  (if (eq (car form) 'let*)
+                                      ;; `let*' --> shadow immediately.
+                                      (push `(,eq-hash . nil) env)
+                                    ;; `let'; delay until all bindings
+                                    ;; processed.
+                                    (push `(,eq-hash . nil) env))
+                                ;; Don't shadow it.
+                                (setq symbol (car acons))
+                                (unless (symbolp symbol) (setq letf t)))
+                              (cons symbol
+                                    (cl-macroexpand-body valueform env)))))
+                      (if (consp (car lets)) (caar lets) (car lets))
+                      (cdr-safe (car-safe lets)))
+                     res)
 	       (setq lets (cdr lets)))
 	     (list* (if letf (if (eq (car form) 'let) 'letf 'letf*) (car form))
-		    (nreverse res) (cl-macroexpand-body (cddr form) env)))))
+		    (nreverse res)
+                    (cl-macroexpand-body (cddr form) (nconc shadows env))))))
 	((eq (car form) 'cond)
 	 (cons (car form)
 	       (mapcar (function (lambda (x) (cl-macroexpand-body x env)))
@@ -530,7 +548,25 @@ This also does some trivial optimizations to make the form prettier."
 			(cdddr form))))
 	((memq (car form) '(quote function))
 	 (if (eq (car-safe (nth 1 form)) 'lambda)
-	     (let ((body (cl-macroexpand-body (cddadr form) env)))
+             (let* ((env
+                     (reduce #'nconc (nth 1 (nth 1 form)) :from-end t
+                             :key #'(lambda (symbol)
+                                      (when (and
+                                             (not (member
+                                                   symbol
+                                                   '(&optional &rest)))
+                                             ;; Is there an existing symbol
+                                             ;; macro?
+                                             (cdr (assoc*
+                                                   (setq symbol
+                                                         (eq-hash symbol))
+                                                   env)))
+                                        ;; If so, shadow it by a nil symbol
+                                        ;; macro, so there's no expansion, and
+                                        ;; the variable is treated normally.
+                                        `((,symbol . nil))))
+                             :initial-value env))
+                    (body (cl-macroexpand-body (cddadr form) env)))
 	       (if (and cl-closure-vars (eq (car form) 'function)
 			(cl-expr-contains-any body cl-closure-vars))
 		   (let* ((new (mapcar 'gensym cl-closure-vars))
@@ -580,7 +616,24 @@ This also does some trivial optimizations to make the form prettier."
                (list 'function found))
               (t form)))))
 	((memq (car form) '(defun defmacro))
-	 (list* (car form) (nth 1 form) (cl-macroexpand-body (cddr form) env)))
+         (let ((env
+                (reduce #'nconc (nth 2 form) :from-end t
+                        :key #'(lambda (symbol)
+                                 (when (and (not (member symbol
+                                                         '(&optional &rest)))
+                                            ;; Is there an existing symbol
+                                            ;; macro?
+                                            (cdr (assoc*
+                                                  (setq symbol
+                                                        (eq-hash symbol))
+                                                  env)))
+                                   ;; If so, shadow it by a nil symbol
+                                   ;; macro, so there's no expansion, and
+                                   ;; the variable is treated normally.
+                                   `((,symbol . nil))))
+                        :initial-value env)))
+           (list* (car form) (nth 1 form)
+                  (cl-macroexpand-body (cddr form) env))))
 	((and (eq (car form) 'progn) (not (cddr form)))
 	 (cl-macroexpand-all (nth 1 form) env))
 	((eq (car form) 'setq)

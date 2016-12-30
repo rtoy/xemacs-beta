@@ -1713,16 +1713,28 @@ This is like `flet', but for macros instead of functions."
                        env)))
 
 ;;;###autoload
-(defmacro* symbol-macrolet ((&rest symbol-macros) &body form &environment env)
+(defmacro* symbol-macrolet ((&rest symbol-macros) &body body &environment env)
   "Make temporary symbol macro definitions.
-Elements in SYMBOL-MACROS look like (NAME EXPANSION).
-Within the body FORMs, a reference to NAME is replaced with its EXPANSION,
-and (setq NAME ...) acts like (setf EXPANSION ...)."
-  (cl-macroexpand-all (cons 'progn form)
+
+Elements in SYMBOL-MACROS look like (NAME EXPANSION &optional SHADOW).
+Within BODY, a series of Lisp forms, a reference to NAME is replaced with its
+EXPANSION, and (setq NAME ...) acts like (setf EXPANSION ...).
+
+If NAME is encountered in a lambda argument list within BODY, then the
+corresponding symbol macro will be shadowed within the lambda body, and NAME
+will be treated as normal.
+
+If NAME is encountered as a symbol within the VARLIST of a `let', `let*',
+`lexical-let', or `lexical-let*' form, then the binding acts as it would with
+`letf' or `letf*', depending on the specific form encountered.  This is in
+contravention of Common Lisp, where such bindings shadow any enclosing symbol
+macros. To specify the Common Lisp behavior for an individual symbol macro,
+supply a non-nil third SHADOW element."
+  (cl-macroexpand-all (cons 'progn body)
                       (nconc (loop
-			       for (name expansion) in symbol-macros
+			       for (name expansion . shadow) in symbol-macros
 			       do (check-type name symbol)
-			       collect (list (eq-hash name) expansion))
+			       collect (list* (eq-hash name) expansion shadow))
 			     env)))
 
 (defvar cl-closure-vars nil)
@@ -3172,27 +3184,20 @@ surrounded by (block NAME ...)."
                                          (setq body
                                                (cl-macroexpand-all
                                                 body `((,(eq-hash argn)
-                                                        ,copy-symbol)))
+                                                        ,copy-symbol t)))
                                                argn copy-symbol)))
-                                   (push (list argn argv) symbol-macros)
+                                   (push (list argn argv t) symbol-macros)
                                    (and unsafe (list (list argn argv))))
                                (list (list argn argv))))
                          argns argvs)))
       `(let ,lets
          (symbol-macrolet
-             ;; #### Bug; this will happily substitute in places where the
-             ;; symbol is being shadowed in a different scope (e.g. inside
-             ;; let bindings or lambda expressions where it has been
-             ;; bound). We don't have GNU's issue where the replacement will
-             ;; be done when the symbol is used in a function context,
-             ;; because we're using #'symbol-macrolet instead of #'subst.
-             ;;
-             ;; #'symbol-macrolet as specified by Common Lisp is shadowed by
-             ;; #'let, #'let* and lambda argument lists, and that would suit
-             ;; our purposes here perfectly; we could implement it in
-             ;; cl-macroexpand-all by shadowing any existing symbol macros
-             ;; when we descend let forms or arglist lambdas. Doing it
-             ;; unconditionally could well break #'loop, though.
+             ;; We don't have GNU's issue where the replacement will be done
+             ;; when the symbol is used in a function context, because we're
+             ;; using #'symbol-macrolet instead of #'subst. And we're using a
+             ;; new, third field to the symbol expansion which specifies that
+             ;; shadowing for `let', `let*' is to be applied, which avoids
+             ;; problems with those subforms.
              ,symbol-macros
            ,body)))))
 

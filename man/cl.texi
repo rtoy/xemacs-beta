@@ -1870,9 +1870,9 @@ body.
 @defmac symbol-macrolet (bindings@dots{}) forms@dots{}
 This form creates @dfn{symbol macros}, which are macros that look
 like variable references rather than function calls.  Each
-@var{binding} is a list @samp{(@var{var} @var{expansion})};
-any reference to @var{var} within the body @var{forms} is
-replaced by @var{expansion}.
+@var{binding} is a list @samp{(@var{var} @var{expansion} &optional
+@var{shadow})}; any reference to @var{var} within the body @var{forms}
+is replaced by @var{expansion}.
 
 @example
 (setq bar '(5 . 9))
@@ -1891,7 +1891,13 @@ treated like a @code{letf} or @code{letf*}.  This differs from true
 Common Lisp, where the rules of lexical scoping cause a @code{let}
 binding to shadow a @code{symbol-macrolet} binding.  In this package,
 only @code{lexical-let} and @code{lexical-let*} will shadow a symbol
-macro.
+macro.  To specify the Common Lisp behavior, supply a non-nil value for
+the third @var{shadow} element of the list.
+
+If @var{var} (the name of the symbol macro) is encountered in a lambda
+argument list within @var{forms}, then the corresponding symbol macro
+will be shadowed within the lambda body, and @var{var} will be treated
+as normal within that lambda body.
 
 There is no analogue of @code{defmacro} for symbol macros; all symbol
 macros are local.  A typical use of @code{symbol-macrolet} is in the
