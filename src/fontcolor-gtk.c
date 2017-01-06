@@ -636,7 +636,7 @@ Only selects monospace fonts.
 
 #if GTK_CHECK_VERSION(3, 2, 0)
   w = gtk_font_chooser_dialog_new ("Select font",
-				   FRAME_GTK_SHELL_WIDGET (f));
+				   GTK_WINDOW(FRAME_GTK_SHELL_WIDGET (f)));
   gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w),
 				    monospace_only,
 				    NULL, NULL);
