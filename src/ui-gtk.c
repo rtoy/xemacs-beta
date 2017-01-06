@@ -1541,7 +1541,7 @@ Return the child types of TYPE.
        (type))
 {
   GType gt = G_TYPE_INVALID;
-  GType *children = G_TYPE_INVALID;
+  GType *children = NULL;
   guint n_children, i;
   Lisp_Object result = Qnil;
 
@@ -1559,14 +1559,14 @@ Return the child types of TYPE.
   g_free (children);
   return result;
 }
-  
+
 DEFUN ("g-type-interfaces", Fg_type_interfaces, 1, 1, 0, /*
 Return the interface types of TYPE.
 */
        (type))
 {
   GType gt = G_TYPE_INVALID;
-  GType *interfaces = G_TYPE_INVALID;
+  GType *interfaces = NULL;
   guint n_interfaces, i;
   Lisp_Object result = Qnil;
 
