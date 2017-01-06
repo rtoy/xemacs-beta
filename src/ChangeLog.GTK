@@ -1,6 +1,7 @@
 2017-01-06  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* fontcolor-gtk.c (Fgtk_select_font)  Add cast for stricter gcc
+	* fontcolor-gtk.c (Fgtk_select_font)  Add cast for stricter gcc.
+	(monospace_only): Cast away const.
 
 2016-01-04  Jeff Sparkes  <jsparkes@gmail.com>
 
