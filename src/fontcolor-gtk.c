@@ -611,7 +611,8 @@ monospace_only (const PangoFontFamily *family,
 		const PangoFontFace * UNUSED (face),
 		gpointer UNUSED (data))
 {
-  if (pango_font_family_is_monospace (family))
+  /* const_cast */
+  if (pango_font_family_is_monospace ((PangoFontFamily *) family))
     return TRUE;
   return FALSE;
 }
