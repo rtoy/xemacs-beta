@@ -1,3 +1,42 @@
+2017-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove format(), recently introduced and used by almost nothing.
+	Within #'format-into, if STREAM is the symbol `string', return a
+	string reflecting the arguments rather than STREAM.
+	This is the functionality of format(); use it in the one place
+	that format() was used.
+
+	Restore format as a local variable name, from fermat.
+	* doprnt.c:
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (emacs_vsprintf_string):
+	* doprnt.c (emacs_sprintf_string):
+	* doprnt.c (emacs_vasprintf):
+	* doprnt.c (emacs_asprintf):
+	* doprnt.c (emacs_vsnprintf):
+	* doprnt.c (emacs_snprintf):
+	* doprnt.c (format_into):
+	* doprnt.c (format):
+	* callint.c:
+	* callint.c (callint_prompt):
+	* device-x.c (x_init_device):
+	* frame-x.c (x_wm_hack_wm_protocols):
+	* glyphs.c (decode_device_ii_format):
+	* glyphs.c (decode_image_instantiator_format):
+	* glyphs.c (valid_image_instantiator_format_p):
+	* lisp.h:
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lisp.h (qxestrcoll):
+	* print.c (debug_out_lisp):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* strftime.c (strftime):
+	* text.c (qxesprintf):
+
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Quiet compiler warnings, recent gcc-5, g++-5, clang-3.5.

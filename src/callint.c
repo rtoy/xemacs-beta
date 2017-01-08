@@ -241,10 +241,10 @@ callint_prompt (const Ibyte *prompt_start, Bytecount prompt_length,
 {
   Lisp_Object s = make_string (prompt_start, prompt_length);
 
-  if (!strchr ((char *) XSTRING_DATA (s), '%'))
+  if (!qxestrchr (XSTRING_DATA (s), '%'))
     return s;
-  /* format() will GCPRO S, no need for us to. */
-  return format (s, nargs, args);
+  /* format_into() will GCPRO S, no need for us to. */
+  return format_into (Qstring, s, nargs, args);
 }
 
 /* `lambda' for RECORD-FLAG is an XEmacs addition. */

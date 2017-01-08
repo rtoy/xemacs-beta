@@ -75,14 +75,14 @@ selection_data_to_lisp_data (struct device *d,
 			     Rawbyte *data,
 			     Bytecount size,
 			     XE_ATOM_TYPE type,
-			     int fermat)
+			     int format)
 {
 #ifdef THIS_IS_X
   if (type == DEVICE_XATOM_NULL (d))
     return QNULL;
 
   /* Convert any 8-bit data to a string, for compactness. */
-  else if (fermat == 8)
+  else if (format == 8)
     return make_extstring ((Extbyte *) data, size,
 			    type == DEVICE_XATOM_TEXT (d) ||
 			    type == DEVICE_XATOM_COMPOUND_TEXT (d)
@@ -96,7 +96,7 @@ selection_data_to_lisp_data (struct device *d,
     return QNULL;
 
   /* Convert any 8-bit data to a string, for compactness. */
-  else if (fermat == 8)
+  else if (format == 8)
     return make_extstring ((Extbyte *) data, size,
 			    ((type == gdk_atom_intern ("TEXT", FALSE)) ||
 			     (type == gdk_atom_intern ("COMPOUND_TEXT", FALSE)))
@@ -124,11 +124,11 @@ selection_data_to_lisp_data (struct device *d,
      not available, selection_data_to_lisp_data() can return a cons, with the
      car a fixnum containing the higher-order 16 bits, the cdr the lower-order
      16 bits. */
-  else if (fermat == 16 && size == sizeof (INT_16_BIT))
+  else if (format == 16 && size == sizeof (INT_16_BIT))
     {
       return make_fixnum ((EMACS_INT) (((INT_16_BIT *) data) [0]));
     }
-  else if (fermat == 32 && size == sizeof (INT_32_BIT))
+  else if (format == 32 && size == sizeof (INT_32_BIT))
     {
       if (type == DEVICE_XATOM_TIMESTAMP (d))
         {
@@ -137,7 +137,7 @@ selection_data_to_lisp_data (struct device *d,
 
       return int32_t_to_lisp (((INT_32_BIT *) data) [0]);
     }
-  else if (fermat == 32 && size == sizeof (long) &&
+  else if (format == 32 && size == sizeof (long) &&
            sizeof (long) != sizeof (INT_32_BIT))
     {
 #ifdef THIS_IS_X
@@ -168,7 +168,7 @@ selection_data_to_lisp_data (struct device *d,
      Right now the fact that the return type was SPAN is discarded before
      lisp code gets to see it.
    */
-  else if (fermat == 16)
+  else if (format == 16)
     {
       Elemcount i, count = size / 2;
       Lisp_Object v = make_vector (count, Qzero);
@@ -179,7 +179,7 @@ selection_data_to_lisp_data (struct device *d,
 	}
       return v;
     }
-  else if (fermat == 32 && sizeof (long) == 4)
+  else if (format == 32 && sizeof (long) == 4)
     {
       Elemcount i;
       Lisp_Object v = make_vector (size / 4, Qzero);
@@ -190,7 +190,7 @@ selection_data_to_lisp_data (struct device *d,
 	}
       return v;
     }
-  else if (fermat == 32)
+  else if (format == 32)
     {
       Elemcount ii, count = size / sizeof (long);
       Lisp_Object v = make_vector (count, Qzero);
@@ -206,7 +206,7 @@ selection_data_to_lisp_data (struct device *d,
 
   warn_when_safe (Vwindow_system, Qselection_conversion_error,
                   "selection_data_to_lisp_data: format %d: not understood",
-                  fermat);
+                  format);
 
   return Qnil;
 }

@@ -1087,11 +1087,11 @@ doprnt_1 (Lisp_Object stream,
    it, e.g. with record_unwind_protect_freeing_dynarr(). */
 static printf_spec_dynarr *
 parse_doprnt_spec (printf_spec_dynarr *specs,
-                   const Ibyte *fermat, Bytecount fermat_length,
+                   const Ibyte *format, Bytecount format_length,
                    Elemcount *args_needed_out)
 {
-  const Ibyte *fmt = fermat;
-  const Ibyte *fmt_end = fermat + fermat_length;
+  const Ibyte *fmt = format;
+  const Ibyte *fmt_end = format + format_length;
   Elemcount prev_argnum = 0, max_argnum = 0;
 
   if (specs == NULL)
@@ -1121,7 +1121,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
       text_end = (Ibyte *) memchr (fmt, '%', fmt_end - fmt);
       if (!text_end)
 	text_end = fmt_end;
-      spec.text_before = fmt - fermat;
+      spec.text_before = fmt - format;
       spec.text_before_len = text_end - fmt;
       set_itext_ichar (spec.pad_char, ' ');
       spec.precision = -1;
@@ -3099,12 +3099,12 @@ emacs_asprintf_lisp (Ibyte **retval_out, const CIbyte *format_nonreloc,
    objects--doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data
    from Lisp strings is OK because we explicitly inhibit GC. */
 Lisp_Object
-emacs_vsprintf_string (const CIbyte *fermat, va_list vargs)
+emacs_vsprintf_string (const CIbyte *format, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
   int count = begin_gc_forbidden ();
 
-  write_fmt_string_va (stream, fermat, vargs);
+  write_fmt_string_va (stream, format, vargs);
   obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
   end_gc_forbidden (count);
@@ -3116,13 +3116,13 @@ emacs_vsprintf_string (const CIbyte *fermat, va_list vargs)
    --doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data from Lisp
    strings is OK because we explicitly inhibit GC. */
 Lisp_Object
-emacs_sprintf_string (const CIbyte *fermat, ...)
+emacs_sprintf_string (const CIbyte *format, ...)
 {
   va_list vargs;
   Lisp_Object retval;
 
-  va_start (vargs, fermat);
-  retval = emacs_vsprintf_string (fermat, vargs);
+  va_start (vargs, format);
+  retval = emacs_vsprintf_string (format, vargs);
   va_end (vargs);
   return retval;
 }
@@ -3133,13 +3133,13 @@ emacs_sprintf_string (const CIbyte *fermat, ...)
    terminating zero). Stores a pointer to be freed with free() into
    *RETVAL_OUT. */
 Bytecount
-emacs_vasprintf (Ibyte **retval_out, const CIbyte *fermat, va_list vargs)
+emacs_vasprintf (Ibyte **retval_out, const CIbyte *format, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream ();
   int count = begin_gc_forbidden ();
   Bytecount len;
 
-  write_fmt_string_va (stream, fermat, vargs);
+  write_fmt_string_va (stream, format, vargs);
 
   Lstream_flush (XLSTREAM (stream));
   len = Lstream_byte_count (XLSTREAM (stream));
@@ -3158,13 +3158,13 @@ emacs_vasprintf (Ibyte **retval_out, const CIbyte *fermat, va_list vargs)
    explicitly inhibit GC.  Returns length (not including the terminating
    zero), Stores a pointer to be freed with free() into *RETVAL_OUT. */
 Bytecount
-emacs_asprintf (Ibyte **retval_out, const CIbyte *fermat, ...)
+emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
 {
   va_list vargs;
   Bytecount len;
 
-  va_start (vargs, fermat);
-  len = emacs_vasprintf (retval_out, fermat, vargs);
+  va_start (vargs, format);
+  len = emacs_vasprintf (retval_out, format, vargs);
   va_end (vargs);
   return len;
 }
@@ -3180,7 +3180,7 @@ emacs_asprintf (Ibyte **retval_out, const CIbyte *fermat, ...)
    will not zero-terminate if the number of octets is greater than SIZE -
    1.  The terminating zero is not included in the returned value. */
 Bytecount
-emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
+emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
                  va_list vargs)
 {
   /* emacs_vsnprintf can be called from write_string_to_external_output_va()
@@ -3190,7 +3190,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
      buffer lstream and the specs on the stack. This is not a practice that
      should be emulated anywhere else. */
   Bytecount retval, len, speccount = 1;
-  const CIbyte *cursor = fermat;
+  const CIbyte *cursor = format;
 
   while (*cursor)
     {
@@ -3199,7 +3199,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
       speccount += *cursor == '%', cursor += 1;
     }
 
-  len = cursor - fermat;
+  len = cursor - format;
 
   if (speccount == 1)
     {
@@ -3209,7 +3209,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
       retval = len;
       /* For the same reason, use the more robust memmove() rather than
          memcpy(). */
-      memmove (output, fermat, min (size - 1, len));
+      memmove (output, format, min (size - 1, len));
     }
   else
     {
@@ -3230,7 +3230,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
                             least the number of specs. */
                          speccount, sbase);
 
-      parse_doprnt_spec (&specs, (const Ibyte *) fermat, len, &nargs);
+      parse_doprnt_spec (&specs, (const Ibyte *) format, len, &nargs);
       /* Check we allocated enough on the stack for the specs. If we haven't,
          we've probably crashed already, though, since the dynarr code will
          have attempted to realloc stack-based data. */
@@ -3240,7 +3240,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
 
       get_doprnt_c_args (args, nargs, &specs, vargs);
 
-      retval = emacs_doprnt (stream, (const Ibyte *) fermat, len,
+      retval = emacs_doprnt (stream, (const Ibyte *) format, len,
                              Qnil, &specs, NULL, args);
     }
 
@@ -3267,24 +3267,28 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *fermat,
    will not zero-terminate if the number of octets is greater than SIZE -
    1. The terminating zero is not included in the returned value. */
 Bytecount
-emacs_snprintf (Ibyte *output, Bytecount size, const CIbyte *fermat, ...)
+emacs_snprintf (Ibyte *output, Bytecount size, const CIbyte *format, ...)
 {
   va_list vargs;
   Bytecount retval;
 
-  va_start (vargs, fermat);
-  retval = emacs_vsnprintf (output, size, fermat, vargs);
+  va_start (vargs, format);
+  retval = emacs_vsnprintf (output, size, format, vargs);
   va_end (vargs);
 
   return retval;
 }
 
 /* The implementation of #'format-into. Take a relocatable Lisp control string
-   FORMAT_RELOC, together with an array of Lisp_Object arguments, and return
-   a constructed Lisp string object, preserving extents as appropriate.
+   FORMAT_RELOC, together with an array of Lisp_Object arguments, and write
+   into a stream, preserving extents as appropriate.
 
    All Lisp_Object arguments are GCPRO'd, including FORMAT_RELOC; this makes
-   it acceptable to pass newly created objects into this function. */
+   it acceptable to pass newly created objects into this function.
+
+   Special case; if STREAM is the symbol Qstring, do not return STREAM,
+   instead return a newly-constructed string reflecting FORMAT_RELOC and
+   LARGS. */
 Lisp_Object
 format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
              const Lisp_Object *largs)
@@ -3295,6 +3299,7 @@ format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
     = parse_doprnt_spec (NULL, XSTRING_DATA (format_reloc),
                          format_length, &args_needed);
   int count = record_unwind_protect_freeing_dynarr (specs);
+  Boolint stringp = EQ (stream, Qstring);
   struct gcpro gcpro1, gcpro2, gcpro3;
 
   if (nargs < args_needed)
@@ -3323,6 +3328,12 @@ format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
     
     }
 #endif
+
+  if (stringp)
+    {
+      stream = make_resizing_buffer_output_stream ();
+    }
+
   GCPRO3 (largs[0], format_reloc, stream);
   gcpro1.nvars = nargs;
 
@@ -3331,22 +3342,15 @@ format_into (Lisp_Object stream, Lisp_Object format_reloc, int nargs,
 
   UNGCPRO;
   unbind_to (count);
+
+  if (stringp)
+    {
+      Lisp_Object obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+      Lstream_delete (XLSTREAM (stream));
+      return obj;
+    }
+
   return stream;
-}
-
-/* Like format_into (), but return a string Lisp_Object reflecting the
-   formatted data.  */
-Lisp_Object
-format (Lisp_Object format_reloc, int nargs, const Lisp_Object *largs)
-{
-  /* format_into() does the GCPRO. */
-  Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
-
-  format_into (stream, format_reloc, nargs, largs);
-  obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
-  Lstream_delete (XLSTREAM (stream));
-
-  return obj;
 }
 
 DEFUN ("format", Fformat, 1, MANY, 0, /*
@@ -3463,17 +3467,10 @@ arguments: (CONTROL-STRING &rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  /* format_into() does the GCPRO. */
-  Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
   Lisp_Object control_string = args[0];
 
   CHECK_STRING (control_string);
-
-  format_into (stream, control_string, nargs - 1, args + 1);
-
-  obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
-  Lstream_delete (XLSTREAM (stream));
-  return obj;
+  return format_into (Qstring, control_string, nargs - 1, args + 1);
 }
 
 DEFUN ("format-into", Fformat_into, 2, MANY, 0, /*
@@ -3486,6 +3483,10 @@ rather than `format-into' returning a string, as is the case in Common Lisp.
 
 Return STREAM.  See the documentation for `format' for details of
 CONTROL-STRING and the other arguments.
+
+As a special case, if STREAM is the symbol `string', `format-into' behaves as
+does `format', returning a newly-constructed string reflecting CONTROL-STRING
+and ARGS.
 
 arguments: (STREAM CONTROL-STRING &rest ARGS)
 */
