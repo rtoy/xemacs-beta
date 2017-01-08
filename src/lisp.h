@@ -4582,10 +4582,10 @@ Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
                            Lisp_Object table_or_nil);
 #endif
 
+/* Specify the symbol Qstring for STREAM if you would like a string to be
+   returned. */
 Lisp_Object format_into (Lisp_Object stream, Lisp_Object format_reloc,
                          int nargs, const Lisp_Object *largs);
-Lisp_Object format (Lisp_Object format_reloc, int nargs,
-                    const Lisp_Object *largs);
 
 MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
   PRINTF_ARGS (2, 3);
@@ -6173,11 +6173,11 @@ int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 DECLARE_INLINE_HEADER (int qxesscanf_ascii_1 (Ibyte *buffer,
-					      const Ascbyte *fermat,
+					      const Ascbyte *format,
 					      void *ptr))
 {
   /* #### DAMNIT! No vsscanf! */
-  return sscanf ((Chbyte *) buffer, fermat, ptr);
+  return sscanf ((Chbyte *) buffer, format, ptr);
 }
 
 /* Do not use POSIX locale routines.  Not Mule-correct. */

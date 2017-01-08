@@ -1331,13 +1331,13 @@ Fixnum Vchar_code_limit;
 /* Most are inline functions in lisp.h */
 
 int
-qxesprintf (Ibyte *buffer, const CIbyte *fermat, ...)
+qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
 {
   va_list args;
   int retval;
 
-  va_start (args, fermat);
-  retval = vsprintf ((Chbyte *) buffer, fermat, args);
+  va_start (args, format);
+  retval = vsprintf ((Chbyte *) buffer, format, args);
   va_end (args);
 
   return retval;
