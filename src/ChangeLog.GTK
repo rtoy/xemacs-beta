@@ -1,3 +1,7 @@
+2017-01-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Get RGBA visual for newer GTK.
+
 2017-01-06  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* ui-gtk.c (Fg_type_children): Intialize GType * array with NULL
