@@ -257,7 +257,11 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
     DEVICE_NAME (d) = display;
 
   /* Always search for the best visual */
+#if GTK_CHECK(2, 8, 0)
+  visual = gdk_screen_get_rgba_visual (gdk_screen_get_default ());
+#else
   visual = gdk_visual_get_best();
+  #endif
 
   DEVICE_GTK_VISUAL (d) = visual;
 #if GTK_CHECK_VERSION(2,22,1)
