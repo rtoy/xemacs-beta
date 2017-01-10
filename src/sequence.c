@@ -3288,32 +3288,34 @@ See also the function `nreverse', which is used more often.
   else if (VECTORP (sequence))
     {
       Elemcount length = XVECTOR_LENGTH (sequence), ii = length;
-      Lisp_Object *staging = alloca_array (Lisp_Object, length);
+      Lisp_Object *staging;
+
+      result = make_uninit_vector (length);
+      staging = XVECTOR_DATA (result);
 
       while (ii > 0)
 	{
 	  staging[length - ii] = XVECTOR_DATA (sequence) [ii - 1];
 	  --ii;
 	}
-
-      result = Fvector (length, staging);
     }
   else if (STRINGP (sequence))
     {
       Elemcount length = XSTRING_LENGTH (sequence);
-      Ibyte *staging = alloca_ibytes (length), *staging_end = staging + length;
       Ibyte *cursor = XSTRING_DATA (sequence), *endp = cursor + length;
+      Ibyte *result_end;
+
+      result = make_uninit_string (length);
+      result_end = XSTRING_DATA (result) + length;
 
       while (cursor < endp)
 	{
-	  staging_end -= itext_ichar_len (cursor);
-	  itext_copy_ichar (cursor, staging_end);
+	  result_end -= itext_ichar_len (cursor);
+	  itext_copy_ichar (cursor, result_end);
 	  INC_IBYTEPTR (cursor);
 	}
 
-      assert (staging == staging_end);
-
-      result = make_string (staging, length);
+      assert (XSTRING_DATA (result) == result_end);
     }
   else if (BIT_VECTORP (sequence))
     {

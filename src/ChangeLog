@@ -80,6 +80,12 @@
 	* select.c (Fown_selection_internal):
 	Update these comments to reflect current reality.
 
+2017-01-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (Freverse):
+	Use make_uninit_vector, make_uninit_string in this function, no
+	need for a stack staging area.
+
 2017-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Remove format(), recently introduced and used by almost nothing.
