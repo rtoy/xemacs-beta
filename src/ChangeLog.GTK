@@ -1,6 +1,17 @@
 2017-01-12  Jeff Sparkes  <jsparkes@gmail.com>
 
-	* device-gtk.c (gtk_init_device): The macro to use GTK_CHECK_VERSION.
+	* redisplay-gtk.c (XLIKE_clear_region): use new 3.22 drawing
+	context here.
+	(XLIKE_clear_frame): Ditto.
+	(XLIKE_bevel_area): Ditto.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+	(XLIKE_output_eol_cursor): Ditto.
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Use drawing context
+	post GTK 3.22.  Fix a memory leak in older GTK.
+
+	* device-gtk.c (gtk_init_device): The macro to use is GTK_CHECK_VERSION.
 
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): No need
 	to manually signal change since Gtk 3.18.
