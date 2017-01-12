@@ -1,5 +1,7 @@
 2017-01-12  Jeff Sparkes  <jsparkes@gmail.com>
 
+	* device-gtk.c (gtk_init_device): The macro to use GTK_CHECK_VERSION.
+
 	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): No need
 	to manually signal change since Gtk 3.18.
 	(scrollbar_cb): Ditto.
