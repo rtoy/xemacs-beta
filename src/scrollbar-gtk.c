@@ -237,7 +237,10 @@ gtk_update_scrollbar_instance_status (struct window *w, int active, int size,
               gtk_adjustment_set_value (adj, pos_data->slider_position);
             }
 
+#if GTK_CHECK_VERSION(3, 18, 0)
+#else
           gtk_adjustment_changed (adj);
+#endif
           instance->scrollbar_instance_changed = 0;
         }
 
@@ -419,9 +422,12 @@ scrollbar_cb (GtkRange *range, GtkScrollType scroll, gdouble UNUSED (value),
       ABORT();
     }
   signal_special_gtk_user_event (frame, event_type, event_data);
+#if GTK_CHECK_VERSION(3, 18, 0)
+#else
   if (scroll != GTK_SCROLL_NONE)
     gtk_adjustment_value_changed (adj);
   gtk_adjustment_changed (adj);
+#endif
 
   return FALSE;
 }
