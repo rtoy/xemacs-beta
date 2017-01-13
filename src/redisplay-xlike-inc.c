@@ -1619,11 +1619,11 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 #ifdef THIS_IS_GTK
       {
 	GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+	GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
-        /* We should be able to avoid the next call, but the GTK documentation
-         * doesn't explain how to get the drawing context. */
-        GdkDrawingContext *ctx = gdk_window_begin_draw_frame
-	  (gtk_widget_get_window (widget), NULL);
+	cairo_region_t *region = gdk_window_get_visible_region (window);
+	GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							      region);
         cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
 	cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -1643,6 +1643,7 @@ XLIKE_output_pixmap (struct window *w, Lisp_Object image_instance,
 	  }
 #if GTK_CHECK_VERSION(3, 22, 0)
 	gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+	cairo_region_destroy (region);
 #else
 	cairo_destroy (cr);
 #endif

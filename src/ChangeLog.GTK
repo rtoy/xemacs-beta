@@ -1,3 +1,17 @@
+2017-01-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_region): GDK drawing context
+	regquires a region.
+	(XLIKE_clear_frame): Ditto.
+	(XLIKE_bevel_area): Ditto.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+	(XLIKE_flash): Ditto.
+	(XLIKE_output_eol_cursor): Ditto.
+	(XLIKE_output_blank): Ditto.
+	(XLIKE_output_string): Ditto.
+	(XLIKE_output_xlike_pixmap): Ditto.
+
 2017-01-12  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_clear_region): use new 3.22 drawing
@@ -6,7 +20,11 @@
 	(XLIKE_bevel_area): Ditto.
 	(XLIKE_output_vertical_divider): Ditto.
 	(XLIKE_output_horizontal_line): Ditto.
+	(XLIKE_flash): Ditto.
 	(XLIKE_output_eol_cursor): Ditto.
+	(XLIKE_output_blank): Ditto.
+	(XLIKE_output_string): Ditto.
+	(XLIKE_output_xlike_pixmap): Ditto.
 
 	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Use drawing context
 	post GTK 3.22.  Fix a memory leak in older GTK.
