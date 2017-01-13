@@ -45,14 +45,16 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
 		    Lisp_Object UNUSED (background_placement))
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
-        /* We should be able to avoid the next call, but the GTK documentation
-         * doesn't explain how to get the drawing context. */
-        GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                              NULL);
-        cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
+  cairo_region_t *region = gdk_window_get_visible_region (window);
+  /* We should be able to avoid the next call, but the GTK documentation
+   * doesn't explain how to get the drawing context. */
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
+  cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-        cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (window);
 #endif
 
   if (!NILP (background_pixmap) && !UNBOUNDP (background_pixmap))
@@ -84,7 +86,8 @@ XLIKE_clear_region (Lisp_Object UNUSED (locale), struct frame* f,
 #endif
     }
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -94,14 +97,16 @@ static void
 XLIKE_clear_frame (struct frame *f)
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
-        /* We should be able to avoid the next call, but the GTK documentation
-         * doesn't explain how to get the drawing context. */
-        GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                              NULL);
-        cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
+  cairo_region_t *region = gdk_window_get_visible_region (window);
+  /* We should be able to avoid the next call, but the GTK documentation
+   * doesn't explain how to get the drawing context. */
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
+  cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-        cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (window);
 #endif
   Lisp_Object frame;
 #ifdef HAVE_GTK2
@@ -151,10 +156,11 @@ XLIKE_clear_frame (struct frame *f)
     }
 #endif
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
-  #endif
+#endif
 }
 
 /*****************************************************************************
@@ -175,11 +181,13 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 #endif
 #ifdef HAVE_GTK3
   GtkStyleContext *gstyle = gtk_widget_get_style_context (widget);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -211,7 +219,8 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
   gtk_render_frame (gstyle, cr, x*1.0, y*1.0, width*1.0, height*1.0);
 #endif
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -237,11 +246,13 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 #ifdef HAVE_GTK3
   GtkStyleContext *gstyle = gtk_widget_get_style_context (widget);
 #endif
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
@@ -289,7 +300,8 @@ XLIKE_output_vertical_divider (struct window *w, int UNUSED (clear))
 		   x + (width/2), ybottom + spacing);
 #endif
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -306,14 +318,16 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (window);
 #endif
 
   int x = rb->xpos;
@@ -369,7 +383,8 @@ XLIKE_output_horizontal_line (struct window *w, struct display_line *dl,
 #endif
     }
  #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -392,14 +407,16 @@ XLIKE_flash (struct device *d)
 {
   struct frame *f = device_selected_frame (d);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (window);
 #endif
   struct window *w = XWINDOW (FRAME_ROOT_WINDOW (f));
   Lisp_Object frame = wrap_frame (f);
@@ -441,7 +458,8 @@ XLIKE_flash (struct device *d)
 			w->pixel_width, w->pixel_height);
 
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -454,14 +472,16 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 {
   struct frame *f = XFRAME (w->frame);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
+  GdkWindow *win = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (win);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (win,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (win);
 #endif
   struct device *d = XDEVICE (f->device);
   Lisp_Object window;
@@ -512,7 +532,8 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
     }
 
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (win, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -732,14 +753,16 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
   struct frame *f = XFRAME (w->frame);
   struct device *d = XDEVICE (f->device);
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (window);
 #endif
 
   struct face_cachel *cursor_cachel =
@@ -850,7 +873,8 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
         }
     }
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
@@ -961,14 +985,16 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
     {
       Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
       int need_clipping;
+      GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+      cairo_region_t *region = gdk_window_get_visible_region (window);
       /* We should be able to avoid the next call, but the GTK documentation
        * doesn't explain how to get the drawing context. */
-      GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                            NULL);
+      GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							    region);
       cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-      cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+      cairo_t *cr = gdk_cairo_create (window);
 #endif
 
       if (!NILP (bg_pmap) && IMAGE_INSTANCEP (bg_pmap))
@@ -1033,7 +1059,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       xpos += width;
 #if GTK_CHECK_VERSION(3, 22, 0)
-      gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+      gdk_window_end_draw_frame (window, ctx);
+      cairo_region_destroy (region);
 #else
       cairo_destroy (cr);
 #endif
@@ -1069,14 +1096,16 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
       face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
       struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, ix);
+      GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+      cairo_region_t *region = gdk_window_get_visible_region (window);
       /* We should be able to avoid the next call, but the GTK documentation
        * doesn't explain how to get the drawing context. */
-      GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                            NULL);
+      GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							    region);
       cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-      cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+      cairo_t *cr = gdk_cairo_create (window);
 #endif
 
       assert (cursor_cachel);
@@ -1112,7 +1141,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
 	}
 #if GTK_CHECK_VERSION(3, 22, 0)
-      gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+      gdk_window_end_draw_frame (window, ctx);
+      cairo_region_destroy (region);
 #else
       cairo_destroy (cr);
 #endif
@@ -1126,14 +1156,16 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
 			   XLIKE_COLOR UNUSED (fg), XLIKE_COLOR UNUSED (bg))
 {
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET(f);
+  GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
+  cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
    * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (gtk_widget_get_window (widget),
-                                                        NULL);
+  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (window,
+							region);
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
-  cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+  cairo_t *cr = gdk_cairo_create (window);
 #endif
   GdkPixbuf *pb, *scaled = NULL;
 
@@ -1152,7 +1184,8 @@ XLIKE_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x,
   }
   cairo_paint (cr);
 #if GTK_CHECK_VERSION(3, 22, 0)
-  gdk_window_end_draw_frame (gtk_widget_get_window (widget), ctx);
+  gdk_window_end_draw_frame (window, ctx);
+  cairo_region_destroy (region);
 #else
   cairo_destroy (cr);
 #endif
