@@ -1,3 +1,17 @@
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Fix some warnings, C99isms, to get the build working on Win32.
+	No variable-length arrays for us!
+	* doprnt.c (fixnum_to_string):
+	* doprnt.c (Fnumber_to_string):
+	* doprnt.c (get_doprnt_c_args):
+	* doprnt.c (emacs_doprnt):
+	* doprnt.c (write_fmt_string_va):
+	* doprnt.c (emacs_vsnprintf):
+	* tests.c (Ftest_fixnum_to_string):
+	snprintf() isn't necessarily available, use sprintf() when
+	cross-checking fixnum_to_string().
+
 2017-01-14  Jerry James  <james@xemacs.org>
 
 	* config.h.in (_POSIX_C_SOURCE): Do not redefine if set by system
