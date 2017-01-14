@@ -1,5 +1,10 @@
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* font-menu.el (font-menu-set-font):
+	Revert part of 30118fdc4f1f of 20021112, which meant the font menu
+	no longer worried about whether a given face was equivalent to the
+	current default face when deciding whether to change it.
+
 	* cl-macs.el (assert):
 	Remove the artificial restriction that FORM must be a cons.
 	This restriction is also present in Common Lisp, but keeping it

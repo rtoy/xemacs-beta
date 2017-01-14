@@ -341,9 +341,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	(condition-case c
 	    (font-menu-change-face face
 				   from-family from-weight from-size
-				   (or family from-family)
-				   (or weight from-weight)
-				   (or size from-size))
+				   family weight size)
 	  (error
 	   (message "Error updating font of `%s'" face)
 	   (display-error c nil)
