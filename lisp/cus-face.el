@@ -95,6 +95,13 @@
 			   :help-echo "\
 Text size (e.g. 9pt or 2mm).")
 	   custom-set-face-font-size custom-face-font-size)
+    (:height
+     (choice :tag "Height"
+             :help-echo "Face's font height."
+             :value 1.0			; default
+      (integer :tag "Height in 1/10 pt")
+      (number :tag "Scale" 1.0))
+     custom-set-face-font-height custom-face-font-size)
     (:family (editable-field :format "Font Family: %v"
 			     :help-echo "\
 Name of font family to use (e.g. times).")
@@ -289,6 +296,10 @@ If FRAME is nil, use the default face."
 	 ;; Gag
 	 (fontobj (font-create-object font)))
     (format "%s" (font-size fontobj))))
+
+(defun custom-set-face-font-height (face height &optional locale tags)
+  "Set the font of FACE to SIZE."
+  (make-face-height face height locale tags))
 
 ;; Jan suggests this may not dtrt
 ;;(defun custom-set-face-font-family (face family &optional locale tags)
