@@ -1,5 +1,11 @@
 2017-01-14  Jerry James  <james@xemacs.org>
 
+	* config.h.in (_POSIX_C_SOURCE): Do not redefine if set by system
+	headers.
+	(alloca): Ditto.
+
+2017-01-14  Jerry James  <james@xemacs.org>
+
 	* events.c (upshift_event): Fix sequence point error.
 
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>

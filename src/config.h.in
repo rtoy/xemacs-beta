@@ -114,7 +114,9 @@ things are arranged in config.h.in.  In particular:
 #undef XEMACS_RELEASE_DATE
 
 /* Make functions from IEEE Stds 1003.[123] available. */
+#ifndef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
+#endif
 
 /* Make some functions from Unix98 available. */
 #undef _XOPEN_SOURCE
@@ -901,7 +903,9 @@ things are arranged in config.h.in.  In particular:
    differently */
 #include <alloca.h>
 #elif defined (__GNUC__)
+#ifndef alloca
 #define alloca __builtin_alloca
+#endif
 #elif defined (WIN32_NO_CONFIGURE)
 /* Defines size_t and alloca ().  */
 #include <malloc.h>
