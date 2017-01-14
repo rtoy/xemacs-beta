@@ -1,3 +1,7 @@
+2017-01-14  Jerry James  <james@xemacs.org>
+
+	* events.c (upshift_event): Fix sequence point error.
+
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (lisp_to_uint32_t):
