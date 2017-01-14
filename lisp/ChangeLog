@@ -1,9 +1,19 @@
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* font-menu.el:
+	* font-menu.el (font-menu-change-face): Renamed.
+	* font-menu.el (font-menu-maybe-change-face): New name for
+	#'font-menu-change-face.
+	Also give it a more comprehensive docstring, to avoid the sort of
+	mistake of 30118fdc4f1f.
+	No need for #'string-equal (there is on balance usually no need
+	for #'string-equal, #'equal has a docstring).
+
 	* font-menu.el (font-menu-set-font):
 	Revert part of 30118fdc4f1f of 20021112, which meant the font menu
 	no longer worried about whether a given face was equivalent to the
 	current default face when deciding whether to change it.
+	Only message about changing a font if it is changed.
 
 	* cl-macs.el (assert):
 	Remove the artificial restriction that FORM must be a cons.
