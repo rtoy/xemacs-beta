@@ -1160,13 +1160,14 @@ lisp_to_uint32_t (Lisp_Object item)
   if (INTEGERP (item))
     {
       check_integer_range (item, Qzero,
-#ifdef HAVE_BIGNUM
+#if defined (HAVE_BIGNUM) || (SIZEOF_EMACS_INT > 4)
                            make_unsigned_integer (MAKE_32_BIT_UNSIGNED_CONSTANT
                                                   (0xffffffff))
 #else
-                           Vmost_positive_fixnum
+                           make_fixnum (MOST_POSITIVE_FIXNUM)
 #endif
                            );
+
 #ifdef HAVE_BIGNUM
       if (BIGNUMP (item))
         {
@@ -1175,7 +1176,7 @@ lisp_to_uint32_t (Lisp_Object item)
           return (UINT_32_BIT) bignum_to_emacs_uint (XBIGNUM_DATA (item));
         }
 #endif
-      return XFIXNUM (item);
+      return (UINT_32_BIT) XFIXNUM (item);
     }
   else
     {
