@@ -1,3 +1,10 @@
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Check for the menubar feature before calling
+	#'normalize-menu-text, thank you Raymond Toye and Mats Lidell's
+	XEmacs buildbot.
+
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

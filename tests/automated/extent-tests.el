@@ -673,22 +673,23 @@
                             (decode-coding-string "ME\xc4\xb0NE" 'utf-8))))
         (set-language-environment env))))
 
-  (Assert
-   (equal
-    "So bist du meine Tochter nimmer% mehr!"
-    (setf normalize
-          (normalize-menu-text
-           (mapconcat #'identity
-                      (sublis '(("du" . "d%_u") ("nimmer" . "nimmer%%"))
-                              split :test #'equal)
-                      " ")))))
-  (Assert (extentp
-	   (setf pE
-		 (car (extent-list normalize nil nil nil property-name))))
-          "checking extent copied, \"Tochter\", normalize-menu-text")
-  (Assert (extentp
-	   (setf pEE
-		 (car (extent-list normalize nil nil nil 'count))))
-          "checking extent copied, \"mehr!\""))
+  (when (featurep 'menubar)
+    (Assert
+     (equal
+      "So bist du meine Tochter nimmer% mehr!"
+      (setf normalize
+            (normalize-menu-text
+             (mapconcat #'identity
+                        (sublis '(("du" . "d%_u") ("nimmer" . "nimmer%%"))
+                                split :test #'equal)
+                        " ")))))
+    (Assert (extentp
+             (setf pE
+                   (car (extent-list normalize nil nil nil property-name))))
+            "checking extent copied, \"Tochter\", normalize-menu-text")
+    (Assert (extentp
+             (setf pEE
+                   (car (extent-list normalize nil nil nil 'count))))
+            "checking extent copied, \"mehr!\"")))
 
 ;;; end of extent-tests.el
