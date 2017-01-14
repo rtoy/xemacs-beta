@@ -337,11 +337,12 @@ or if you change your font path, you can call this to re-initialize the menus."
 	    (delq 'border-glyph face-list-to-change)))
     (dolist (face face-list-to-change)
       (when (face-font-instance face)
-	(message "Changing font of `%s'..." face)
 	(condition-case c
-	    (font-menu-change-face face
-				   from-family from-weight from-size
-				   family weight size)
+            (and
+             (font-menu-maybe-change-face face
+                                          from-family from-weight from-size
+                                          family weight size)
+             (message "Changing font of `%s'..." face))
 	  (error
 	   (message "Error updating font of `%s'" face)
 	   (display-error c nil)
@@ -388,12 +389,21 @@ or if you change your font path, you can call this to re-initialize the menus."
 					   :size fsize))))
     (message "Font %s" (face-font-name 'default))))
 
-;; #### This should be called `font-menu-maybe-change-face'
 ;; I wonder if a better API wouldn't (face attribute from to)
-(defun font-menu-change-face (face
-			      from-family from-weight from-size
-			      to-family   to-weight   to-size)
-  "Maybe update the font of FACE per TO-FAMILY, TO-WEIGHT, and TO-SIZE."
+(defun font-menu-maybe-change-face (face
+                                    from-family from-weight from-size
+                                    to-family   to-weight   to-size)
+  "Maybe update FACE given TO-FAMILY, TO-WEIGHT, and TO-SIZE.
+
+FROM-FAMILY, FROM-WEIGHT and FROM-SIZE are taken to reflect the old family,
+weight, and size of the `default' face.  If TO-FAMILY is specified and FACE's
+family is the same as FROM-FAMILY, then `font-menu-maybe-change-face' updates
+FACE's family to reflect TO-FAMILY. Similarly for the weight and size.
+
+No change is made if FACE has no global specification for a font.  See
+`face-font'.
+
+Returns non-nil if `font-menu-maybe-change-face' changed FACE's font."
   (check-type face symbol)
   (let* ((dcache (device-fonts-cache))
 	 (font-data (font-menu-font-data face dcache))
@@ -412,9 +422,9 @@ or if you change your font path, you can call this to re-initialize the menus."
     ;; is not true, we leave it alone.
     (when (and (face-font face 'global)
 	       (cond
-		(to-family (string-equal face-family from-family))
-		(to-weight (string-equal face-weight from-weight))
-		(to-size   (=            face-size   from-size))))
+                 (to-family (equal face-family from-family))
+                 (to-weight (equal face-weight from-weight))
+                 (to-size   (= face-size from-size))))
       (set-face-font face
 		     (font-instance-name
 		      (font-menu-load-font (or to-family face-family)
