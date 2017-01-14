@@ -1,5 +1,11 @@
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* minibuf.el (mouse-rfn-setup-vars): Move this to being a label.
+	* minibuf.el (mouse-read-file-name-1):
+	Define, use the label.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cus-face.el:
 	* cus-face.el (custom-face-attributes):
 	Merge GNU's :height, equivalent to :size if a fixnum, providing a
