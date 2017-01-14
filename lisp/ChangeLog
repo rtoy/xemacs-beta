@@ -1,5 +1,11 @@
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cus-face.el (custom-face-inherit):
+	Whoops Ben in 7efd3a9bbcfb, (vector spec) does not check whether
+	SPEC is a vector, do it properly.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* font-menu.el:
 	* font-menu.el (font-menu-change-face): Renamed.
 	* font-menu.el (font-menu-maybe-change-face): New name for

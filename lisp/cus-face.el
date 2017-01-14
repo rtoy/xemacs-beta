@@ -266,7 +266,7 @@ If FRAME is nil, use the default face."
   ;; #### Major, temporary hack!
   (let ((spec (apply 'specifier-instantiator
 		     (face-font face) args)))
-    (and spec (vector spec) (aref spec 0))))
+    (and (vectorp spec) (aref spec 0))))
 
 ;; This consistently fails to dtrt
 ;;(defun custom-set-face-font-size (face size &optional locale tags)
