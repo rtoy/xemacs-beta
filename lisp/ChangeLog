@@ -1,5 +1,24 @@
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cus-face.el:
+	* cus-face.el (custom-face-attributes):
+	Merge GNU's :height, equivalent to :size if a fixnum, providing a
+	scale factor if a float, and transforming in some way if a
+	function.
+	* cus-face.el (custom-set-face-font-height): New.
+	Implementation to set :height.
+	* faces.el:
+	* faces.el (make-face-family):
+	* faces.el (make-face-size):
+	Use #'apply-partially in these two functions, so the byte compiler
+	can check the lambda bodies for sanity.
+	* faces.el (make-face-height): New.
+	Do the bulk of the work of implementing the :height keyword. Not
+	done yet; code to make a proportional font size update on changing
+	of the font size from the font menu.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cus-face.el (custom-face-inherit):
 	Whoops Ben in 7efd3a9bbcfb, (vector spec) does not check whether
 	SPEC is a vector, do it properly.
