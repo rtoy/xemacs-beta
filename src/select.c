@@ -77,7 +77,9 @@ Lisp_Object Vlost_selection_hooks;
      Each pair consists of (type . value), where type is nil or a
      selection data type, and value is any type of Lisp object.
    selection-timestamp is the time at which emacs began owning this selection,
-     as a cons of two 16-bit numbers (making a 32 bit time).
+     as a cons of two 16-bit numbers (making a 32 bit time). If XEmacs has
+     bignum support, or if EMACS_INT has greater than 32 bits, it will be an
+     integer representing the time directly.
    If there is an entry in this alist, then it can be assumed that emacs owns
     that selection.
    The only (eq) parts of this list that are visible from elisp are the
@@ -278,13 +280,6 @@ It defaults to the selected device.
   /* have to do device specific stuff last so that methods can access the
      selection_alist */
 
-  /* If you are re-implementing this for another redisplay type, either make
-     certain that the selection time will fit within thirty-two bits, or
-     redesign get-xemacs-selection-timestamp to return, say, a bignum, and
-     convert the device-specific timestamp to a bignum before storing it in
-     this list. The current practice is to blindly assume that the timestamp
-     is thirty-two bits, which will work for extant architectures. */
-
   if (HAS_DEVMETH_P (XDEVICE (device), own_selection))
     selection_time = DEVMETH (XDEVICE (device), own_selection,
 			      (selection_name, selection_value,
@@ -480,6 +475,9 @@ sixteen bits of the device-specific thirty-two-bit quantity, the second
 being the lower-order sixteen bits of same. Expect to see this API change
 when and if redisplay on a window system with timestamps wider than 32bits
 happens.
+
+If this XEmacs has support for bignums, the timestamp will be an integer,
+either a fixnum or bignum as appropriate.
 */
        (selection))
 {

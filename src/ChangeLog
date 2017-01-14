@@ -1,3 +1,15 @@
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (lisp_to_uint32_t):
+	Vmost_positive_fixnum is not a Lisp_Object, don't pass it to
+	check_integer_range().
+	Be explicit about casting to UINT_32_BIT when given a positive
+	fixnum ITEM; there is an intended loss of precision with 64-bit
+	EMACS_INTs.
+	* select.c:
+	* select.c (Fown_selection_internal):
+	Update these comments to reflect current reality.
+
 2017-01-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Remove format(), recently introduced and used by almost nothing.
