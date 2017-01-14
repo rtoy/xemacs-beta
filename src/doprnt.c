@@ -310,7 +310,7 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
 
   if ((radix & (radix - 1)) == 0) /* Power of two? */
     {
-      EMACS_UINT powof2 = 0;
+      UINT_16_BIT powof2 = 0;
 
       text_checking_assert (radix != 0);
 
@@ -533,7 +533,7 @@ arguments: (NUMBER &optional (RADIX 10) RADIX_TABLE)
 */
        (number, radix, radix_table))
 {
-  EMACS_UINT radixing = 10;
+  UINT_16_BIT radixing = 10;
   Lisp_Object fixnum_to_char_table;
 
   CHECK_NUMBER (number);
@@ -562,7 +562,7 @@ arguments: (NUMBER &optional (RADIX 10) RADIX_TABLE)
       check_integer_range (radix, make_fixnum (2),
                            make_fixnum (XSTRING_LENGTH (fixnum_to_char_table)
                                         / MAX_ICHAR_LEN));
-      radixing = XFIXNUM (radix);
+      radixing = (UINT_16_BIT) XFIXNUM (radix);
     }
 
   if (FLOATP (number))
@@ -1465,7 +1465,7 @@ get_doprnt_c_args (printf_arg *args, Elemcount args_needed,
 
               if (SIZEOF_EMACS_INT >= 8)
                 {
-                  arg.l = i64;
+                  arg.l = (EMACS_INT) i64;
                 }
               else if (i64 < 0 && !spec->unsigned_flag)
                 {
@@ -2139,12 +2139,13 @@ emacs_doprnt (Lisp_Object stream,
             /* Printing floats; fall through to the C library's support,
                construct a spec to pass to snprintf().
 
-               The size Length of this spec plus sufficient size to print two
-               EMACS_INTS, needed if the minwidth and precision were supplied
-               using repositioning specs. */
-            Ascbyte constructed_spec[spec->spec_length + 
-                                     DECIMAL_PRINT_SIZE (EMACS_INT) +
-                                     DECIMAL_PRINT_SIZE (EMACS_INT) + 1];
+               The size of this buffer is the length of this spec plus
+               sufficient size to print two EMACS_INTS, needed if the minwidth
+               and precision were supplied using repositioning specs. */
+            const Bytecount constructed_size
+              = spec->spec_length + DECIMAL_PRINT_SIZE (EMACS_INT) +
+              DECIMAL_PRINT_SIZE (EMACS_INT) + 1;
+            Ascbyte *constructed_spec = alloca_ascbytes (constructed_size);
             Ascbyte *p = constructed_spec, *text_to_print;
 
             /* See comment at float_to_string (). This is unsigned because
@@ -2206,8 +2207,7 @@ emacs_doprnt (Lisp_Object stream,
             if (spec->minwidth >= 0)
               {
                 p += fixnum_to_string_base_10 ((Ibyte *) p,
-                                               (Bytecount)
-                                               (sizeof (constructed_spec))
+                                               constructed_size
                                                - (p - constructed_spec),
                                                spec->minwidth,
                                                Vfixnum_to_majuscule_ascii);
@@ -2216,8 +2216,7 @@ emacs_doprnt (Lisp_Object stream,
               {
                 *p++ = '.';
                 p += fixnum_to_string_base_10 ((Ibyte *) p,
-                                               (Bytecount)
-                                               (sizeof (constructed_spec))
+                                               constructed_size
                                                - (p - constructed_spec),
                                                spec->precision,
                                                Vfixnum_to_majuscule_ascii);
@@ -2225,17 +2224,21 @@ emacs_doprnt (Lisp_Object stream,
             *p++ = ch;
             *p++ = '\0';
             text_checking_assert ((p - constructed_spec)
-                                  < (signed) (sizeof (constructed_spec)));
-
+                                  < constructed_size);
+#ifdef HAVE_SNPRINTF
             text_to_print_length = snprintf (text_to_print, alloca_sz,
                                              constructed_spec, arg.d);
+#else
+            text_to_print_length = sprintf (text_to_print,
+                                            constructed_spec, arg.d);
+#endif
             text_checking_assert (text_to_print_length
                                   < (Bytecount) alloca_sz);
 
             if (!NILP (format_reloc))
               {
                 struct printf_spec minimal_spec;
-                bzero (&minimal_spec, sizeof (minimal_spec));
+                memset (&minimal_spec, 0, sizeof (minimal_spec));
                 minimal_spec.precision = -1;
                 minimal_spec.spec_length = spec->spec_length;
                 minimal_spec.text_before = spec->text_before;
@@ -2880,7 +2883,7 @@ write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
   else
     {
       printf_spec_dynarr specs;
-      printf_spec sbase[speccount];
+      printf_spec *sbase = alloca_array (printf_spec, speccount);
       printf_arg *args;
   
       INIT_STACK_DYNARR (specs, printf_spec,
@@ -3214,7 +3217,7 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
   else
     {
       printf_spec_dynarr specs;
-      printf_spec sbase[speccount];
+      printf_spec *sbase = alloca_array (printf_spec, speccount);
       printf_arg *args;
       Elemcount nargs;
       /* Beyond the upside of avoiding touching the Lisp allocation code,
