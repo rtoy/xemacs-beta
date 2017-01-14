@@ -3063,8 +3063,10 @@ omitted, a default message listing FORM itself is used."
   (and (or (not (cl-compiling-file))
 	   (< cl-optimize-speed 3) (= cl-optimize-safety 3))
        (let ((sargs (and show-args
-                         ;; #'remove-if isn't necessarily available yet.
-                         (remove* t (cdr form) :key #'cl-const-expr-p))))
+                         (if (consp form)
+                             ;; #'remove-if isn't necessarily available yet.
+                             (remove* t (cdr form) :key #'cl-const-expr-p))
+                         (list form))))
 	 (list 'progn
 	       (list 'or form
 		     (if string
