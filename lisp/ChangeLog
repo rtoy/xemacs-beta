@@ -1,3 +1,11 @@
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (with-output-to-string):
+	Sigh, despite that we did not document that standard-output would
+	always be a Lisp buffer, a decent amount of code depends on that
+	behaviour, and so we cannot implement this in terms of
+	#'make-string-output-stream. Thanks for the bug report, Jerry James!
+
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* minibuf.el (mouse-rfn-setup-vars): Move this to being a label.
