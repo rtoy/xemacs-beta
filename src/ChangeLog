@@ -1,5 +1,30 @@
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Merge further after hg's automatic merging of recent trunk
+	changes. Some of my redisplay changes were invasive and change the
+	approach we should take with GTK.
+	
+	* console-gtk.h:
+	Remove gtk_get_gc(), restored by hg fetch.
+
+	* redisplay-gtk.c:
+	No need for the separate_textual_runs approach of the X11 code,
+	pango should do all the fishing-for-appropriate-fonts work.
+	
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Adjust this function's signature now we no longer use textual runs.
+	* redisplay-gtk.c (gtk_text_width):
+	Adjust this function's signature to take an array of Ibytes,
+	rather than an Ichar_dynarr.
+	* redisplay-gtk.c (gtk_output_string):
+	Ditto.
+	Don't use the textual runs, Pango's responsibility will be (is)
+	working out character coverage and so on.
+	* redisplay-xlike-inc.c (XLIKE_output_display_block):
+	Remove an errant merged Dynarr_reset().
+
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Drop a lot of needless Ibyte -> Ichar conversion,
 	redisplay-msw.c.
 	This is the mswindows code corresponding to 64c9a3a479ce .

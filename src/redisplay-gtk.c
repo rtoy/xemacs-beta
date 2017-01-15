@@ -622,10 +622,11 @@ gtk_text_attributes (struct face_cachel *cachel)
 }
 
 static void
-gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
-		     gint x, gint y, struct textual_run *run)
+gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel,
+                     cairo_t *cr, gint x, gint y,
+                     Lisp_Object charset, Extbyte *ptr, Bytecount len)
 {
-  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, run->charset);
+  Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, charset);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
 
   PangoContext *context = gtk_widget_get_pango_context (widget);
@@ -636,13 +637,10 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
   PangoAttrList *attr_list = gtk_text_attributes (cachel);
   GList *items = NULL, *current = NULL;;
 
-  assert (run->dimension == 1);  /* UTF-8 only. */
-
   pango_layout_set_attributes (layout, attr_list);
   pango_layout_set_font_description (layout, pfd);
   /* Pango breaks text into directional sections. */
-  items = pango_itemize (context, (const char *) run->ptr, 0, run->len,
-                         attr_list, 0);
+  items = pango_itemize (context, ptr, 0, len, attr_list, 0);
 
   current = items;
   while (current)
@@ -652,8 +650,7 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
       gint width = 0;
       gint height = 0;
 
-      pango_layout_set_text (layout, (const char *) run->ptr + item->offset,
-                             item->length);
+      pango_layout_set_text (layout, ptr + item->offset, item->length);
       pango_layout_get_pixel_size (layout, &width, &height);
       ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
 
@@ -677,30 +674,21 @@ gdk_draw_text_image (GtkWidget *widget, struct face_cachel *cachel, cairo_t *cr,
   pango_attr_list_unref (attr_list);
 }
 
-/* XLIKE_text_width
+/* gtk_text_width
 
    Given a string and a merged face, return the string's length in pixels
    when displayed in the fonts associated with the face. */
-
 static int
-XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
-		  const Ichar *str, Charcount len)
+gtk_text_width (struct frame *f, struct face_cachel *cachel,
+                const Ibyte *str, Bytecount len)
 {
-  Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
-  Ibyte *int_storage_ptr = int_storage;
   Extbyte *alloca_ext_storage;
   Bytecount extbytes = 0;
   gint width = 0;
   Lisp_Object font_inst = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
   Lisp_Font_Instance *fi = XFONT_INSTANCE (font_inst);
-  int ii;
 
-  for (ii = 0; ii < len; ii++)
-    {
-      int_storage_ptr += set_itext_ichar (int_storage_ptr, str[ii]);
-    }
-
-  TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr - int_storage),
+  TO_EXTERNAL_FORMAT (DATA, (str, len),
                       ALLOCA, (alloca_ext_storage, extbytes),
                       Qutf_8);
 
@@ -881,10 +869,11 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 }
 
 void
-XLIKE_output_string (struct window *w, struct display_line *dl,
-		     Ichar_dynarr *buf, int xpos, int xoffset, int clip_start,
-		     int width, face_index findex, int cursor,
-		     int cursor_start, int cursor_width, int cursor_height)
+gtk_output_string (struct window *w, struct display_line *dl,
+                   const Ibyte *buf, Bytecount len,
+                   int xpos, int xoffset, int clip_start,
+                   int width, face_index findex, int cursor,
+                   int cursor_start, int cursor_width, int cursor_height)
 {
   /* General variables */
   struct frame *f = XFRAME (w->frame);
@@ -901,19 +890,19 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
   Lisp_Object bg_pmap;
   int height = XLIKE_DISPLAY_LINE_HEIGHT (dl);
   int ypos = XLIKE_DISPLAY_LINE_YPOS (dl);
-  int len = Dynarr_length (buf);
-  unsigned char *text_storage;
-  struct textual_run *runs;
-  int nruns;
-  int i;
+  Extbyte *text_storage;
+  Bytecount extbytes;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
 
   if (cursor == 1)
-    assert (Dynarr_length (buf) == 1);
+    {
+      display_checking_assert (itext_ichar_len (buf) == len);
+    }
 
   if (width < 0)
-    width = XLIKE_text_width (f, cachel, Dynarr_begin (buf),
-			      Dynarr_length (buf));
+    {
+      width = gtk_text_width (f, cachel, buf, len);
+    }
 
   /* Regularize the variables passed in. */
   clip_start = min (clip_start, xpos);
@@ -958,32 +947,11 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 #endif
     }
 
-  runs = alloca_new (struct textual_run);
-  nruns = 1;
-  {
-    Elemcount ii, extbytes;
-    Ibyte *int_storage = alloca_ibytes (MAX_ICHAR_LEN * len);
-    Ibyte *int_storage_ptr = int_storage;
-
-    for (ii = 0; ii < len; ii++)
-      {
-        int_storage_ptr += set_itext_ichar (int_storage_ptr,
-                                            Dynarr_at (buf, ii));
-      }
-
-    TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr - int_storage),
-                        ALLOCA, (text_storage, extbytes),
-                        Qutf_8);
-
-    runs->ptr = text_storage;
-    runs->len = extbytes;
-    runs->dimension = 1;
-    runs->charset = Vcharset_ascii;
-  }
-
- for (i = 0; i < nruns; i++)
+  TO_EXTERNAL_FORMAT (DATA, (buf, len),
+                      ALLOCA, (text_storage, extbytes), Qutf_8);
+  do
     {
-      Lisp_Object font = FACE_CACHEL_FONT (cachel, runs[i].charset);
+      Lisp_Object font = FACE_CACHEL_FONT (cachel, Vcharset_ascii);
       int need_clipping;
       GdkWindow *window = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
@@ -1006,7 +974,9 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	}
 
       if (EQ (font, Vthe_null_font_instance))
-	continue;
+        {
+          break;
+        }
 
       cachel = WINDOW_FACE_CACHEL (w, findex);
       cr_set_foreground (cr, cachel->foreground);
@@ -1038,7 +1008,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
           cairo_clip (cr);
         }
 
-      gdk_draw_text_image (widget, cachel, cr, xpos, dl->ypos, &runs[i]);
+      gdk_draw_text_image (widget, cachel, cr, xpos, dl->ypos,
+                           Vcharset_ascii, text_storage, extbytes);
 
       /* If we are actually superimposing the cursor then redraw with just
 	 the appropriate section highlighted. */
@@ -1053,8 +1024,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 
           gdk_cairo_rectangle (cr, &clip_box);
           cairo_clip (cr);
-          gdk_draw_text_image (widget, cachel, cr,
-				     xpos, dl->ypos, &runs[i]);
+          gdk_draw_text_image (widget, cachel, cr, xpos, dl->ypos,
+                               Vcharset_ascii, text_storage, extbytes);
 	}
 
       xpos += width;
@@ -1065,6 +1036,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
       cairo_destroy (cr);
 #endif
     }
+  while (0);
 
   /* Draw the non-focus box or bar-cursor as needed. */
   /* Can't this logic be simplified? */
@@ -1092,7 +1064,7 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
 	 new cursor types or (e.g.) make the bar cursor be able to
 	 span two characters instead of overlaying just one. */
       int bogusly_obtained_ascent_value =
-	XFONT_INSTANCE (FACE_CACHEL_FONT (cachel, runs[0].charset))->ascent;
+	XFONT_INSTANCE (FACE_CACHEL_FONT (cachel, Vcharset_ascii))->ascent;
 
       face_index ix = get_builtin_face_cache_index (w, Vtext_cursor_face);
       struct face_cachel *cursor_cachel = WINDOW_FACE_CACHEL (w, ix);
