@@ -960,7 +960,9 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) END FROM-
      been given. */
   PARSE_KEYWORDS (Fcount, nargs, args, 8,
 		  (test, test_not, if_, if_not, key, start, end, from_end),
-		  NULL);
+		  /* Silence some compiler warnings: */
+                  (USED (test), USED (test_not), USED (if_), USED (if_not),
+                   USED (key), USED (start), USED (end), USED (from_end)));
 
   return count_with_tail (&tail, nargs, args, Qcount);
 }
@@ -1423,6 +1425,8 @@ The value is actually the element of ALIST whose car equals KEY.
   /* This function can GC. */
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_cdr); /* Silence the warning. */
+
       if (internal_equal (key, elt_car, 0))
 	return elt;
     }
@@ -1446,6 +1450,7 @@ Elements of ALIST that are not conses are ignored.
 {
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_cdr); /* Silence warnings. */
       if (EQ_WITH_EBOLA_NOTICE (key, elt_car))
 	return elt;
     }
@@ -1492,6 +1497,8 @@ arguments: (ITEM ALIST &key (TEST #'eql) (KEY #'identity) TEST-NOT)
       /* TEST is #'eq, no need to call any C functions. */
       EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
 	{
+          USED (elt_cdr); /* Silence warning. */
+
 	  if (EQ (item, elt_car) == test_not_unboundp)
 	    {
 	      return elt;
@@ -1523,6 +1530,8 @@ The value is actually the element of ALIST whose cdr equals VALUE.
 {
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_car); /* Silence warning. */
+
       if (internal_equal (value, elt_cdr, 0))
 	return elt;
     }
@@ -1537,6 +1546,8 @@ The value is actually the element of ALIST whose cdr is VALUE.
 {
   EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
     {
+      USED (elt_car); /* Silence warning. */
+
       if (EQ_WITH_EBOLA_NOTICE (value, elt_cdr))
 	return elt;
     }
@@ -1581,6 +1592,8 @@ arguments: (ITEM ALIST &key (TEST #'eql) (KEY #'identity) TEST-NOT)
       /* TEST is #'eq, no need to call any C functions. */
       EXTERNAL_ALIST_LOOP_4 (elt, elt_car, elt_cdr, alist)
 	{
+          USED (elt_car); /* Silence warning. */
+
 	  if (EQ (item, elt_cdr) == test_not_unboundp)
 	    {
 	      return elt;
@@ -2485,6 +2498,8 @@ list_delete_duplicates_from_end (Lisp_Object list,
 	  {
             EXTERNAL_LIST_LOOP_3 (elt, list, tail)
 	      {
+                USED (elt); /* Silence warning. */
+
 		if (ii == greatest_pos_seen)
 		  {
 		    XSETCDR (result_tail, XCDR (tail));
@@ -2502,7 +2517,8 @@ list_delete_duplicates_from_end (Lisp_Object list,
       else
 	{
 	  EXTERNAL_LIST_LOOP_DELETE_IF (elt, list,
-					bit_vector_bit (deleting, ii++));
+					(USED (elt),
+                                         bit_vector_bit (deleting, ii++)));
 	}
     }
 
@@ -4126,6 +4142,7 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
       {
         EXTERNAL_LIST_LOOP_3 (elt, sequence, tail)
           {
+            USED (elt); /* Silence warning. */
             if (counting >= starting)
               {
                 if (counting < ending)
@@ -8544,7 +8561,7 @@ arguments: (LIST1 LIST2 &key (TEST #'eql) (KEY #'identity) TEST-NOT)
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   PARSE_KEYWORDS (Fnset_exclusive_or, nargs, args, 4,
-                  (test, key, test_not, stable), NULL);
+                  (test, key, test_not, stable), (USED (stable)));
 
   CHECK_LIST (liszt1);
   CHECK_LIST (liszt2);

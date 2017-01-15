@@ -2177,7 +2177,7 @@ do {									\
 	 (void)								\
 	 ((++len > suspicion_length)					\
 	  &&								\
-	  ((((len & 1) != 0) && (tortoise = XCDR (tortoise), 0)),	\
+	  ((((len & 1) != 0) ? (tortoise = XCDR (tortoise), 0) : 0),    \
 	   (EQ (hare, tortoise) &&					\
             ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
 
@@ -2225,6 +2225,7 @@ do {									\
   Lisp_Object GELL_elt, GELL_tail;					\
   EXTERNAL_LIST_LOOP_4_NO_DECLARE (GELL_elt, list, GELL_tail, len)	\
     ;									\
+  USED (GELL_elt); /* Silence warning. */                              \
 } while (0)
 
 /* For a list that's known to be in valid list format, where we may
@@ -2695,7 +2696,7 @@ XSTRING_DATA (Lisp_Object s)
 
 #define XSTRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp + 0)
 #define XSET_STRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp = 1)
-#define XCLEAR_STRING_MODIFFP(s) ((XSTRING (s)->u.v.modiffp = 0), 1)
+#define XCLEAR_STRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp = 0)
 
 /* Return the true aligned size of a struct whose last member is a
    variable-length array field.  (this is known as the "struct hack") */
@@ -4588,10 +4589,10 @@ Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
                            Lisp_Object table_or_nil);
 #endif
 
+/* Specify the symbol Qstring for STREAM if you would like a string to be
+   returned. */
 Lisp_Object format_into (Lisp_Object stream, Lisp_Object format_reloc,
                          int nargs, const Lisp_Object *largs);
-Lisp_Object format (Lisp_Object format_reloc, int nargs,
-                    const Lisp_Object *largs);
 
 MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
   PRINTF_ARGS (2, 3);
@@ -5864,25 +5865,14 @@ long get_random (void);
 void seed_random (long arg);
 
 /* Defined in text.c */
-void find_charsets_in_ibyte_string (unsigned char *charsets,
-				      const Ibyte *str,
-				      Bytecount len);
-void find_charsets_in_ichar_string (unsigned char *charsets,
-				     const Ichar *str,
-				     Charcount len);
+void find_charsets_in_ibyte_string (Binbyte *charsets, const Ibyte *str,
+                                    Bytecount len);
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
-int ichar_string_displayed_columns (const Ichar *str, Charcount len);
-Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
-void convert_ibyte_string_into_ichar_dynarr (const Ibyte *str,
-						Bytecount len,
-						Ichar_dynarr *dyn);
+
 Charcount convert_ibyte_string_into_ichar_string (const Ibyte *str,
 						     Bytecount len,
 						     Ichar *arr);
-void convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
-						Ibyte_dynarr *dyn);
-Ibyte *convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
-						    Bytecount *len_out);
+
 Bytecount copy_text_between_formats (const Ibyte *src, Bytecount srclen,
 				     Internal_Format srcfmt,
 				     Lisp_Object srcobj,
@@ -6180,11 +6170,11 @@ int qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
      PRINTF_ARGS (2, 3);
 
 DECLARE_INLINE_HEADER (int qxesscanf_ascii_1 (Ibyte *buffer,
-					      const Ascbyte *fermat,
+					      const Ascbyte *format,
 					      void *ptr))
 {
   /* #### DAMNIT! No vsscanf! */
-  return sscanf ((Chbyte *) buffer, fermat, ptr);
+  return sscanf ((Chbyte *) buffer, format, ptr);
 }
 
 /* Do not use POSIX locale routines.  Not Mule-correct. */
@@ -6289,8 +6279,6 @@ extern Lisp_Object Vmswindows_downcase_file_names;
 
 /* Defined in window.c */
 extern Lisp_Object Qwindow_live_p;
-
-END_C_DECLS
 
 
 /************************************************************************/
@@ -6437,5 +6425,7 @@ write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
 }
 
 #define write_msg_string write_msg_ascstring
+
+END_C_DECLS
 
 #endif /* INCLUDED_lisp_h_ */

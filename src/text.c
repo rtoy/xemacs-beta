@@ -1331,13 +1331,13 @@ Fixnum Vchar_code_limit;
 /* Most are inline functions in lisp.h */
 
 int
-qxesprintf (Ibyte *buffer, const CIbyte *fermat, ...)
+qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
 {
   va_list args;
   int retval;
 
-  va_start (args, fermat);
-  retval = vsprintf ((Chbyte *) buffer, fermat, args);
+  va_start (args, format);
+  retval = vsprintf ((Chbyte *) buffer, format, args);
   va_end (args);
 
   return retval;
@@ -1712,22 +1712,6 @@ wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len)
 /*               conversion between textual representations             */
 /************************************************************************/
 
-/* NOTE: Does not reset the Dynarr. */
-
-void
-convert_ibyte_string_into_ichar_dynarr (const Ibyte *str, Bytecount len,
-					Ichar_dynarr *dyn)
-{
-  const Ibyte *strend = str + len;
-
-  while (str < strend)
-    {
-      Ichar ch = itext_ichar (str);
-      Dynarr_add (dyn, ch);
-      INC_IBYTEPTR (str);
-    }
-}
-
 Charcount
 convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
 					Ichar *arr)
@@ -1741,52 +1725,6 @@ convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
       INC_IBYTEPTR (str);
     }
   return newlen;
-}
-
-/* Convert an array of Ichars into the equivalent string representation.
-   Store into the given Ibyte dynarr.  Does not reset the dynarr.
-   Does not add a terminating zero. */
-
-void
-convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
-					  Ibyte_dynarr *dyn)
-{
-  Ibyte str[MAX_ICHAR_LEN];
-  int i;
-
-  for (i = 0; i < nels; i++)
-    {
-      Bytecount len = set_itext_ichar (str, arr[i]);
-      Dynarr_add_many (dyn, str, len);
-    }
-}
-
-/* Convert an array of Ichars into the equivalent string representation.
-   Malloc the space needed for this and return it.  If LEN_OUT is not a
-   NULL pointer, store into LEN_OUT the number of Ibytes in the
-   malloc()ed string.  Note that the actual number of Ibytes allocated
-   is one more than this: the returned string is zero-terminated. */
-
-Ibyte *
-convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
-					    Bytecount *len_out)
-{
-  /* Damn zero-termination. */
-  Ibyte *str = alloca_ibytes (nels * MAX_ICHAR_LEN + 1);
-  Ibyte *strorig = str;
-  Bytecount len;
-
-  int i;
-
-  for (i = 0; i < nels; i++)
-    str += set_itext_ichar (str, arr[i]);
-  *str = '\0';
-  len = str - strorig;
-  str = xnew_ibytes (1 + len);
-  memcpy (str, strorig, 1 + len);
-  if (len_out)
-    *len_out = len;
-  return str;
 }
 
 #define COPY_TEXT_BETWEEN_FORMATS(srcfmt, dstfmt)			 \
@@ -1943,58 +1881,42 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 /************************************************************************/
 
 void
-find_charsets_in_ibyte_string (unsigned char *charsets,
+find_charsets_in_ibyte_string (Binbyte *charsets,
 			       const Ibyte *USED_IF_MULE (str),
 			       Bytecount USED_IF_MULE (len))
 {
-#ifndef MULE
-  /* Telescope this. */
-  charsets[0] = 1;
-#else
-  const Ibyte *strend = str + len;
-  memset (charsets, 0, NUM_LEADING_BYTES);
-
-  /* #### SJT doesn't like this. */
-  if (len == 0)
-    {
-      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - MIN_LEADING_BYTE] = 1;
-      return;
-    }
-
-  while (str < strend)
-    {
-      charsets[ichar_leading_byte (itext_ichar (str)) - MIN_LEADING_BYTE] =
-	1;
-      INC_IBYTEPTR (str);
-    }
-#endif
-}
-
-void
-find_charsets_in_ichar_string (unsigned char *charsets,
-			       const Ichar *USED_IF_MULE (str),
-			       Charcount USED_IF_MULE (len))
-{
-#ifndef MULE
-  /* Telescope this. */
-  charsets[0] = 1;
-#else
-  int i;
+  const Ibyte *endp = str + len;
 
   memset (charsets, 0, NUM_LEADING_BYTES);
 
   /* #### SJT doesn't like this. */
   if (len == 0)
     {
-      charsets[XCHARSET_LEADING_BYTE (Vcharset_ascii) - MIN_LEADING_BYTE] = 1;
+      charsets[LEADING_BYTE_ASCII - MIN_LEADING_BYTE] = 1;
       return;
     }
 
-  for (i = 0; i < len; i++)
+  while (str < endp)
     {
-      charsets[ichar_leading_byte (str[i]) - MIN_LEADING_BYTE] = 1;
+      Ibyte i0 = *str;
+
+      if (byte_ascii_p (i0))
+        {
+          charsets[LEADING_BYTE_ASCII - MIN_LEADING_BYTE] = 1;
+          str = skip_ascii (str, endp);
+          continue;
+        }
+      else
+        {
+          if (leading_byte_prefix_p (i0))
+            {
+              i0 = *(str + 1);
+            }
+
+          charsets[i0 - MIN_LEADING_BYTE] = 1;
+          INC_IBYTEPTR (str);
+        }
     }
-#endif
 }
 
 /* A couple of these functions should only be called on a non-Mule build. */
@@ -2021,41 +1943,6 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
     }
 
   return cols;
-}
-
-int
-ichar_string_displayed_columns (const Ichar * USED_IF_MULE(str), Charcount len)
-{
-  int cols = 0;
-  int i;
-
-  ASSERT_BUILT_WITH_MULE();
-
-  for (i = 0; i < len; i++)
-    cols += XCHARSET_COLUMNS (ichar_charset (str[i]));
-
-  return cols;
-}
-
-Charcount
-ibyte_string_nonascii_chars (const Ibyte *USED_IF_MULE (str),
-			     Bytecount USED_IF_MULE (len))
-{
-#ifdef MULE
-  const Ibyte *end = str + len;
-  Charcount retval = 0;
-
-  while (str < end)
-    {
-      if (!byte_ascii_p (*str))
-	retval++;
-      INC_IBYTEPTR (str);
-    }
-
-  return retval;
-#else
-  return 0;
-#endif
 }
 
 

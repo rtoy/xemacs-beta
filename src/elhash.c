@@ -129,7 +129,7 @@ mark_hash_table_test (Lisp_Object obj)
   return http->name;
 }
 
-static const struct memory_description hash_table_test_description_1[] =
+static const struct memory_description hash_table_test_description[] =
   {
     { XD_LISP_OBJECT, offsetof (struct Hash_Table_Test, name) },
     { XD_LISP_OBJECT, offsetof (struct Hash_Table_Test, lisp_equal_function) },
@@ -137,15 +137,9 @@ static const struct memory_description hash_table_test_description_1[] =
     { XD_END }
   };
 
-static const struct sized_memory_description hash_table_test_description =
-  {
-    sizeof (struct Hash_Table_Test),
-    hash_table_test_description_1
-  };
-
 DEFINE_DUMPABLE_INTERNAL_LISP_OBJECT ("hash-table-test", hash_table_test,
 				      mark_hash_table_test,
-                                      hash_table_test_description_1,
+                                      hash_table_test_description,
                                       Hash_Table_Test);
 /* A hash table. */
 

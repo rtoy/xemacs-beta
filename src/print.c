@@ -2848,7 +2848,7 @@ debug_print (Lisp_Object debug_print_obj)
 */
 
 void
-debug_out_lisp (const CIbyte *fermat, ...)
+debug_out_lisp (const CIbyte *format, ...)
 {
   /* This function cannot GC, since GC is forbidden */
   struct debug_bindings bindings;
@@ -2857,8 +2857,8 @@ debug_out_lisp (const CIbyte *fermat, ...)
   va_list va;
   Ibyte *msgout;
 
-  va_start (va, fermat);
-  len = emacs_vasprintf_lisp (&msgout, fermat, va);
+  va_start (va, format);
+  len = emacs_vasprintf_lisp (&msgout, format, va);
   va_end (va);
 
   write_string_to_external_output (msgout, len, EXT_PRINT_ALL);

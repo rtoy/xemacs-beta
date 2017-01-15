@@ -342,7 +342,11 @@
   (Assert (eq stream (format-into stream "L'amour est un oiseau rebelle ")))
   (Assert (eq stream (format-into stream "que %#x ne peut apprivoiser" 0)))
   (Assert (equal (get-output-stream-string stream)
-                 "L'amour est un oiseau rebelle que 0 ne peut apprivoiser")))
+                 "L'amour est un oiseau rebelle que 0 ne peut apprivoiser"))
+  (Assert (equal "que 0x0 ne peut apprivoiser"
+                 (format-into 'string "que %#p ne peut apprivoiser" 0)))
+  (Check-Error void-function
+	       (format-into 'character "que %#p ne peut apprivoiser" 0)))
 
 (macrolet
     ((Assert-with-format-extents (&rest list)

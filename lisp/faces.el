@@ -1335,16 +1335,16 @@ multi-charset environments."
   (Face-frob-property face locale tags exact-p
 		      nil nil 'font nil
 		      ;; #### this code is duplicated in make-face-size
-		      `(lambda (f d)
-			 ;; keep the dependency on font.el for now
-			 ;; #### The filter on null d is a band-aid.
-			 ;; Frob-face-property should not be passing in
-			 ;; null devices.
-			 (unless (or (null d) (eq d 'tty))
-			   (let ((fo (font-create-object f d)))
-			     (set-font-family fo ,family)
-			     (font-create-name fo d))))
-		      nil))
+                      (apply-partially
+                       #'(lambda (family f d)
+                           ;; keep the dependency on font.el for now
+                           (assert (not (null d)) t)
+                           (unless (eq d 'tty)
+                             (let ((fo (font-create-object f d)))
+                               (set-font-family fo family)
+                               (font-create-name fo d))))
+                       family)
+                      nil))
 
 ;; Style (ie, typographical face) frobbing
 (defun make-face-bold (face &optional locale tags exact-p)
@@ -1555,15 +1555,15 @@ specifics on exactly how this function works."
   (Face-frob-property face locale tags exact-p
 		      nil nil 'font nil
 		      ;; #### this code is duplicated in make-face-family
-		      `(lambda (f d)
-			 ;; keep the dependency on font.el for now
-			 ;; #### The filter on null d is a band-aid.
-			 ;; Frob-face-property should not be passing in
-			 ;; null devices.
-			 (unless (or (null d) (eq d 'tty))
-			   (let ((fo (font-create-object f d)))
-			     (set-font-size fo ,size)
-			     (font-create-name fo d))))
+                      (apply-partially
+                       #'(lambda (size f d)
+                           ;; keep the dependency on font.el for now
+                           (assert d t)
+                           (unless (eq d 'tty)
+                             (let ((fo (font-create-object f d)))
+                               (set-font-size fo size)
+                               (font-create-name fo d))))
+                       size)
 		      nil))
 
 ;; Why do the following two functions lose so badly in so many
@@ -1594,6 +1594,61 @@ See `make-face-smaller' for the semantics of the LOCALE argument."
 			mswindows	mswindows-find-larger-font
 			msprinter	mswindows-find-larger-font)
 		      nil))
+
+(defun make-face-height (face height &optional locale tags exact-p)
+  "Adjust FACE's size in LOCALE, if possible."
+  (interactive (list (read-face-name "Set size of which face: ")
+		     (read-number "Size to set: " nil 1.0)))
+  (cond
+    ((fixnump height) ;; Equivalent to make-face-size.
+     (make-face-size face height locale tags exact-p))
+    ((eql height 1.0)) ;; Do nothing, inherit the size.
+    (t
+     (Face-frob-property face locale tags exact-p
+                         nil nil 'font nil
+                         (if (functionp height)
+                             (apply-partially
+                              #'(lambda (height f d)
+                                  (assert d t "D should be non-nil")
+                                  (unless (eq d 'tty)
+                                    (let* ((fo (font-create-object f d))
+                                           (canonical
+                                            (font-spatial-to-canonical
+					     (font-size fo)))
+                                           result)
+                                      (setq canonical
+                                            (or canonical
+                                                (font-spatial-to-canonical
+                                                 (font-size
+                                                  (font-create-object
+                                                   'default d)))
+                                                1.0)
+                                            result (funcall height canonical))
+                                      (if (fixnump canonical)
+                                          (check-type result fixnum))
+                                      (set-font-size fo result)
+                                      (font-create-name fo d))))
+                              height)
+                           (apply-partially
+                            #'(lambda (height f d)
+                                (assert (not (null d)) t "D should be non-nil")
+                                (unless (eq d 'tty)
+                                  (let* ((fo (font-create-object f d))
+                                         (canonical
+                                          (font-spatial-to-canonical
+					   (font-size fo)))
+                                         result)
+                                    (setq canonical
+                                          (or canonical
+                                              (font-spatial-to-canonical
+                                               (font-size
+                                                (font-create-object
+                                                 'default d)))
+                                              1.0)
+                                          result (round (* height canonical)))
+                                    (set-font-size fo result)
+                                    (font-create-name fo d))))
+                            height)) nil))))
 
 (defun invert-face (face &optional locale)
   "Swap the foreground and background colors of the face."

@@ -555,12 +555,7 @@ xlw_update_one_widget (widget_instance* instance, Widget widget,
 #ifdef LWLIB_MENUBARS_LUCID
   else if (class_ == xlwMenuWidgetClass)
     {
-      XlwMenuWidget mw;
-      if (XtIsShell (widget))
-	mw = (XlwMenuWidget)((CompositeWidget)widget)->composite.children [0];
-      else
-	mw = (XlwMenuWidget)widget;
-      Xt_SET_VALUE (widget, XtNmenu, val); /* #### mw unused! */
+      Xt_SET_VALUE (widget, XtNmenu, val);
     }
 #endif
 #ifdef LWLIB_SCROLLBARS_LUCID

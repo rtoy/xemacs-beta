@@ -78,16 +78,10 @@ EXTERN_C void tputs (const char *, int, void (*)(int));
   } while (0)
 #define OUTPUT1_IF(c, a) OUTPUTN_IF (c, a, 1)
 
-static void tty_output_ichar_dynarr (struct window *w,
-				      struct display_line *dl,
-				      Ichar_dynarr *buf, int xpos,
-				      face_index findex,
-				      int cursor);
 static void tty_output_ibyte_string (struct window *w,
-				       struct display_line *dl,
-				       Ibyte *str, Bytecount len,
-				       int xpos, face_index findex,
-				       int cursor);
+                                     struct display_line *dl,
+                                     const Ibyte *str, Bytecount len,
+                                     int xpos, face_index findex, int cursor);
 static void tty_turn_on_face (struct window *w, face_index findex);
 static void tty_turn_off_face (struct window *w, face_index findex);
 static void tty_turn_on_frame_face (struct frame *f, Lisp_Object face);
@@ -99,22 +93,23 @@ static void term_get_fkeys (Lisp_Object keymap, char **address);
  tty_text_width
 
  Non-Mule TTYs don't have fonts (that we use at least), so everything
- is considered to be fixed width -- in other words, we return LEN.
+ is considered to be fixed width -- in other words, we just convert character
+ LEN to a Charcount.
  Under Mule, however, a character can still cover more than one
- column, so we use ichar_string_displayed_columns().
+ column, so we use ibyte_string_displayed_columns().
  ****************************************************************************/
 static int
 tty_text_width (struct frame *f, struct face_cachel *UNUSED (cachel),
-		const Ichar *str, Charcount len)
+                const Ibyte *str, Bytecount len)
 {
   struct console *c = FRAME_XCONSOLE (f);
 
   if (CONSOLE_TTY_MULTIPLE_WIDTH (c))
     {
-      return ichar_string_displayed_columns (str, len);
+      return ibyte_string_displayed_columns (str, len);
     }
 
-  return len;
+  return bytecount_to_charcount (str, len);
 }
 
 /*****************************************************************************
@@ -211,7 +206,7 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 			  int UNUSED (cursor_height))
 {
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf;
+  Ibyte *buffer, *bufp;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
   rune_dynarr *rba = db->runes;
@@ -237,8 +232,6 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
   if (end < 0)
     end = Dynarr_length (rba);
 
-  buf = Dynarr_new (Ichar);
-
   while (elt < end && Dynarr_atp (rba, elt)->xpos < start_pixpos)
     {
       elt++;
@@ -246,26 +239,29 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
       xpos = Dynarr_atp (rba, elt)->xpos;
     }
 
+  buffer = bufp = alloca_ibytes ((end - elt) * MAX_ICHAR_LEN);
+
   while (elt < end)
     {
       rb = Dynarr_atp (rba, elt);
 
       if (rb->findex == findex && rb->type == RUNE_CHAR
-	  && rb->object.chr.ch != '\n'
+          && rb->object.chr.ch != '\n'
 	  && (rb->cursor_type != CURSOR_ON
 	      || NILP (w->text_cursor_visible_p)))
 	{
-	  Dynarr_add (buf, rb->object.chr.ch);
+          bufp += set_itext_ichar (bufp, rb->object.chr.ch);
 	  elt++;
 	}
       else
 	{
-	  if (Dynarr_length (buf))
+	  if (bufp - buffer)
 	    {
-	      tty_output_ichar_dynarr (w, dl, buf, xpos, findex, 0);
+              tty_output_ibyte_string (w, dl, buffer, bufp - buffer,
+                                       xpos, findex, 0);
 	      xpos = rb->xpos;
+              bufp = buffer;
 	    }
-	  Dynarr_reset (buf);
 
 	  if (rb->type == RUNE_CHAR)
 	    {
@@ -275,12 +271,9 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 	      if (rb->object.chr.ch == '\n')
 		{
 		  /* Clear in case a cursor was formerly here. */
-
-		  Dynarr_add (buf, ' ');
-		  tty_output_ichar_dynarr (w, dl, buf, rb->xpos,
-					    DEFAULT_INDEX, 0);
-		  Dynarr_reset (buf);
-
+                  tty_output_ibyte_string (w, dl, (const Ibyte *) " ",
+                                           ichar_len (' '), rb->xpos,
+                                           DEFAULT_INDEX, 0);
 		  cmgoto (f, dl->ypos - 1, rb->xpos);
 
 		  elt++;
@@ -288,41 +281,34 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 	      else if (rb->cursor_type == CURSOR_ON)
 		{
 		  /* There is not a distinct eol cursor on tty's. */
-
-		  Dynarr_add (buf, rb->object.chr.ch);
-		  tty_output_ichar_dynarr (w, dl, buf, xpos, findex, 0);
-		  Dynarr_reset (buf);
-
+                  tty_output_ibyte_string (w, dl, buffer,
+                                           set_itext_ichar (buffer,
+                                                            rb->object.chr.ch),
+                                           xpos, findex, 0);
 		  cmgoto (f, dl->ypos - 1, xpos);
 
 		  xpos += rb->width;
 		  elt++;
 		}
 	    }
-	  /* #### RUNE_HLINE is actually a little more complicated than this
-             but at the moment it is only used to draw a turned off
-             modeline and this will suffice for that. */
-	  else if (rb->type == RUNE_BLANK || rb->type == RUNE_HLINE)
+	  else if (rb->type == RUNE_BLANK)
 	    {
-	      Ichar ch_to_add;
 	      int size = rb->width;
-
-	      if (rb->type == RUNE_BLANK)
-		ch_to_add = ' ';
-	      else
-		ch_to_add = '-';
+              Ibyte linebuf[size * ichar_len (' ')], *lbufp = linebuf;
 
 	      while (size--)
-		Dynarr_add (buf, ch_to_add);
-	      tty_output_ichar_dynarr (w, dl, buf, rb->xpos, findex, 0);
+                {
+                  lbufp += set_itext_ichar (lbufp, ' ');
+                }
+
+              tty_output_ibyte_string (w, dl, linebuf, lbufp - linebuf,
+                                       rb->xpos, findex, 0);
 
 	      if (xpos >= cursor_start
-		  && cursor_start < xpos + Dynarr_length (buf))
+		  && cursor_start < xpos + lbufp - linebuf)
 		{
 		  cmgoto (f, dl->ypos - 1, cursor_start);
 		}
-
-	      Dynarr_reset (buf);
 
 	      elt++;
 	      if (elt < end)
@@ -333,6 +319,34 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 		  xpos = rb->xpos;
 		}
 	    }
+          else if (rb->type == RUNE_HLINE)
+            {
+	      int size = rb->width;
+              Ibyte linebuf[size * ichar_len ('-')], *lbufp = linebuf;
+
+	      while (size--)
+                {
+                  lbufp += set_itext_ichar (lbufp, '-');
+                }
+
+              tty_output_ibyte_string (w, dl, linebuf, lbufp - linebuf,
+                                       rb->xpos, findex, 0);
+
+	      if (xpos >= cursor_start
+		  && cursor_start < xpos + lbufp - linebuf)
+		{
+		  cmgoto (f, dl->ypos - 1, cursor_start);
+		}
+
+	      elt++;
+	      if (elt < end)
+		{
+		  rb = Dynarr_atp (rba, elt);
+
+		  findex = rb->findex;
+		  xpos = rb->xpos;
+		}
+            }
 	  else if (rb->type == RUNE_DGLYPH)
 	    {
 	      Lisp_Object window;
@@ -374,10 +388,9 @@ tty_output_display_block (struct window *w, struct display_line *dl, int block,
 	}
     }
 
-  if (Dynarr_length (buf))
-    tty_output_ichar_dynarr (w, dl, buf, xpos, findex, 0);
-  Dynarr_free (buf);
-
+  if (bufp - buffer)
+    tty_output_ibyte_string (w, dl, buffer, bufp - buffer,
+                             xpos, findex, 0);
 }
 
 
@@ -534,7 +547,7 @@ tty_clear_frame (struct frame *f)
 
 static void
 tty_output_ibyte_string (struct window *w, struct display_line *dl,
-			 Ibyte *str, Bytecount len, int xpos,
+			 const Ibyte *str, Bytecount len, int xpos,
 			 face_index findex, int UNUSED (cursor))
 {
   struct frame *f = XFRAME (w->frame);
@@ -554,34 +567,6 @@ tty_output_ibyte_string (struct window *w, struct display_line *dl,
 
   /* Turn the face properties back off. */
   tty_turn_off_face (w, findex);
-}
-
-static Ibyte_dynarr *tty_output_ichar_dynarr_dynarr;
-
-/*****************************************************************************
- tty_output_ichar_dynarr
-
- Given a string and a starting position, output that string in the
- given face.  If cursor is true, draw a cursor around the string.
- ****************************************************************************/
-static void
-tty_output_ichar_dynarr (struct window *w, struct display_line *dl,
-			  Ichar_dynarr *buf, int xpos, face_index findex,
-			  int cursor)
-{
-  if (!tty_output_ichar_dynarr_dynarr)
-    tty_output_ichar_dynarr_dynarr = Dynarr_new (Ibyte);
-  else
-    Dynarr_reset (tty_output_ichar_dynarr_dynarr);
-
-  convert_ichar_string_into_ibyte_dynarr (Dynarr_begin (buf),
-					    Dynarr_length (buf),
-					    tty_output_ichar_dynarr_dynarr);
-
-  tty_output_ibyte_string (w, dl,
-			     Dynarr_begin (tty_output_ichar_dynarr_dynarr),
-			     Dynarr_length (tty_output_ichar_dynarr_dynarr),
-			     xpos, findex, cursor);
 }
 
 #if 0

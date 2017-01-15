@@ -172,22 +172,22 @@ EXFUN (Fnext_window, 4);
  ****************************************************************************/
 
 struct image_instantiator_methods *
-decode_device_ii_format (Lisp_Object device, Lisp_Object fermat,
+decode_device_ii_format (Lisp_Object device, Lisp_Object format,
 			 Error_Behavior errb)
 {
   int i;
 
-  if (!SYMBOLP (fermat))
+  if (!SYMBOLP (format))
     {
       if (ERRB_EQ (errb, ERROR_ME))
-	CHECK_SYMBOL (fermat);
+	CHECK_SYMBOL (format);
       return 0;
     }
 
   for (i = 0; i < Dynarr_length (the_image_instantiator_format_entry_dynarr);
        i++)
     {
-      if ( EQ (fermat,
+      if ( EQ (format,
 	       Dynarr_at (the_image_instantiator_format_entry_dynarr, i).
 	       symbol) )
 	{
@@ -202,24 +202,24 @@ decode_device_ii_format (Lisp_Object device, Lisp_Object fermat,
 	}
     }
 
-  maybe_invalid_argument ("Invalid image-instantiator format", fermat,
+  maybe_invalid_argument ("Invalid image-instantiator format", format,
 			  Qimage, errb);
 
   return 0;
 }
 
 struct image_instantiator_methods *
-decode_image_instantiator_format (Lisp_Object fermat, Error_Behavior errb)
+decode_image_instantiator_format (Lisp_Object format, Error_Behavior errb)
 {
-  return decode_device_ii_format (Qnil, fermat, errb);
+  return decode_device_ii_format (Qnil, format, errb);
 }
 
 static int
-valid_image_instantiator_format_p (Lisp_Object fermat, Lisp_Object locale)
+valid_image_instantiator_format_p (Lisp_Object format, Lisp_Object locale)
 {
   int i;
   struct image_instantiator_methods* meths =
-    decode_image_instantiator_format (fermat, ERROR_ME_NOT);
+    decode_image_instantiator_format (format, ERROR_ME_NOT);
   Lisp_Object contype = Qnil;
   /* mess with the locale */
   if (!NILP (locale) && SYMBOLP (locale))
@@ -230,7 +230,7 @@ valid_image_instantiator_format_p (Lisp_Object fermat, Lisp_Object locale)
       contype = console ? CONSOLE_TYPE (console) : locale;
     }
   /* nothing is valid in all locales */
-  if (EQ (fermat, Qnothing))
+  if (EQ (format, Qnothing))
     return 1;
   /* reject unknown formats */
   else if (NILP (contype) || !meths)
@@ -2382,10 +2382,11 @@ string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    helper that is used elsewhere for calculating text geometry. */
 void
 query_string_geometry (Lisp_Object string, Lisp_Object face,
-		       int* width, int* height, int* descent, Lisp_Object domain)
+		       int* width, int* height, int* descent,
+                       Lisp_Object domain)
 {
   struct font_metric_info fm;
-  unsigned char charsets[NUM_LEADING_BYTES];
+  Binbyte charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
   struct face_cachel *the_cachel;
   Lisp_Object window = DOMAIN_WINDOW (domain);
@@ -2393,59 +2394,66 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 
   CHECK_STRING (string);
 
-  /* Compute height */
-  if (height)
+  /* Compute string metric info */
+  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
+                                 XSTRING_LENGTH (string));
+  /* Fallback to the default face if none was provided. */
+  if (!NILP (face))
     {
-      /* Compute string metric info */
-      find_charsets_in_ibyte_string (charsets,
-				       XSTRING_DATA   (string),
-				       XSTRING_LENGTH (string));
+      reset_face_cachel (&cachel);
+      update_face_cachel_data (&cachel,
+                               /* #### NOTE: in fact, I'm not sure if it's
+                                  #### possible to *not* get a window
+                                  #### here, but you never know...
+                                  #### -- dvl */
+                               NILP (window) ? frame : window,
+                               face);
+      the_cachel = &cachel;
+    }
+  else
+    {
+      the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
+                                       DEFAULT_INDEX);
+    }
 
-      /* Fallback to the default face if none was provided. */
-      if (!NILP (face))
-	{
-	  reset_face_cachel (&cachel);
-	  update_face_cachel_data (&cachel,
-				   /* #### NOTE: in fact, I'm not sure if it's
-				      #### possible to *not* get a window
-				      #### here, but you never know...
-				      #### -- dvl */
-				   NILP (window) ? frame : window,
-				   face);
-	  the_cachel = &cachel;
-	}
-      else
-	the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
-					 DEFAULT_INDEX);
+  ensure_face_cachel_complete (the_cachel, domain, charsets);
 
-      ensure_face_cachel_complete (the_cachel, domain, charsets);
+  /* Compute height */
+  if (height || descent)
+    {
       face_cachel_charset_font_metric_info (the_cachel, charsets, &fm);
 
-      *height = fm.ascent + fm.descent;
-      /* #### descent only gets set if we query the height as well. */
+      if (height) 
+        {
+          *height = fm.ascent + fm.descent;
+        }
+
       if (descent)
-	*descent = fm.descent;
+        {
+          *descent = fm.descent;
+        }
     }
 
   /* Compute width */
   if (width)
-    *width = redisplay_text_width_string (domain,
-					  NILP (face) ? Vdefault_face : face,
-					  0, string, 0, -1);
+    {
+      *width = DEVMETH (DOMAIN_XDEVICE (domain), text_width,
+                        (XFRAME (frame), the_cachel, XSTRING_DATA (string),
+                         XSTRING_LENGTH (string)));
+    }
 }
 
 Lisp_Object
 query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
 {
-  unsigned char charsets[NUM_LEADING_BYTES];
+  Binbyte charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
   int i;
   Lisp_Object window = DOMAIN_WINDOW (domain);
   Lisp_Object frame  = DOMAIN_FRAME  (domain);
 
   /* Compute string font info */
-  find_charsets_in_ibyte_string (charsets,
-				 XSTRING_DATA   (string),
+  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
 				 XSTRING_LENGTH (string));
 
   reset_face_cachel (&cachel);

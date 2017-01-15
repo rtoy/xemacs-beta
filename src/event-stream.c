@@ -815,8 +815,7 @@ help_char_p (Lisp_Object event)
 }
 
 static void
-execute_help_form (struct command_builder *command_builder,
-                   Lisp_Object event)
+execute_help_form (Lisp_Object event)
 {
   /* This function can GC */
   Lisp_Object help = Qnil;
@@ -2404,7 +2403,7 @@ The returned event will be one of the following types:
       /* temporarily reenable quit checking here, because we could get stuck */
       Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
       unbind_to (depth);
-      execute_help_form (command_builder, event);
+      execute_help_form (event);
       depth = begin_dont_check_for_quit ();
     }
 

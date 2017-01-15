@@ -597,7 +597,7 @@
                      (search "nimmer" string) string))
      (EE (make-extent (search " mehr" string) (search "!" string)
                       string))
-     (property-name '#:secret-token) substituted pE pEE split)
+     (property-name '#:secret-token) substituted pE pEE split normalize)
   (setf (extent-property E 'duplicable) t
         (extent-property E property-name) t
         (extent-property E 'face) 'green
@@ -671,6 +671,25 @@
              (Assert (eql (extent-end-position pE) (length MEINE)))
              (Assert (equal MEINE
                             (decode-coding-string "ME\xc4\xb0NE" 'utf-8))))
-        (set-language-environment env)))))
+        (set-language-environment env))))
+
+  (when (featurep 'menubar)
+    (Assert
+     (equal
+      "So bist du meine Tochter nimmer% mehr!"
+      (setf normalize
+            (normalize-menu-text
+             (mapconcat #'identity
+                        (sublis '(("du" . "d%_u") ("nimmer" . "nimmer%%"))
+                                split :test #'equal)
+                        " ")))))
+    (Assert (extentp
+             (setf pE
+                   (car (extent-list normalize nil nil nil property-name))))
+            "checking extent copied, \"Tochter\", normalize-menu-text")
+    (Assert (extentp
+             (setf pEE
+                   (car (extent-list normalize nil nil nil 'count))))
+            "checking extent copied, \"mehr!\"")))
 
 ;;; end of extent-tests.el

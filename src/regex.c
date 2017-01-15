@@ -6530,6 +6530,8 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             unsigned char *pdummy;
             re_char *sdummy = NULL;
 
+            USED (sdummy); /* Silence warning. */
+
             DEBUG_MATCH_PRINT1 ("EXECUTING pop_failure_jump.\n");
             POP_FAILURE_POINT (sdummy, pdummy,
                                dummy_low_reg, dummy_high_reg,

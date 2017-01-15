@@ -51,7 +51,8 @@ evalcost (int UNUSED (c))
 struct console *cmputc_console;
 
 void
-send_string_to_tty_console (struct console *c, unsigned char *str, int len)
+send_string_to_tty_console (struct console *c, const unsigned char *str,
+                            Bytecount len)
 {
   /* #### Ben sez: don't some terminals need nulls outputted
      for proper timing? */

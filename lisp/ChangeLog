@@ -1,3 +1,146 @@
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (with-output-to-string):
+	Sigh, despite that we did not document that standard-output would
+	always be a Lisp buffer, a decent amount of code depends on that
+	behaviour, and so we cannot implement this in terms of
+	#'make-string-output-stream. Thanks for the bug report, Jerry James!
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (mouse-rfn-setup-vars): Move this to being a label.
+	* minibuf.el (mouse-read-file-name-1):
+	Define, use the label.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-face.el:
+	* cus-face.el (custom-face-attributes):
+	Merge GNU's :height, equivalent to :size if a fixnum, providing a
+	scale factor if a float, and transforming in some way if a
+	function.
+	* cus-face.el (custom-set-face-font-height): New.
+	Implementation to set :height.
+	* faces.el:
+	* faces.el (make-face-family):
+	* faces.el (make-face-size):
+	Use #'apply-partially in these two functions, so the byte compiler
+	can check the lambda bodies for sanity.
+	* faces.el (make-face-height): New.
+	Do the bulk of the work of implementing the :height keyword. Not
+	done yet; code to make a proportional font size update on changing
+	of the font size from the font menu.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cus-face.el (custom-face-inherit):
+	Whoops Ben in 7efd3a9bbcfb, (vector spec) does not check whether
+	SPEC is a vector, do it properly.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font-menu.el:
+	* font-menu.el (font-menu-change-face): Renamed.
+	* font-menu.el (font-menu-maybe-change-face): New name for
+	#'font-menu-change-face.
+	Also give it a more comprehensive docstring, to avoid the sort of
+	mistake of 30118fdc4f1f.
+	No need for #'string-equal (there is on balance usually no need
+	for #'string-equal, #'equal has a docstring).
+
+	* font-menu.el (font-menu-set-font):
+	Revert part of 30118fdc4f1f of 20021112, which meant the font menu
+	no longer worried about whether a given face was equivalent to the
+	current default face when deciding whether to change it.
+	Only message about changing a font if it is changed.
+
+	* cl-macs.el (assert):
+	Remove the artificial restriction that FORM must be a cons.
+	This restriction is also present in Common Lisp, but keeping it
+	adds no value for us.
+
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-macroexpand-all):
+	Shadow symbol macros when the corresponding symbols are
+	encountered in lambda argument lists with the symbol macro body.
+	Previously this was buggy in that the lambda argument lists were
+	left alone and the expansion was applied to the body of the
+	lambda, which no-one intended.
+	Implement a new SHADOW option for individual symbol macros,
+	specifying the Common Lisp behaviour.
+
+	* cl-macs.el (symbol-macrolet):
+	Document this shadowing in the docstring. Document the
+	transformation of `let', `let*' to `letf', `letf*'.
+	Document the new SHADOW option.
+
+	* cl-macs.el (cl-defsubst-expand): 
+	Use the new SHADOW option in our symbol macros, to avoid problems
+	with argument substitution inside let bindings or lambda
+	expressions where that would be inappropriate.
+	
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove duplicate (and silently overridden) buffers tab Lisp code,
+	buff-menu.el.
+
+	* buff-menu.el:
+	* buff-menu.el (buffers-tab): Removed.
+	* buff-menu.el (buffers-tab-max-size): Removed.
+	* buff-menu.el (buffers-tab-switch-to-buffer-function): Removed.
+	* buff-menu.el (buffers-tab-omit-function): Removed.
+	* buff-menu.el (buffers-tab-selection-function): Removed.
+	* buff-menu.el (buffers-tab-filter-functions): Removed.
+	* buff-menu.el (buffers-tab-sort-function): Removed.
+	* buff-menu.el (buffers-tab-face): Removed.
+	* buff-menu.el (buffers-tab-grouping-regexp): Removed.
+	* buff-menu.el (buffers-tab-format-buffer-line-function): Removed.
+	* buff-menu.el (buffers-tab-default-buffer-line-length): Removed.
+	* buff-menu.el (buffers-tab-max-buffer-line-length): Removed.
+	* buff-menu.el (buffers-menu-omit-function): New.
+	* buff-menu.el (buffers-tab-switch-to-buffer): Removed.
+	* buff-menu.el (select-buffers-tab-buffers-by-mode): Removed.
+	* buff-menu.el (format-buffers-tab-line): Removed.
+	* buff-menu.el (buffers-tab-items): Removed.
+
+	* files.el (switch-to-next-buffer):
+	* files.el (switch-to-previous-buffer)
+	Use the usually-equivalent buffers-menu-omit-function in
+	#'switch-to-{next,previous}-buffer, since these functions are
+	always dumped and the buffers tab omit-function may well not be.
+
+	* files.el (switch-to-next-buffer-in-group): Removed.
+	* files.el (switch-to-previous-buffer-in-group): Removed.
+	Move #'switch-to-{next,previous}-buffer-in-group to
+	gutter-items.el, given they rely on the buffer tab grouping being
+	available. 
+
+	* gutter-items.el:
+	* gutter-items.el (buffers-tab): New.
+	* gutter-items.el (buffers-tab-omit-some-buffers): New.
+	* gutter-items.el (select-buffers-tab-buffers-by-mode):
+	* gutter-items.el (switch-to-next-buffer-in-group): New.
+	* gutter-items.el (switch-to-previous-buffer-in-group): New.
+
+	* keydefs.el:
+	Only give #'switch-to-{next,previous}-buffer-in-group a keybinding
+	if the gutter is available.
+
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* about.el (about-xemacs):
+	* auto-save.el (auto-save-unescape-name):
+	* cl-extra.el:
+	* cl-extra.el (upper-case-p):
+	* descr-text.el (unidata-initialize-unihan-database):
+	* files.el:
+	* files.el (backup-extract-version):
+	* font.el (font-parse-rgb-components):
+	Use (parse-integer ... :radix 16) rather than (string-to-number
+	(match-string ...) 16) where appropriate, creating less garbage
+	strings.
+
 2016-11-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* minibuf.el (read-from-minibuffer):

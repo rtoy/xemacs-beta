@@ -111,13 +111,15 @@ Windows the sound file must be in WAV format.
 */
        (file, volume, USED_IF_HAVE_ANY (device)))
 {
+  struct gcpro gcpro1;
   /* This function can call lisp */
   int vol;
 #if defined (HAVE_NATIVE_SOUND) || defined (HAVE_ALSA_SOUND) || \
   defined (HAVE_NAS_SOUND) || defined (HAVE_ESD_SOUND)
   struct device *d = decode_device (device);
+#else
+  USED (vol);
 #endif
-  struct gcpro gcpro1;
 
   CHECK_STRING (file);
   if (NILP (volume))

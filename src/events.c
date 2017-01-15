@@ -1612,7 +1612,7 @@ upshift_event (Lisp_Object event)
   else
     if (!(XEVENT_KEY_MODIFIERS (event) & XEMACS_MOD_SHIFT))
       XSET_EVENT_KEY_MODIFIERS
-	(event, XEVENT_KEY_MODIFIERS (event) |= XEMACS_MOD_SHIFT);
+	(event, XEVENT_KEY_MODIFIERS (event) | XEMACS_MOD_SHIFT);
 }
 
 void

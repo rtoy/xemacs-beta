@@ -174,10 +174,12 @@ EXFUN (Fbignump, 1);
 #ifdef HAVE_BIGNUM
 #define make_integer(x)							\
   (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)			\
-   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ll (x) : make_bignum (x)))
+   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ll (x) :                   \
+      make_bignum ((long) x)))
 #define make_unsigned_integer(x)					\
   (UNSIGNED_NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)		\
-   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ull (x) : make_bignum_un (x)))
+   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ull (x) :                  \
+      make_bignum_un ((unsigned long) x)))
 #else
 #define make_integer(x) make_fixnum (x)
 #define make_unsigned_integer(x) make_fixnum ((EMACS_INT) x)

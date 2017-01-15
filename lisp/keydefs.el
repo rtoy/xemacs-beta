@@ -605,14 +605,15 @@ Keymap for characters following C-c.")
 (define-key global-map '(meta kp-prior)	'scroll-other-window-down)
 
 ;; movement between buffers
-(global-set-key '(meta shift home) 'switch-to-previous-buffer-in-group)
-(global-set-key '(meta shift end) 'switch-to-next-buffer-in-group)
 (global-set-key '(meta home) 'switch-to-previous-buffer)
 (global-set-key '(meta end) 'switch-to-next-buffer)
-(global-set-key '(meta shift kp-home) 'switch-to-previous-buffer-in-group)
-(global-set-key '(meta shift kp-end) 'switch-to-next-buffer-in-group)
 (global-set-key '(meta kp-home) 'switch-to-previous-buffer)
 (global-set-key '(meta kp-end) 'switch-to-next-buffer)
+(when (featurep 'gutter)
+  (global-set-key '(meta shift home) 'switch-to-previous-buffer-in-group)
+  (global-set-key '(meta shift kp-home) 'switch-to-previous-buffer-in-group)
+  (global-set-key '(meta shift kp-end) 'switch-to-next-buffer-in-group)
+  (global-set-key '(meta shift end) 'switch-to-next-buffer-in-group))
 
 ;; the infamous delete key
 (define-key global-map 'delete	        'backward-or-forward-delete-char)

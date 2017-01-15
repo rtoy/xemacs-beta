@@ -1132,63 +1132,50 @@ The list (R G B) is returned, or an error is signaled if the lookup fails."
 (defun font-parse-rgb-components (color)
   "Parse RGB color specification and return a list of integers (R G B).
 #FEFEFE and rgb:fe/fe/fe style specifications are parsed."
-  (let ((case-fold-search t)
-	r g b str)
-  (cond ((string-match "^#[0-9a-f]+$" color)
-	 (cond
-	  ((eql (length color) 4)
-	   (setq r (string-to-number (substring color 1 2) 16)
-		 g (string-to-number (substring color 2 3) 16)
-		 b (string-to-number (substring color 3 4) 16)
-		 r (* r 4096)
-		 g (* g 4096)
-		 b (* b 4096)))
-	  ((eql (length color) 7)
-	   (setq r (string-to-number (substring color 1 3) 16)
-		 g (string-to-number (substring color 3 5) 16)
-		 b (string-to-number (substring color 5 7) 16)
-		 r (* r 256)
-		 g (* g 256)
-		 b (* b 256)))
-	  ((eql (length color) 10)
-	   (setq r (string-to-number (substring color 1 4) 16)
-		 g (string-to-number (substring color 4 7) 16)
-		 b (string-to-number (substring color 7 10) 16)
-		 r (* r 16)
-		 g (* g 16)
-		 b (* b 16)))
-	  ((eql (length color) 13)
-	   (setq r (string-to-number (substring color 1 5) 16)
-		 g (string-to-number (substring color 5 9) 16)
-		 b (string-to-number (substring color 9 13) 16)))
-	  (t
-	   (display-warning 'color
-	     (format "Invalid RGB color specification: %s" color))
-	   (setq r 0
-		 g 0
-		 b 0))))
-	((string-match "rgb:\\([0-9a-f]+\\)/\\([0-9a-f]+\\)/\\([0-9a-f]+\\)"
-		       color)
-	 (if (or (> (- (match-end 1) (match-beginning 1)) 4)
-		 (> (- (match-end 2) (match-beginning 2)) 4)
-		 (> (- (match-end 3) (match-beginning 3)) 4))
-	     (error "Invalid RGB color specification: %s" color)
-	   (setq str (match-string 1 color)
-		 r (* (string-to-number str 16)
-		      (expt 16 (- 4 (length str))))
-		 str (match-string 2 color)
-		 g (* (string-to-number str 16)
-		      (expt 16 (- 4 (length str))))
-		 str (match-string 3 color)
-		 b (* (string-to-number str 16)
-		      (expt 16 (- 4 (length str)))))))
-	(t
-	 (display-warning 'color (format "Invalid RGB color specification: %s"
-					color))
-	 (setq r 0
-	       g 0
-	       b 0)))
-  (list r g b) ))
+  (let ((length (length color)) r g b position start)
+    (labels ((fail () (error 'invalid-argument
+                             "Not a valid RGB color specification"
+                             color)))
+      (cond ((and (> length 0) (eql ?# (aref color 0)))
+             (case length
+               (4
+                (setq r (* 4096 (parse-integer color :start 1 :end 2
+                                               :radix 16))
+                      g (* 4096 (parse-integer color :start 2 :end 3
+                                               :radix 16))
+                      b (* 4096 (parse-integer color :start 3 :end 4
+                                               :radix 16))))
+               (7
+                (setq r (* 256 (parse-integer color :start 1 :end 3 :radix 16))
+                      g (* 256 (parse-integer color :start 3 :end 5 :radix 16))
+                      b (* 256 (parse-integer color :start 5 :end 7
+                                              :radix 16))))
+               (10
+                (setq r (* 16 (parse-integer color :start 1 :end 4 :radix 16))
+                      g (* 16 (parse-integer color :start 4 :end 7 :radix 16))
+                      b (* 16 (parse-integer color :start 7 :end 10
+                                             :radix 16))))
+               (otherwise (fail))))
+            ((eql 0 (search "rgb:" color :test #'equalp :end2 (min length 4)))
+             (multiple-value-setq (r position)
+               (parse-integer color :start (length "rgb:")
+                              :junk-allowed t :radix 16))
+             (or (and (< -1 r #x10000) position (eql (aref color position) ?/))
+                 (fail))
+             (setq r (* r (expt 16 (- 4 (- position (length "rgb:")))))
+                   start (1+ position))
+             (multiple-value-setq (g position)
+               (parse-integer color :start start :junk-allowed t :radix 16))
+             (or (and (< -1 g #x10000) position (eql (aref color position) ?/))
+                 (fail))
+             (setq g (* g (expt 16 (- 4 (- position start))))
+                   start (1+ position))
+             (multiple-value-setq (b position)
+               (parse-integer color :start start :junk-allowed nil :radix 16))
+             (or (< -1 b #x10000) (fail))
+             (setq b (* b (expt 16 (- 4 (- position start))))))
+            (t (fail)))
+      (list r g b))))
 
 (defun font-rgb-color-p (obj)
   (or (and (vectorp obj)
