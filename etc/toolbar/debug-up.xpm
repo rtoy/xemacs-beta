@@ -1,0 +1,53 @@
+/* XPM */
+
+/* This file is part of XEmacs.
+
+XEmacs is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, either version 3 of the License, or (at your
+option) any later version.
+
+XEmacs is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
+
+static char * bug_xpm[] = {
+"28 28 6 1",
+"X	c Gray75 s backgroundToolBarColor",
+"o	c black",
+"O	c Gray40",
+"+	c Gray60",
+"@	c white",
+"#	c Gray90",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+"XXXXXXooooooooooooooooXXXXXX",
+"XXXXXoooooooooOoOoOoOooXXXXX",
+"XXXXXoooooooooOoOoOoOooXXXXX",
+"XXXXXoooooooooooooooooo+XXXX",
+"XXXXXXo@@@@@@@@@@@##Xo++XXXX",
+"XXXXXo@@@@@@@@@@@@##XXo+XXXX",
+"XXXXXo@@@@@@@@@@@@##XXoXXXXX",
+"XXXXXo@@@@@@@@@@@@##XXo+XXXX",
+"XXXXXo@@@@@@@@@@@@##XXo+XXXX",
+"XXXXXo@@@@@@o@@oo@##XXo+XXXX",
+"XXXXXo@@@o@@o@oooo##XXo+XXXX",
+"XXXXXo@@@@o@oo@ooo##XXo+XXXX",
+"XXXXXo@@@@@oooooo@##XXo+XXXX",
+"XXXXXo@ooo@ooooo@@##XXo+XXXX",
+"XXXXXo@@@oo@oooooo##XXo+XXXX",
+"XXXXXo@@o@ooooo@@@##XXo+XXXX",
+"XXXXXo@oooooo@@o@@##XXo+XXXX",
+"XXXXXo@oooooo@@@o@##XXo+XXXX",
+"XXXXXo@ooooooo@@@@##XXo+XXXX",
+"XXXXXo@ooooo@o@@@@##XXo+XXXX",
+"XXXXXo@@ooo@@o@@@@##XXo+XXXX",
+"XXXXXo@@@@@@@@@@@@##XXo+XXXX",
+"XXXXXXoooooooooooooooo++XXXX",
+"XXXXXX++++++++++++++++++XXXX",
+"XXXXXXX++++++++++++++++XXXXX",
+"XXXXXXXXXXXXXXXXXXXXXXXXXXXX"};

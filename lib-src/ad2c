@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# Copyright (C) 1990, 1991 George Ferguson
+# Copyright (C) 1992 Charles Hannum
+# Copyright (C) 1992 Matthew Stier
+#
+#	ad2c : Convert app-defaults file to C strings decls.
+#
+#	George Ferguson, ferguson@cs.rcohester.edu, 12 Nov 1990.
+#	19 Mar 1991 : gf
+#		Made it self-contained.
+#	6 Jan 1992 : mycroft@gnu.ai.mit.edu (Charles Hannum)
+#		Removed use of "-n" and ":read" label since Gnu and
+#		IBM sed print pattern space on "n" command. Still works
+#		with Sun sed, of course.
+#	7 Jan 1992: matthew@sunpix.East.Sun.COM (Matthew Stier)
+#		Escape quotes after escaping backslashes.
+#
+# This file is part of XEmacs.
+# 
+# XEmacs is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+# 
+# XEmacs is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Synched up with: Not in FSF.
+
+sed '
+/^!/d
+/^$/d
+s/\\/\\\\/g
+s/\\$//g
+s/"/\\"/g
+s/^/"/
+: test
+/\\$/b slash
+s/$/",/
+p
+d
+: slash
+n
+/^!/d
+/^$/d
+s/"/\\"/g
+s/\\\\/\\/g
+s/\\n/\\\\n/g
+s/\\t/\\\\t/g
+s/\\f/\\\\f/g
+s/\\b/\\\\b/g
+b test' "$@"
