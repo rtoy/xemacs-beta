@@ -1,3 +1,27 @@
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Drop a lot of needless Ibyte -> Ichar conversion,
+	redisplay-msw.c.
+	This is the mswindows code corresponding to 64c9a3a479ce .
+
+	* redisplay-msw.c (textual_run):
+	No need for the number of Ichars in this structure.
+	* redisplay-msw.c (separate_textual_runs):
+	Rework this on the model of separate_textual_runs_xft_mule();
+	just do the TO_EXTERNAL_FORMAT() once, not for every run seen,
+	store the WCHARs and the textual runs on the stack.
+	* redisplay-msw.c (mswindows_output_cursor):
+	No need to call separate_textual_runs() in this function, call
+	TO_EXTERNAL_FORMAT ourselves.
+	* redisplay-msw.c (mswindows_output_string):
+	Take an Ibyte pointer and a Bytecount rather than an Ichar_dyarr *
+	here.
+	* redisplay-msw.c (mswindows_output_display_block):
+	Stack-allocate Ibytes rather than using an Ichar_dynarr here, as
+	an argument to mswindows_output_string.
+	* redisplay-msw.c (mswindows_text_width):
+	Use the new calling convention for separate_textual_runs.
+
 2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Fix some warnings, C99isms, to get the build working on Win32.
