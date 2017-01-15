@@ -110,7 +110,7 @@ static void gtk_fill_rectangle (cairo_t *cr, gint x, gint y,
 #define XLIKE_text_width XFUN (text_width)
 
 static int XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
-                             const Ichar *str, Charcount len);
+                             const Ibyte *str, Bytecount len);
 static void XLIKE_output_vertical_divider (struct window *w, int clear);
 static void XLIKE_output_blank (struct window *w, struct display_line *dl,
 				struct rune *rb, int start_pixpos,
@@ -799,7 +799,6 @@ XLIKE_output_display_block (struct window *w, struct display_line *dl,
                                              (rb->cursor_type == CURSOR_ON),
                                              cursor_start, cursor_width,
                                              cursor_height);
-			Dynarr_reset (buf);
 		      }
 		      break;
 #else
