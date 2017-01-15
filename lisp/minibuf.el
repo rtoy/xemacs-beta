@@ -1904,18 +1904,6 @@ whether it is a file(/result) or a directory (/result/)."
 	   result)
 	  (t file))))
 
-(defun mouse-rfn-setup-vars (prompt)
-  ;; a specifier would be nice.
-  (set (make-local-variable 'frame-title-format)
-       (capitalize-string-as-title
-	;; Kludge: Delete ": " off the end.
-	(replace-in-string prompt ": $" "")))
-  ;; ensure that killing the frame works right,
-  ;; instead of leaving us in the minibuffer.
-  (add-local-hook 'delete-frame-hook
-		  #'(lambda (frame)
-		      (abort-recursive-edit))))
-
 (defun mouse-file-display-completion-list (window dir minibuf user-data)
   (let ((standard-output (window-buffer window)))
     (condition-case nil
@@ -1989,7 +1977,28 @@ whether it is a file(/result) or a directory (/result/)."
 	 user-data
 	 (window-min-height 1)) ; allow button window to be height 2
     (unwind-protect
-	(progn
+	(labels
+            ((mouse-rfn-setup-vars (prompt)
+               ;; a specifier would be nice.
+               (set (make-local-variable 'frame-title-format)
+                    (capitalize-string-as-title
+                     ;; Kludge: Delete ": " off the end.
+                     (replace-in-string prompt ": $" "")))
+               ;; ensure that killing the frame works right,
+               ;; instead of leaving us in the minibuffer.
+               (add-local-hook 'delete-frame-hook
+                               #'(lambda (frame) (abort-recursive-edit))))
+             (rfcshookfun ()
+               ;; kludge!
+               ;; #### I really need to flesh out the object
+               ;; hierarchy better to avoid these kludges.
+               ;; (?? I wrote this comment above some time ago,
+               ;; and I don't understand what I'm referring to
+               ;; any more. --ben
+               (mouse-rfn-setup-vars prompt)
+               (when-boundp 'scrollbar-width
+                 (set-specifier scrollbar-width 0 (current-buffer)))
+               (setq truncate-lines t)))
 	  (reset-buffer filebuf)
 
 	  ;; set up the frame.
@@ -2008,23 +2017,11 @@ whether it is a file(/result) or a directory (/result/)."
 	  (set-window-buffer (frame-lowest-window frame) butbuf)
 
 	  ;; set up completion buffers.
-	  (labels
-              ((rfcshookfun ()
-		 ;; kludge!
-		 ;; #### I really need to flesh out the object
-		 ;; hierarchy better to avoid these kludges.
-		 ;; (?? I wrote this comment above some time ago,
-		 ;; and I don't understand what I'm referring to
-		 ;; any more. --ben
-                 (mouse-rfn-setup-vars prompt)
-                 (when-boundp 'scrollbar-width
-                   (set-specifier scrollbar-width 0 (current-buffer)))
-                 (setq truncate-lines t)))
-	    (set-buffer filebuf)
-	    (add-local-hook 'completion-setup-hook #'rfcshookfun)
-	    (when file-p
-	      (set-buffer dirbuf)
-	      (add-local-hook 'completion-setup-hook #'rfcshookfun)))
+          (set-buffer filebuf)
+          (add-local-hook 'completion-setup-hook #'rfcshookfun)
+          (when file-p
+            (set-buffer dirbuf)
+            (add-local-hook 'completion-setup-hook #'rfcshookfun))
 
 	  ;; set up minibuffer.
 	  (add-one-shot-hook

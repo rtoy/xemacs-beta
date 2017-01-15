@@ -509,6 +509,7 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
       TO_INTERNAL_FORMAT (C_STRING, wv->name,
 			  ALLOCA, (intname, unused_intlen),
 			  Qlwlib_encoding);
+      USED (unused_intlen); /* Silence warning. */
       if (separator_string_p (intname))
 	{
 	  wv->type = SEPARATOR_TYPE;

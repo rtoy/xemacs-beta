@@ -492,10 +492,6 @@ static void get_frame_new_total_pixel_size (struct frame *f,
 					    int *out_height);
 
 static struct display_line title_string_display_line;
-/* Used by generate_title_string. Global because they get used so much that
-   the dynamic allocation time adds up. */
-static Ichar_dynarr *title_string_ichar_dynarr;
-
 
 /**************************************************************************/
 /*                                                                        */
@@ -3955,7 +3951,8 @@ generate_title_string (struct window *w, Lisp_Object format_str,
 {
   struct display_line *dl;
   struct display_block *db;
-  int elt = 0;
+  Elemcount elt = 0;
+  Ibyte *result, *buffer, *bufp;
 
   dl = &title_string_display_line;
   db = get_display_block_from_line (dl, TEXT);
@@ -3964,19 +3961,21 @@ generate_title_string (struct window *w, Lisp_Object format_str,
   generate_formatted_string_db (format_str, Qnil, w, dl, db, findex, 0,
 				-1, type);
 
-  Dynarr_reset (title_string_ichar_dynarr);
+  buffer = bufp = alloca_ibytes (Dynarr_length (db->runes) * MAX_ICHAR_LEN);
   while (elt < Dynarr_length (db->runes))
     {
       if (Dynarr_atp (db->runes, elt)->type == RUNE_CHAR)
-	Dynarr_add (title_string_ichar_dynarr,
-		    Dynarr_atp (db->runes, elt)->object.chr.ch);
+        {
+          bufp
+            += set_itext_ichar (bufp, 
+                                Dynarr_atp (db->runes, elt)->object.chr.ch);
+        }
       elt++;
     }
 
-  return
-    convert_ichar_string_into_malloced_string
-    (Dynarr_begin (title_string_ichar_dynarr),
-     Dynarr_length (title_string_ichar_dynarr), 0);
+  result = xnew_ibytes (bufp - buffer + 1);
+  result[bufp - buffer] = '\0';
+  return (Ibyte *) memcpy (result, buffer, bufp - buffer);
 }
 
 void
@@ -4142,7 +4141,6 @@ init_frame (void)
   if (!initialized)
 #endif
     {
-      title_string_ichar_dynarr = Dynarr_new (Ichar);
       DISPLAY_LINE_INIT (title_string_display_line);
     }
 }

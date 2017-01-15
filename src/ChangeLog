@@ -1,3 +1,201 @@
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Drop a lot of needless Ibyte -> Ichar conversion,
+	redisplay-msw.c.
+	This is the mswindows code corresponding to 64c9a3a479ce .
+
+	* redisplay-msw.c (textual_run):
+	No need for the number of Ichars in this structure.
+	* redisplay-msw.c (separate_textual_runs):
+	Rework this on the model of separate_textual_runs_xft_mule();
+	just do the TO_EXTERNAL_FORMAT() once, not for every run seen,
+	store the WCHARs and the textual runs on the stack.
+	* redisplay-msw.c (mswindows_output_cursor):
+	No need to call separate_textual_runs() in this function, call
+	TO_EXTERNAL_FORMAT ourselves.
+	* redisplay-msw.c (mswindows_output_string):
+	Take an Ibyte pointer and a Bytecount rather than an Ichar_dyarr *
+	here.
+	* redisplay-msw.c (mswindows_output_display_block):
+	Stack-allocate Ibytes rather than using an Ichar_dynarr here, as
+	an argument to mswindows_output_string.
+	* redisplay-msw.c (mswindows_text_width):
+	Use the new calling convention for separate_textual_runs.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Fix some warnings, C99isms, to get the build working on Win32.
+	No variable-length arrays for us!
+	* doprnt.c (fixnum_to_string):
+	* doprnt.c (Fnumber_to_string):
+	* doprnt.c (get_doprnt_c_args):
+	* doprnt.c (emacs_doprnt):
+	* doprnt.c (write_fmt_string_va):
+	* doprnt.c (emacs_vsnprintf):
+	* tests.c (Ftest_fixnum_to_string):
+	snprintf() isn't necessarily available, use sprintf() when
+	cross-checking fixnum_to_string().
+
+2017-01-14  Jerry James  <james@xemacs.org>
+
+	* config.h.in (_POSIX_C_SOURCE): Do not redefine if set by system
+	headers.
+	(alloca): Ditto.
+
+2017-01-14  Jerry James  <james@xemacs.org>
+
+	* events.c (upshift_event): Fix sequence point error.
+
+2017-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (lisp_to_uint32_t):
+	Vmost_positive_fixnum is not a Lisp_Object, don't pass it to
+	check_integer_range().
+	Be explicit about casting to UINT_32_BIT when given a positive
+	fixnum ITEM; there is an intended loss of precision with 64-bit
+	EMACS_INTs.
+	* select.c:
+	* select.c (Fown_selection_internal):
+	Update these comments to reflect current reality.
+
+2017-01-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove format(), recently introduced and used by almost nothing.
+	Within #'format-into, if STREAM is the symbol `string', return a
+	string reflecting the arguments rather than STREAM.
+	This is the functionality of format(); use it in the one place
+	that format() was used.
+
+	Restore format as a local variable name, from fermat.
+	* doprnt.c:
+	* doprnt.c (parse_doprnt_spec):
+	* doprnt.c (emacs_vsprintf_string):
+	* doprnt.c (emacs_sprintf_string):
+	* doprnt.c (emacs_vasprintf):
+	* doprnt.c (emacs_asprintf):
+	* doprnt.c (emacs_vsnprintf):
+	* doprnt.c (emacs_snprintf):
+	* doprnt.c (format_into):
+	* doprnt.c (format):
+	* callint.c:
+	* callint.c (callint_prompt):
+	* device-x.c (x_init_device):
+	* frame-x.c (x_wm_hack_wm_protocols):
+	* glyphs.c (decode_device_ii_format):
+	* glyphs.c (decode_image_instantiator_format):
+	* glyphs.c (valid_image_instantiator_format_p):
+	* lisp.h:
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lisp.h (qxestrcoll):
+	* print.c (debug_out_lisp):
+	* redisplay.c (add_disp_table_entry_runes_1):
+	* select-x.c (x_reply_selection_request):
+	* select-x.c (x_handle_selection_request):
+	* select-x.c (Fx_get_cutbuffer_internal):
+	* select-xlike-inc.c:
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	* strftime.c (strftime):
+	* text.c (qxesprintf):
+
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Quiet compiler warnings, recent gcc-5, g++-5, clang-3.5.
+	
+	* buffer.c (cleanup_buffer_undo_lists):
+	* buffer.c (Fget_file_buffer):
+	* chartab.c (chartab_data_validate):
+	* event-Xt.c (x_reset_modifier_mapping):
+	* event-Xt.c (store_modifier):
+	* event-stream.c (execute_help_form):
+	* event-stream.c (Fnext_event):
+	* fns.c (Fnbutlast):
+	* fns.c (Fbutlast):
+	* fns.c (Fold_assoc):
+	* fns.c (Fold_assq):
+	* fns.c (Fold_rassq):
+	* fns.c (Fold_rassoc):
+	* fontcolor-x.c (x_font_instance_properties):
+	* gui-x.c (button_item_to_widget_value):
+	* gutter.c:
+	* gutter.c (gutter_visible_validate):
+	* rangetab.c (rangetab_data_validate):
+	* regex.c (re_match_2_internal):
+	* search.c (search_buffer):
+	* sequence.c (Fcount):
+	* sequence.c (Fassoc):
+	* sequence.c (Fassq):
+	* sequence.c (FassocX):
+	* sequence.c (Frassoc):
+	* sequence.c (Frassq):
+	* sequence.c (FrassocX):
+	* sequence.c (list_delete_duplicates_from_end):
+	* sequence.c (Ffill):
+	* sequence.c (Fnset_exclusive_or):
+	* sound.c (Fplay_sound_file):
+	Silence unused variable warnings, either by removing the
+	corresponding variables or marking them with USED (e.g. in those
+	cases where they are necessary macro arguments). 
+
+	* elhash.c (static const struct sized_memory_description
+	hash_table_test_description_1): Renamed to
+	hash_table_test_description[], the old definition of the former is
+	not used. 
+	
+	* text.h:
+	Cast the result of string_byte() to Ibyte, quieting the C++
+	compiler.
+
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	GCC feels that the result of the first argument to && is unused;
+	switch to the ternary operator to quiet it. 
+	* lisp.h (GET_EXTERNAL_LIST_LENGTH):
+	Mark GELL-elt used to quiet the compiler.
+	* lisp.h (XCLEAR_STRING_MODIFFP):
+	No need for the comma operator, let this macro return 0.
+	* number.h (make_integer, make_unsigned_integer):
+	Sigh, when a C type is greater in size than a long, and so we're
+	calling make_bignum_ll, the compiler complains about the
+	make_bignum call (which will never be executed) with the larger
+	value. Cast this to quiet it.
+
+	Couple of more changes flushed out by the union build (thank you
+	Mats Lidell, Raymond Toye and the buildbot):
+	* glyphs-eimage.c (gif_instantiate):
+	Bah, Vmost_positive_fixnum is not a Lisp_Object.
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	Massage this to placate the Union build.
+
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs-x.c (x_redisplay_widget):
+	Use a malloc'd external string here, no point stuffing alloca'd
+	data into the lwlib widget's text.
+	* glyphs-x.c (x_widget_instantiate):
+	If this is a text widget, store a malloc'd copy of the text into
+	the lwlib widget.
+
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* src/glyphs-eimage.c:
+	Do some more validation on the GIF's height and width.
+	Document why we won't run past the end of InterlacedOffset[] when
+	reading an interlaced GIF. Add assertions to check this.
+	Mask the pass count to quiet the compiler warning about running
+	past the end.
+
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h:
+	Move END_C_DECLS after all the function declarations, following
+	9bf84e216bf869, my change of 2016-10-29, which put some of them
+	after it.
+
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar.c (Fnormalize_menu_text):
+	Use the correct offset when writing the slack between the %% or %_
+	sequences encountered to our resizing output stream.
+
 2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fontcolor-gtk.c:
@@ -53,6 +251,127 @@
 	* print.c (Fwrite_sequence):
 	If END is specified, don't error on a circular list in this
 	function.
+
+2016-12-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Drop a lot of needless Ibyte -> Ichar conversion, redisplay.
+	The most benefit to this will be from the GTK and XFT code, and is
+	not yet directly visible.
+
+	* cm.c (send_string_to_tty_console):
+	Declare this with its STR argument const.
+	* console-gtk.h:
+	gtk_output_string(), take a vector of Ibytes rather than a Dynarr
+	of Ichars.
+	* console-impl.h (struct console_methods):
+	(*text_width_method)(), take an Ibyte pointer and a byte length rather
+	than an array of Ichars.
+	(*output_string_method)(), take an Ibyte pointer and a byte length
+	rather than an Ichar Dynarr.
+	* console-stream.c (stream_text_width):
+	Return a charcount here rather than just the byte length.
+	* console-tty.h:
+	Update this to reflect the const argument to
+	send_string_to_tty_console().
+	* console-x.h:
+	Update x_output_string()'s prototype to take an Ibyte vector and
+	length rather than an Ichar Dynarr.
+	* faces.c (face_cachel_charset_font_metric_info):
+	Take an array of Binbyte as an argument rather than unsigned char
+	*, face_cachel_charset_font_metric_info().
+	* faces.h:
+	Ditto
+	* frame.c:
+	No need for a static Dynarr for the title string, an alloca'd
+	buffer space is fine.
+	* frame.c (generate_title_string):
+	Ditto.
+	* frame.c (init_frame):
+	No need to allocate that new Dynarr when creating the frame.
+	* glyphs.c (query_string_geometry):
+	Make sure the face cachel is complete both when querying the
+	height *and* the width.
+	Compute the descent when it is requested on its own, don't require
+	that the height be also requested.
+	* lisp.h:
+	Remove find_charsets_in_ichar_string(), no longer used.
+	Remove ichar_string_displayed_columns(), no longer used.
+	Remove convert_ibyte_string_into_ichar_dynarr(), no longer used.
+	Remove convert_ichar_string_into_ibyte_dynarr(), no longer used.
+	Remove convert_ichar_string_into_malloced_string(), no longer used.
+	* redisplay-output.c:
+	* redisplay-output.c (redisplay_output_layout):
+	Call (*output_string_method) with its new calling convention,
+	which removes the necessity to transform our Lisp string argument
+	to an array of Ichars.
+	* redisplay-tty.c:
+	Remove tty_output_ichar_dynarr(), no longer used.
+	* redisplay-tty.c (tty_text_width):
+	Update the reflect the new Ibyte * calling convention.
+	* redisplay-tty.c (tty_output_display_block):
+	Use a stack-allocated array here for the text, rather than a
+	Dynarr.
+	* redisplay-tty.c (tty_output_ibyte_string):
+	Take a const *STR argnument, rather than just an Ibyte * pointer.
+	Remove tty_output_ichar_dynarr(), no longer used.
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (struct textual_run):
+	PTR is now an Extbyte, reflecting external-format data.
+	Add ALLOCATE_RUNS_TEXT, a platform-specific #define allowing
+	e.g. the Xft code to transform to UTF-16 when allocating the stack
+	space for the text passed to it.
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	Just use memcpy() in this, don't re-implement it, now we no longer
+	have an Ichar * argument.
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	Trust the external-format conversion we did when allocating the
+	space for our text.
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	Ditto. Support non-BMP characters correctly.
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	Move to taking a vector of Ibytes rather than a vector of
+	Ichars.
+	Compress the loop of this function if the whole string is
+	ASCII, use the skip_ascii inline function.
+	* redisplay-xlike-inc.c (separate_textual_runs):
+	Take a vector of Ibytes rather than a vector of Ichars.
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run):
+	On XFT builds, all XFT runs are of dimension two.
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	Take a vector of Ibyte * rather than of Ichar * here.
+	* redisplay-xlike-inc.c (XLIKE_output_display_block):
+	No need for a Dynarr of Ichars, when outputting strings, use
+	Ibyte vectors allocated on the stack.
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Don't take a Dynarr of Ichars, take a vector of Ibytes and a
+	length.
+	* redisplay.c:
+	Remove redisplay_window_text_width_ichar_string(), no longer used.
+	* redisplay.c (redisplay_window_text_width_string):
+	No longer take a RELOC argument in this function; take just an
+	Ibyte vector, a font index, and a byte length.
+	* redisplay.c (redisplay_text_width_string):
+	No longer implement this in terms of the Ichar width functions.
+	* redisplay.c (add_ichar_rune_1):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.h:
+	Update the declaration for redisplay_text_width_string() to
+	reflect its changed API.
+	* text.c:
+	* text.c (convert_ibyte_string_into_ichar_string): Removed.
+	* text.c (convert_ichar_string_into_ibyte_dynarr): Removed.
+	* text.c (convert_ichar_string_into_malloced_string): Removed.
+	* text.c (ichar_string_displayed_columns): Removed.	
+	* text.c (ibyte_string_nonascii_chars): Removed.	
+	* text.c (find_charsets_in_ibyte_string):
+	Take an array of Binbytes here.
+	Use the skip_ascii inline function, which will make it cheap for
+	ASCII text.
+	* toolbar-xlike.c (xlike_output_toolbar_button):
+	Use the toolbar face when determining the metrics for an image
+	text index.
+	No longer bother with the Ichar dynarr, use a stack-allocated
+	array of Ibyte *.
 
 2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
 

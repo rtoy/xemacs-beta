@@ -852,14 +852,13 @@ This essentially rotates the buffer list forward.
 N (interactively, the prefix arg) specifies how many times to rotate
 forward, and defaults to 1.  Buffers whose name begins with a space
 \(i.e. \"invisible\" buffers) are ignored."
-  ;; Here is a different interactive spec.  Look up the function
-  ;; `interactive' (i.e. `C-h f interactive') to understand how this
-  ;; all works.
   (interactive "p")
   (dotimes (n (or n 1))
     (loop
       do (bury-buffer (car (buffer-list)))
-      while (funcall buffers-tab-omit-function (car (buffer-list))))
+      ;; This used to be usually-equivalent buffers-tab-omit-function, which
+      ;; may not be available in this file.
+      while (funcall buffers-menu-omit-function (car (buffer-list))))
     (switch-to-buffer (car (buffer-list)))))
 
 (defun switch-to-previous-buffer (&optional n)
@@ -872,38 +871,8 @@ backward, and defaults to 1.  Buffers whose name begins with a space
   (dotimes (n (or n 1))
     (loop
       do (switch-to-buffer (car (last (buffer-list))))
-      while (funcall buffers-tab-omit-function (car (buffer-list))))))
-
-(defun switch-to-next-buffer-in-group (&optional n)
-  "Switch to the next-most-recent buffer in the current group.
-This essentially rotates the buffer list forward.
-N (interactively, the prefix arg) specifies how many times to rotate
-forward, and defaults to 1.  Buffers whose name begins with a space
-\(i.e. \"invisible\" buffers) are ignored."
-  (interactive "p")
-  (dotimes (n (or n 1))
-    (let ((curbuf (car (buffer-list))))
-      (loop
-	do (bury-buffer (car (buffer-list)))
-	while (or (funcall buffers-tab-omit-function (car (buffer-list)))
-		  (not (funcall buffers-tab-selection-function
-			curbuf (car (buffer-list)))))))
-    (switch-to-buffer (car (buffer-list)))))
-
-(defun switch-to-previous-buffer-in-group (&optional n)
-  "Switch to the previously most-recent buffer in the current group.
-This essentially rotates the buffer list backward.
-N (interactively, the prefix arg) specifies how many times to rotate
-backward, and defaults to 1.  Buffers whose name begins with a space
-\(i.e. \"invisible\" buffers) are ignored."
-  (interactive "p")
-  (dotimes (n (or n 1))
-    (let ((curbuf (car (buffer-list))))
-      (loop
-	do (switch-to-buffer (car (last (buffer-list))))
-	while (or (funcall buffers-tab-omit-function (car (buffer-list)))
-		  (not (funcall buffers-tab-selection-function
-			curbuf (car (buffer-list)))))))))
+      ;; See above re buffers-tab-omit-function.
+      while (funcall buffers-menu-omit-function (car (buffer-list))))))
 
 (defmacro find-file-create-switch-thunk (switch-function)
   "Mark buffer modified if needed, then call SWITCH-FUNCTION. 
@@ -2635,8 +2604,9 @@ You may need to redefine `file-name-sans-versions' as well."
 Uses the free variable `backup-extract-version-start', whose value should be
 the index in the name where the version number begins."
   (if (and (string-match "[0-9]+~$" fn backup-extract-version-start)
-	   (= (match-beginning 0) backup-extract-version-start))
-      (string-to-int (substring fn backup-extract-version-start -1))
+	   (eql (match-beginning 0) backup-extract-version-start))
+      (parse-integer fn :start backup-extract-version-start
+                     :end (- (length fn) 1))
       0))
 
 ;; [[ FSF 21.2 says:

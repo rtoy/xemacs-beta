@@ -403,7 +403,8 @@ The returned string may be the same string as the original.
               stream = make_resizing_buffer_output_stream ();
             }
 
-          Lstream_write_with_extents (XLSTREAM (stream), name, 0,
+          Lstream_write_with_extents (XLSTREAM (stream), name, 
+				      lastp - XSTRING_DATA (name),
                                       name_data - lastp);
 
           name_data += ichar_len ('%');
@@ -416,7 +417,8 @@ The returned string may be the same string as the original.
               stream = make_resizing_buffer_output_stream ();
             }
 
-          Lstream_write_with_extents (XLSTREAM (stream), name, 0,
+          Lstream_write_with_extents (XLSTREAM (stream), name,
+				      lastp - XSTRING_DATA (name),
                                       name_data - lastp -
                                       ichar_len ('%'));
 

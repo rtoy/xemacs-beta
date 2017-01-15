@@ -1,3 +1,11 @@
+2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl.texi (Macro Bindings):
+	Document the new shadowing of arguments to lambda lists within
+	`symbol-macrolet' forms.
+	Document the new SHADOW element in a `symbol-macrolet' element, to
+	specify Common Lisp behaviour for expansion.
+
 2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/strings.texi (Formatting Strings):

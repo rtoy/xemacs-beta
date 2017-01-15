@@ -994,7 +994,9 @@ default_gutter_visible_p_changed_in_window (Lisp_Object UNUSED (specifier),
 }
 
 
-DECLARE_SPECIFIER_TYPE (gutter_size);
+/* No need for the declaration, we don't use the
+   error_check_gutter_size_{type,data} functions. */
+/* DECLARE_SPECIFIER_TYPE (gutter_size); */
 #define GUTTER_SIZE_SPECIFIERP(x) SPECIFIER_TYPEP (x, gutter_size)
 DEFINE_SPECIFIER_TYPE (gutter_size);
 
@@ -1019,7 +1021,9 @@ instantiators.
   return GUTTER_SIZE_SPECIFIERP (object) ? Qt : Qnil;
 }
 
-DECLARE_SPECIFIER_TYPE (gutter_visible);
+/* No need for the declaration, we don't use the
+   error_check_gutter_visible_{type,data} functions. */
+/* DECLARE_SPECIFIER_TYPE (gutter_visible); */
 #define GUTTER_VISIBLE_SPECIFIERP(x) SPECIFIER_TYPEP (x, gutter_visible)
 DEFINE_SPECIFIER_TYPE (gutter_visible);
 

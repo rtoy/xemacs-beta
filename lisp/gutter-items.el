@@ -22,6 +22,10 @@
 
 ;;; Gutter-specific buffers tab code
 
+(defgroup buffers-tab nil
+  "Customization of `Buffers' tab."
+  :group 'gutter)
+
 (defvar gutter-buffers-tab nil
   "A tab widget in the gutter for displaying buffers.
 Do not set this. Use `set-glyph-image' to change the properties of the tab.")
@@ -72,7 +76,7 @@ buffers based on the value of `buffers-tab-omit-list'."
   :type '(choice (const :tag "None" nil)
   		 function)
   :group 'buffers-tab)
-  
+
 (defcustom buffers-tab-omit-list '("\\` ")
   "*A list of types of buffers to omit from the buffers tab.
 This is only used if `buffers-tab-omit-function' is set to
@@ -179,6 +183,13 @@ If this is 0, then the full buffer name will be shown."
 	   (set-specifier buffers-tab-default-buffer-line-length val)
 	   (setq buffers-tab-max-buffer-line-length val)))
 
+(defun buffers-tab-omit-some-buffers (buf)
+  "For use as a value of `buffers-tab-omit-function'.
+Omit buffers based on the value of `buffers-tab-omit-list', which
+see."
+  (let ((regexp (mapconcat 'concat buffers-tab-omit-list "\\|")))
+    (not (null (string-match regexp (buffer-name buf))))))
+
 (defun buffers-tab-switch-to-buffer (buffer)
   "For use as a value for `buffers-tab-switch-to-buffer-function'."
   (unless (eq (window-buffer) buffer)
@@ -193,7 +204,7 @@ If this is 0, then the full buffer name will be shown."
         (switch-to-buffer buffer)))))
 
 (defun select-buffers-tab-buffers-by-mode (buffer-to-select buf1)
-  "For use as a value of `buffers-tab-selection-function'.
+  "For use as an element of `buffers-tab-filter-functions'.
 This selects buffers by major mode `buffers-tab-grouping-regexp'."
   (let ((mode1 (symbol-name (symbol-value-in-buffer 'major-mode buf1)))
 	(mode2 (symbol-name (symbol-value-in-buffer 'major-mode 
@@ -379,6 +390,55 @@ redefining the function `format-buffers-menu-line'."
 		     (when (and (eq prop 'buffers-tab) visible-p)
 		       (mapc #'update-tab-in-gutter (frame-list)))))
        (update-tab-in-gutter (selected-frame) t))))
+
+;; Commands to move between those buffers grouped together in the
+;; gutter. Previously in files.el, but moved here since
+;; buffers-tab-omit-function and buffers-tab-filter-functions are not
+;; available if that file is not dumped.
+
+;; Comments on their implementation:
+;;
+;; -- Repeatedly consing-up the buffer list is wasteful, but this function
+;; won't be called that often (I'd be surprised if it's called at all for
+;; most installations, it's a Ben Wing addition from the tail end of the
+;; 90s, not in GNU Emacs and not really advertised.).
+;; 
+;; -- You could argue that that buffer-list-filtering code could be factored
+;; out from #'buffers-tab-items, and we could just operate on that. This would
+;; be a little easier to maintain.
+
+(defun switch-to-next-buffer-in-group (&optional n)
+  "Switch to the next-most-recent buffer in the current tab group.
+This essentially rotates the buffer list forward.
+N (interactively, the prefix arg) specifies how many times to rotate
+forward, and defaults to 1.  Buffers whose name begins with a space
+\(i.e. \"invisible\" buffers) are ignored."
+  (interactive "p")
+  (dotimes (n (or n 1))
+    (let ((curbuf (car (buffer-list))))
+      (loop
+	do (bury-buffer (car (buffer-list)))
+	while (or (funcall buffers-tab-omit-function (car (buffer-list)))
+                  (notevery #'(lambda (function)
+                                (funcall function curbuf (car (buffer-list))))
+                            buffers-tab-filter-functions)))))
+  (switch-to-buffer (car (buffer-list))))
+
+(defun switch-to-previous-buffer-in-group (&optional n)
+  "Switch to the previously most-recent buffer in the current tab group.
+This essentially rotates the buffer list backward.
+N (interactively, the prefix arg) specifies how many times to rotate
+backward, and defaults to 1.  Buffers whose name begins with a space
+\(i.e. \"invisible\" buffers) are ignored."
+  (interactive "p")
+  (dotimes (n (or n 1))
+    (let ((curbuf (car (buffer-list))))
+      (loop
+	do (switch-to-buffer (car (last (buffer-list))))
+	while (or (funcall buffers-tab-omit-function (car (buffer-list)))
+                  (notevery #'(lambda (function)
+                                (funcall function curbuf (car (buffer-list))))
+                            buffers-tab-filter-functions))))))
 
 ;;
 ;; progress display
@@ -685,12 +745,6 @@ The remaining ARGS are passed with FMT `(apply #'format FMT ARGS)'."
 	(display-progress-feedback label str value)
 	str))))
 
-(defun buffers-tab-omit-some-buffers (buf)
-  "For use as a value of `buffers-tab-omit-function'.
-Omit buffers based on the value of `buffers-tab-omit-list', which
-see."
-  (let ((regexp (mapconcat 'concat buffers-tab-omit-list "\\|")))
-    (not (null (string-match regexp (buffer-name buf))))))
-
 (provide 'gutter-items)
+
 ;;; gutter-items.el ends here.

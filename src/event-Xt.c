@@ -857,7 +857,6 @@ x_reset_modifier_mapping (struct device *d)
   int modifier_index, modifier_key, column, mkpm;
   int warned_about_overlapping_modifiers = 0;
   int warned_about_predefined_modifiers  = 0;
-  int warned_about_duplicate_modifiers   = 0;
   int meta_bit  = 0;
   int hyper_bit = 0;
   int super_bit = 0;
@@ -907,8 +906,7 @@ x_reset_modifier_mapping (struct device *d)
     warn_when_safe (Qkey_mapping, Qwarning,				\
  "XEmacs:  %s (0x%x) generates both %s and %s, which is nonsensical.",	\
 		    name, code, index_to_name (old),			\
-		    index_to_name (modifier_index)),			\
-    warned_about_duplicate_modifiers = 1;				\
+		    index_to_name (modifier_index));			\
   if (modifier_index == ShiftMapIndex) modbarf (name,"ModShift");	\
   else if (modifier_index == LockMapIndex) modbarf (name,"ModLock");	\
   else if (modifier_index == ControlMapIndex) modbarf (name,"ModControl"); \

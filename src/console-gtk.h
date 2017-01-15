@@ -65,10 +65,14 @@ void gtk_handle_property_notify (GdkEventProperty *event);
 void signal_special_gtk_user_event (Lisp_Object channel, Lisp_Object function,
 				    Lisp_Object object);
 void gtk_output_string (struct window *w, struct display_line *dl,
-		      Ichar_dynarr *buf, int xpos, int xoffset,
-		      int start_pixpos, int width, face_index findex,
-		      int cursor, int cursor_start, int cursor_width,
-		      int cursor_height);
+                        const Ibyte *buf, Bytecount len,
+                        int xpos, int xoffset,
+                        int start_pixpos, int width, face_index findex,
+                        int cursor, int cursor_start, int cursor_width,
+                        int cursor_height);
+GdkGC *gtk_get_gc (struct frame *f,
+		   Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
+		   Lisp_Object bg_pmap, Lisp_Object lwidth);
 
 int gtk_initialize_frame_menubar (struct frame *f);
 void gtk_init_modifier_mapping (struct device *d);

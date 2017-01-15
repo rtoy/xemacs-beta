@@ -70,74 +70,61 @@ typedef struct textual_run
 {
   Lisp_Object charset; /* charset of this run */
   WCHAR *ptr; /* pointer to Unicode chars in this run */
-  int nchars; /* number of internal characters in this run */
-  int nwchars; /* number of Unicode chars in this run */
+  Elemcount nwchars; /* number of Unicode chars in this run */
 } textual_run;
 
-/* Separate out the text in STR into a series of textual runs of a
-   particular charset.  Returns the number of runs actually used.
-   Returns the textual runs (STATICALLY ALLOCATED!) in RUN_STORAGE_PTR. */
+/* Separate out the text in STR into a series of textual runs of a particular
+   charset.  Returns the number of runs actually used.  Returns the textual
+   runs in RUN_STORAGE, which is presumed to contain enough space for the
+   worst case, which is LEN runs. */
 
-static int
-separate_textual_runs (textual_run **run_storage_ptr,
-		       const Ichar *str, Charcount len)
+static Elemcount
+separate_textual_runs (WCHAR *text_storage, struct textual_run *run_storage,
+                       const Ibyte *str, Bytecount len)
 {
-  static WCHAR *ext_storage;
-  static int ext_storage_size; /* in WCHARS! */
-  static textual_run *run_storage;
-  static int run_storage_size;
-  int runs_so_far = 0;
-  int runbegin = 0;
-  int total_nchars = 0;
-  int i;
-  Lisp_Object prev_charset;
+  Lisp_Object prev_charset = Qunbound;
+  const Ibyte *end = str + len; 
+  Elemcount runs_so_far = 0;
 
-  if (len == 0)
-    return 0;
+  run_storage[0].ptr = text_storage;
+  run_storage[0].nwchars = 0;
 
-  prev_charset = ichar_charset (str[0]);
-
-  for (i = 1; i <= len; i++)
+  while (str < end)
     {
-      if (i == len || !EQ (ichar_charset (str[i]), prev_charset))
-	{
-	  int j;
-	  Ibyte *int_storage =
-	    alloca_ibytes (MAX_ICHAR_LEN * (i - runbegin));
-	  int int_storage_ptr = 0;
-	  Extbyte *alloca_ext_storage;
-	  int nchars;
+      Ichar ch = itext_ichar (str);
+      Lisp_Object charset = ichar_charset (ch);
 
-	  int_storage_ptr = 0;
-	  for (j = runbegin; j < i; j++)
-	    int_storage_ptr +=
-	      set_itext_ichar (int_storage + int_storage_ptr, str[j]);
-	  TO_EXTERNAL_FORMAT (DATA, (int_storage, int_storage_ptr),
-			      ALLOCA, (alloca_ext_storage, nchars),
-			      Qmswindows_unicode);
-	  nchars /= sizeof (WCHAR); /* Tricky ... */
-	  DO_REALLOC (ext_storage, ext_storage_size, total_nchars + nchars,
-		      WCHAR);
-	  memcpy (ext_storage + total_nchars, alloca_ext_storage,
-		  nchars * sizeof (WCHAR));
-	  DO_REALLOC (run_storage, run_storage_size, runs_so_far + 1,
-		      textual_run);
-	  run_storage[runs_so_far].ptr = ext_storage + total_nchars;
-	  run_storage[runs_so_far].charset = prev_charset;
-	  run_storage[runs_so_far].nwchars = nchars;
-	  run_storage[runs_so_far].nchars = i - runbegin;
-	  total_nchars += nchars;
+      if (!EQ (charset, prev_charset))
+	{
+	  if (runs_so_far)
+            {
+              run_storage[runs_so_far-1].nwchars
+                = text_storage - run_storage[runs_so_far-1].ptr;
+            }
+
+	  run_storage[runs_so_far].ptr = text_storage;
+	  run_storage[runs_so_far].charset = charset;
+	  prev_charset = charset;
 	  runs_so_far++;
-	  runbegin = i;
-	  if (i < len)
-	    prev_charset = ichar_charset (str[i]);
 	}
+
+      if (valid_utf_16_first_surrogate (*text_storage))
+        {
+          text_storage++;
+        }
+
+      text_storage++;
+      INC_IBYTEPTR (str);
     }
 
-  *run_storage_ptr = run_storage;
+  if (runs_so_far)
+    {
+      run_storage[runs_so_far-1].nwchars
+        = text_storage - run_storage[runs_so_far-1].ptr;
+    }
+
   return runs_so_far;
 }
-
 
 static int
 mswindows_text_width_single_run (HDC hdc, struct face_cachel *cachel,
@@ -322,8 +309,6 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   int focus = EQ (w->frame, DEVICE_FRAME_WITH_FOCUS_REAL (d));
   HDC hdc = get_frame_dc (f, 1);
   int local_face_index = 0;
-  textual_run *run;
-  int nruns = 0;
   RECT rect = { xpos,
 		DISPLAY_LINE_YPOS (dl),
 		xpos + width,
@@ -333,6 +318,8 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
   int bar_p = image_p || !NILP (bar);
   int cursor_p = !NILP (w->text_cursor_visible_p);
   int real_char_p = ch != 0;
+  WCHAR *ptr = NULL;
+  Elemcount nwchars = 0;
 
   /* Unmap all subwindows in the area we are going to blank. */
   redisplay_unmap_subwindows_maybe (f, xpos, DISPLAY_LINE_YPOS (dl),
@@ -342,10 +329,17 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
     {
       /* Use the font from the underlying character */
       struct face_cachel *font_cachel = WINDOW_FACE_CACHEL (w, findex);
-      nruns = separate_textual_runs (&run, &ch, 1);
-      font = FACE_CACHEL_FONT (font_cachel, run->charset);
+      Ibyte chbuf[MAX_ICHAR_LEN];
+
+      font = FACE_CACHEL_FONT (font_cachel, ichar_charset (ch));
       mswindows_set_dc_font (hdc, font,
 			     font_cachel->underline, font_cachel->strikethru);
+
+      TO_EXTERNAL_FORMAT (DATA, (chbuf, set_itext_ichar (chbuf, ch)),
+                          ALLOCA, (ptr, nwchars), Qmswindows_unicode);
+
+      nwchars /= 2; /* TO_EXTERNAL_FORMAT gave us a bytecount, we want the
+                       number of WCHARS, which is always half that. */
     }
 
   if (!image_p)
@@ -361,7 +355,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
       mswindows_update_dc (hdc, color_cachel->foreground,
 			   color_cachel->background, Qnil);
       ExtTextOutW (hdc, xpos, dl->ypos, ETO_OPAQUE|ETO_CLIPPED, &rect,
-	           nruns ? run->ptr : NULL, nruns ? run->nwchars : 0, NULL);
+	           ptr, nwchars, NULL);
     }
 
   if (!cursor_p)
@@ -391,8 +385,7 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
 			   cursor_cachel->foreground, 
 			   cursor_cachel->background, Qnil);
       ExtTextOutW (hdc, xpos, dl->ypos, ETO_OPAQUE | ETO_CLIPPED,
-		   &rect, nruns ? run->ptr : NULL, nruns ? run->nwchars : 0,
-		   NULL);
+		   &rect, ptr, nwchars, NULL);
     }
 
 #ifdef MULE
@@ -432,8 +425,8 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
  DL		Display line that this text is on.  The values in the
  		structure are used to determine the vertical position and
 		clipping range of the text.
- BUF		Dynamic array of Ichars specifying what is actually to be
-		drawn.
+ BUF		Pointer to those Ibytes to be output.
+ LEN            Number of those Ibytes to be output
  XPOS		X position in pixels where the text should start being drawn.
  XOFFSET	Number of pixels to be chopped off the left side of the
  		text.  The effect is as if the text were shifted to the
@@ -445,8 +438,9 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
  ****************************************************************************/
 static void
 mswindows_output_string (struct window *w, struct display_line *dl,
-			 Ichar_dynarr *buf, int xpos, int xoffset,
-			 int clip_start, int width, face_index findex,
+			 const Ibyte *buf, Bytecount len,
+                         int xpos, int xoffset, int clip_start,
+                         int width, face_index findex,
 			 int UNUSED (cursor), int UNUSED (cursor_start),
 			 int UNUSED (cursor_width), int UNUSED (cursor_height))
 {
@@ -456,8 +450,10 @@ mswindows_output_string (struct window *w, struct display_line *dl,
   HDC hdc = get_frame_dc (f, 1);
   int clip_end;
   Lisp_Object bg_pmap;
+  Extbyte *text_storage;
   textual_run *runs;
-  int nruns;
+  Elemcount nruns;
+  Bytecount text_storage_len;
   int i, height;
   RECT rect;
   struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, findex);
@@ -515,8 +511,16 @@ mswindows_output_string (struct window *w, struct display_line *dl,
       cachel = WINDOW_FACE_CACHEL (w, findex);
     }
 
-  nruns = separate_textual_runs (&runs, Dynarr_begin (buf),
-				 Dynarr_length (buf));
+  TO_EXTERNAL_FORMAT (DATA, (buf, len),
+                      ALLOCA, (text_storage, text_storage_len),
+                      Qmswindows_unicode);
+
+  /* TEXT_STORAGE_LEN / 2 will be smaller than LEN, while still being an
+     inclusive upper bound on the number of possible textual runs (the maximum
+     value possible is the number of Ichars at BUF). */
+  runs = alloca_array (textual_run, text_storage_len >> 1);
+
+  nruns = separate_textual_runs ((WCHAR *) text_storage, runs, buf, len);
 
   for (i = 0; i < nruns; i++)
     {
@@ -947,7 +951,7 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 				int cursor_width, int cursor_height)
 {
   struct frame *f = XFRAME (w->frame);
-  Ichar_dynarr *buf;
+  Ibyte *buffer, *bufp;
   Lisp_Object window;
 
   struct display_block *db = Dynarr_atp (dl->display_blocks, block);
@@ -963,8 +967,10 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
   rb = Dynarr_atp (rba, start);
 
   if (!rb)
+    {
       /* Nothing to do so don't do anything. */
       return;
+    }
 
   findex = rb->findex;
   xpos = rb->xpos;
@@ -974,7 +980,8 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 
   if (end < 0)
     end = Dynarr_length (rba);
-  buf = Dynarr_new (Ichar);
+
+  buffer = bufp = alloca_ibytes (end * MAX_ICHAR_LEN);
 
   while (elt < end)
     {
@@ -984,20 +991,21 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	  && rb->object.chr.ch != '\n' && rb->cursor_type != CURSOR_ON
 	  && EQ (charset, ichar_charset (rb->object.chr.ch)))
 	{
-	  Dynarr_add (buf, rb->object.chr.ch);
+          bufp += set_itext_ichar (bufp, rb->object.chr.ch);
 	  width += rb->width;
 	  elt++;
 	}
       else
 	{
-	  if (Dynarr_length (buf))
+	  if (bufp - buffer)
 	    {
-	      mswindows_output_string (w, dl, buf, xpos, 0, start_pixpos,
-				       width, findex, 0, 0, 0, 0);
+	      mswindows_output_string (w, dl, buffer, bufp - buffer, xpos, 0,
+                                       start_pixpos, width, findex,
+                                       0, 0, 0, 0);
 	      xpos = rb->xpos;
 	      width = 0;
+              bufp = buffer;
 	    }
-	  Dynarr_reset (buf);
 	  width = 0;
 
 	  if (rb->type == RUNE_CHAR)
@@ -1015,10 +1023,8 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 		    }
 		  else
 		    {
-		      Dynarr_add (buf, rb->object.chr.ch);
 		      mswindows_output_cursor (w, dl, xpos, cursor_width,
 					       findex, rb->object.chr.ch, 0);
-		      Dynarr_reset (buf);
 		    }
 
 		  xpos += rb->width;
@@ -1051,7 +1057,10 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 		}
 
 	      if (rb->cursor_type == CURSOR_ON)
-		mswindows_output_cursor (w, dl, xpos, cursor_width, rb->findex, 0, 0);
+                {
+                  mswindows_output_cursor (w, dl, xpos, cursor_width,
+                                           rb->findex, 0, 0);
+                }
 
 	      elt++;
 	      if (elt < end)
@@ -1068,9 +1077,11 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	      struct display_box dbox;
 	      struct display_glyph_area dga;
 
-	      redisplay_calculate_display_boxes (dl, rb->xpos, rb->object.dglyph.xoffset,
+	      redisplay_calculate_display_boxes (dl, rb->xpos,
+                                                 rb->object.dglyph.xoffset,
 						 rb->object.dglyph.yoffset,
-                                                 start_pixpos, rb->width, &dbox, &dga);
+                                                 start_pixpos, rb->width,
+                                                 &dbox, &dga);
 
 	      window = wrap_window (w);
 	      instance = glyph_image_instance (rb->object.dglyph.glyph,
@@ -1132,9 +1143,9 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	}
     }
 
-  if (Dynarr_length (buf))
-    mswindows_output_string (w, dl, buf, xpos, 0, start_pixpos, width, findex,
-			     0, 0, 0, 0);
+  if (bufp - buffer)
+    mswindows_output_string (w, dl, buffer, bufp - buffer, xpos, 0,
+                             start_pixpos, width, findex, 0, 0, 0, 0);
 
   if (dl->modeline
       && !EQ (Qzero, w->modeline_shadow_thickness)
@@ -1142,8 +1153,6 @@ mswindows_output_display_block (struct window *w, struct display_line *dl,
 	  || f->windows_structure_changed
 	  || w->shadow_thickness_changed))
     bevel_modeline (w, dl);
-
-  Dynarr_free (buf);
 }
 
 
@@ -1213,15 +1222,23 @@ mswindows_output_vertical_divider (struct window *w, int UNUSED (clear_unused))
  ****************************************************************************/
 static int
 mswindows_text_width (struct frame *f, struct face_cachel *cachel,
-		      const Ichar *str, Charcount len)
+		      const Ibyte *str, Bytecount len)
 {
   HDC hdc = get_frame_dc (f, 0);
   int width_so_far = 0;
   textual_run *runs;
-  int nruns;
+  Extbyte *text_storage;
+  Elemcount nruns;
+  Bytecount text_storage_len;
   int i;
 
-  nruns = separate_textual_runs (&runs, str, len);
+  TO_EXTERNAL_FORMAT (DATA, (str, len),
+                      ALLOCA, (text_storage, text_storage_len),
+                      Qmswindows_unicode);
+
+  runs = alloca_array (textual_run, text_storage_len >> 1);
+
+  nruns = separate_textual_runs ((WCHAR *) text_storage, runs, str, len);
 
   for (i = 0; i < nruns; i++)
     width_so_far += mswindows_text_width_single_run (hdc, cachel, runs + i);

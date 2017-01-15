@@ -1415,7 +1415,7 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	{
 	  Ibyte tmp_str[MAX_ICHAR_LEN];
 	  Ichar c, translated, inverse;
-	  Bytecount orig_bytelen, new_bytelen, inv_bytelen;
+	  Bytecount orig_bytelen, new_bytelen;
 
 	  /* If we got here and the RE flag is set, it's because
 	     we're dealing with a regexp known to be trivial, so the
@@ -1430,7 +1430,6 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  inverse = TRANSLATE (inverse_trt, c);
 
 	  orig_bytelen = itext_ichar_len (base_pat);
-	  inv_bytelen = set_itext_ichar (tmp_str, inverse);
 	  new_bytelen = set_itext_ichar (tmp_str, translated);
 
           if (boyer_moore_ok
