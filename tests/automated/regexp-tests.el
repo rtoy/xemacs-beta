@@ -67,7 +67,20 @@
   (Assert (string-match "ä" "ä"))
   (Assert (not (string-match "ä" "Ä")))
   (Assert (string-match "Ä" "Ä"))
-  (Assert (not (string-match "Ä" "ä"))))
+  (Assert (not (string-match "Ä" "ä")))
+
+  (let ((preserve (list 0 most-positive-fixnum (/ most-positive-fixnum 4)
+			(/ most-positive-fixnum 2))))
+    (store-match-data preserve)
+    (Assert (string-match-p "ä" "ä"))
+    ;; We are singularly unlikely to have the above become the
+    ;; match-data incidentally!
+    (Assert (equal (match-data) preserve))
+    (Assert (string-match "ä" "ä"))
+    (Assert (eql (- (match-end 0) (match-beginning 0)) 1)
+	    "checking we only matched one character")
+    (Assert (not (cddr (match-data)))
+	    "checking the match data only reflected one match, string-match")))
 
 ;; Is posix-string-match passing the POSIX flag correctly?
 
@@ -95,7 +108,20 @@
   (Assert (not (looking-at "Ä")))
   (forward-char)
   (Assert (not (looking-at "ä")))
-  (Assert (looking-at "Ä")))
+  (Assert (looking-at "Ä"))
+  (goto-char (point-min))
+  (let ((preserve (list 0 most-positive-fixnum (/ most-positive-fixnum 4)
+			(/ most-positive-fixnum 2))))
+    (store-match-data preserve)
+    (Assert (looking-at-p "ä"))
+    ;; We are singularly unlikely to have the above become the
+    ;; match-data incidentally!
+    (Assert (equal (match-data) preserve))
+    (Assert (looking-at "ä"))
+    (Assert (eql (- (match-end 0) (match-beginning 0)) 1)
+	    "checking we only matched one character")
+    (Assert (not (cddr (match-data)))
+	    "checking the match data was only one in length, looking-at")))
 
 ;; re-search-forward and re-search-backward
 (with-temp-buffer
@@ -250,11 +276,10 @@ baaaa
 ;; Not called because it takes too much time.
 (defun test-regexp-charset-paranoid ()
   (let ((i 0)
-	(max (expt 2 (if (featurep 'mule) 19 8)))
 	(range "[a-z]")
 	(range-not "[^a-z]")
 	char string)
-    (while (< i max)
+    (while (< i char-code-limit)
       (when (setq char (int-to-char i))
 	(setq string (char-to-string char))
 	(if (or (and (<= 65 i)
@@ -268,14 +293,13 @@ baaaa
 	  (Assert (string-match range-not string))))
       (setq i (1+ i)))))
 
-;; (test-regexp-charset-paranoid)
+; (test-regexp-charset-paranoid)
 
 ;; charset_mule, charset_mule_not
 ;; Not called because it takes too much time.
 (defun test-regex-charset-mule-paranoid ()
   (if (featurep 'mule)
       (let ((i 0)
-	    (max (expt 2 19))
 	    (range (format "[%c-%c]"
 			   (make-char 'japanese-jisx0208 36 34)
 			   (make-char 'japanese-jisx0208 36 42)))
@@ -285,7 +309,7 @@ baaaa
 	    (min-int (char-to-int (make-char 'japanese-jisx0208 36 34)))
 	    (max-int (char-to-int (make-char 'japanese-jisx0208 36 42)))
 	    char string)
-	(while (< i max)
+	(while (< i char-code-limit)
 	  (when (setq char (int-to-char i))
 	    (setq string (char-to-string char))
 	    (if (and (<= min-int i)
@@ -297,7 +321,7 @@ baaaa
 	      (Assert (string-match range-not string))))
 	  (setq i (1+ i))))))
 
-;; (test-regex-charset-mule-paranoid)
+; (test-regex-charset-mule-paranoid)
 
 ;; Test that replace-match does not clobber registers after a failed match
 (with-temp-buffer

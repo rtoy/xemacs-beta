@@ -325,7 +325,7 @@ fixup_search_regs_for_string (Lisp_Object string)
 
 
 static Lisp_Object
-looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
+looking_at_1 (Lisp_Object string, struct buffer *buf, int posix, int nodata)
 {
   Lisp_Object val;
   Bytebpos p1, p2;
@@ -362,7 +362,8 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
 
   i = re_match_2 (bufp, (char *) BYTE_BUF_BYTE_ADDRESS (buf, p1),
 		  s1, (char *) BYTE_BUF_BYTE_ADDRESS (buf, p2), s2,
-		  BYTE_BUF_PT (buf) - BYTE_BUF_BEGV (buf), &search_regs,
+		  BYTE_BUF_PT (buf) - BYTE_BUF_BEGV (buf),
+		  nodata ? NULL : &search_regs,
 		  BYTE_BUF_ZV (buf) - BYTE_BUF_BEGV (buf), wrap_buffer (buf),
 		  buf, scache);
 
@@ -370,17 +371,22 @@ looking_at_1 (Lisp_Object string, struct buffer *buf, int posix)
     matcher_overflow ();
 
   val = (0 <= i ? Qt : Qnil);
-  if (NILP (val))
-    return Qnil;
-  {
-    int num_regs = search_regs.num_regs;
-    for (i = 0; i < num_regs; i++)
-      if (search_regs.start[i] >= 0)
-	{
-	  search_regs.start[i] += BYTE_BUF_BEGV (buf);
-	  search_regs.end[i] += BYTE_BUF_BEGV (buf);
-	}
-  }
+
+  if (nodata || NILP (val))
+    {
+      return val;
+    }
+  else
+    {
+      int num_regs = search_regs.num_regs;
+      for (i = 0; i < num_regs; i++)
+	if (search_regs.start[i] >= 0)
+	  {
+	    search_regs.start[i] += BYTE_BUF_BEGV (buf);
+	    search_regs.end[i] += BYTE_BUF_BEGV (buf);
+	  }
+    }
+  
   last_thing_searched = wrap_buffer (buf);
   fixup_search_regs_for_buffer (buf);
   return val;
@@ -398,7 +404,7 @@ Optional argument BUFFER defaults to the current buffer.
 */
        (regexp, buffer))
 {
-  return looking_at_1 (regexp, decode_buffer (buffer, 0), 0);
+  return looking_at_1 (regexp, decode_buffer (buffer, 0), 0, 0);
 }
 
 DEFUN ("posix-looking-at", Fposix_looking_at, 1, 2, 0, /*
@@ -414,7 +420,25 @@ Optional argument BUFFER defaults to the current buffer.
 */
        (regexp, buffer))
 {
-  return looking_at_1 (regexp, decode_buffer (buffer, 0), 1);
+  return looking_at_1 (regexp, decode_buffer (buffer, 0), 1, 0);
+}
+
+DEFUN ("looking-at-p", Flooking_at_p, 1, 2, 0, /*
+Return t if text after point matches regular expression REGEXP.
+
+This differs from `looking-at' in that it does not modify the match
+data on success.  This has the advantage that calls to `looking-at-p'
+have fewer side effects, are easier to reason about, and are less
+likely to provoke problems with other code when that other code has
+not been written with the consideration of modification of the match
+data at the forefront of the programmer's mind.  Neither function
+modifies the match data on failure.
+
+Optional argument BUFFER defaults to the current buffer.
+*/
+       (regexp, buffer))
+{
+  return looking_at_1 (regexp, decode_buffer (buffer, 0), 0, 1);
 }
 
 static Lisp_Object
@@ -537,10 +561,11 @@ previous success match is preserved.
   return string_match_1 (regexp, string, start, decode_buffer (buffer, 0), 1);
 }
 
-/* Match REGEXP against STRING, searching all of STRING,
-   and return the index of the match, or negative on failure.
-   This does not clobber the match data. */
-
+/* Match REGEXP against RELOC, searching that substring of RELOC
+   starting at OFFSET, and return the index of the match, or negative
+   on failure.  This does not clobber the match data.  If RELOC is
+   Qnil, the text to be examined is taken to be at NONRELOC, an Ibyte
+   pointer. */
 Bytecount
 fast_string_match (Lisp_Object regexp, const Ibyte *nonreloc,
 		   Lisp_Object reloc, Bytecount offset,
@@ -592,6 +617,42 @@ Bytecount
 fast_lisp_string_match (Lisp_Object regex, Lisp_Object string)
 {
   return fast_string_match (regex, 0, string, 0, -1, 0, ERROR_ME, 0);
+}
+
+DEFUN ("string-match-p", Fstring_match_p, 2, 4, 0, /*
+Return index of start of first match for REGEXP in STRING, or nil.
+
+If third arg START is non-nil, start search at that index in STRING.
+
+Optional arg BUFFER controls how case folding and syntax and category
+lookup is done (according to the value of `case-fold-search' in that buffer
+and that buffer's case tables, syntax tables, and category table).
+
+This differs from `string-match' in that it does not modify the match
+data on success.  This has the advantage that calls to
+`string-match-p' have fewer side effects, are easier to reason about,
+and are less likely to provoke problems with other code when that
+other code has not been written with the consideration of modification
+of the match data at the forefront of the programmer's mind.
+
+Neither function modifies the match data on failure.
+*/
+       (regexp, string, start, buffer))
+{
+  Bytecount result, bstart;
+  struct buffer *bufp;
+
+  CHECK_STRING (regexp);
+  CHECK_STRING (string);
+  bstart = (NILP (start)) ? 0 : get_string_pos_byte (string, start,
+                                                     GB_NEGATIVE_FROM_END);
+  bufp = decode_buffer (buffer, 0);
+  result = fast_string_match (regexp, NULL, string, bstart,
+                              XSTRING_LENGTH (string) - bstart,
+                              !NILP (bufp->case_fold_search), 
+                              ERROR_ME, 0);
+  return result < 0 ? Qnil
+    : make_fixnum (string_index_byte_to_char (string, result));
 }
 
 
@@ -3527,8 +3588,10 @@ syms_of_search (void)
 
   DEFSUBR (Flooking_at);
   DEFSUBR (Fposix_looking_at);
+  DEFSUBR (Flooking_at_p);
   DEFSUBR (Fstring_match);
   DEFSUBR (Fposix_string_match);
+  DEFSUBR (Fstring_match_p);
   DEFSUBR (Fskip_chars_forward);
   DEFSUBR (Fskip_chars_backward);
   DEFSUBR (Fskip_syntax_forward);

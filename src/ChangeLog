@@ -1,5 +1,27 @@
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Implement GNU's #'looking-at-p, #'string-match-p in C, the regexp
+	code already provides for them on the C level.
+	Don't provide GNU's 'inhibit-changing-match-data, *adding* special
+	variables doesn't make our life better.
+	* search.c (looking_at_1):
+	New argument NODATA, specifying that the match data are not to be
+	modified.
+	* search.c (Flooking_at):
+	Use the new signature.
+	* search.c (Fposix_looking_at):
+	Ditto.
+	* search.c (Flooking_at_p): New. Equivalent to #'looking-at, but
+	do not modify the match data even on success.
+	* search.c (fast_string_match): Update the documentation comment
+	for this.
+	* search.c (Fstring_match_p): New. Equivalent to #'string-match,
+	but do not modify the match data on success.
+	* search.c (syms_of_search):
+	Make Fstring_match_p, Flooking_at_p available here.
+
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Drop a lot of needless Ibyte -> Ichar conversion,
 	redisplay-msw.c.
 	This is the mswindows code corresponding to 64c9a3a479ce .

@@ -1,3 +1,9 @@
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Regexp Search):
+	* lispref/searching.texi (POSIX Regexps):
+	Document `string-match-p', `looking-at-p'.
+
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.texi (Macro Bindings):

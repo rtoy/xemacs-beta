@@ -856,6 +856,14 @@ the match is available as @code{(match-end 0)}.  @xref{Match Data}.
 @end example
 @end defun
 
+@defun string-match-p regexp string &optional start buffer
+This function is equivalent to @code{string-match}, but, if it
+matches, it does not change the match data. This is useful for many
+cases where there is no need for the match data, since there is less
+risk of destroying match data that is needed for some other code.
+Neither function modifies the match data there is no match.
+@end defun
+
 The function @code{split-string} can be used to parse a string into
 components delimited by text matching a regular expression.
 
@@ -943,9 +951,11 @@ following'' means precisely that: the search is ``anchored'' and it can
 succeed only starting with the first character following point.  The
 result is @code{t} if so, @code{nil} otherwise.
 
-This function does not move point, but it updates the match data, which
-you can access using @code{match-beginning} and @code{match-end}.
-@xref{Match Data}.
+This function does not move point, but it updates the match data,
+which you can access using @code{match-beginning} and
+@code{match-end}.  @xref{Match Data}.  If you have no need for this
+match data, consider @code{looking-at-p}, which is equivalent to
+@code{looking-at} but does not change the match data on success.
 
 In this example, point is located directly before the @samp{T}.  If it
 were anywhere else, the result would be @code{nil}.
@@ -961,6 +971,12 @@ comes back" twice.
      @result{} t
 @end group
 @end example
+@end defun
+
+@defun looking-at-p regexp &optional buffer
+This is a version of @code{looking-at} that never changes the match
+data, useful when you have no need to use the match data for this
+regular expression.
 @end defun
 
 @node POSIX Regexps, Search and Replace, Regexp Search, Searching and Matching
