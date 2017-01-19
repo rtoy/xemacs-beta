@@ -1881,9 +1881,8 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 /************************************************************************/
 
 void
-find_charsets_in_ibyte_string (Binbyte *charsets,
-			       const Ibyte *USED_IF_MULE (str),
-			       Bytecount USED_IF_MULE (len))
+find_charsets_in_ibyte_string (Binbyte *charsets, const Ibyte *str,
+			       Bytecount len)
 {
   const Ibyte *endp = str + len;
 
