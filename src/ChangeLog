@@ -1,3 +1,9 @@
+2017-01-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (find_charsets_in_ibyte_string):
+	STR and LEN are now used on non-Mule, remove the annotation that
+	they're unused, hopefully placating the buildbot.
+
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Implement GNU's #'looking-at-p, #'string-match-p in C, the regexp
