@@ -5984,11 +5984,11 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           old_regstart[*p] = REG_MATCH_NULL_STRING_P (reg_info[*p])
                              ? REG_UNSET (regstart[*p]) ? d : regstart[*p]
                              : regstart[*p];
-	  DEBUG_MATCH_PRINT2 ("  old_regstart: %d\n",
+	  DEBUG_MATCH_PRINT2 ("  old_regstart: %ld\n",
 			 POINTER_TO_OFFSET (old_regstart[*p]));
 
           regstart[*p] = d;
-	  DEBUG_MATCH_PRINT2 ("  regstart: %d\n", POINTER_TO_OFFSET (regstart[*p]));
+	  DEBUG_MATCH_PRINT2 ("  regstart: %ld\n", POINTER_TO_OFFSET (regstart[*p]));
 
           IS_ACTIVE (reg_info[*p]) = 1;
           MATCHED_SOMETHING (reg_info[*p]) = 0;
@@ -6025,11 +6025,12 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
           old_regend[*p] = REG_MATCH_NULL_STRING_P (reg_info[*p])
                            ? REG_UNSET (regend[*p]) ? d : regend[*p]
 			   : regend[*p];
-	  DEBUG_MATCH_PRINT2 ("      old_regend: %d\n",
-			 POINTER_TO_OFFSET (old_regend[*p]));
+	  DEBUG_MATCH_PRINT2 ("      old_regend: %ld\n",
+			      POINTER_TO_OFFSET (old_regend[*p]));
 
           regend[*p] = d;
-	  DEBUG_MATCH_PRINT2 ("      regend: %d\n", POINTER_TO_OFFSET (regend[*p]));
+	  DEBUG_MATCH_PRINT2 ("      regend: %ld\n",
+			      POINTER_TO_OFFSET (regend[*p]));
 
           /* This register isn't active anymore.  */
           IS_ACTIVE (reg_info[*p]) = 0;
