@@ -127,11 +127,14 @@
 
 ;;; Check for 64-bit cleanness on LP64 platforms.
 (Assert (= (read (format "%d"  most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum))
+;; No longer true, %ld is explicitly 32-bits wide in Lisp format strings.
+; (Assert (= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum))
 (Assert (= (read (format "%u"  most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum))
+;; See above.
+; (Assert (= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum))
 (Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
-(Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
+;; See above.
+; (Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
 
 ;; These used to crash. 
 (Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))

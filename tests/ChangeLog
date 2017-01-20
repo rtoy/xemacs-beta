@@ -1,3 +1,10 @@
+2017-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	The design of (format "%ld" ...) has changed slightly, there's no
+	guarantee it will represent most-positive-fixnum correctly,
+	comment out a couple of tests here.
+
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:
