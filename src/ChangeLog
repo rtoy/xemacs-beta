@@ -1,3 +1,12 @@
+2017-01-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* regex.c (re_match_2_internal):
+	Use %ld in DEBUG_MATCH_PRINT2, since we're printing old_regstart,
+	a ssize_t.
+	* regex.h:
+	Make regoff_t a Bytecount, not an int. Bytecount becomes ssize_t
+	when emacs is not #defined.
+
 2017-01-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (find_charsets_in_ibyte_string):

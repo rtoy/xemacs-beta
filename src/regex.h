@@ -428,7 +428,7 @@ struct re_pattern_buffer
 typedef struct re_pattern_buffer regex_t;
 
 /* Type for byte offsets within the string.  POSIX mandates this.  */
-typedef int regoff_t;
+typedef Bytecount regoff_t;
 
 
 /* This is the structure we store register match data in.  See
