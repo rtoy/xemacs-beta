@@ -78,7 +78,7 @@ time and pid.
        (limit))
 {
   EMACS_INT val;
-  unsigned long denominator;
+  EMACS_UINT denominator;
 
   if (EQ (limit, Qt))
     seed_random (qxe_getpid () + time (NULL));
@@ -98,7 +98,7 @@ time and pid.
 	 it's possible to get a quotient larger than limit; discarding
 	 these values eliminates the bias that would otherwise appear
 	 when using a large limit.  */
-      denominator = ((unsigned long)1 << FIXNUM_VALBITS) / XFIXNUM (limit);
+      denominator = ((EMACS_UINT) 1 << FIXNUM_VALBITS) / XFIXNUM (limit);
       do
 	val = get_random () / denominator;
       while (val >= XFIXNUM (limit));

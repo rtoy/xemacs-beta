@@ -537,7 +537,7 @@ bignum_random (bignum result, bignum limit)
 	{
 	  bignum_lshift (limitcmp, limitcmp, FIXNUM_VALBITS);
 	  bignum_lshift (result, result, FIXNUM_VALBITS);
-	  bignum_set_long (intern_bignum, get_random ());
+	  bignum_set_emacs_int (intern_bignum, get_random ());
 	  MP_MADD (intern_bignum, result, result);
 	}
       while (MP_MCMP (limitcmp, limit) <= 0);

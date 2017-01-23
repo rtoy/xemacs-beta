@@ -3473,7 +3473,7 @@ get_process_times (double *user_time, double *system_time, double *real_time)
 #endif /* !RAND_BITS */
 
 void
-seed_random (long arg)
+seed_random (EMACS_INT arg)
 {
 #ifdef HAVE_RANDOM
   srandom ((unsigned int)arg);
@@ -3493,10 +3493,10 @@ seed_random (long arg)
  * Build a full Emacs-sized word out of whatever we've got.
  * This suffices even for a 64-bit architecture with a 15-bit rand.
  */
-long
+EMACS_INT
 get_random (void)
 {
-  long val = random ();
+  EMACS_INT val = random ();
 #if FIXNUM_VALBITS > RAND_BITS
   val = (val << RAND_BITS) ^ random ();
 #if FIXNUM_VALBITS > 2*RAND_BITS

@@ -5853,8 +5853,8 @@ void uninit_buffer_syntax_cache (struct buffer *buf);
 extern Lisp_Object Qsyntax_table;
 
 /* Defined in sysdep.c */
-long get_random (void);
-void seed_random (long arg);
+EMACS_INT get_random (void);
+void seed_random (EMACS_INT arg);
 
 /* Defined in text.c */
 void find_charsets_in_ibyte_string (Binbyte *charsets, const Ibyte *str,
