@@ -1,3 +1,15 @@
+2017-01-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Declare get_random() as returning an EMACS_INT, long does not
+	necessarily have all the bits of a full-sized emacs word.
+	Declare seed_random as taking an EMACS_INT for symmetry.
+
+	* fns.c (Frandom):
+	* lisp.h:
+	* number-mp.c (bignum_random):
+	* sysdep.c (seed_random):
+	* sysdep.c (get_random):
+
 2017-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* regex.c (re_match_2_internal):
