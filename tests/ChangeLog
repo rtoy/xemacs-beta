@@ -1,3 +1,9 @@
+2017-01-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Test a change just committed to avoid eating the next non-digit
+	character after a backreference.
+
 2017-01-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el:
