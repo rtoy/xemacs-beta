@@ -1211,6 +1211,10 @@ appropriately, ASCII digits" limit)))))
    (decode-char 'ucs #x2116) ;; NUMERO SIGN
    (decode-char 'ucs #x5357))) ;; kDefinition south; southern part; southward
 
+;; GET_UNSIGNED_NUMBER in regex.c used to eat the next character, check it
+;; doesn't anymore.
+(Assert (eql (string-match "\\(x\\)\\(\\1\\)" "xx") 0))
+
 (with-temp-buffer
   (insert "hi there")
   (goto-char 1)

@@ -1,3 +1,13 @@
+2017-01-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Don't eat the next non-digit Ibyte after a backreference,
+	regex.c. Thank you Jerry James and the Fedora users!
+	* regex.c:
+	* regex.c (GET_UNSIGNED_NUMBER_1): New, like GET_UNSIGNED_NUMBER,
+	but leave P pointing at the next non-digit.
+	* regex.c (GET_UNSIGNED_NUMBER): Use it.
+	* regex.c (regex_compile): Use it when parsing backreferences.
+
 2017-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Declare get_random() as returning an EMACS_INT, long does not
