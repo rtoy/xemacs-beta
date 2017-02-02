@@ -8,6 +8,13 @@
 	* regex.c (GET_UNSIGNED_NUMBER): Use it.
 	* regex.c (regex_compile): Use it when parsing backreferences.
 
+2017-01-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-eimage.c (gif_instantiate_unwind): Update for giflib 5.1
+	API change.
+	(gif_decode_error_string): Take an error argument for new API.
+	(gif_instantiate): New API changes.
+
 2017-01-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Declare get_random() as returning an EMACS_INT, long does not

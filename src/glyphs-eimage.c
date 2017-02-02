@@ -586,8 +586,14 @@ gif_instantiate_unwind (Lisp_Object unwind_obj)
   free_opaque_ptr (unwind_obj);
   if (data->giffile)
     {
+#if defined(GIFLIB_MAJOR) && ((GIFLIB_MAJOR > 5) || (GIFLIB_MAJOR == 5 && GIFLIB_MINOR > 0))
+      int error;
+      DGifCloseFile (data->giffile, &error);
+      GifFreeSavedImages (data->giffile);
+#else
       DGifCloseFile (data->giffile);
       FreeSavedImages (data->giffile);
+#endif
       data->giffile = 0;
     }
   if (data->eimage)
@@ -619,9 +625,9 @@ gif_read_from_memory (GifFileType *gif, GifByteType *buf, int size)
 }
 
 static const char *
-gif_decode_error_string (void)
+gif_decode_error_string (int error)
 {
-  switch (GifLastError ())
+  switch (error)
     {
     case D_GIF_ERR_OPEN_FAILED:
       return "GIF error: unable to open";
@@ -685,16 +691,31 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     mem_struct.bytes = bytes;
     mem_struct.len = len;
     mem_struct.index = 0;
+#if defined(GIFLIB_MAJOR) && ((GIFLIB_MAJOR > 5) || (GIFLIB_MAJOR == 5 && GIFLIB_MINOR > 0))
+    {
+      int error = 0;
+      unwind.giffile = DGifOpen (&mem_struct, gif_read_from_memory, &error);
+      if (unwind.giffile == NULL)
+	signal_image_error (gif_decode_error_string (error), instantiator);
+      /* Then slurp the image into memory, decoding along the way.
+	 The result is the image in a simple one-byte-per-pixel
+	 format. */
+      if (DGifSlurp (unwind.giffile) == GIF_ERROR)
+	signal_image_error (gif_decode_error_string (unwind.giffile->Error),
+			    instantiator);
+    }
+#else
     unwind.giffile = DGifOpen (&mem_struct, gif_read_from_memory);
     if (unwind.giffile == NULL)
-      signal_image_error (gif_decode_error_string (), instantiator);
-
+      signal_image_error (gif_decode_error_string (GifLastError ()),
+                          instantiator);
     /* Then slurp the image into memory, decoding along the way.
        The result is the image in a simple one-byte-per-pixel
        format. */
     if (DGifSlurp (unwind.giffile) == GIF_ERROR)
-      signal_image_error (gif_decode_error_string (), instantiator);
-
+      signal_image_error (gif_decode_error_string (GifLastError ()),
+                          instantiator);
+#endif
     /* dgif_lib.c doesn't do any validation on these. */
     check_integer_range (make_fixnum (1),
                          make_fixnum (unwind.giffile->SHeight),
@@ -802,6 +823,18 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       unsigned short timeout = 0;
       Lisp_Object tid;
 
+#if defined(GIFLIB_MAJOR) && ((GIFLIB_MAJOR > 5) || (GIFLIB_MAJOR == 5 && GIFLIB_MINOR > 0))
+      if (unwind.giffile->SavedImages[0].ExtensionBlockCount
+	  &&
+	  unwind.giffile->SavedImages[0].ExtensionBlocks[0].Function
+	  == GRAPHICS_EXT_FUNC_CODE
+	  )
+	{
+	  timeout = (unsigned short)
+	    ((unwind.giffile->SavedImages[0].ExtensionBlocks[0].Bytes[2] << 8) +
+	     unwind.giffile-> SavedImages[0].ExtensionBlocks[0].Bytes[1]) * 10;
+	}
+#else
       if (unwind.giffile->SavedImages[0].Function == GRAPHICS_EXT_FUNC_CODE
 	  &&
 	  unwind.giffile->SavedImages[0].ExtensionBlockCount)
@@ -810,6 +843,7 @@ gif_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	    ((unwind.giffile->SavedImages[0].ExtensionBlocks[0].Bytes[2] << 8) +
 	     unwind.giffile-> SavedImages[0].ExtensionBlocks[0].Bytes[1]) * 10;
 	}
+#endif
 
       /* Too short a timeout will crucify us performance-wise. */
       tid = add_glyph_animated_timeout (timeout > 10 ? timeout : 10, image_instance);

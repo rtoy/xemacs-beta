@@ -3872,10 +3872,12 @@ if test "$window_system" != "none"; then
     dnl Versions of libgif and libungif prior to the introduction of
     dnl EGifPutExtensionLast caused Emacs crashes.  We'll require that
     dnl function, too, in hopes that we can avoid similar crashes.
-    AC_CHECK_LIB(gif, EGifPutExtensionLast,
+    AC_CHECK_LIB(gif, EGifPutExtensionTrailer,
       [XE_PREPEND(-lgif, libs_x)],
-      [AC_CHECK_LIB(ungif, EGifPutExtensionLast,
-        [XE_PREPEND(-lungif, libs_x)], with_gif=no)])
+      AC_CHECK_LIB(gif, EGifPutExtensionLast,
+        [XE_PREPEND(-lgif, libs_x)],
+        [AC_CHECK_LIB(ungif, EGifPutExtensionLast,
+          [XE_PREPEND(-lungif, libs_x)], with_gif=no)]))
   fi
   if test "$with_gif" != "no"; then
     AC_DEFINE(HAVE_GIF)
