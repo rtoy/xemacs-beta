@@ -15979,7 +15979,46 @@ fi
  }
   if test "$with_gif" != "no"; then
     with_gif="yes"
-                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EGifPutExtensionLast in -lgif" >&5
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EGifPutExtensionTrailer in -lgif" >&5
+$as_echo_n "checking for EGifPutExtensionTrailer in -lgif... " >&6; }
+if ${ac_cv_lib_gif_EGifPutExtensionTrailer+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgif  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char EGifPutExtensionTrailer ();
+int
+main ()
+{
+return EGifPutExtensionTrailer ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gif_EGifPutExtensionTrailer=yes
+else
+  ac_cv_lib_gif_EGifPutExtensionTrailer=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gif_EGifPutExtensionTrailer" >&5
+$as_echo "$ac_cv_lib_gif_EGifPutExtensionTrailer" >&6; }
+if test "x$ac_cv_lib_gif_EGifPutExtensionTrailer" = xyes; then :
+  libs_x="-lgif $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lgif\" to \$libs_x"; fi
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for EGifPutExtensionLast in -lgif" >&5
 $as_echo_n "checking for EGifPutExtensionLast in -lgif... " >&6; }
 if ${ac_cv_lib_gif_EGifPutExtensionLast+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16058,6 +16097,8 @@ if test "x$ac_cv_lib_ungif_EGifPutExtensionLast" = xyes; then :
   libs_x="-lungif $libs_x" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lungif\" to \$libs_x"; fi
 else
   with_gif=no
+fi
+
 fi
 
 fi

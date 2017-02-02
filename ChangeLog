@@ -1,3 +1,9 @@
+2017-01-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac (HAVE_XFACE): giflib 5.0 removed a function we
+	were checking for.
+	* configure: Rebuild.
+
 2016-11-05  Michael Sperber  <mike@xemacs.org>
 
 	* configure.ac: Disable ASLR on macOS Sierra..
