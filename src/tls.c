@@ -28,6 +28,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
+
 static Lisp_Object prompt;
 static Lisp_Object Qread_passwd;
 Lisp_Object Qtls_error;

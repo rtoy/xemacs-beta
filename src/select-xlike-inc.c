@@ -72,7 +72,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 static Lisp_Object
 selection_data_to_lisp_data (struct device *d,
-			     Rawbyte *data,
+			     const Rawbyte *data,
 			     Bytecount size,
 			     XE_ATOM_TYPE type,
 			     int format)
@@ -130,10 +130,12 @@ selection_data_to_lisp_data (struct device *d,
     }
   else if (format == 32 && size == sizeof (INT_32_BIT))
     {
+#ifdef THIS_IS_X
       if (type == DEVICE_XATOM_TIMESTAMP (d))
         {
           return uint32_t_to_lisp (((UINT_32_BIT *) data) [0]);
         }
+#endif
 
       return int32_t_to_lisp (((INT_32_BIT *) data) [0]);
     }

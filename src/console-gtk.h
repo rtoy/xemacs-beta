@@ -36,6 +36,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "console.h"
 #include "sysgtk.h"
 
+#define THIS_IS_GTK
+#include "console-xlike-inc.h"
+
 /* Variables associated with the X display frame this emacs is using. */
 
 extern Lisp_Object Vx_gc_pointer_shape;
@@ -53,6 +56,10 @@ struct frame *gtk_any_widget_or_parent_to_frame (struct device *d, GtkWidget *wi
 struct frame *decode_gtk_frame (Lisp_Object);
 struct device *gtk_any_window_to_device (GdkWindow *);
 struct device *decode_gtk_device (Lisp_Object);
+#ifdef HAVE_GTK3
+GdkDevice *gtk_widget_get_device (GtkWidget *widget);
+#endif
+
 void gtk_handle_property_notify (GdkEventProperty *event);
 
 void signal_special_gtk_user_event (Lisp_Object channel, Lisp_Object function,
@@ -63,9 +70,6 @@ void gtk_output_string (struct window *w, struct display_line *dl,
                         int start_pixpos, int width, face_index findex,
                         int cursor, int cursor_start, int cursor_width,
                         int cursor_height);
-GdkGC *gtk_get_gc (struct frame *f,
-		   Lisp_Object font, Lisp_Object fg, Lisp_Object bg,
-		   Lisp_Object bg_pmap, Lisp_Object lwidth);
 
 int gtk_initialize_frame_menubar (struct frame *f);
 void gtk_init_modifier_mapping (struct device *d);
