@@ -31,9 +31,10 @@
    gtk-signal-connect
    gtk-radio-button-new-with-label gtk-radio-button-group
    gtk-toggle-button-set-active gtk-check-button-new-with-label
-   gtk-widget-show-all gtk-notebook-new gtk-notebook-append-page
-   gtk-vbox-new gtk-label-new gtk-adjustment-new
-   gtk-progress-bar-new-with-adjustment gtk-adjustment-set-value
+   gtk-widget-show-all
+   ;; ifdef INTROSPECTION
+   ;; gtk-notebook-new gtk-notebook-append-page
+   gtk-vbox-new
    gtk-entry-new gtk-entry-set-text gtk-widget-set-style
    gtk-widget-get-style))
 
@@ -56,70 +57,66 @@
      (t
       nil))))
 
-(defun gtk-widget-instantiate-button-internal (plist instance)
-  (let* ((type (or (plist-get plist :style) 'button))
-	 (label (or (plist-get plist :descriptor) (symbol-name type)))
-	 (widget nil))
-    (case type
-      (button
-       (setq widget (gtk-button-new-with-label label))
-       (gtk-signal-connect widget 'clicked
-			   (gtk-widget-get-callback widget plist instance)))
-      (radio
-       (let ((aux nil)
-	     (selected-p (plist-get plist :selected)))
-	 (setq widget (gtk-radio-button-new-with-label nil label)
-	       aux (gtk-radio-button-new-with-label
-		    (gtk-radio-button-group widget)
-		    "bogus sibling"))
-	 (gtk-toggle-button-set-active widget (eval selected-p))
-	 (gtk-signal-connect widget 'toggled
-			     (gtk-widget-get-callback widget plist instance) aux)))
-      (otherwise
-       ;; Check boxes
-       (setq widget (gtk-check-button-new-with-label label))
-       (gtk-toggle-button-set-active widget
-				     (eval (plist-get plist :selected)))
-       (gtk-signal-connect widget 'toggled
-			   (gtk-widget-get-callback widget plist instance))))
-    (gtk-widget-show-all widget)
-    widget))
+;; (defun gtk-widget-instantiate-button-internal (plist instance)
+;;   (let* ((type (or (plist-get plist :style) 'button))
+;; 	 (label (or (plist-get plist :descriptor) (symbol-name type)))
+;; 	 (widget nil))
+;;     (case type
+;;       (button
+;;        (setq widget (gtk-button-new-with-label label))
+;;        (gtk-signal-connect widget 'clicked
+;; 			   (gtk-widget-get-callback widget plist instance)))
+;;       (radio
+;;        (let ((aux nil)
+;; 	     (selected-p (plist-get plist :selected)))
+;; 	 (setq widget (gtk-radio-button-new-with-label nil label)
+;; 	       aux (gtk-radio-button-new-with-label
+;; 		    (gtk-radio-button-group widget)
+;; 		    "bogus sibling"))
+;; 	 (gtk-toggle-button-set-active widget (eval selected-p))
+;; 	 (gtk-signal-connect widget 'toggled
+;; 			     (gtk-widget-get-callback widget plist instance) aux)))
+;;       (otherwise
+;;        ;; Check boxes
+;;        (setq widget (gtk-check-button-new-with-label label))
+;;        (gtk-toggle-button-set-active widget
+;; 				     (eval (plist-get plist :selected)))
+;;        (gtk-signal-connect widget 'toggled
+;; 			   (gtk-widget-get-callback widget plist instance))))
+;;     (gtk-widget-show-all widget)
+;;     widget))
 
-(defun gtk-widget-instantiate-notebook-internal (plist instance)
-  (let ((widget (gtk-notebook-new))
-	;(items (plist-get plist :items))
-	)
-;    (while items
-;      (gtk-notebook-append-page widget
-;				(gtk-vbox-new nil 3)
-;				(gtk-label-new (aref (car items) 0)))
-;      (setq items (cdr items)))
-    widget))
+;; ifdef INTROSPECTION
+;;(defun gtk-widget-instantiate-notebook-internal (plist instance)
+;;  (let ((widget (gtk-notebook-new))
+;;	;(items (plist-get plist :items))
+;;	)
+;;    (while items
+;;      (gtk-notebook-append-page widget
+;;				(gtk-vbox-new nil 3)
+;;				(gtk-label-new (aref (car items) 0)))
+;;      (setq items (cdr items)))
+;;    widget))
 
-(defun gtk-widget-instantiate-progress-internal (plist instance)
-  (let* ((adj (gtk-adjustment-new 0.0 0.0 100.0 1.0 5.0 5.0))
-	 (widget (gtk-progress-bar-new-with-adjustment adj)))
-    (gtk-adjustment-set-value adj (or (plist-get plist :value) 0.0))
-    widget))
+;; (defun gtk-widget-instantiate-entry-internal (plist instance)
+;;   (let* ((widget (gtk-entry-new))
+;; 	 (default (plist-get plist :descriptor)))
+;;     (cond
+;;      ((stringp default)
+;;       nil)
+;;      ((sequencep default)
+;;       (setq default (mapconcat 'identity default "")))
+;;      (t
+;;       (error "Invalid default value: %S" default)))
+;;     (gtk-entry-set-text widget default)
+;;     widget))
 
-(defun gtk-widget-instantiate-entry-internal (plist instance)
-  (let* ((widget (gtk-entry-new))
-	 (default (plist-get plist :descriptor)))
-    (cond
-     ((stringp default)
-      nil)
-     ((sequencep default)
-      (setq default (mapconcat 'identity default "")))
-     (t
-      (error "Invalid default value: %S" default)))
-    (gtk-entry-set-text widget default)
-    widget))
-
-(put 'button         'instantiator 'gtk-widget-instantiate-button-internal)
-(put 'tab-control    'instantiator 'gtk-widget-instantiate-notebook-internal)
-(put 'progress-gauge 'instantiator 'gtk-widget-instantiate-progress-internal)
+(put 'button         'instantiator 'ignore)
+(put 'tab-control    'instantiator 'ignore)
+;; ifndef INTROSPECTION
+(put 'progress-gauge 'instantiator 'ignore)
 (put 'tree-view      'instantiator 'ignore)
-(put 'edit-field     'instantiator 'gtk-widget-instantiate-entry-internal)
+(put 'edit-field     'instantiator 'ignore)
 (put 'combo-box      'instantiator 'ignore)
 (put 'label          'instantiator 'ignore)
 (put 'layout         'instantiator 'ignore)
@@ -140,11 +137,5 @@
 ;					      (frame-property nil 'text-widget))))
 ;		 widget)
     widget))
-
-(defun gtk-widget-property-internal ()
-  nil)
-
-(defun gtk-widget-redisplay-internal ()
-  nil)
 
 (provide 'widgets-gtk)

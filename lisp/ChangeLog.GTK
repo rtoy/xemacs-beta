@@ -1,3 +1,150 @@
+2015-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-widget-property-internal): Unused, so remove.
+	(gtk-widget-redisplay-internal): Ditto.
+
+2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-widget-instantiate-button-internal): Comment
+	out; save for reference as C version is incomplete.
+
+2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-widget-instantiate-entry-internal): Delete.
+
+2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el gtk-widget-instantiate-progress-internal):
+	Delete.  Set progress-gauge instantiator to ignore.
+	Remove pre-definition of label and progress bar functions.
+
+2015-11-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* widgets-gtk.el (gtk-button-new-with-label): Don't define
+	prototypes for gtk-notebook functions.
+	(gtk-widget-instantiate-notebook-internal): Comment out.
+	(tab-control): Ignore notebook-instantiator, it's moved to C.
+
+2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-init.el (make-device-late-gtk-entry-point): Load
+	etc/xemacs.css here.
+
+2013-11-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-faces.el (gtk-init-device-faces): Only apply style
+	information to faces in Gtk 2, for now.
+
+	* gtk-widgets.el (): Don't import Gtk version variables directly.
+	They are implemented differently between Gtk 2 and 3, so we have
+	to wrap them now.
+
+	* gtk-init.el (gtk-version-string): Declare var alias for FSF
+	compatability.
+
+2013-10-29  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-mouse.el (gtk-init-pointers): Re-enable this function.
+
+2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-gtk.c:
+	* redisplay-gtk.c (XLIKE_text_width):
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+        No need to separate_textual_runs on GTK, it's reasonable and
+        appropriate to let Pango worry about font coverage once we've
+        converted the text to Unicode.
+
+2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* custom.el (custom-declare-variable):
+        Remove purecopy here, missed in the merge.
+
+2011-05-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el (GtkWidget): Remove gtk-toolbar-* functions.
+
+2011-05-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el (gboolean): Define some gtk-widget-* functions
+	for displaying widgets.
+
+2011-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-faces.el (gtk-font-weights): Define.
+	(gtk-font-weights): Define.
+	(gtk-convert-font-from-xlfd): Define.
+	(gtk-convert-font-weight-from-xlfd): Define.
+	(gtk-convert-font-slant-from-xlfd): Define.
+
+2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el: Add some toolbar and toolitem bindings.
+
+2011-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (): Add marshallers for INT__INT and
+	INT__INT_INT. Needed for gtk-window-new.
+
+	* gtk-widgets.el (GtkWidget): Add gtk-window-new.
+	(GtkWidget): Update gtk-toolbar-new to 2.0 params.
+
+2011-04-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-faces.el: Comment out bold and italic fonts functions
+	because they have been moved into src/fontcolor-gtk.c.
+
+2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (name-to-return-type): return fundamental C types
+	for mapping.
+	(define-marshaller): Use GType instead of deprecated GtkArg.
+	(define-marshaller): Intialize retval GType with type before
+	setting the value.
+
+2010-07-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-password-dialog.el (gtk-password-dialog-new): Update to Gtk
+	2.0 dialog functions.
+
+	* gtk-file-dialog.el (gtk-file-dialog-new): Update to Gtk 2.0
+	dialog functions.
+
+	* dialog-gtk.el (popup-builtin-question-dialog): Update to Gtk 2.0
+	dialog functions.
+
+	* gtk-widgets.el: Import gtk-dialog functions.
+
+2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (find-file): Add two more sets of args for marshalling.
+2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el: import new GtkNotebook functions.
+
+2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (find-file): Add a marshaller that takes a
+	pointer and a bool that returns no value.
+
+2010-06-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-marshal.el (find-file): Add "pointer string" marshaller.
+
+2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-widgets.el (GType): Replace GtkType with GType everyone for
+	Gtk 2.x.  Comment out removed widgets and related functions for
+	GtkPacker type. 
+
+	* gtk-widget-accessors.el ("../src/emacs-widget-accessors.c"):
+	Comment out serveral GtkWidget fields I don't handle yet. Comment
+	out obsolete types that are no longer in 2.x. 
+
+	* gtk-ffi.el (gtk-type-aliases): Define GtkString as gchararray
+	and GdkWindow as a pointer.
+
 2000-09-12  William M. Perry  <wmperry@aventail.com>
 
 	* dialog-gtk.el (popup-builtin-open-dialog): Went back to

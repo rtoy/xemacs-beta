@@ -52,7 +52,8 @@
   ;;
   ;; If the "default" face didn't have a font specified, try to pick one.
   ;;
-  (when (eq (device-type device) 'gtk)
+  (when (and (eq (device-type device) 'gtk)
+	     (= gtk-major-version 2))
     (let* ((style (gtk-style-info device))
 	   (normal 0)			; GTK_STATE_NORMAL
 	   ;;(active 1)			; GTK_STATE_ACTIVE
@@ -158,17 +159,78 @@
 		- registry - encoding "\\'"))
   )
 
-(defvaralias 'x-font-regexp 'gtk-font-regexp)
-(defvaralias 'x-font-regexp-head 'gtk-font-regexp-head)
-(defvaralias 'x-font-regexp-head-2 'gtk-font-regexp-head-2)
-(defvaralias 'x-font-regexp-weight 'gtk-font-regexp-weight)
-(defvaralias 'x-font-regexp-slant 'gtk-font-regexp-slant)
-(defvaralias 'x-font-regexp-pixel 'gtk-font-regexp-pixel)
-(defvaralias 'x-font-regexp-point 'gtk-font-regexp-point)
-(defvaralias 'x-font-regexp-foundry-and-family 'gtk-font-regexp-foundry-and-family)
-(defvaralias 'x-font-regexp-registry-and-encoding 'gtk-font-regexp-registry-and-encoding)
-(defvaralias 'x-font-regexp-spacing 'gtk-font-regexp-spacing)
+(defconst gtk-font-weights
+  '(("thin")
+    ("ultralight")
+    ("light" . "light")
+    ("book")
+    ("normal")
+    ("medium" . "medium")
+    ("semibold" . "demibold")
+    ("bold" . "bold")
+    ("ultrabold")
+    ("heavy" . "black")
+    ("ultraheavy"))
+  "list of gtk font weight names and XLFD equivalents.")
 
+(defconst gtk-font-slants
+  '("Normal" "Italic" "Oblique")
+  "List of Gtk slant names")
+
+;; (defvaralias 'x-font-regexp 'gtk-font-regexp)
+;; (defvaralias 'x-font-regexp-head 'gtk-font-regexp-head)
+;; (defvaralias 'x-font-regexp-head-2 'gtk-font-regexp-head-2)
+;; (defvaralias 'x-font-regexp-weight 'gtk-font-regexp-weight)
+;; (defvaralias 'x-font-regexp-slant 'gtk-font-regexp-slant)
+;; (defvaralias 'x-font-regexp-pixel 'gtk-font-regexp-pixel)
+;; (defvaralias 'x-font-regexp-point 'gtk-font-regexp-point)
+;; (defvaralias 'x-font-regexp-foundry-and-family 'gtk-font-regexp-foundry-and-family)
+;; (defvaralias 'x-font-regexp-registry-and-encoding 'gtk-font-regexp-registry-and-encoding)
+;; (defvaralias 'x-font-regexp-spacing 'gtk-font-regexp-spacing)
+
+
+(defun gtk-convert-font-from-xlfd (font)
+  (if (not (x-font-xlfd-font-name-p font))
+      font
+    (let (family
+          (weight (match-string 1 font))
+          (slant (match-string 2 font))
+          (size (x-font-size font)))
+      (if (string-match x-font-regexp-foundry-and-family font)
+          (setq family (capitalize (match-string 1 font)))
+        (setq family gtk-fallback-font-name))
+      (concat family " "
+              (gtk-convert-font-weight-from-xlfd weight) " "
+              (gtk-convert-font-slant-from-xlfd slant) " "
+              (number-to-string
+               (gtk-convert-font-size-from-xlfd size))))))
+
+(defun gtk-convert-font-weight-from-xlfd (xlfd-weight)
+  (if (null xlfd-weight)
+      ""
+    (let* ((weight (downcase xlfd-weight))
+           (equiv (rassoc weight gtk-font-weights)))
+      (if (null equiv)
+          ""
+        (capitalize (car equiv))))))
+
+(defun gtk-convert-font-slant-from-xlfd (xlfd-slant)
+  (if (null xlfd-slant)
+      ""
+    (let ((slant (downcase xlfd-slant)))
+      (cond
+       ((string-equal slant "r") "Normal")
+       ((string-equal slant "i") "Italic")
+       ((string-equal slant "o") "Oblique")
+       (t "")))))
+
+(defun gtk-convert-font-size-from-xlfd (size)
+  ;; More than 80 point can't be displayed!
+  (if (>= size 80 )
+      (/ size 10)
+    size))
+
+
 (defun gtk-frob-font-weight (font which)
   (if (font-instance-p font) (setq font (font-instance-name font)))
   (cond ((null font) nil)
@@ -191,13 +253,13 @@
 		 (substring font (match-end 1))))
 	(t nil)))
 
-(defun gtk-make-font-bold (font &optional device)
-  (or (try-font-name (gtk-frob-font-weight font "bold") device)
-      (try-font-name (gtk-frob-font-weight font "black") device)
-      (try-font-name (gtk-frob-font-weight font "demibold") device)))
+;;; (defun gtk-make-font-bold (font &optional device)
+;;;   (or (try-font-name (gtk-frob-font-weight font "bold") device)
+;;;       (try-font-name (gtk-frob-font-weight font "black") device)
+;;;       (try-font-name (gtk-frob-font-weight font "demibold") device)))
 
-(defun gtk-make-font-unbold (font &optional device)
-  (try-font-name (gtk-frob-font-weight font "medium") device))
+;;; (defun gtk-make-font-unbold (font &optional device)
+;;;   (try-font-name (gtk-frob-font-weight font "medium") device))
 
 (defcustom try-oblique-before-italic-fonts t
   "*If nil, italic fonts are searched before oblique fonts.
@@ -209,42 +271,42 @@ applicable to adobe-courier fonts"
 (define-obsolete-variable-alias '*try-oblique-before-italic-fonts*
   'try-oblique-before-italic-fonts)
 
-(defun gtk-make-font-italic (font &optional device)
-  (if try-oblique-before-italic-fonts
-      (or (try-font-name (gtk-frob-font-slant font "o") device)
-	  (try-font-name (gtk-frob-font-slant font "i") device))
-    (or (try-font-name (gtk-frob-font-slant font "i") device)
-	(try-font-name (gtk-frob-font-slant font "o") device))))
+;;; (defun gtk-make-font-italic (font &optional device)
+;;;   (if try-oblique-before-italic-fonts
+;;;       (or (try-font-name (gtk-frob-font-slant font "o") device)
+;;; 	  (try-font-name (gtk-frob-font-slant font "i") device))
+;;;     (or (try-font-name (gtk-frob-font-slant font "i") device)
+;;; 	(try-font-name (gtk-frob-font-slant font "o") device))))
 
-(defun gtk-make-font-unitalic (font &optional device)
-  (try-font-name (gtk-frob-font-slant font "r") device))
+;;; (defun gtk-make-font-unitalic (font &optional device)
+;;;   (try-font-name (gtk-frob-font-slant font "r") device))
 
-(defun gtk-make-font-bold-italic (font &optional device)
-  (if try-oblique-before-italic-fonts
-      (or (try-font-name
-	   (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "o") device)
-	  (try-font-name
-	   (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "i") device)
-	  (try-font-name
-	   (gtk-frob-font-slant (gtk-frob-font-weight font "black") "o") device)
-	  (try-font-name
-	   (gtk-frob-font-slant (gtk-frob-font-weight font "black") "i") device)
-	  (try-font-name
-	   (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "o") device)
-	  (try-font-name
-	   (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "i") device))
-    (or (try-font-name
-	 (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "i") device)
-	(try-font-name
-	 (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "o") device)
-	(try-font-name
-	 (gtk-frob-font-slant (gtk-frob-font-weight font "black") "i") device)
-	(try-font-name
-	 (gtk-frob-font-slant (gtk-frob-font-weight font "black") "o") device)
-	(try-font-name
-	 (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "i") device)
-	(try-font-name
-	 (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "o") device))))
+;;; (defun gtk-make-font-bold-italic (font &optional device)
+;;;   (if try-oblique-before-italic-fonts
+;;;       (or (try-font-name
+;;; 	   (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "o") device)
+;;; 	  (try-font-name
+;;; 	   (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "i") device)
+;;; 	  (try-font-name
+;;; 	   (gtk-frob-font-slant (gtk-frob-font-weight font "black") "o") device)
+;;; 	  (try-font-name
+;;; 	   (gtk-frob-font-slant (gtk-frob-font-weight font "black") "i") device)
+;;; 	  (try-font-name
+;;; 	   (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "o") device)
+;;; 	  (try-font-name
+;;; 	   (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "i") device))
+;;;     (or (try-font-name
+;;; 	 (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "i") device)
+;;; 	(try-font-name
+;;; 	 (gtk-frob-font-slant (gtk-frob-font-weight font "bold") "o") device)
+;;; 	(try-font-name
+;;; 	 (gtk-frob-font-slant (gtk-frob-font-weight font "black") "i") device)
+;;; 	(try-font-name
+;;; 	 (gtk-frob-font-slant (gtk-frob-font-weight font "black") "o") device)
+;;; 	(try-font-name
+;;; 	 (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "i") device)
+;;; 	(try-font-name
+;;; 	 (gtk-frob-font-slant (gtk-frob-font-weight font "demibold") "o") device))))
 
 (defun gtk-choose-font ()
   (interactive)

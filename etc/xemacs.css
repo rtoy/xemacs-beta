@@ -1,0 +1,35 @@
+/* CSS configuration for GTK 3.0.  ~/.xemacs/xemacs.css has precedence. */
+
+GtkToolbar, #primary-toolbar, .toolbar {
+    border-width: 1px;
+    border-style: solid;
+    padding: 0;
+}
+
+/*
+GtkToolbarButton {
+    expand: false;
+}
+*/
+
+GtkScrollbar {
+    -GtkScrollbar-has-backward-stepper: true;
+    -GtkScrollbar-has-forward-stepper: true;
+}
+
+GtkWindow {
+    /* resize-grip: true; */
+    -GtkWindow-resize-grip-default: true;
+    -GtkWindow-resize-grip-visible: true;
+}
+
+/* #frame { */
+/*     resize-grip: true; */
+/*     /\* grip-visible: true; *\/ */
+/*     border-width: 10px 20px 20px 10px; */
+/*     border-color: purple; */
+/*     border-style: solid; */
+/*     background: purple; */
+/*     padding: 10px; */
+/* } */
+
