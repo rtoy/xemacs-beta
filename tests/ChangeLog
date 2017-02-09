@@ -1,3 +1,9 @@
+2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test `safe-length', which has been in XEmacs for a long time but
+	only recently moved to Lisp.
+
 2017-01-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:

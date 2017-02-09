@@ -266,6 +266,20 @@ confoundedness in older versions of E-Lisp."
 (defun number-char-or-marker-p (object)
   "Return t if OBJECT is a number, character or a marker."
   (or (numberp object) (characterp object) (markerp object)))
+
+;; Also previously in data.c. Replaced in most uses by #'list-length.
+(defun safe-length (list)
+  "Return the length of a list, but avoid error or infinite loop.
+This function never gets an error.  If LIST is not really a list,
+it returns 0.  If LIST is circular, it returns a finite value
+which is at least the number of distinct elements."
+  (let ((hare list) (tortoise list) (length 0))
+    (while (and (consp hare) (or (not (eq hare tortoise)) (eql length 0)))
+      (if (eql (logand length 1) 1)
+          (setq tortoise (cdr tortoise)))
+      (setq hare (cdr hare)
+            length (1+ length)))
+    length))
 
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el

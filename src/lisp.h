@@ -5267,7 +5267,6 @@ MODULE_API EXFUN (Fput, 3);
 EXFUN (Frassq, 2);
 EXFUN (Freplace_list, 2);
 MODULE_API EXFUN (Freverse, 1);
-EXFUN (Fsafe_length, 1);
 EXFUN (Fstring_equal, 2);
 EXFUN (Fstring_lessp, 2);
 EXFUN (Fsubseq, 3);

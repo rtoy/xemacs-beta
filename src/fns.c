@@ -121,32 +121,6 @@ check_losing_bytecode (const Ascbyte *function, Lisp_Object seq)
        function);
 }
 
-DEFUN ("safe-length", Fsafe_length, 1, 1, 0, /*
-Return the length of a list, but avoid error or infinite loop.
-This function never gets an error.  If LIST is not really a list,
-it returns 0.  If LIST is circular, it returns a finite value
-which is at least the number of distinct elements.
-*/
-       (list))
-{
-  Lisp_Object hare, tortoise;
-  Elemcount len;
-
-  for (hare = tortoise = list, len = 0;
-       CONSP (hare) && (! EQ (hare, tortoise) || len == 0);
-       hare = XCDR (hare), len++)
-    {
-      if (len & 1)
-	tortoise = XCDR (tortoise);
-    }
-
-  return make_fixnum (len);
-}
-
-/* This is almost the above, but is defined by Common Lisp. We need it in C
-   for shortest_length_among_sequences(), below, for the various sequence
-   functions that can usefully operate on circular lists. */
-
 DEFUN ("list-length", Flist_length, 1, 1, 0, /*
 Return the length of LIST.  Return nil if LIST is circular.
 Error if LIST is dotted.
@@ -3016,7 +2990,6 @@ syms_of_fns (void)
 
   DEFSUBR (Fidentity);
   DEFSUBR (Frandom);
-  DEFSUBR (Fsafe_length);
   DEFSUBR (Flist_length);
   DEFSUBR (Fstring_equal);
   DEFSUBR (Fcompare_strings);

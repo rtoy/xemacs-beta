@@ -294,6 +294,19 @@ will be used to make debugging easier."
 	"checking a cons is not recognised as the end of a list")
 
 ;;-----------------------------------------------------
+;; Test `safe-length'
+;;-----------------------------------------------------
+(Check-Error wrong-number-of-arguments (safe-length))
+(Check-Error wrong-number-of-arguments (safe-length '(1 2) 'foo))
+(Assert (eql (safe-length 'foo) 0))
+(Assert (eql (safe-length [hello]) 0))
+(Assert (eql (safe-length '(2 1 3)) 3))
+(Assert (eql (safe-length '(2 1 3 . 4)) 3))
+(Assert (>= (safe-length (make-circular-list 3)) 3))
+(Assert (>= (safe-length (make-circular-list 4000)) 4000))
+(Assert (eql (safe-length nil) 0))
+
+;;-----------------------------------------------------
 ;; Arithmetic operations
 ;;-----------------------------------------------------
 

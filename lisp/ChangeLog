@@ -1,3 +1,8 @@
+2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (safe-length): New. Moved here from data.c, there's no
+	indication to have this in C.
+
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (with-output-to-string):

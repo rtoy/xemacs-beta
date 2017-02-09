@@ -1793,13 +1793,25 @@ detect_input_pending (int how_many)
   /* This can call Lisp */
   Lisp_Object event;
 
+  SAFE_LIST_LOOP_2 (elt, Vunread_command_events)
+    {
+      how_many--;
+      if (how_many <= 0)
+        {
+          return 1;
+        }
+      }
+
+  USED (elt); /* Silence compiler. */
+
   if (!NILP (Vunread_command_event))
-    how_many--;
-
-  how_many -= XFIXNUM (Fsafe_length (Vunread_command_events));
-
-  if (how_many <= 0)
-    return 1;
+    {
+      how_many--;
+      if (how_many <= 0)
+        {
+          return 1;
+        }
+    }
 
   EVENT_CHAIN_LOOP (event, command_event_queue)
     {
