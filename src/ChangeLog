@@ -1,3 +1,12 @@
+2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-stream.c (detect_input_pending):
+	Don't use Fsafe_length(), it's now in Lisp and we have the macro
+	available to do the same in C.
+	* fns.c (Fsafe_length): Removed. Now in subr.el.
+	* fns.c (syms_of_fns): Ditto.
+	* lisp.h: Ditto.
+
 2017-01-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Don't eat the next non-digit Ibyte after a backreference,
