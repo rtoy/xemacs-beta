@@ -1,5 +1,20 @@
 2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* event-stream.c (Vunread_command_events_tortoise,
+	unread_command_events_counter):
+	New variables, keep track of possible circularity in
+	#'unread-command-events.
+	* event-stream.c (unread_command_events_changed): New function,
+	magic handler for #'unread-command-events, needed to keep the
+	circularity tracking in sync.
+	* event-stream.c (Fnext_event):
+	Check for circularity when examining unread-command-events.
+	* event-stream.c (vars_of_event_stream):
+	GC protect those variables used for circularity-checking of
+	unread-command-events.
+
+2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* event-stream.c (detect_input_pending):
 	Don't use Fsafe_length(), it's now in Lisp and we have the macro
 	available to do the same in C.

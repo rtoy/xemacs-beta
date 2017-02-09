@@ -162,6 +162,11 @@ Lisp_Object Qcancel_mode_internal;
 
 /* If not Qnil, event objects to be read as the next command input */
 Lisp_Object Vunread_command_events;
+
+/* Avoid XEmacs hanging with a circular unread-command-events */
+static Lisp_Object Vunread_command_events_tortoise;
+static Elemcount unread_command_events_counter;
+
 Lisp_Object Vunread_command_event; /* obsoleteness support */
 
 static Lisp_Object Qunread_command_events, Qunread_command_event;
@@ -1932,6 +1937,17 @@ event_stream_protect_modal_loop (const char *error_string,
 /*                      retrieving the next event                     */
 /**********************************************************************/
 
+static int
+unread_command_events_changed (Lisp_Object UNUSED (sym), Lisp_Object *val,
+                               Lisp_Object UNUSED (in_object),
+                               int UNUSED (flags))
+{
+  /* Make sure user code can't make Vunread_command_events and its tortoise
+     reflect different lists. */
+  Vunread_command_events = Vunread_command_events_tortoise = *val;
+  return (unread_command_events_counter = 0);
+}
+
 static int in_single_console;
 
 /* #### These functions don't currently do anything. */
@@ -2230,16 +2246,55 @@ The returned event will be one of the following types:
 	{
 	  Vunread_command_events = Qnil;
 	  signal_error_1 (Qwrong_type_argument,
-			list3 (Qconsp, Vunread_command_events,
-			       Qunread_command_events));
+                          list3 (Qconsp, Vunread_command_events,
+                                 Qunread_command_events));
 	}
       else
 	{
 	  Lisp_Object e = XCAR (Vunread_command_events);
+
+          if (NILP (Vunread_command_events_tortoise))
+            {
+              Vunread_command_events_tortoise
+                = Vunread_command_events;
+              unread_command_events_counter = 0;
+            }
+
 	  Vunread_command_events = XCDR (Vunread_command_events);
+
+          if (NILP (Vunread_command_events))
+            {
+              Vunread_command_events_tortoise = Vunread_command_events = Qnil;
+              unread_command_events_counter = 0;
+            }
+          else if (EQ (Vunread_command_events_tortoise, Vunread_command_events))
+            {
+              Lisp_Object circled = Vunread_command_events_tortoise;
+              Vunread_command_events_tortoise = Vunread_command_events = Qnil;
+              unread_command_events_counter = 0;
+
+              /* Circular unread-command-events, whoops. */
+              signal_error_1 (Qcircular_list, list2 (Qunread_command_events,
+                                                     circled));
+            }
+          /* Not using CIRCULAR_LIST_SUSPICION_LENGTH, a non-nil
+             Vunread_command_events is not particularly an execution hot spot,
+             and, say, 1024 malign events for a one-element circular list
+             before we give up is sub-optimal. That said, any circular list is
+             sub-optimal. */
+          else if ((++unread_command_events_counter) & 1)
+                   
+            {
+              Vunread_command_events_tortoise
+                /* Someone may have messed with the list structure
+                   here, use the function for its error checking. */
+                = Fcdr (Vunread_command_events_tortoise);
+            }
+
 	  if (!EVENTP (e) || !command_event_p (e))
 	    signal_error_1 (Qwrong_type_argument,
-			  list3 (Qcommand_event_p, e, Qunread_command_events));
+                            list3 (Qcommand_event_p, e,
+                                   Qunread_command_events));
 	  redisplay_no_pre_idle_hook ();
 	  if (!EQ (e, event))
 	    Fcopy_event (e, event);
@@ -5028,6 +5083,9 @@ vars_of_event_stream (void)
   last_point_position_buffer = Qnil;
   staticpro (&last_point_position_buffer);
 
+  Vunread_command_events_tortoise = Qnil;
+  staticpro (&Vunread_command_events_tortoise);
+
   QSnext_event_internal = build_ascstring ("next_event_internal()");
   staticpro (&QSnext_event_internal);
   QSexecute_internal_event = build_ascstring ("execute_internal_event()");
@@ -5139,12 +5197,12 @@ modified, so copy it if you want to keep it.
 */ );
   Vlast_command_event_time = Qnil;
 
-  DEFVAR_LISP ("unread-command-events", &Vunread_command_events /*
+  DEFVAR_LISP_MAGIC ("unread-command-events", &Vunread_command_events /*
 List of event objects to be read as next command input events.
 This can be used to simulate the receipt of events from the user.
 Normally this is nil.
 Events are removed from the front of this list.
-*/ );
+*/, unread_command_events_changed);
   Vunread_command_events = Qnil;
 
   DEFVAR_LISP ("unread-command-event", &Vunread_command_event /*
