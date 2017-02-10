@@ -3948,4 +3948,143 @@ via the hepatic alpha-tocopherol transfer protein")))
                (let ((a most-negative-fixnum)) (return-a a))))
          `(,most-negative-fixnum ,most-negative-fixnum)))
 
+;;-----------------------------------------------------
+;; Test `run-hooks' and friends.
+;;-----------------------------------------------------
+
+(macrolet
+    ((general-preamble (função)
+       `(progn
+         (Check-Error wrong-type-argument (,função []))
+         (Check-Error wrong-type-argument (,função (lambda (z) z) 1)) 
+         (Check-Error wrong-number-of-arguments (,função))
+         (Assert (eq 120 (,função (let ((gensym (gensym)))
+                                    (set gensym (symbol-function '*))
+                                    gensym)
+                                  1 2 3 4 5))))))
+  (labels
+      ((+-and-truncate-list-as-side-effect (&rest arguments)
+         (when (cdr (symbol-value current-hook-symbol))
+           (setf (cdr (symbol-value current-hook-symbol)) nil)
+           (garbage-collect))
+         (apply #'+ arguments))
+       (ignore-and-truncate-list-as-side-effect (&rest arguments)
+         (when (cdr (symbol-value current-hook-symbol))
+           (setf (cdr (symbol-value current-hook-symbol)) nil)
+           (garbage-collect))
+         nil)
+       (t-and-truncate-list-as-side-effect (&rest arguments)
+         (when (cdr (symbol-value current-hook-symbol))
+           (setf (cdr (symbol-value current-hook-symbol)) nil)
+           (garbage-collect))
+         t)
+       (nil-and-clear-flag (&rest arguments)
+         (setq flag nil))
+       (t-and-clear-flag (&rest arguments)
+         (setq flag nil)
+         t))
+
+    ;; Surprisingly little needs to be tested for #'run-hooks itself,
+    ;; the bulk of it is tested below.
+    (Check-Error wrong-type-argument (run-hooks []))
+    (Check-Error wrong-type-argument (run-hooks (lambda (z) z) 1)) 
+    (Check-Error wrong-number-of-arguments (run-hooks))
+    (Assert (eq nil (run-hooks (gensym) (gensym) (gensym) (gensym))))
+
+    (let ((current-hook-symbol (gensym "run-hook-with-args"))
+          (flag t)
+          (init-value (list #'- #'+-and-truncate-list-as-side-effect #'*
+                            #'t-and-clear-flag #'ignore)))
+      (set current-hook-symbol (copy-list init-value))
+      (general-preamble run-hook-with-args)
+      (Assert (eq nil (run-hook-with-args (gensym))))
+      (Assert (eq (run-hook-with-args current-hook-symbol 1 2 3 4 5) nil))
+      (Assert (eq nil flag)
+              "checking side effects from #'t-and-clear-flag appropriate")
+      (set current-hook-symbol (copy-list init-value))
+      (setq flag t)
+      (make-local-hook current-hook-symbol)
+      (Assert (equal (symbol-value current-hook-symbol) '(t)))
+      (Assert (eq (run-hook-with-args current-hook-symbol 1 2 3 4 5) nil)
+              "checking local hook equivalent, run-hook-with-args")
+      (Assert (eq nil flag)
+       "checking side effects appropriate, local hook, run-hook-with-args")
+      (set current-hook-symbol (list #'- #'*))
+      (setq flag t)
+      (Assert (eql (run-hook-with-args current-hook-symbol 1 2 3) 6))
+      (Assert (eq t flag) "checking no side effects with local hook value")
+      (set current-hook-symbol (let ((list (list 'ignore)))
+                                 (setcdr list list)))
+      (Check-Error circular-list
+                   (run-hook-with-args current-hook-symbol 3 2 1)))
+    (let ((current-hook-symbol (gensym "run-hook-with-args-until-success"))
+          (flag t)
+          (init-value
+           (list #'ignore #'ignore-and-truncate-list-as-side-effect
+		 #'t-and-truncate-list-as-side-effect 
+                 #'t-and-clear-flag 
+                 #'+-and-truncate-list-as-side-effect #'- #'* 'ignore)))
+      (set current-hook-symbol (copy-list init-value))
+      (general-preamble run-hook-with-args-until-success)
+      (Assert (eq nil (run-hook-with-args-until-success (gensym))))
+      (Assert (eq (run-hook-with-args-until-success current-hook-symbol
+                                                    1 2 3 4 5) t))
+      (Assert (eq flag t) "checking later functions not called, \
+#'run-hook-with-args-until-success")
+      (set current-hook-symbol '(ignore ignore ignore null))
+      (Assert (eq (run-hook-with-args-until-success current-hook-symbol 1)
+                  nil))
+      (setq flag t)
+      (set current-hook-symbol (copy-list init-value))
+      (make-local-hook current-hook-symbol)
+      (Assert (eq (run-hook-with-args-until-success
+		   current-hook-symbol 1 2 3 4 5) t)
+              "checking local hook OK, run-hook-with-args-until-success")
+      (Assert (eq t flag)
+       "checking side effects, local hook, run-hook-with-args-until-success")
+      (set current-hook-symbol (list #'- #'*))
+      (setq flag t)
+      (Assert (eql (run-hook-with-args-until-success current-hook-symbol 1 2 3)
+	       -4))
+      (Assert (eq t flag)
+	      "checking no side effects, local hook value, \
+run-hook-with-args-until-success")
+      (set current-hook-symbol (let ((list (list 'ignore)))
+                                 (setcdr list list)))
+      (Check-Error circular-list
+                   (run-hook-with-args-until-success
+                    current-hook-symbol 3 2 1)))
+    (let ((current-hook-symbol (gensym "run-hook-with-args-until-failure"))
+          (flag t)
+          (init-value
+           (list #'* #'t-and-truncate-list-as-side-effect
+                 #'+-and-truncate-list-as-side-effect #'- #'ignore
+		 #'nil-and-clear-flag)))
+      (set current-hook-symbol (copy-list init-value))
+      (general-preamble run-hook-with-args-until-failure)
+      (Assert (eq t (run-hook-with-args-until-failure (gensym))))
+      (Assert (eq (run-hook-with-args-until-failure current-hook-symbol
+                                                    1 2 3 4 5) nil))
+      (Assert (eq flag t) "checking later functions not called, \
+#'run-hook-with-args-until-failure")
+      (set current-hook-symbol '(numberp numberp numberp numberp))
+      (Assert (eql (run-hook-with-args-until-success current-hook-symbol 1)
+                   t))
+      (setq flag t)
+      (set current-hook-symbol (copy-list init-value))
+      (make-local-hook current-hook-symbol)
+      (Assert (eq (run-hook-with-args-until-failure current-hook-symbol
+                                                    1 2 3 4 5) nil)
+	      "checking local hook OK, run-hook-with-args-until-failure")
+      (Assert (eq t flag)
+       "checking side effects, local hook, run-hook-with-args-until-failure")
+      (set current-hook-symbol (list #'- #'*))
+      (Assert (eql (run-hook-with-args-until-failure current-hook-symbol
+                                                    1 2 3 4 5) 120))
+      (set current-hook-symbol (let ((list (list '*)))
+                                 (setcdr list list)))
+      (Check-Error circular-list
+                   (run-hook-with-args-until-failure
+                    current-hook-symbol 3 2 1)))))
+
 ;;; end of lisp-tests.el
