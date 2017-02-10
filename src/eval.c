@@ -5226,14 +5226,14 @@ arguments: (HOOK &rest ARGS)
    as arguments all the rest of ARGS (all NARGS - 1 elements).
    COND specifies a condition to test after each call
    to decide whether to stop.
-   The caller (or its caller, etc) must gcpro all of ARGS,
-   except that it isn't necessary to gcpro ARGS[0].  */
+   The caller (or its caller, etc) must gcpro all of ARGS. */
 
 Lisp_Object
 run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 			      enum run_hooks_condition cond)
 {
-  Lisp_Object sym, val, ret;
+  Lisp_Object sym, val, ret, globals;
+  Boolint globals_done = 0;
 
   if (!initialized || preparing_for_armageddon)
     /* We need to bail out of here pronto. */
@@ -5251,62 +5251,78 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 
   if (UNBOUNDP (val) || NILP (val))
     return ret;
-  else if (!CONSP (val) || EQ (XCAR (val), Qlambda))
+  
+  if (!CONSP (val) || EQ (XCAR (val), Qlambda))
     {
       args[0] = val;
       return Ffuncall (nargs, args);
     }
-  else
-    {
-      struct gcpro gcpro1, gcpro2, gcpro3;
-      Lisp_Object globals = Qnil;
-      GCPRO3 (sym, val, globals);
 
-      for (;
-	   CONSP (val) && ((cond == RUN_HOOKS_TO_COMPLETION)
-			   || (cond == RUN_HOOKS_UNTIL_SUCCESS ? NILP (ret)
-			       : !NILP (ret)));
-	   val = XCDR (val))
-	{
-	  if (EQ (XCAR (val), Qt))
-	    {
-	      /* t indicates this hook has a local binding;
-		 it means to run the global binding too.  */
-	      globals = Fdefault_value (sym);
+  {
+    GC_EXTERNAL_LIST_LOOP_2 (elt, val)
+      {
+        if (cond != RUN_HOOKS_TO_COMPLETION && /* cond is usually
+                                                  RUN_HOOKS_TO_COMPLETION. */
+            ((cond == RUN_HOOKS_UNTIL_FAILURE && NILP (ret)) ||
+             (cond == RUN_HOOKS_UNTIL_SUCCESS && !NILP (ret))))
+          {
+            break;
+          }
+          
+        if (EQ (elt, Qt))
+          {
+            if (globals_done)
+              {
+                continue; /* Only process the global value once. */
+              }
+            
+            /* t indicates this hook has a local binding; it means to run
+               the global binding too.  */
+            globals = Fdefault_value (sym);
 
-	      if ((! CONSP (globals) || EQ (XCAR (globals), Qlambda)) &&
-		  ! NILP (globals))
-		{
-		  args[0] = globals;
-		  ret = Ffuncall (nargs, args);
-		}
-	      else
-		{
-		  for (;
-		       CONSP (globals) && ((cond == RUN_HOOKS_TO_COMPLETION)
-					   || (cond == RUN_HOOKS_UNTIL_SUCCESS
-					       ? NILP (ret)
-					       : !NILP (ret)));
-		       globals = XCDR (globals))
-		    {
-		      args[0] = XCAR (globals);
-		      /* In a global value, t should not occur.  If it does, we
-			 must ignore it to avoid an endless loop.  */
-		      if (!EQ (args[0], Qt))
-			ret = Ffuncall (nargs, args);
-		    }
-		}
-	    }
-	  else
-	    {
-	      args[0] = XCAR (val);
-	      ret = Ffuncall (nargs, args);
-	    }
-	}
+            if (CONSP (globals) && !EQ (XCAR (globals), Qlambda))
+              {
+                GC_EXTERNAL_LIST_LOOP_2 (elt0, globals)
+                  {
+                    if (cond != RUN_HOOKS_TO_COMPLETION &&
+                        ((cond == RUN_HOOKS_UNTIL_FAILURE && NILP (ret)) ||
+                         (cond == RUN_HOOKS_UNTIL_SUCCESS && !NILP (ret))))
+                      {
+                        break;
+                      }
+                    
+                    /* In a global value, t should not occur.  If it does,
+                       we must ignore it to avoid an endless loop.  */
+                    if (!EQ (elt0, Qt))
+                      {
+                        args[0] = elt0;
+                        ret = Ffuncall (nargs, args);
+                      }
+                  }
+                END_GC_EXTERNAL_LIST_LOOP (elt0);
+              }
+            else if (!NILP (globals))
+              {
+                /* GLOBALS is sym's default value, and SYM is reachable. This
+                   means GLOBALS is reachable; if there is a magic handler,
+                   then it is that handler's mistake if GLOBALS is not
+                   reachable. */
+                args[0] = globals;
+                ret = Ffuncall (nargs, args);
+              }
+            
+            globals_done = 1;
+          }
+        else
+          {
+            args[0] = elt;
+            ret = Ffuncall (nargs, args);
+          }
+      }
+    END_GC_EXTERNAL_LIST_LOOP (elt);
+  }
 
-      UNGCPRO;
-      return ret;
-    }
+  return ret;
 }
 
 Lisp_Object

@@ -1,3 +1,17 @@
+2017-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* eval.c (run_hook_with_args_in_buffer):
+	Use GC_EXTERNAL_LIST_LOOP_2 in this function, for GC protection of
+	the list structure and for detection of circular lists.
+	When treating t as the value within a local hook to indicate that
+	the global hook value should be used, only call the global hook
+	once.
+	Be more consistent about documented GC protection requirements,
+	require that all of ARGS have GC protection. This won't affect
+	anything, no non-interned hook symbols are used from the C code,
+	the Lisp interpreter will GC protect uninterned symbols, and there
+	is extensive (actually overdone) GCPROing in most C callers.
+
 2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-stream.c (Vunread_command_events_tortoise,
