@@ -1,5 +1,28 @@
 2017-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Sync the #'run-hook family of functions' docstrings, APIs from
+	GNU. Add #'run-hook-wrapped.
+	* eval.c:
+	* eval.c (Frun_hook):
+	Accept zero arguments as does GNUL.
+	* eval.c (run_hook_wrapped_funcall): New.
+	* eval.c (Frun_hook_wrapped): New, API from GNU.
+	* eval.c (run_hook_with_args_in_buffer_1): Rename
+	run_hook_with_args_in_buffer to this, make it static, add an extra
+	FUNCALL argument to allow implementation of #'run-hook-wrapped.
+	* eval.c (run_hook_with_args_in_buffer):
+	Wrap run_hook_with_args_in_buffer_1(), providing a slightly more
+	sane API.
+	* eval.c (va_run_hook_with_args_in_buffer):
+	Call run_hook_with_args_in_buffer_1(), no need for the extra C
+	function call here.
+	* eval.c (run_hook_with_args_in_buffer_trapping_problems_1):
+	Ditto.
+	* eval.c (syms_of_eval):
+	Make #'run-hook-wrapped available.
+
+2017-02-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* eval.c (run_hook_with_args_in_buffer):
 	Use GC_EXTERNAL_LIST_LOOP_2 in this function, for GC protection of
 	the list structure and for detection of circular lists.

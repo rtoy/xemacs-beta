@@ -5140,19 +5140,23 @@ values2 (Lisp_Object first, Lisp_Object second)
 /*		     Run hook variables in various ways.		*/
 /************************************************************************/
 
-DEFUN ("run-hooks", Frun_hooks, 1, MANY, 0, /*
-Run each hook in HOOKS.  Major mode functions use this.
-Each argument should be a symbol, a hook variable.
+DEFUN ("run-hooks", Frun_hooks, 0, MANY, 0, /*
+Run each hook in HOOKS.
+Each argument should be a symbol, reflecting a hook variable.
 These symbols are processed in the order specified.
 If a hook symbol has a non-nil value, that value may be a function
 or a list of functions to be called to run the hook.
 If the value is a function, it is called with no arguments.
 If it is a list, the elements are called, in order, with no arguments.
 
-To make a hook variable buffer-local, use `make-local-hook',
-not `make-local-variable'.
+Major modes should not use this function directly to run their mode
+hook; they should use `run-mode-hooks' instead.
 
-arguments: (FIRST &rest REST)
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument, or use
+`make-local-hook'.
+
+arguments: (&rest HOOKS)
 */
        (int nargs, Lisp_Object *args))
 {
@@ -5166,17 +5170,19 @@ arguments: (FIRST &rest REST)
 
 DEFUN ("run-hook-with-args", Frun_hook_with_args, 1, MANY, 0, /*
 Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  If HOOK has a non-nil
-value, that value may be a function or a list of functions to be
-called to run the hook.  If the value is a function, it is called with
-the given arguments and its return value is returned.  If it is a list
-of functions, those functions are called, in order,
-with the given arguments ARGS.
-It is best not to depend on the value returned by `run-hook-with-args',
-as that may change.
 
-To make a hook variable buffer-local, use `make-local-hook',
-not `make-local-variable'.
+HOOK should be a symbol, a hook variable.  If HOOK has a non-nil value, that
+value may be a function or a list of functions to be called to run the hook.
+If the value is a function, it is called with the given arguments and its
+return value is returned.  If it is a list of functions, those functions are
+called, in order, with the given arguments ARGS.
+
+Under XEmacs the return value is that given by the last function called. Other
+implementations do not specify the return value.
+
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument, or use
+`make-local-hook'.
 
 arguments: (HOOK &rest ARGS)
 */
@@ -5185,16 +5191,20 @@ arguments: (HOOK &rest ARGS)
   return run_hook_with_args (nargs, args, RUN_HOOKS_TO_COMPLETION);
 }
 
+/* XEmacs; we have no issue with documenting a specific non-nil return
+   value. */
 DEFUN ("run-hook-with-args-until-success", Frun_hook_with_args_until_success, 1, MANY, 0, /*
 Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  Its value should
-be a list of functions.  We call those functions, one by one,
-passing arguments ARGS to each of them, until one of them
-returns a non-nil value.  Then we return that value.
-If all the functions return nil, we return nil.
+HOOK should be a symbol, a hook variable.  The value of HOOK
+may be nil, a function, or a list of functions.  Call each
+function in order with arguments ARGS, stopping at the first
+one that returns non-nil, and return that value.  Otherwise (if
+all functions return nil, or if there are no functions to call),
+return nil.
 
-To make a hook variable buffer-local, use `make-local-hook',
-not `make-local-variable'.
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument, or use
+`make-local-hook'.
 
 arguments: (HOOK &rest ARGS)
 */
@@ -5205,14 +5215,18 @@ arguments: (HOOK &rest ARGS)
 
 DEFUN ("run-hook-with-args-until-failure", Frun_hook_with_args_until_failure, 1, MANY, 0, /*
 Run HOOK with the specified arguments ARGS.
-HOOK should be a symbol, a hook variable.  Its value should
-be a list of functions.  We call those functions, one by one,
-passing arguments ARGS to each of them, until one of them
-returns nil.  Then we return nil.
-If all the functions return non-nil, we return non-nil.
+HOOK should be a symbol, a hook variable.  The value of HOOK
+may be nil, a function, or a list of functions.  Call each
+function in order with arguments ARGS, stopping at the first
+one that returns nil, and return nil.  Otherwise (if all functions
+return non-nil, or if there are no functions to call), return non-nil.
 
-To make a hook variable buffer-local, use `make-local-hook',
-not `make-local-variable'.
+Under XEmacs this will be the last non-nil value, other implementations may
+not make the same guarantees.
+
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument, or use
+`make-local-hook'.
 
 arguments: (HOOK &rest ARGS)
 */
@@ -5221,16 +5235,54 @@ arguments: (HOOK &rest ARGS)
   return run_hook_with_args (nargs, args, RUN_HOOKS_UNTIL_FAILURE);
 }
 
+static Lisp_Object
+run_hook_wrapped_funcall (int nargs, Lisp_Object *args)
+{
+  Lisp_Object tmp = args[0], ret;
+  args[0] = args[1];
+  args[1] = tmp;
+  ret = Ffuncall (nargs, args);
+  args[1] = args[0];
+  args[0] = tmp;
+  return ret;
+}
+
+static Lisp_Object
+run_hook_with_args_in_buffer_1 (struct buffer *, int, Lisp_Object *,
+                                enum run_hooks_condition,
+                                Lisp_Object (*) (int, Lisp_Object *));
+
+/* XEmacs; #### this smells really bad. */
+DEFUN ("run-hook-wrapped", Frun_hook_wrapped, 2, MANY, 0, /*
+Run HOOK, passing each function through WRAP-FUNCTION.
+I.e. instead of calling each function FUN directly with arguments ARGS,
+it calls WRAP-FUNCTION with arguments FUN and ARGS.
+As soon as a call to WRAP-FUNCTION returns non-nil, `run-hook-wrapped'
+aborts and returns that value.
+
+arguments: (HOOK WRAP-FUNCTION &rest ARGS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return run_hook_with_args_in_buffer_1 (current_buffer, nargs, args,
+                                         RUN_HOOKS_UNTIL_SUCCESS,
+                                         run_hook_wrapped_funcall);
+}
+
 /* ARGS[0] should be a hook symbol.
    Call each of the functions in the hook value, passing each of them
    as arguments all the rest of ARGS (all NARGS - 1 elements).
    COND specifies a condition to test after each call
    to decide whether to stop.
-   The caller (or its caller, etc) must gcpro all of ARGS. */
+   The caller (or its caller, etc) must gcpro all of ARGS.
+   FUNCALL is usually Ffuncall, but see #'run-hook-wrapped, which is there for
+   GNU compatibility. */
 
-Lisp_Object
-run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
-			      enum run_hooks_condition cond)
+static Lisp_Object
+run_hook_with_args_in_buffer_1 (struct buffer *buf,
+                                int nargs, Lisp_Object *args,
+                                enum run_hooks_condition cond,
+                                Lisp_Object (*funcall) (int, Lisp_Object *))
 {
   Lisp_Object sym, val, ret, globals;
   Boolint globals_done = 0;
@@ -5255,7 +5307,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
   if (!CONSP (val) || EQ (XCAR (val), Qlambda))
     {
       args[0] = val;
-      return Ffuncall (nargs, args);
+      return funcall (nargs, args);
     }
 
   {
@@ -5296,7 +5348,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
                     if (!EQ (elt0, Qt))
                       {
                         args[0] = elt0;
-                        ret = Ffuncall (nargs, args);
+                        ret = funcall (nargs, args);
                       }
                   }
                 END_GC_EXTERNAL_LIST_LOOP (elt0);
@@ -5308,7 +5360,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
                    then it is that handler's mistake if GLOBALS is not
                    reachable. */
                 args[0] = globals;
-                ret = Ffuncall (nargs, args);
+                ret = funcall (nargs, args);
               }
             
             globals_done = 1;
@@ -5316,7 +5368,7 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
         else
           {
             args[0] = elt;
-            ret = Ffuncall (nargs, args);
+            ret = funcall (nargs, args);
           }
       }
     END_GC_EXTERNAL_LIST_LOOP (elt);
@@ -5326,10 +5378,19 @@ run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
 }
 
 Lisp_Object
+run_hook_with_args_in_buffer (struct buffer *buf, int nargs, Lisp_Object *args,
+			      enum run_hooks_condition cond)
+{
+  return run_hook_with_args_in_buffer_1 (buf, nargs, args, cond,
+                                         Ffuncall);
+}
+
+Lisp_Object
 run_hook_with_args (int nargs, Lisp_Object *args,
 		    enum run_hooks_condition cond)
 {
-  return run_hook_with_args_in_buffer (current_buffer, nargs, args, cond);
+  return run_hook_with_args_in_buffer_1 (current_buffer, nargs, args, cond,
+                                         Ffuncall);
 }
 
 #if 0
@@ -5390,8 +5451,8 @@ va_run_hook_with_args_in_buffer (struct buffer *buf, Lisp_Object hook_var,
 
   GCPRO1 (*funcall_args);
   gcpro1.nvars = nargs + 1;
-  run_hook_with_args_in_buffer (buf, nargs + 1, funcall_args,
-				RUN_HOOKS_TO_COMPLETION);
+  run_hook_with_args_in_buffer_1 (buf, nargs + 1, funcall_args,
+                                  RUN_HOOKS_TO_COMPLETION, Ffuncall);
   UNGCPRO;
 }
 
@@ -6545,8 +6606,8 @@ run_hook_with_args_in_buffer_trapping_problems_1 (void *puta)
   struct run_hook_with_args_in_buffer_trapping_problems *porra =
     (struct run_hook_with_args_in_buffer_trapping_problems *) puta;
 
-  return run_hook_with_args_in_buffer (porra->buf, porra->nargs, porra->args,
-				       porra->cond);
+  return run_hook_with_args_in_buffer_1 (porra->buf, porra->nargs,
+                                         porra->args, porra->cond, Ffuncall);
 }
 
 /* #### fix these functions to follow the calling convention of
@@ -7452,6 +7513,7 @@ syms_of_eval (void)
   DEFSUBR (Frun_hook_with_args);
   DEFSUBR (Frun_hook_with_args_until_success);
   DEFSUBR (Frun_hook_with_args_until_failure);
+  DEFSUBR (Frun_hook_wrapped);
   DEFSUBR (Fbacktrace_debug);
   DEFSUBR (Fbacktrace);
   DEFSUBR (Fbacktrace_frame);
