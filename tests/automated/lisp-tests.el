@@ -3988,7 +3988,7 @@ via the hepatic alpha-tocopherol transfer protein")))
     ;; the bulk of it is tested below.
     (Check-Error wrong-type-argument (run-hooks []))
     (Check-Error wrong-type-argument (run-hooks (lambda (z) z) 1)) 
-    (Check-Error wrong-number-of-arguments (run-hooks))
+    (Assert (eq nil (run-hooks)))
     (Assert (eq nil (run-hooks (gensym) (gensym) (gensym) (gensym))))
 
     (let ((current-hook-symbol (gensym "run-hook-with-args"))
@@ -4085,6 +4085,36 @@ run-hook-with-args-until-success")
                                  (setcdr list list)))
       (Check-Error circular-list
                    (run-hook-with-args-until-failure
-                    current-hook-symbol 3 2 1)))))
+                    current-hook-symbol 3 2 1)))
+    (let ((current-hook-symbol (gensym "run-hook-wrapped"))
+          (flag t)
+          (init-value
+           (list #'ignore #'ignore-and-truncate-list-as-side-effect
+		 #'t-and-truncate-list-as-side-effect 
+                 #'t-and-clear-flag 
+                 #'+-and-truncate-list-as-side-effect #'- #'* 'ignore)))
+      (set current-hook-symbol (copy-list init-value))
+      (Check-Error wrong-type-argument
+                   (run-hook-wrapped [] #'ignore))
+      (Check-Error wrong-type-argument
+                   (run-hook-wrapped (lambda (z) z) #'ignore))
+      (Check-Error wrong-number-of-arguments (run-hook-wrapped
+                                              current-hook-symbol))
+      (Assert (eq (run-hook-wrapped current-hook-symbol #'funcall 1 2 3 4 5)
+                  t))
+      (Assert (eq flag t) "checking later functions not called, \
+#'run-hook-wrapped")
+      (set current-hook-symbol (copy-list '(* + - /)))
+      (Assert (eql (run-hook-wrapped current-hook-symbol
+                                     #'(lambda (first &rest rest)
+                                         (1- (reduce first rest)))
+                                     1 2 3 4 5)
+                   119))
+      (set current-hook-symbol (copy-list '(+ * - /)))
+      (Assert (eql (run-hook-wrapped current-hook-symbol
+                                     #'(lambda (first &rest rest)
+                                         (1+ (reduce first rest)))
+                                     1 2 3 4 5)
+                   16)))))
 
 ;;; end of lisp-tests.el

@@ -4,6 +4,8 @@
 	Test `run-hooks', `run-hook-with-args',
 	`run-hook-with-args-until-success',
 	`run-hook-with-args-until-failure'.
+	Test #'run-hook-wrapped, just added. Allow #'run-hooks to take
+	zero arguments as does GNU.
 
 2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
