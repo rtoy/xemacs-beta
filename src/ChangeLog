@@ -1,5 +1,20 @@
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	New function, read_uninterned_symbol().
+	* lread.c:
+	* lread.c (read_atom_0):
+	Make SAW_A_BACKSLASH into a Boolint.
+	* lread.c (read_uninterned_symbol):
+	New function, no point passing UNTERNED_SYMBOL into read_atom()
+	when we know it's constant in value.
+	* lread.c (read_atom):
+	Move the body of read_uninterned_symbol() there.
+	* lread.c (read_rational):
+	* lread.c (read1):
+	Call read_atom() with its new calling convention.
+
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* console-stream.c (stream_text_width):
 	* data.c (build_fixnum_to_char_map):
 	* data.c (vars_of_data):
