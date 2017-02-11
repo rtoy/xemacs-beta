@@ -2859,7 +2859,11 @@ emacs_doprnt (Lisp_Object stream,
    spec is interpreted to mean that the corresponding argument should be
    treated as having the bit length of an EMACS_INT, whether that length be
    32, 64, 128, and that %s means the corresponding argument is interpreted as
-   an Ibyte pointer, to zero-terminated text. */
+   an Ibyte pointer, to zero-terminated text.
+
+   We also do not handle the $ repositioning specs; they make it harder to
+   determine an upper bound on the number of specs. This can be revised if
+   necessary, but it is unlikely to be that necessary on the C level.  */
 void
 write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
@@ -2870,8 +2874,12 @@ write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
   while (*cursor)
     {
       /* Count the number of format specs, so we can allocate the Dynarr on
-         the stack for parse_doprnt_spec(). */
-      speccount += *cursor == '%', cursor += 1;
+         the stack for parse_doprnt_spec(). Note that * in a spec means an
+         extra argument. */
+      speccount += (*cursor == '%' || *cursor == '*'), cursor += 1;
+      assert (*cursor != '$'); /* We don't handle the repositioning specs in
+                                  emacs_snprintf, error early if someone
+                                  passes us a format string with this.*/
     }
 
   len = cursor - fmt;
@@ -3181,7 +3189,11 @@ emacs_asprintf (Ibyte **retval_out, const CIbyte *format, ...)
 
    Always zero-terminates. This differs from the standard C behaviour, which
    will not zero-terminate if the number of octets is greater than SIZE -
-   1.  The terminating zero is not included in the returned value. */
+   1.  The terminating zero is not included in the returned value.
+
+   We do not handle the $ repositioning specs; they make it harder to
+   determine an upper bound on the number of specs. This can be revised if
+   necessary, but it is unlikely to be that necessary on the C level.  */
 Bytecount
 emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
                  va_list vargs)
@@ -3198,8 +3210,13 @@ emacs_vsnprintf (Ibyte *output, Bytecount size, const CIbyte *format,
   while (*cursor)
     {
       /* Count the number of format specs, so we can allocate the Dynarr on
-         the stack for parse_doprnt_spec(). */
-      speccount += *cursor == '%', cursor += 1;
+         the stack for parse_doprnt_spec(). Note that * in a spec means an
+         extra argument.
+         We don't handle repositioning specs with '$' */
+      speccount += (*cursor == '%' || *cursor == '*'), cursor += 1;
+      assert (*cursor != '$'); /* We don't handle the repositioning specs in
+                                  emacs_snprintf, error early if someone
+                                  passes us a format string with this.*/
     }
 
   len = cursor - format;
