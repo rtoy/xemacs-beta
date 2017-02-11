@@ -1825,7 +1825,8 @@ read_escape (Lisp_Object readcharfun)
 
 /* read symbol-constituent stuff into `Vread_buffer_stream'. */
 static Bytecount
-read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
+read_atom_0 (Lisp_Object readcharfun, Ichar firstchar,
+             Boolint *saw_a_backslash)
 {
   /* This function can GC */
   Ichar c = ((firstchar) >= 0 ? firstchar : readchar (readcharfun));
@@ -1861,24 +1862,28 @@ read_atom_0 (Lisp_Object readcharfun, Ichar firstchar, int *saw_a_backslash)
 }
 
 static Lisp_Object
-read_atom (Lisp_Object readcharfun,
-           Ichar firstchar,
-           int uninterned_symbol)
+read_uninterned_symbol (Lisp_Object readcharfun)
+{
+  Boolint saw_a_backslash;
+  Bytecount symlen = read_atom_0 (readcharfun, -1, &saw_a_backslash);
+
+  USED (saw_a_backslash);
+
+  /* SBCL errors if an uninterned symbol has numeric syntax. Maybe we should
+     too. GNU doesn't, CLISP doesn't, we never have. */
+  return Fmake_symbol (make_string ((const Ibyte *) resizing_buffer_stream_ptr
+                                    (XLSTREAM (Vread_buffer_stream)),
+                                    symlen));
+}
+
+static Lisp_Object
+read_atom (Lisp_Object readcharfun, Ichar firstchar)
 {
   /* This function can GC */
-  int saw_a_backslash;
+  Boolint saw_a_backslash;
   Bytecount len = read_atom_0 (readcharfun, firstchar, &saw_a_backslash);
   Ibyte *read_ptr
     = (Ibyte *) resizing_buffer_stream_ptr (XLSTREAM (Vread_buffer_stream));
-
-  /* If a token was preceded by #:, it's always a symbol. */
-  if (uninterned_symbol)
-    {
-      /* SBCL errors if an uninterned symbol has numeric
-         syntax. Maybe we should too. GNU doesn't, CLISP doesn't,
-         we never have. */
-      return Fmake_symbol (make_string (read_ptr, len));
-    }
 
   /* Is it an integer?
 
@@ -2029,7 +2034,7 @@ static Lisp_Object
 read_rational (Lisp_Object readcharfun, Fixnum base)
 {
   /* This function can GC */
-  int saw_a_backslash;
+  Boolint saw_a_backslash;
   const Ibyte *buf_end, *buf_ptr, *slash;
   Bytecount len = read_atom_0 (readcharfun, -1, &saw_a_backslash);
   Lisp_Object num = Qnil, denom = Qzero;
@@ -2540,7 +2545,7 @@ retry:
            two characters in a row.
 	   (I think this doesn't matter anymore because there should
 	   be no more danger in unreading multiple characters) */
-        return read_atom (readcharfun, '.', 0);
+        return read_atom (readcharfun, '.');
       }
 
     case '#':
@@ -2559,7 +2564,7 @@ retry:
 	  case '[': return read_compiled_function (readcharfun, ']'
 						   /*, purify_flag */ );
             /* "#:"-- gensym syntax */
-	  case ':': return read_atom (readcharfun, -1, 1);
+	  case ':': return read_uninterned_symbol (readcharfun);
             /* #'x => (function x) */
 	  case '\'': return list2 (Qfunction, read0 (readcharfun));
 #if 0
@@ -2844,7 +2849,7 @@ retry:
 	       future, then commas should be invalid read syntax
 	       outside of backquotes anywhere they're found (i.e.
 	       they must be quoted in symbols) -- Stig */
-	    return read_atom (readcharfun, c, 0);
+	    return read_atom (readcharfun, c);
 	  }
       }
 #endif
@@ -2872,7 +2877,7 @@ retry:
 	/* Ignore whitespace and control characters */
 	if (c <= 040)
 	  goto retry;
-	return read_atom (readcharfun, c, 0);
+	return read_atom (readcharfun, c);
       }
     }
 }
