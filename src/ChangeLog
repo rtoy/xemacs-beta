@@ -1,5 +1,17 @@
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* doprnt.c:
+	* doprnt.c (write_fmt_string_va):
+	* doprnt.c (emacs_vsnprintf):
+	When determining an upper bound for the number of format specs,
+	pay attention to '*' as well as '%', write_fmt_string_va(),
+	emacs_vsnprintf().
+	Assert that we haven't been passed a '$', since that makes
+	calculating an upper bound on the number of arguments to expect
+	harder.
+
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* lisp.h:
 	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
 	If SIGNALP is zero, actually stop when we detect a circular list,
@@ -55,7 +67,7 @@
 	GNU. Add #'run-hook-wrapped.
 	* eval.c:
 	* eval.c (Frun_hook):
-	Accept zero arguments as does GNUL.
+	Accept zero arguments as does GNU.
 	* eval.c (run_hook_wrapped_funcall): New.
 	* eval.c (Frun_hook_wrapped): New, API from GNU.
 	* eval.c (run_hook_with_args_in_buffer_1): Rename
