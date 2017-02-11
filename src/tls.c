@@ -1168,12 +1168,10 @@ init_tls (void)
 tls_state_t *
 tls_negotiate (int fd, const Extbyte *host, Lisp_Object keylist)
 {
-  Lisp_Object tail;
-
-  for (tail = keylist; CONSP (tail); tail = XCDR (tail))
+  EXTERNAL_LIST_LOOP_2 (elt, keylist)
     {
-      Lisp_Object keyfile = Fcar (XCAR (tail));
-      Lisp_Object certfile = Fcar (Fcdr (XCAR (tail)));
+      Lisp_Object keyfile = Fcar (elt);
+      Lisp_Object certfile = Fcar (Fcdr (elt));
       Extbyte *c_keyfile, *c_certfile;
 
       if (!STRINGP (keyfile))

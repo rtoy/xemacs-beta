@@ -4117,4 +4117,55 @@ run-hook-with-args-until-success")
                                      1 2 3 4 5)
                    16)))))
 
+;;-----------------------------------------------------
+;; Check that various special operators GCPRO correctly, and don't crash with
+;; corrupt list structure.
+;;-----------------------------------------------------
+
+(Assert
+ (eq
+  'no-crash
+  (progn
+    (let ((form '(if (> (prog1 -2 (setcdr (cdr form) nil) (garbage-collect)) -1)
+                     'greater
+                  'less-than-or-equal)))
+      (eval form))
+    'no-crash)) ;; Behaviour undefined, but shouldn't crash.
+ "checking `if' gcpros its arguments correctly while interpreted.")
+
+;; Does `progn' handle a malformed list appropriately?
+(Check-Error malformed-list
+             (let ((form '(progn (> (prog1 -2 (setcdr (cdr form) [hello])) -1)
+                           'hello 'there)))
+               (eval form)))
+
+;; Does `cond'?
+(Check-Error malformed-list
+             (let ((form '(cond 
+                           ((> (prog1 -1 (setcdr (cdr form) [hello])) 0)
+                            'hello)
+                           (nil 'there)
+                           (t 'everyone))))
+               (eval form)))
+
+;; Does `while' GCPRO appropriately?
+(Assert (eq nil
+            (let ((count -10)
+                  (form '(while (< (prog1
+                                       count
+                                     (when (cdr form)
+                                       (setcdr (cdr form) nil)
+                                       (garbage-collect))
+                                     (setq count (1+ count)))
+                                 1)
+                          'hello)))
+              (eval form))))
+
+;; Does `throw' handle a malformed argument list appropriately? 
+(Check-Error wrong-type-argument
+             (let ((form '(throw (prog1 '#:g0123 (setcdr (cdr form) 100)
+                                        (garbage-collect))
+                           '#:g3456)))
+               (eval form)))
+
 ;;; end of lisp-tests.el

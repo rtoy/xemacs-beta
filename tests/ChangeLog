@@ -1,3 +1,9 @@
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that various basic special operators GCPRO correctly and
+	don't crash with corrupt list structure.
+
 2017-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

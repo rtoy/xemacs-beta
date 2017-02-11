@@ -1292,11 +1292,10 @@ locate_file (Lisp_Object path, Lisp_Object str, Lisp_Object suffixes,
    the source has an associated file name or not. */
 
 static void
-build_load_history (int loading, Lisp_Object source)
+build_load_history (Boolint loading, Lisp_Object source)
 {
-  REGISTER Lisp_Object tail, prev, newelt;
-  REGISTER Lisp_Object tem, tem2;
-  int foundit;
+  REGISTER Lisp_Object prev = Qnil;
+  Boolint foundit = 0;
 
 #if !defined(LOADHIST_DUMPED)
   /* Don't bother recording anything for preloaded files.  */
@@ -1304,50 +1303,44 @@ build_load_history (int loading, Lisp_Object source)
     return;
 #endif
 
-  tail = Vload_history;
-  prev = Qnil;
-  foundit = 0;
-  while (!NILP (tail))
-    {
-      tem = Fcar (tail);
+  {
+    GC_EXTERNAL_LIST_LOOP_3 (tem, Vload_history, tail)
+      {
+        /* Find the feature's previous assoc list... */
+        if (internal_equal (source, Fcar (tem), 0))
+          {
+            foundit = 1;
 
-      /* Find the feature's previous assoc list... */
-      if (internal_equal (source, Fcar (tem), 0))
-	{
-	  foundit = 1;
-
-	  /*  If we're loading, remove it. */
-	  if (loading)
-	    {
-	      if (NILP (prev))
-		Vload_history = Fcdr (tail);
-	      else
-		Fsetcdr (prev, Fcdr (tail));
-	    }
-
-	  /*  Otherwise, cons on new symbols that are not already members.  */
-	  else
-	    {
-	      tem2 = Vcurrent_load_list;
-
-	      while (CONSP (tem2))
-		{
-		  newelt = XCAR (tem2);
-
-		  if (NILP (Fmemq (newelt, tem)))
-		    Fsetcar (tail, Fcons (Fcar (tem),
-					  Fcons (newelt, Fcdr (tem))));
-
-		  tem2 = XCDR (tem2);
-		  QUIT;
-		}
-	    }
-	}
-      else
-	prev = tail;
-      tail = Fcdr (tail);
-      QUIT;
-    }
+            /*  If we're loading, remove it. */
+            if (loading)
+              {
+                if (NILP (prev))
+                  Vload_history = Fcdr (tail);
+                else
+                  Fsetcdr (prev, Fcdr (tail));
+              }
+            /* Otherwise, cons on new symbols that are not already members. */
+            else
+              {
+                /* No need for GC protection, #'memq no longer signals a
+                   continuable error. */
+                EXTERNAL_LIST_LOOP_2 (newelt, Vcurrent_load_list)
+                  {
+                    if (NILP (Fmemq (newelt, tem)))
+                      {
+                        XSETCAR (tail, Fcons (Fcar (tem),
+                                              Fcons (newelt, Fcdr (tem))));
+                      }
+                  }
+              }
+          }
+        else
+          {
+            prev = tail;
+          }
+      }
+    END_GC_EXTERNAL_LIST_LOOP (tem);
+  }
 
   /* If we're loading, cons the new assoc onto the front of load-history,
      the most-recently-loaded position.  Also do this if we didn't find
