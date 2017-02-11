@@ -1,3 +1,43 @@
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Be more careful to treat external lists as lists that may be
+	malformed or circular.
+	* eval.c:
+	* eval.c (wants_debugger):
+	Use EXTERNAL_LIST_LOOP_2 here for both lists.
+	* eval.c (skip_debugger):
+	Use EXTERNAL_LIST_LOOP_2 here for CONDITIONS, Vdebug_ignored_errors
+	* eval.c (For):
+	* eval.c (Fand):
+	* eval.c (Fif):
+	* eval.c (Fcond):
+	* eval.c (Fprogn):
+	* eval.c (Fprog1):
+	* eval.c (Fprog2):
+	* eval.c (FletX):
+	* eval.c (Flet):
+	* eval.c (Fwhile):
+	Be more careful about GCPRO and dealing with argument lists that
+	are not true lists in these special operators.
+
+	* eval.c (Fwhen):
+	* eval.c (Funless):
+	Document why these two macros don't need the same GC protection
+	as the special operators.
+
+	* eval.c (Fquote):
+	* eval.c (Ffunction):
+	Be cheaper about checking for a wrong number of arguments here.
+
+	* eval.c (Fthrow):
+	GCPRO TAG, VALUE in this special operator, we didn't previously.
+	* lread.c (build_load_history):
+	Use our macros for external lists to traverse Vload_history,
+	Vcurrent_load_list.
+	* tls.c (tls_negotiate):
+	KEYLIST is an external list and thus may be circular, use
+	EXTERNAL_LIST_LOOP_2 appropriately.
+
 2017-02-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Sync the #'run-hook family of functions' docstrings, APIs from

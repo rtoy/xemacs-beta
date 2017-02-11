@@ -615,18 +615,23 @@ wants_debugger (Lisp_Object list, Lisp_Object conditions)
 {
   if (NILP (list))
     return 0;
-  if (! CONSP (list))
+
+  if (!CONSP (list))
     return 1;
 
-  while (CONSP (conditions))
-    {
-      Lisp_Object curr, tail;
-      curr = XCAR (conditions);
-      for (tail = list; CONSP (tail); tail = XCDR (tail))
-	if (EQ (XCAR (tail), curr))
-	  return 1;
-      conditions = XCDR (conditions);
-    }
+  {
+    EXTERNAL_LIST_LOOP_2 (curr, conditions)
+      {
+        EXTERNAL_LIST_LOOP_2 (elt, list)
+          {
+            if (EQ (elt, curr))
+              {
+                return 1;
+              }
+          }
+      }
+  }
+
   return 0;
 }
 
@@ -639,29 +644,28 @@ static int
 skip_debugger (Lisp_Object conditions, Lisp_Object data)
 {
   /* This function can GC */
-  Lisp_Object tail;
   int first_string = 1;
   Lisp_Object error_message = Qnil;
 
-  for (tail = Vdebug_ignored_errors; CONSP (tail); tail = XCDR (tail))
+  EXTERNAL_LIST_LOOP_2 (elt, Vdebug_ignored_errors)
     {
-      if (STRINGP (XCAR (tail)))
+      if (STRINGP (elt))
 	{
 	  if (first_string)
 	    {
 	      error_message = Ferror_message_string (data);
 	      first_string = 0;
 	    }
-	  if (fast_lisp_string_match (XCAR (tail), error_message) >= 0)
+	  if (fast_lisp_string_match (elt, error_message) >= 0)
 	    return 1;
 	}
       else
 	{
-	  Lisp_Object contail;
-
-          for (contail = conditions; CONSP (contail); contail = XCDR (contail))
-            if (EQ (XCAR (tail), XCAR (contail)))
-	      return 1;
+          EXTERNAL_LIST_LOOP_2 (curr, conditions)
+            {
+              if (EQ (elt, curr))
+                return 1;
+            }
 	}
     }
 
@@ -863,10 +867,12 @@ arguments: (&rest ARGS)
   /* This function can GC */
   Lisp_Object val = Qnil;
 
-  LIST_LOOP_3 (arg, args, tail)
+  GC_EXTERNAL_LIST_LOOP_3 (arg, args, tail)
     {
       if (!NILP (IGNORE_MULTIPLE_VALUES (val = Feval (arg))))
 	{
+          XUNGCPRO (arg);
+
 	  if (NILP (XCDR (tail)))
 	    {
 	      /* Pass back multiple values if this is the last one: */
@@ -876,6 +882,7 @@ arguments: (&rest ARGS)
 	  return IGNORE_MULTIPLE_VALUES (val);
 	}
     }
+  END_GC_EXTERNAL_LIST_LOOP (arg);
 
   return val;
 }
@@ -895,10 +902,11 @@ arguments: (&rest ARGS)
   /* This function can GC */
   Lisp_Object val = Qt;
 
-  LIST_LOOP_3 (arg, args, tail)
+  GC_EXTERNAL_LIST_LOOP_3 (arg, args, tail)
     {
       if (NILP (IGNORE_MULTIPLE_VALUES (val = Feval (arg))))
 	{
+          XUNGCPRO (arg);
 	  if (NILP (XCDR (tail)))
 	    {
 	      /* Pass back any multiple values for the last form: */
@@ -908,6 +916,7 @@ arguments: (&rest ARGS)
 	  return Qnil;
 	}
     }
+  END_GC_EXTERNAL_LIST_LOOP (arg);
 
   return val;
 }
@@ -924,13 +933,15 @@ arguments: (COND THEN &rest ELSE)
 {
   /* This function can GC */
   Lisp_Object condition  = XCAR (args);
-  Lisp_Object then_form  = XCAR (XCDR (args));
-  Lisp_Object else_forms = XCDR (XCDR (args));
 
   if (!NILP (IGNORE_MULTIPLE_VALUES (Feval (condition))))
-    return Feval (then_form);
+    return Feval (Fcar (XCDR (args)));
   else
-    return Fprogn (else_forms);
+    return Fprogn (Fcdr (XCDR (args)));
+
+  /* We used to store THEN and ELSE into C variables for clarity, but that's a
+     bad idea, since COND can manipulate ARGS' list structure to make them
+     unreachable. */
 }
 
 /* Macros `when' and `unless' are trivially defined in Lisp,
@@ -954,6 +965,8 @@ arguments: (COND &rest BODY)
     default: body = Fcons (Qprogn, Flist (nargs-1, args+1)); break;
     }
 
+  /* WHEN and UNLESS are macros, so the interpreter ensures our result is
+     reachable, we don't need to GCPRO it. */
   return list3 (Qif, cond, body);
 }
 
@@ -967,6 +980,9 @@ arguments: (COND &rest BODY)
 {
   Lisp_Object cond = args[0];
   Lisp_Object body = Flist (nargs-1, args+1);
+
+  /* WHEN and UNLESS are macros, so the interpreter ensures our result is
+     reachable, we don't need to GCPRO it. */
   return Fcons (Qif, Fcons (cond, Fcons (Qnil, body)));
 }
 
@@ -987,7 +1003,7 @@ arguments: (&rest CLAUSES)
   /* This function can GC */
   REGISTER Lisp_Object val;
 
-  LIST_LOOP_2 (clause, args)
+  GC_EXTERNAL_LIST_LOOP_2 (clause, args)
     {
       CHECK_CONS (clause);
       if (!NILP (val = IGNORE_MULTIPLE_VALUES (Feval (XCAR (clause)))))
@@ -998,9 +1014,11 @@ arguments: (&rest CLAUSES)
 	      /* Pass back any multiple values here: */
 	      val = Fprogn (clause);
 	    }
+          XUNGCPRO (clause);
 	  return val;
 	}
     }
+  END_GC_EXTERNAL_LIST_LOOP (clause);
 
   return Qnil;
 }
@@ -1013,18 +1031,14 @@ arguments: (&rest BODY)
        (args))
 {
   /* This function can GC */
-  /* Caller must provide a true list in ARGS */
   REGISTER Lisp_Object val = Qnil;
-  struct gcpro gcpro1;
 
-  GCPRO1 (args);
-
-  {
-    LIST_LOOP_2 (form, args)
+  GC_EXTERNAL_LIST_LOOP_2 (form, args)
+    {
       val = Feval (form);
-  }
+    }
+  END_GC_EXTERNAL_LIST_LOOP (form);
 
-  UNGCPRO;
   return val;
 }
 
@@ -1049,8 +1063,11 @@ arguments: (FIRST &rest BODY)
   GCPRO1 (val);
 
   {
-    LIST_LOOP_2 (form, XCDR (args))
-      Feval (form);
+    GC_EXTERNAL_LIST_LOOP_2 (form, XCDR (args))
+      {
+        Feval (form);
+      }
+    END_GC_EXTERNAL_LIST_LOOP (form);
   }
 
   UNGCPRO;
@@ -1081,8 +1098,11 @@ arguments: (FIRST SECOND &rest BODY)
   GCPRO1 (val);
 
   {
-    LIST_LOOP_2 (form, args)
-      Feval (form);
+    GC_EXTERNAL_LIST_LOOP_2 (form, args)
+      {
+        Feval (form);
+      }
+    END_GC_EXTERNAL_LIST_LOOP (form);
   }
 
   UNGCPRO;
@@ -1102,10 +1122,9 @@ arguments: (VARLIST &rest BODY)
 {
   /* This function can GC */
   Lisp_Object varlist = XCAR (args);
-  Lisp_Object body    = XCDR (args);
   int speccount = specpdl_depth();
 
-  EXTERNAL_LIST_LOOP_3 (var, varlist, tail)
+  GC_EXTERNAL_LIST_LOOP_3 (var, varlist, tail)
     {
       Lisp_Object symbol, value, tem;
       if (SYMBOLP (var))
@@ -1128,7 +1147,9 @@ arguments: (VARLIST &rest BODY)
 	}
       specbind (symbol, value);
     }
-  return unbind_to_1 (speccount, Fprogn (body));
+  END_GC_EXTERNAL_LIST_LOOP (var);
+
+  return unbind_to_1 (speccount, Fprogn (XCDR (args)));
 }
 
 DEFUN ("let", Flet, 1, UNEVALLED, 0, /*
@@ -1144,7 +1165,6 @@ arguments: (VARLIST &rest BODY)
 {
   /* This function can GC */
   Lisp_Object varlist = XCAR (args);
-  Lisp_Object body    = XCDR (args);
   int speccount = specpdl_depth();
   Lisp_Object *temps;
   int idx;
@@ -1163,7 +1183,7 @@ arguments: (VARLIST &rest BODY)
 
   idx = 0;
   {
-    LIST_LOOP_2 (var, varlist)
+    GC_EXTERNAL_LIST_LOOP_2 (var, varlist)
       {
 	Lisp_Object *value = &temps[idx++];
 	if (SYMBOLP (var))
@@ -1187,6 +1207,7 @@ arguments: (VARLIST &rest BODY)
 	      }
 	  }
       }
+    END_GC_EXTERNAL_LIST_LOOP (var);
   }
 
   idx = 0;
@@ -1199,7 +1220,7 @@ arguments: (VARLIST &rest BODY)
 
   UNGCPRO;
 
-  return unbind_to_1 (speccount, Fprogn (body));
+  return unbind_to_1 (speccount, Fprogn (XCDR (args)));
 }
 
 DEFUN ("while", Fwhile, 1, UNEVALLED, 0, /*
@@ -1212,13 +1233,12 @@ arguments: (TEST &rest BODY)
        (args))
 {
   /* This function can GC */
-  Lisp_Object test = XCAR (args);
-  Lisp_Object body = XCDR (args);
-
-  while (!NILP (IGNORE_MULTIPLE_VALUES (Feval (test))))
+  /* Don't store TEST and BODY into local C variables, Lisp may make them
+     unreachable. */
+  while (!NILP (IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)))))
     {
       QUIT;
-      Fprogn (body);
+      Fprogn (XCDR (args));
     }
 
   return Qnil;
@@ -1275,13 +1295,10 @@ arguments: (OBJECT)
 */
        (args))
 {
-  int nargs;
-
-  GET_LIST_LENGTH (args, nargs);
-  if (nargs != 1)
+  if (!NILP (XCDR (args)))
     {
       Fsignal (Qwrong_number_of_arguments,
-               list2 (Qquote, make_fixnum (nargs)));
+               list2 (Qquote, Flist_length (args)));
     }
 
   return XCAR (args);
@@ -1357,13 +1374,10 @@ arguments: (SYMBOL-OR-LAMBDA)
 */
        (args))
 {
-  int nargs;
-
-  GET_LIST_LENGTH (args, nargs);
-  if (nargs != 1)
+  if (!NILP (XCDR (args)))
     {
       Fsignal (Qwrong_number_of_arguments,
-               list2 (Qfunction, make_fixnum (nargs)));
+               list2 (Qfunction, Flist_length (args)));
     }
 
   return XCAR (args);
@@ -1949,25 +1963,28 @@ throw_or_bomb_out (Lisp_Object tag, Lisp_Object val, int bomb_out_p,
 DEFUN_NORETURN ("throw", Fthrow, 2, UNEVALLED, 0, /*
 Throw to the catch for TAG and return VALUE from it.
 
-Both TAG and VALUE are evalled, and multiple values in VALUE will be passed
+Both TAG and VALUE are evaluated, and multiple values in VALUE will be passed
 back.  Tags are the same if and only if they are `eq'.
 
 arguments: (TAG VALUE)
 */
        (args))
 {
-  int nargs;
-  Lisp_Object tag, value;
+  Lisp_Object tag = Qunbound, value = Qunbound;
+  struct gcpro gcpro1, gcpro2;
 
-  GET_LIST_LENGTH (args, nargs);
-  if (nargs != 2)
+  if (!CONSP (XCDR (args)) || !NILP (XCDR (XCDR (args))))
     {
-      Fsignal (Qwrong_number_of_arguments, list2 (Qthrow, make_fixnum (nargs)));
+      Fsignal (Qwrong_number_of_arguments,
+               list2 (Qthrow, Flist_length (args)));
     }
 
-  tag = IGNORE_MULTIPLE_VALUES (Feval (XCAR(args)));
-
-  value = Feval (XCAR (XCDR (args)));
+  GCPRO2 (tag, value);
+  tag = IGNORE_MULTIPLE_VALUES (Feval (XCAR (args)));
+  value = Feval (Fcar (XCDR (args))); /* Fcar in case TAG has modified ARGS'
+                                         list structure. */
+  UNGCPRO; /* throw_or_bomb_out() makes TAG and VALUE reachable before calling
+              Lisp. */
 
   throw_or_bomb_out (tag, value, 0, Qnil, Qnil); /* Doesn't return */
   RETURN_NOT_REACHED (Qnil);
