@@ -871,12 +871,10 @@ arguments: (SEQUENCE &optional STREAM &key (START 0) END)
         }
       else if (BIT_VECTORP (sequence))
         {
-          Ibyte one [MAX_ICHAR_LEN];
           Lisp_Bit_Vector *vv = XBIT_VECTOR (sequence);
 
           nonreloc = allptr
-            = alloca_ibytes (((ending - starting) *
-                              (set_itext_ichar (one, (Ichar)1))));
+            = alloca_ibytes (((ending - starting) * ichar_len ((Ichar)1)));
           for (ii = starting; ii < ending; ++ii)
             {
               allptr += set_itext_ichar (allptr, bit_vector_bit (vv, ii));
@@ -2226,7 +2224,7 @@ print_internal (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 		{
 		  Ibyte buf[DECIMAL_PRINT_SIZE (long) + MAX_ICHAR_LEN];
 
-		  set_itext_ichar (buf, '#');
+		  (void) set_itext_ichar (buf, '#');
                   write_string_1 (printcharfun, buf, 
                                   ichar_len ('#')
                                   + fixnum_to_string (buf + ichar_len ('#'),

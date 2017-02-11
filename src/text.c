@@ -1876,6 +1876,16 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 }
 
 
+#ifndef MULE
+
+static int leading_byte_prefix_p (Ibyte USED_IF_MULE (lb))
+{
+  assert (!"this shouldn't be called at runtime on non-Mule");
+  return 0;
+}
+
+#endif
+
 /************************************************************************/
 /*                    charset properties of strings                     */
 /************************************************************************/
@@ -1940,6 +1950,10 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
       cols += XCHARSET_COLUMNS (ichar_charset (ch));
       INC_IBYTEPTR (str);
     }
+
+#ifndef MULE
+  USED (ch);
+#endif
 
   return cols;
 }
