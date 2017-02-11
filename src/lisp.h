@@ -2172,7 +2172,8 @@ do {									\
 	  &&								\
 	  ((((len & 1) != 0) ? (tortoise = XCDR (tortoise), 0) : 0),    \
 	   (EQ (hare, tortoise) &&					\
-            ((signalp ? signal_circular_list_error (list) : (void) 0), 0)))))
+            ((signalp ? signal_circular_list_error (list) :             \
+              ((hare = Qunbound, (void) 0))), 0)))))
 
 #define PRIVATE_EXTERNAL_LIST_LOOP_6(elt, list, len, hare,		\
 				     tortoise, suspicion_length)	\
@@ -2192,6 +2193,10 @@ EMACS_INT len_##elt;							\
 PRIVATE_SAFE_LIST_LOOP_6 (elt, list, len_##elt, hare_##elt,		\
 		          tortoise_##elt, CIRCULAR_LIST_SUSPICION_LENGTH)
 
+/* Similar to EXTERNAL_LIST_LOOP_3() but don't signal when an error is
+   detected, just stop.  If LIST was a true, non-circular list, then TAIL will
+   be Qnil after SAFE_LIST_LOOP_3 completes.  If LIST was circular, TAIL will
+   be Qunbound; otherwise it will be the last (non-list) cdr in LIST. */
 #define SAFE_LIST_LOOP_3(elt, list, tail)				\
 Lisp_Object elt, tail, tortoise_##elt;					\
 EMACS_INT len_##elt;							\

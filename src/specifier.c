@@ -854,19 +854,25 @@ predicates.
 
 Most of the time, a tag set is not specified, and the instantiator
 gets a null tag set, which matches all devices.
+
+If TAG-SET is not a true list (that is, if it is circular, or some cdr of its
+list structure is not a list), then `valid-specifier-tag-set-p' gives nil.
 */
        (tag_set))
 {
-  Lisp_Object rest;
-
-  for (rest = tag_set; !NILP (rest); rest = XCDR (rest))
+  SAFE_LIST_LOOP_3 (elt, tag_set, rest)
     {
-      if (!CONSP (rest))
-	return Qnil;
-      if (NILP (Fvalid_specifier_tag_p (XCAR (rest))))
-	return Qnil;
-      QUIT;
+      if (NILP (Fvalid_specifier_tag_p (elt)))
+        {
+          return Qnil;
+        }
     }
+
+  if (!LISTP (rest)) /* Not a true list? */
+    {
+      return Qnil;
+    }
+  
   return Qt;
 }
 
