@@ -717,6 +717,7 @@ gtk_keysym_to_character (guint keysym)
     return make_char (make_ichar (charset, code, 0));
   }
 #else
+  USED (charset);
   return make_char (code + 0x80);
 #endif
 }

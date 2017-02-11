@@ -654,7 +654,8 @@ REASON is nil or a string describing the failure (not required).
   CHARACTER_TELL_ASSERT (Lstream_character_tell (XLSTREAM (stream))
                          /* This should be equal to sizeof (shortbuf) on
                             non-mule. */
-                         == sizeof (shortbuf) - !(byte_ascii_p (0xff)),
+                         == (ssize_t) (sizeof (shortbuf))
+                         - !(byte_ascii_p (0xff)),
                          "character tell with short read, no-conversion-unix",
                          "short read character tell failed");
 

@@ -1,5 +1,22 @@
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* console-stream.c (stream_text_width):
+	* data.c (build_fixnum_to_char_map):
+	* data.c (vars_of_data):
+	* doprnt.c (fixnum_to_string):
+	* doprnt.c (bignum_to_string_1):
+	* doprnt.c (parse_doprnt_spec):
+	* event-xlike-inc.c (endif):
+	* print.c (Fwrite_sequence):
+	* print.c (print_internal):
+	* search.c (boyer_moore):
+	* tests.c (Ftest_character_tell):
+	* text.c:
+	* text.c (ibyte_string_displayed_columns):
+	Silence various compiler warnings on non-MULE.
+
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* keymap.c (define_key_check_and_coerce_keysym):
 	Accept (shift a) as equivalent to (A) in this function.
 	Be cheaper about checking for one-character keysyms.

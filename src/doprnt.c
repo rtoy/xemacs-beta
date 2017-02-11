@@ -332,7 +332,7 @@ fixnum_to_string (Ibyte *buffer, Bytecount size, Fixnum number,
   if (minusp)
     {
       len += ichar_len ('-');
-      set_itext_ichar (buffer + size - len, '-');
+      (void) set_itext_ichar (buffer + size - len, '-');
     }
 
   slack = size - len;
@@ -414,7 +414,7 @@ bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
   if (minusp)
     {
       cursor -= ichar_len ('-');
-      set_itext_ichar (cursor, '-');
+      (void) set_itext_ichar (cursor, '-');
     }
 
   text_checking_assert (cursor >= *buf);
@@ -1123,7 +1123,7 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
 	text_end = fmt_end;
       spec.text_before = fmt - format;
       spec.text_before_len = text_end - fmt;
-      set_itext_ichar (spec.pad_char, ' ');
+      (void) set_itext_ichar (spec.pad_char, ' ');
       spec.precision = -1;
       
       fmt = text_end;

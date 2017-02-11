@@ -2095,6 +2095,10 @@ boyer_moore (struct buffer *buf, Ibyte *base_pat, Bytecount len,
       tail_end = BYTE_BUF_CEILING_OF (buf, pos);
       tail_end_ptr = BYTE_BUF_BYTE_ADDRESS (buf, tail_end);
 
+#ifndef MULE
+      USED (tail_end_ptr);
+#endif
+
       if ((limit - pos) * direction > 20)
 	{
 	  /* We have to be careful because the code can generate addresses

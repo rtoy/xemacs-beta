@@ -1542,7 +1542,7 @@ build_fixnum_to_char_map (Lisp_Object radix_table)
   data = XSTRING_DATA (result);
   for (ii = 0; ii < cclen; ii++)
     {
-      set_itext_ichar (data + (MAX_ICHAR_LEN * ii), cctable[ii]);
+      (void) set_itext_ichar (data + (MAX_ICHAR_LEN * ii), cctable[ii]);
     }
 
   init_string_ascii_begin (result);
@@ -4356,7 +4356,7 @@ character does not have an assigned numeric value. See `parse-integer',
     for (ii = 0, ptr = fixnum_tab; ii < 36; ++ii, ptr += MAX_ICHAR_LEN)
       {
 	cc = ii < 10 ? '0' + ii : 'A' + (ii - 10);
-	set_itext_ichar ((Ibyte *) ptr, cc);
+	(void) set_itext_ichar ((Ibyte *) ptr, cc);
       }
 
     /* Sigh, we can't call build_fixnum_to_char_map() on Vdigit_fixnum_map,
@@ -4377,7 +4377,7 @@ character does not have an assigned numeric value. See `parse-integer',
     for (ii = 0, ptr = fixnum_tab; ii < 36; ++ii, ptr += MAX_ICHAR_LEN)
       {
 	cc = ii < 10 ? '0' + ii : 'a' + (ii - 10);
-	set_itext_ichar ((Ibyte *) ptr, cc);
+	(void) set_itext_ichar ((Ibyte *) ptr, cc);
       }
     Vfixnum_to_minuscule_map 
       = make_string ((const Ibyte*) fixnum_tab, 36 * MAX_ICHAR_LEN);
