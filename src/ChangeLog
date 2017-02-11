@@ -1,5 +1,16 @@
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lisp.h:
+	* lisp.h (PRIVATE_UNVERIFIED_LIST_LOOP_7):
+	If SIGNALP is zero, actually stop when we detect a circular list,
+	by setting HARE to Qunbound.
+	Document this in the comment to SAFE_LIST_LOOP_3.
+	* specifier.c (Fvalid_specifier_tag_set_p):
+	Use SAFE_LIST_LOOP_3() in this function, now it doesn't choke on
+	circular lists.
+
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Be more careful to treat external lists as lists that may be
 	malformed or circular.
 	* eval.c:
