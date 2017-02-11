@@ -277,14 +277,21 @@ keystroke may also be represented by an event object, as returned by the
 represented by the number 2 (the @sc{ascii} code for @samp{^B}) or the
 character @code{?\^B}.  See below.
 
-  The @key{SHIFT} modifier is somewhat of a special case.  You should
-not (and cannot) use @code{(meta shift a)} to mean @code{(meta A)},
-since for characters that have @sc{ascii} equivalents, the state of the
-shift key is implicit in the keysym (@samp{a} vs. @samp{A}).  You also
-cannot say @code{(shift =)} to mean @code{+}, as that sort of thing
-varies from keyboard to keyboard.  The @key{SHIFT} modifier is for use
-only with characters that do not have a second keysym on the same key,
-such as @code{backspace} and @code{tab}.
+  The @key{SHIFT} modifier is somewhat of a special case.  You cannot
+say @code{(shift =)} to mean @code{+}, as that sort of thing varies from
+keyboard layout to keyboard layout.  When it comes to alphabetic
+keysyms, @code{(meta shift a)} is transformed internally to mean
+@code{(meta A)}, and similarly for other keysyms with case
+information. @code{(shift A)} is transformed internally to simply
+@code{(A)}.  Note that the case correspondence used by XEmacs and that
+used by your window system may differ, and when binding keysyms the
+XEmacs correspondence overrides.  The @key{SHIFT} modifier is most
+useful for those characters that do not have a second keysym on the same
+key, such as @code{backspace} and @code{tab}.
+
+Older XEmacs code only accepts @code{(A)}, not @code{(shift a)}, so the
+former syntax is to be preferred for the moment.  GNU Emacs supports
+both syntaxes as of February 2017.
 
   A key sequence is a vector of keystrokes.  As a degenerate case,
 elements of this vector may also be keysyms if they have no modifiers.
