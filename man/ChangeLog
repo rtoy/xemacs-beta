@@ -1,3 +1,10 @@
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/keymaps.texi (Key Sequences):
+	Document that we now support e.g. (shift a), transforming that
+	internally to (A).
+	Document that (A) is still preferred given older XEmacs code.
+
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/searching.texi (Regexp Search):

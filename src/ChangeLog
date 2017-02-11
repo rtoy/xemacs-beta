@@ -1,5 +1,15 @@
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* keymap.c (define_key_check_and_coerce_keysym):
+	Accept (shift a) as equivalent to (A) in this function.
+	Be cheaper about checking for one-character keysyms.
+	* keymap.c (define_key_parser):
+	Use EXTERNAL_LIST_LOOP_3() here when parsing an external list.
+	* keymap.c (Fdefine_key):
+	Update the docstring to reflect this change.
+
+2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* doprnt.c:
 	* doprnt.c (write_fmt_string_va):
 	* doprnt.c (emacs_vsnprintf):

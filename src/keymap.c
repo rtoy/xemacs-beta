@@ -37,6 +37,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "insdel.h"
 #include "keymap.h"
 #include "window.h"
+#include "regex.h"
 
 
 /* A keymap contains six slots:
@@ -1288,35 +1289,54 @@ Return the number of bindings in the keymap.
    and perform any necessary canonicalization. */
 
 static void
-define_key_check_and_coerce_keysym (Lisp_Object spec,
-				    Lisp_Object *keysym,
-				    int modifiers)
+define_key_check_and_coerce_keysym (Lisp_Object *keysym, int *modifiers_inout)
 {
   /* Now, check and massage the trailing keysym specifier. */
-  if (SYMBOLP (*keysym))
+  if (SYMBOLP (*keysym)
+      && ((itext_ichar_len (XSTRING_DATA (XSYMBOL (*keysym)->name))
+           == XSTRING_LENGTH (XSYMBOL (*keysym)->name)) ?
+          ((*keysym = make_char (string_ichar (XSYMBOL (*keysym)->name, 0))),
+           0) : 1))
     {
-      if (string_char_length (XSYMBOL (*keysym)->name) == 1)
-	{
-	  Lisp_Object ream_gcc_up_the_ass =
-	    make_char (string_ichar (XSYMBOL (*keysym)->name, 0));
-	  *keysym = ream_gcc_up_the_ass;
-	  goto fixnum_keysym;
-	}
+      DO_NOTHING;
     }
   else if (CHAR_OR_CHAR_INTP (*keysym))
     {
       CHECK_CHAR_COERCE_INT (*keysym);
-    fixnum_keysym:
-      if (XCHAR (*keysym) < ' '
-	  /* || (XCHAR (*keysym) >= 128 && XCHAR (*keysym) < 160) */)
-	/* yuck!  Can't make the above restriction; too many compatibility
-	   problems ... */
-	invalid_argument ("keysym char must be printable", *keysym);
-      /* #### This bites!  I want to be able to write (control shift a) */
-      if (modifiers & XEMACS_MOD_SHIFT)
-	invalid_argument
-	  ("The `shift' modifier may not be applied to ASCII keysyms",
-	   spec);
+
+      if (!ISPRINT (XCHAR (*keysym)))
+        {
+          invalid_argument ("keysym char must be printable", *keysym);
+        }
+
+      if (modifiers_inout && (*modifiers_inout & XEMACS_MOD_SHIFT))
+        {
+          /* This is fundamentally inaccurate, in that those characters
+             considered as having case by the window system (and by this
+             particular keyboard layout!) and those considered as having case
+             by XEmacs are distinct (while usually overlapping). We need some
+             decision, however, and just refusing to accept the shift modifier
+             while accepting (define-key global-map '(?U) ...) is worse. It's
+             better to go for the XEmacs decision in order to have at least a
+             little bit of platform-independence.  */
+          Ichar uc = UPCASE (0, XCHAR (*keysym)), lc;
+
+          /* If our character can be made uppercase, bind its uppercase
+             variant, and remove the shift modifier. */
+          if (uc != XCHAR (*keysym))
+            {
+              *keysym = make_char (uc);
+              *modifiers_inout &= ~XEMACS_MOD_SHIFT;
+            }
+          else if ((lc = DOWNCASE (0, XCHAR (*keysym))) != XCHAR (*keysym))
+            {
+              /* If our character is already uppercase, then just remove the
+                 shift modifier. */
+              *modifiers_inout &= ~XEMACS_MOD_SHIFT;
+            }
+          /* Otherwise, we don't have any case information on the character,
+             and so we preserve the shift modifier. */
+        }
     }
   else
     {
@@ -1440,46 +1460,38 @@ define_key_parser (Lisp_Object spec, Lisp_Key_Data *returned_value)
     }
   else if (SYMBOLP (spec))
     {
+      int modifiers = 0;
       /* Be nice, allow = to mean (=) */
       if (bucky_sym_to_bucky_bit (spec) != 0)
         invalid_argument ("Key is a modifier name", spec);
-      define_key_check_and_coerce_keysym (spec, &spec, 0);
+      define_key_check_and_coerce_keysym (&spec, &modifiers);
       SET_KEY_DATA_KEYSYM (returned_value, spec);
-      SET_KEY_DATA_MODIFIERS (returned_value, 0);
+      SET_KEY_DATA_MODIFIERS (returned_value, modifiers);
     }
   else if (CONSP (spec))
     {
       int modifiers = 0;
-      Lisp_Object keysym = Qnil;
-      Lisp_Object rest = spec;
 
       /* First, parse out the leading modifier symbols. */
-      while (CONSP (rest))
+      EXTERNAL_LIST_LOOP_3 (keysym, spec, rest)
 	{
 	  int modifier;
 
-	  keysym = XCAR (rest);
 	  modifier = bucky_sym_to_bucky_bit (keysym);
 	  modifiers |= modifier;
 	  if (!NILP (XCDR (rest)))
 	    {
-	      if (! modifier)
+	      if (!modifier)
 		invalid_argument ("Unknown modifier", keysym);
 	    }
 	  else
 	    {
 	      if (modifier)
-		sferror ("Nothing but modifiers here",
-				     spec);
+		sferror ("Nothing but modifiers here", spec);
 	    }
-	  rest = XCDR (rest);
-	  QUIT;
 	}
-      if (!NILP (rest))
-        signal_error (Qlist_formation_error,
-			   "List must be nil-terminated", spec);
 
-      define_key_check_and_coerce_keysym (spec, &keysym, modifiers);
+      define_key_check_and_coerce_keysym (&keysym, &modifiers);
       SET_KEY_DATA_KEYSYM(returned_value, keysym);
       SET_KEY_DATA_MODIFIERS (returned_value, modifiers);
     }
@@ -1761,13 +1773,13 @@ means the down-stroke and `button1up' means the up-stroke when clicking
 mouse button 1.
 A `modifier' is a symbol naming a physical key which is only "noticed" by
 XEmacs when chorded with another key.  The `shift' modifier is a special
-case.  You cannot use `(meta shift a)' to mean `(meta A)', since for
-characters that have ASCII equivalents, the state of the shift key is
-implicit in the keysym (a vs. A).  You also cannot say `(shift =)' to mean
-`+', as that correspondence varies from keyboard to keyboard.  The shift
-modifier can only be applied to keys that do not have a second keysym on the
-same key, such as `backspace' and `tab'.  A mouse click may be combined with
-modifiers to create a compound "keystroke".
+case.  `(meta shift a)' is transformed to `(meta A) internally, and similarly
+for all those characters with case information known to XEmacs.  You also
+cannot say `(shift =)' to mean `+', as that correspondence varies from
+keyboard to keyboard.  The shift modifier can only be usefully applied to keys
+that do not have a second keysym on the same key, such as `backspace' and
+`tab'.  A mouse click may be combined with modifiers to create a compound
+"keystroke".
 
 The keys, mouse gestures, and modifiers that are available depend on your
 console and its driver.  At a minimum the ASCII graphic characters will be
