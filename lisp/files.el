@@ -1167,12 +1167,11 @@ If optional argument HACK-HOMEDIR is non-nil, then this also substitutes
 		 (not (and (= (match-end 0) 1)
 			   (= (aref filename 0) directory-sep-char)))
 		 (not (and (eq system-type 'windows-nt)
-			   (save-match-data
-			     (string-match (concat "\\`[a-zA-Z]:"
-						   (regexp-quote
-						    (string directory-sep-char))
-						   "\\'")
-					   filename)))))
+                           (string-match-p (concat "\\`[a-zA-Z]:"
+                                                   (regexp-quote
+                                                    (string directory-sep-char))
+                                                   "\\'")
+                                           filename))))
 	    (setq filename
 		  (concat "~"
 			  (match-string 1 filename)

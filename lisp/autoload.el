@@ -284,10 +284,9 @@ or macro definition or a defcustom)."
 	     (body (nthcdr (get car 'doc-string-elt) form))
 	     (doc (if (stringp (car body)) (pop body))))
 	(if (and (memq car '(defmacro defmacro* defun defun*))
-                 (not (and doc (save-match-data
-                                 (string-match
-                                  "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
-                                  doc)))))
+                 (not (and doc (string-match-p
+                                "[\n\t ]*\narguments: ?(\\(.*\\))\n?\\'"
+                                doc))))
 	    (let ((arglist (nth 2 form)))
 	      (setq doc (concat (or doc "")
 				"\n\narguments: "

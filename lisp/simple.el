@@ -436,8 +436,7 @@ buffer if the variable `delete-trailing-lines' is non-nil."
         (while (re-search-forward "\\s-$" end-marker t)
           (skip-syntax-backward "-" (line-beginning-position))
           ;; Don't delete formfeeds, even if they are considered whitespace.
-          ;; XEmacs; #'looking-at-p not (yet) available
-          (if (save-match-data (looking-at ".*\f")) 
+          (if (looking-at-p ".*\f")
               (goto-char (match-end 0)))
           (delete-region (point) (match-end 0)))
         ;; Delete trailing empty lines.

@@ -135,9 +135,9 @@ by \\=\\< and \\>."
   "Return the depth of REGEXP.
 This means the number of regexp grouping constructs (parenthesised expressions)
 in REGEXP."
+  ;; Hack to signal an error if REGEXP does not have balanced parentheses.
+  (string-match-p regexp "")
   (save-match-data
-    ;; Hack to signal an error if REGEXP does not have balanced parentheses.
-    (string-match regexp "")
     ;; Count the number of open parentheses in REGEXP.
     (let ((count 0) start)
       (while
