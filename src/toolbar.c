@@ -1733,7 +1733,8 @@ This is a specifier; use `set-specifier' to change it.
   fb = Fcons (Fcons (list1 (Qtty), Qzero), fb);
 #endif
 #ifdef HAVE_GTK
-  fb = Fcons (Fcons (list1 (Qgtk), make_fixnum (DEFAULT_TOOLBAR_HEIGHT)), fb);
+  fb = Fcons (Fcons (list1 (Qgtk),
+		     make_fixnum (GTK_DEFAULT_TOOLBAR_HEIGHT)), fb);
 #endif
 #ifdef HAVE_X_WINDOWS
   fb = Fcons (Fcons (list1 (Qx), make_fixnum (DEFAULT_TOOLBAR_HEIGHT)), fb);

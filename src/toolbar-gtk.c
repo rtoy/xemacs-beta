@@ -106,6 +106,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 
   /* Get the toolbar and delete the old widgets in it */
   button = FRAME_TOOLBAR_BUTTONS (f, pos);
+  checksum = bar_width * bar_height;
 
   /* First loop over all of the buttons to determine how many there
      are. This loop will also make sure that all instances are
