@@ -1,3 +1,11 @@
+2017-02-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar.h (GTK_DEFAULT_TOOLBAR_HEIGHT): New define.
+	* toolbar.c (specifier_vars_of_toolbar): Use it.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add toolbar height and width
+	to checksum so it's redrawn when size changes.
+
 2017-01-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* redisplay-gtk.c (XLIKE_clear_region): GDK drawing context
