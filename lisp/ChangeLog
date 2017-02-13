@@ -1,3 +1,14 @@
+2017-02-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* autoload.el (make-autoload):
+	* cl-macs.el (get-setf-method):
+	* files.el (abbreviate-file-name):
+	* regexp-opt.el (regexp-opt-depth):
+	* simple.el (delete-trailing-whitespace):
+	Replace (save-match-data (string-match ...)), detected
+	algorithmically, with (string-match-p ...). Similarly for the one
+	instance of (save-match-data (looking-at ...)).
+
 2017-02-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (safe-length): New. Moved here from data.c, there's no
