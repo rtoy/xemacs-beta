@@ -102,8 +102,40 @@
 
   (fillarray my-bit-vector 0)
   (Assert (eq 4 (length my-bit-vector)))
-  (Assert (eq (elt my-bit-vector 2) 0))
-  )
+  (Assert (eq (elt my-bit-vector 2) 0)))
+
+(macrolet
+    ((probe-bounds-of-aref (&rest arrays)
+       (cons 'progn
+             (loop for array in arrays
+                   collect `(progn
+                             (Check-Error args-out-of-range (aref ,array -1))
+                             (Check-Error args-out-of-range
+                              (aref ,array most-negative-fixnum))
+                             (Check-Error args-out-of-range
+                              (aref ,array ,(length
+                                             (cl-const-expr-val array))))
+                             (Check-Error args-out-of-range
+                              (aref ,array most-positive-fixnum))
+                             ,(if (> (length (cl-const-expr-val array)) 0)
+                                  `(progn
+                                    (Assert (eql (position-if-not #'ignore
+                                                                  ,array) 0))
+                                    (Assert (eql (position-if-not #'ignore
+                                                                  ,array
+                                                                  :from-end t)
+                                             ,(1- (length
+                                                   (cl-const-expr-val
+                                                    array))))))
+                                  `(Check-Error args-out-of-range
+                                    (aref ,array 0))))))))
+  (probe-bounds-of-aref
+   "" #* []
+   "a" #*1 [1]
+   "abcdefghijklmnop"
+   #*10101010100101010101
+   [?a ?b ?c ?d ?e ?f ?g ?h ?i ?j ?k ?l ?m ?n ?o ?p]))
+
 
 (defun make-circular-list (length &optional value)
   "Create evil emacs-crashing circular list of length LENGTH.

@@ -707,7 +707,12 @@ ARRAY may be a vector, bit vector, or string.  INDEX starts at 0.
               ++ii;
             }
           
-          if (ii != idx) goto range_error;
+          if (data >= endp)
+            {
+              /* We shouldn't have been INC_IBYTEPTR'd past the end. */
+              text_checking_assert (data == endp);
+              goto range_error;
+            }
         }
 
 #ifdef ERROR_CHECK_TEXT
