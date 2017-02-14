@@ -1,3 +1,9 @@
+2017-02-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Faref):
+	Don't return zero with (aref STRING (length STRING)), error
+	correctly instead.
+
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	New function, read_uninterned_symbol().

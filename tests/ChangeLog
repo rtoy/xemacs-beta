@@ -1,3 +1,8 @@
+2017-02-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (probe-bounds-of-aref):
+	Check calls to #'aref with invalid INDEX for sanity.
+
 2017-02-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
