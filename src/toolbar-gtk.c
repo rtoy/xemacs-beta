@@ -247,7 +247,6 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
   gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
 		 GTK_WIDGET (toolbar), x, y);
   gtk_widget_show_all (GTK_WIDGET (toolbar));
-  /* gtk_widget_realize (GTK_WIDGET (toolbar)); */
 }
 
 static void
