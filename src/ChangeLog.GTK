@@ -1,3 +1,8 @@
+2017-02-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Name all buttons "button"
+	for CSS purposes instead of individual names.
+
 2017-02-13  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* toolbar.h (GTK_DEFAULT_TOOLBAR_HEIGHT): New define.

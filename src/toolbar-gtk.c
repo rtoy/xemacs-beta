@@ -220,6 +220,11 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
               gtk_tool_item_set_tooltip_text (item,
                                               LISP_STRING_TO_EXTERNAL (tb->help_string,
                                                                        Qutf_8));
+              /* gtk_widget_set_name (GTK_WIDGET (item), */
+	      /* 			   LISP_STRING_TO_EXTERNAL (tb->help_string, */
+	      /* 						    Qutf_8)); */
+	      gtk_widget_set_name (GTK_WIDGET (item), "button");
+
               g_signal_connect (G_OBJECT (item), "clicked",
                                 G_CALLBACK (gtk_toolbar_callback),
                                 (gpointer) tb);
