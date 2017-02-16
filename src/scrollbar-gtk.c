@@ -116,6 +116,7 @@ gtk_create_scrollbar_instance (struct frame *f, int vertical,
 		      gtk_scrollbar_new (GTK_ORIENTATION_VERTICAL, adj) :
 		      gtk_scrollbar_new (GTK_ORIENTATION_HORIZONTAL, adj));
 #endif
+  gtk_widget_set_name (GTK_WIDGET (sb), "scrollbar");
   SCROLLBAR_GTK_WIDGET (instance) = GTK_WIDGET (sb);
 
   assert(g_signal_connect (G_OBJECT (sb),"change-value",

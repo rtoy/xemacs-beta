@@ -169,6 +169,7 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
       if (tb->blank)
 	{
           GtkToolItem *item = gtk_separator_tool_item_new ();
+	  gtk_widget_set_name (GTK_WIDGET (item), "separator");
           gtk_toolbar_insert (GTK_TOOLBAR (toolbar), item, -1);
 	}
       else
@@ -208,23 +209,20 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 		    gtk_tool_button_set_icon_name (GTK_TOOL_BUTTON (item),
 						   icon_name);
 #endif
+		  gtk_widget_set_name (GTK_WIDGET (item), "button");
                 }
               if (item == NULL)
                 {
                   GdkPixbuf *pixmap = XIMAGE_INSTANCE_GTK_PIXMAP (instance);
                   GtkWidget *pixmapwid = gtk_image_new_from_pixbuf (pixmap);
                   item = gtk_tool_button_new (pixmapwid, "");
+		  gtk_widget_set_name (GTK_WIDGET (item), "image");
                 }
 
               gtk_toolbar_insert (GTK_TOOLBAR(toolbar), item, -1);
               gtk_tool_item_set_tooltip_text (item,
                                               LISP_STRING_TO_EXTERNAL (tb->help_string,
                                                                        Qutf_8));
-              /* gtk_widget_set_name (GTK_WIDGET (item), */
-	      /* 			   LISP_STRING_TO_EXTERNAL (tb->help_string, */
-	      /* 						    Qutf_8)); */
-	      gtk_widget_set_name (GTK_WIDGET (item), "button");
-
               g_signal_connect (G_OBJECT (item), "clicked",
                                 G_CALLBACK (gtk_toolbar_callback),
                                 (gpointer) tb);
