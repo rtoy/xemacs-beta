@@ -61,6 +61,7 @@ static GtkWidget *
 gtk_xemacs_menubar_new (struct frame *f)
 {
   GtkWidget *menubar = gtk_menu_bar_new ();
+  gtk_widget_set_name (menubar, "menubar");
   g_object_set_qdata (G_OBJECT (menubar), XEMACS_MENU_FRAME_TAG, f);
   return (GTK_WIDGET (menubar));
 }
@@ -347,6 +348,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
           Bytecount desc_len = strlen (desc_in_utf_8);
           Extbyte *converted = alloca_extbytes (1 + (desc_len * 2));
 	  GtkWidget* accel_label = gtk_label_new (NULL);
+	  gtk_widget_set_name (accel_label, "label");
 	  guint accel_key = 0x01000000; /* is there a constant?
 					   See gdk_unicode_to_keyval doc. */
 #ifdef HAVE_GTK3
@@ -368,6 +370,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	    accel_key = gdk_unicode_to_keyval (accel_char);
 #endif
 	  menu_item = gtk_menu_item_new ();
+	  gtk_widget_set_name (menu_item, "menuitem");
 	  gtk_container_add (GTK_CONTAINER (menu_item), accel_label);
 	  gtk_widget_show (accel_label);
 
@@ -384,6 +387,7 @@ menu_convert (Lisp_Object desc, GtkWidget *reuse,
 	}
 
       submenu = gtk_menu_new ();
+      gtk_widget_set_name (submenu, "menu");
       gtk_widget_show (menu_item);
       gtk_widget_show (submenu);
 
@@ -553,7 +557,9 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
          specify what our separators look like, so we can't do all the
          fancy stuff that the X code does.
       */
-      return (gtk_separator_menu_item_new ());
+      GtkWidget *sep = gtk_separator_menu_item_new ();
+      gtk_widget_set_name (sep, "separator");
+      return sep;
     }
   else if (LISTP (descr))
     {
@@ -686,6 +692,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
           convert_underscores (eiextdata (label), eiextlen (label), &extlabel,
                                extlabel_len);
 	  main_label = gtk_label_new (NULL);
+	  gtk_widget_set_name (main_label, "label");
           gtk_label_set_label (GTK_LABEL (main_label), extlabel);
 	  /* accel_key = */
           gtk_label_set_use_underline (GTK_LABEL (main_label), TRUE);
@@ -751,6 +758,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	{
 	  /* A normal menu item */
 	  widget = gtk_menu_item_new ();
+	  gtk_widget_set_name (widget, "menuitem");
 	}
       else if (EQ (style, Qtoggle) || EQ (style, Qradio))
 	{
@@ -776,6 +784,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	      dummy_sibling = gtk_radio_menu_item_new (group);
 	      group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (dummy_sibling));
 	      widget = gtk_radio_menu_item_new (group);
+	      gtk_widget_set_name (widget, "radiobutton");
 
 	      /* We need to notice when the 'real' one gets destroyed
                  so we can clean up the dummy as well. */
@@ -785,6 +794,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	  else
 	    {
 	      widget = gtk_check_menu_item_new ();
+	      gtk_widget_set_name (widget, "checkbutton");
 	    }
 
 	  /* What horrible defaults you have GTK dear!  The default
@@ -834,6 +844,7 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 #endif
 	      GtkWidget *acc = gtk_label_new (LISP_STRING_TO_EXTERNAL (keys,
 								       Qutf_8));
+	      gtk_widget_set_name (acc, "label");
 	      gtk_misc_set_alignment (GTK_MISC (acc), 1.0, 0.5);
 	      gtk_container_add (GTK_CONTAINER (hbox), main_label);
 	      gtk_container_add (GTK_CONTAINER (hbox), GTK_WIDGET (acc));
@@ -946,7 +957,7 @@ menu_create_menubar (struct frame *f, Lisp_Object descr)
 	    GtkWidget *item;
 
 	    item = menu_descriptor_to_widget (item_descr, menubar_accel_group);
-	    gtk_widget_set_name (item, "XEmacsMenuButton");
+	    gtk_widget_set_name (item, "button");
 
 	    if (!item)
 	      {
@@ -1065,6 +1076,7 @@ create_menubar_widget (struct frame *f)
 {
   GUI_ID id = new_gui_id ();
   GtkWidget *menubar = gtk_xemacs_menubar_new (f);
+  gtk_widget_set_name (menubar, "menubar");
 
   gtk_box_pack_start (GTK_BOX (FRAME_GTK_CONTAINER_WIDGET (f)), menubar, FALSE, FALSE, 0);
 
@@ -1255,7 +1267,7 @@ gtk_popup_menu (Lisp_Object menu_desc, Lisp_Object event)
   /* Now lets get down to business... */
   widget = menu_descriptor_to_widget (menu_desc, NULL);
   menu = gtk_menu_item_get_submenu (GTK_MENU_ITEM (widget));
-  gtk_widget_set_name (widget, "XEmacsPopupMenu");
+  gtk_widget_set_name (widget, "popupmenu");
   id = g_object_get_qdata (G_OBJECT (widget), XEMACS_MENU_GUIID_TAG);
 
   __activate_menu (GTK_MENU_ITEM (widget), id);

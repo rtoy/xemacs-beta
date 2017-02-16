@@ -272,8 +272,9 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
 
   {
     GtkWidget *w = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-
+    gtk_widget_set_name (w, "XEmacs");
     app_shell = gtk_xemacs_new (NULL);
+    gtk_widget_set_name (app_shell, "shell");
     gtk_container_add (GTK_CONTAINER (w), app_shell);
 
     gtk_widget_realize (w);

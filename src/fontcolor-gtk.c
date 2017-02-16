@@ -655,8 +655,9 @@ Only selects monospace fonts.
 									Qutf_8));
     }
 #endif
-
+  gtk_widget_set_name (w, "fontchooser");
   result = gtk_dialog_run (GTK_DIALOG (w));
+
   switch (result)
     {
     case GTK_RESPONSE_ACCEPT:

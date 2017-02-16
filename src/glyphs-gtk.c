@@ -2504,6 +2504,7 @@ gtk_button_instantiate (Lisp_Object image_instance,
   if (NILP (type) || EQ (type, Qbutton))
     {
       widget = gtk_button_new_with_label (label);
+      gtk_widget_set_name (widget, "button");
       action = Qclicked;
     }
   else if (EQ (type, Qradio))
@@ -2512,6 +2513,7 @@ gtk_button_instantiate (Lisp_Object image_instance,
       Lisp_Object selected = find_keyword_in_vector (instantiator, Q_selected);
 
       widget = gtk_radio_button_new_with_label (NULL, label);
+      gtk_widget_set_name (widget, "radiobutton");
       aux = gtk_radio_button_new_with_label
 	(gtk_radio_button_get_group (GTK_RADIO_BUTTON (widget)),
 	 "bogus sibling");
@@ -2524,6 +2526,7 @@ gtk_button_instantiate (Lisp_Object image_instance,
       Lisp_Object selected = find_keyword_in_vector (instantiator, Q_selected);
 
       widget = gtk_check_button_new_with_label (label);
+      gtk_widget_set_name (widget, "checkbutton");
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (widget),
 				    !NILP (Feval (selected)));
       action = Qtoggled;
@@ -2608,6 +2611,7 @@ gtk_progress_gauge_instantiate (Lisp_Object image_instance,
                           pointer_bg, dest_mask, domain);
 
   pb = gtk_progress_bar_new ();
+  gtk_widget_set_name (pb, "progressbar");
   gtk_widget_set_size_request (pb,
                                IMAGE_INSTANCE_WIDTH (ii),
                                IMAGE_INSTANCE_HEIGHT (ii));
@@ -2685,6 +2689,7 @@ gtk_add_tab_item(Lisp_Object image_instance,
   int hash_id = 0;
   char *c_name = NULL;
   GtkWidget* box;
+  GtkWidget* label;
 
   if (GUI_ITEMP (item))
     {
@@ -2727,8 +2732,9 @@ gtk_add_tab_item(Lisp_Object image_instance,
   */
   g_object_set_qdata(G_OBJECT(box), GTK_DATA_TAB_HASHCODE_IDENTIFIER,
                      GUINT_TO_POINTER (hash_id));
-
-  gtk_notebook_append_page (nb, box, gtk_label_new (c_name));
+  label = gtk_label_new (c_name);
+  gtk_widget_set_name (label, "tab");
+  gtk_notebook_append_page (nb, box, label);
 }
 
 /* Signal handler for the switch-page signal. */
@@ -2828,9 +2834,9 @@ gtk_tab_control_instantiate (Lisp_Object image_instance,
   nb = GTK_NOTEBOOK (IMAGE_INSTANCE_GTK_CLIPWIDGET (ii));
 #else
   nb = GTK_NOTEBOOK (gtk_notebook_new ());
-  gtk_widget_set_name (GTK_WIDGET (nb), "notebook");
   IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (nb);
 #endif
+  gtk_widget_set_name (GTK_WIDGET (nb), "notebook");
 
   /* Add items to the tab, find the current selection */
   LIST_LOOP (rest, XCDR (IMAGE_INSTANCE_WIDGET_ITEMS (ii)))
@@ -2962,6 +2968,7 @@ gtk_label_instantiate (Lisp_Object image_instance,
     text = "Label";
 
   label = gtk_label_new (text);
+  gtk_widget_set_name (label, "label");
   IMAGE_INSTANCE_GTK_CLIPWIDGET (ii) = GTK_WIDGET (label);
 }
 
@@ -2997,6 +3004,8 @@ gtk_edit_field_instantiate (Lisp_Object image_instance,
     }
 
   entry = gtk_entry_new ();
+  gtk_widget_set_name (entry, "editfield");
+  
   if (text)
     {
       gtk_entry_set_text (GTK_ENTRY (entry), text);
