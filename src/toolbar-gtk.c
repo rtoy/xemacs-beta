@@ -244,22 +244,10 @@ gtk_output_toolbar (struct frame *f, enum edge_pos pos)
 
   gtk_widget_set_size_request (GTK_WIDGET (toolbar), bar_width, bar_height);
 
-  if (1)
-    {
-      gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
-		     GTK_WIDGET (toolbar), x, y);
-      gtk_widget_show_all (GTK_WIDGET (toolbar));
-      gtk_widget_realize (GTK_WIDGET (toolbar));
-    }
-  else
-    {
-      /* This displays the toolbar correctly in an external window.
-	 Why doesn't the above code work? */
-      GtkWidget *win = gtk_window_new (GTK_WINDOW_POPUP);
-      gtk_container_add (GTK_CONTAINER (win), GTK_WIDGET (toolbar));
-      gtk_widget_show_all (win);
-      gtk_widget_realize (win);
-    }
+  gtk_fixed_put (GTK_FIXED (FRAME_GTK_TEXT_WIDGET (f)),
+		 GTK_WIDGET (toolbar), x, y);
+  gtk_widget_show_all (GTK_WIDGET (toolbar));
+  /* gtk_widget_realize (GTK_WIDGET (toolbar)); */
 }
 
 static void
