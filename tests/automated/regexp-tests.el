@@ -1214,6 +1214,39 @@ appropriately, ASCII digits" limit)))))
 ;; GET_UNSIGNED_NUMBER in regex.c used to eat the next character, check it
 ;; doesn't anymore.
 (Assert (eql (string-match "\\(x\\)\\(\\1\\)" "xx") 0))
+(Assert (eql (string-match "[\t\f\n\r]\\{1,\\}" "hello\tthere")
+             (length "hello")))
+
+(Assert (eql (string-match "[\t\f\n\r]\\{1\\}" "hello\tthere")
+             (length "hello")))
+
+(Check-Error invalid-regexp
+             (string-match "[\t\f\n\r]\\{+1,\\}" "hello\tthere"))
+
+;; LOWER_BOUND defaulting to 0 is a GNU change introduced 99633e97e95 in March
+;; 2000 by Stefan Monnier.
+(Assert (eql (string-match "[\t\f\n\r]\\{,1\\}" "hello\tthere")
+             (string-match "[\t\f\n\r]\\{0,1\\}" "hello\tthere")))
+(Assert (eql (string-match "[\t\f\n\r]\\{,\\}" "hello\tthere") 0))
+
+;; Repeat counts are only sixteen bits.
+(Check-Error invalid-regexp
+             (string-match "[\t\f\n\r]\\{1073741821,1073741823\\}"
+                           "hello\tthere"))
+;; And they're not negative.
+(Check-Error invalid-regexp
+             (string-match "[\t\f\n\r]\\{-3,-2\\}"
+                           "hello\tthere"))
+
+;; Backreferences are even more limited.
+(Check-Error invalid-regexp
+             (string-match "\\([\t\f\n\r]\\{,1\\}\\)\\1073741823"
+                           "hello\tthere"))
+
+;; The - and the 0 are treated as a literals in the following, there is no
+;; attempt to parse as a backreference and no error.
+(Assert (null (string-match "\\([\t\f\n\r]\\{,1\\}\\)\\-1" "hello\tthere")))
+(Assert (null (string-match "\\([\t\f\n\r]\\{,1\\}\\)\\0" "hello\tthere"))
 
 (with-temp-buffer
   (insert "hi there")

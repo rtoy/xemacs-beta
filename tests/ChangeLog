@@ -1,3 +1,9 @@
+2017-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Test several bugs (/ GNU incompatibilities) with the interval code
+	fixed today.
+
 2017-02-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (probe-bounds-of-aref):

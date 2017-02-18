@@ -1,3 +1,26 @@
+2017-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Further bug fixing in the regexp interval handling code, thank you
+	for the bug report, Stephen Turnbull.
+
+	* regex.c:
+	* regex.c (itext_ichar_eql): Provide this for the external
+	programs that use regex.c
+	* regex.c (GET_UNSIGNED_NUMBER):
+	Revise this not to eat the next character after a number, even
+	with a zero-length number. Avoids a specific error seen with VM
+	reported by Stephen Turnbull, which I finally manage to provoke
+	today.
+	* regex.c (BAD_INTERVAL): New, macro to give up on encountering an
+	invalid macro or to fall back to parsing as a literal.
+	* regex.c (regex_compile):
+	1. Default LOWER_BOUND to 0 when parsing intervals, as does GNU
+	since 2000.
+	2. Error explicitly if an interval starts with +.
+	3. Use BAD_INTERVAL() as appropriate.
+	4. Adapt uses of GET_UNSIGNED_NUMBER() to its new calling
+	convention.
+
 2017-02-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (Faref):

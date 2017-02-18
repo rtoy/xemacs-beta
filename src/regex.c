@@ -98,6 +98,7 @@
 #define itext_ichar(str)				((Ichar) (str)[0])
 #define itext_ichar_fmt(str, fmt, object)		((Ichar) (str)[0])
 #define itext_ichar_ascii_fmt(str, fmt, object)	((Ichar) (str)[0])
+#define itext_ichar_eql(str, ch)                (((Ichar) (str)[0]) == (ch))
 
 #if (LONGBITS > INTBITS)
 # define EMACS_INT long
@@ -2143,7 +2144,7 @@ typedef struct
    code. Also avoid the silent overflow issues of the non-emacs code below.
    If the string at P is not exhausted, leave P pointing at the next
    (probable-)non-digit byte encountered. */
-#define GET_UNSIGNED_NUMBER_1(num) do \
+#define GET_UNSIGNED_NUMBER(num) do \
     {                                                                   \
       Ibyte *_gus_numend = NULL;                                        \
       Lisp_Object _gus_numno;                                           \
@@ -2159,8 +2160,7 @@ typedef struct
          code that parses regexps is not aware of this. */              \
       _gus_numno = parse_integer (p, &_gus_numend, limit, 10, 1,        \
                                   Vdigit_fixnum_ascii);                 \
-      PATFETCH (c);                                                     \
-      if (c != '-' && FIXNUMP (_gus_numno))                             \
+      if (FIXNUMP (_gus_numno) && XREALFIXNUM (_gus_numno) >= 0)        \
         {                                                               \
           num = XREALFIXNUM (_gus_numno);                               \
           p = _gus_numend;                                              \
@@ -2168,7 +2168,7 @@ typedef struct
     } while (0)
 #else
 /* Get the next unsigned number in the uncompiled pattern.  */
-#define GET_UNSIGNED_NUMBER_1(num) 					\
+#define GET_UNSIGNED_NUMBER(num) 					\
   { if (p != pend)							\
      {									\
        int _gun_do_unfetch = 1;                                         \
@@ -2193,16 +2193,6 @@ typedef struct
      }                                                                  \
   }
 #endif
-
-#define GET_UNSIGNED_NUMBER(num) do                                     \
-    {                                                                   \
-      GET_UNSIGNED_NUMBER_1 (num);                                      \
-      if (p != pend)                                                    \
-        {                                                               \
-          PATFETCH (c);                                                 \
-        }                                                               \
-    } while (0)
-
 
 /* Map a string to the char class it names (if any). BEG points to the string
    to be parsed and LIMIT is the length, in bytes, of that string.
@@ -3476,41 +3466,55 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                   || (p - 2 == pattern  &&  p == pend))
                 goto normal_backslash;
 
+#define BAD_INTERVAL()                                  \
+                do                                      \
+                  {                                     \
+                    if (syntax & RE_NO_BK_BRACES)       \
+                      {                                 \
+                        goto unfetch_interval;          \
+                      }                                 \
+                    else                                \
+                      {                                 \
+                        FREE_STACK_RETURN (REG_EBRACE); \
+                      }                                 \
+                  } while (0)
+
             handle_interval:
               {
                 /* If got here, then the syntax allows intervals.  */
 
                 /* At least (most) this many matches must be made.  */
-                int lower_bound = -1, upper_bound = -1;
+                int lower_bound = 0, upper_bound = -1;
 
                 beg_interval = p - 1;
 
-                if (p == pend)
-                  {
-                    if (syntax & RE_NO_BK_BRACES)
-                      goto unfetch_interval;
-                    else
-                      FREE_STACK_RETURN (REG_EBRACE);
-                  }
+                if (p == pend || itext_ichar_eql (p, '+')) BAD_INTERVAL ();
 
                 GET_UNSIGNED_NUMBER (lower_bound);
 
+                if (p == pend) BAD_INTERVAL ();
+                PATFETCH (c);
+
                 if (c == ',')
                   {
+                    if (p == pend || itext_ichar_eql (p, '+'))
+                      BAD_INTERVAL ();
+
                     GET_UNSIGNED_NUMBER (upper_bound);
                     if (upper_bound < 0) upper_bound = RE_DUP_MAX;
+
+                    if (p == pend) BAD_INTERVAL ();
+                    PATFETCH (c);
                   }
                 else
-                  /* Interval such as `{1}' => match exactly once. */
-                  upper_bound = lower_bound;
-
-                if (lower_bound < 0 || upper_bound > RE_DUP_MAX
-                    || lower_bound > upper_bound)
                   {
-                    if (syntax & RE_NO_BK_BRACES)
-                      goto unfetch_interval;
-                    else
-                      FREE_STACK_RETURN (REG_BADBR);
+                    /* Interval such as `{1}' => match exactly once. */
+                    upper_bound = lower_bound;
+                  }
+
+                if (upper_bound > RE_DUP_MAX || lower_bound > upper_bound)
+                  {
+                    BAD_INTERVAL ();
                   }
 
                 if (!(syntax & RE_NO_BK_BRACES))
@@ -3524,15 +3528,12 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 
                 if (c != '}')
                   {
-                    if (syntax & RE_NO_BK_BRACES)
-                      goto unfetch_interval;
-                    else
-                      FREE_STACK_RETURN (REG_BADBR);
+                    BAD_INTERVAL ();
                   }
 
                 /* We just parsed a valid interval.  */
 
-                /* If it's invalid to have no preceding re.  */
+                /* It's invalid to have no preceding RE.  */
                 if (!laststart)
                   {
                     if (syntax & RE_CONTEXT_INVALID_OPS)
@@ -3622,6 +3623,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
                 beg_interval = NULL;
               }
               break;
+#undef BAD_INTERVAL
 
             unfetch_interval:
               /* If an invalid interval, match the characters as literals.  */
@@ -3731,10 +3733,7 @@ regex_compile (re_char *pattern, int size, reg_syntax_t syntax,
 		  goto normal_char;
 
                 PATUNFETCH;
-                GET_UNSIGNED_NUMBER_1 (reg); /* We want P pointing at the next
-                                                non-digit character, don't use
-                                                GET_UNSIGNED_NUMBER, which
-                                                consumes that. */
+                GET_UNSIGNED_NUMBER (reg);
 		  
                 /* Progressively divide down the backreference until we find
                    one that corresponds to an existing register. */
