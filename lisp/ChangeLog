@@ -1,3 +1,10 @@
+2017-02-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el:
+	* cl-macs.el (with-hash-table-iterator): New.
+	Make this Common Lisp special form available, the relevant C
+	runtime support has just been added.
+
 2017-02-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* autoload.el (make-autoload):

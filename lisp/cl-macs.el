@@ -1861,6 +1861,32 @@ Returns the first of the multiple values given by FORM."
       `(let ((,temp ,n))
         (car (multiple-value-list-internal ,temp (1+ ,temp) ,form))))))
 
+;;;###autoload
+(defmacro* with-hash-table-iterator ((name hash-table) &body body)
+  "Define NAME within BODY as a macro returning each item in HASH-TABLE.
+
+While there are items remaining to be processed, calls to (NAME) give three
+values (see `multiple-value-bind'):
+
+1. t.
+2. The key from the entry in HASH-TABLE.
+3. The value from the entry in HASH-TABLE.
+
+Once the items are exhausted, only one, nil, value is returned."
+  ;; This is not in hash-table.el because there is no need for it to be
+  ;; dumped, as is hash-table.el.
+  (let ((gensym (gensym)))
+    `(let ((,gensym 
+            ;; This dotted list is the state of the mapping. First element is
+            ;; the relevant hash table. Second is the next offset within the
+            ;; hash table entries, or -1 if NAME has not yet been called. Last
+            ;; cdr of the list is the key of the next pair within the hash
+            ;; table entries, for sanity-checking.  If GENSYM is unbound,
+            ;; we're out of scope, or the mapper has ended.
+            (list* ,hash-table -1 nil)))
+      (macrolet ((,name () `(xemacs-hash-table-iterator-next ',',gensym)))
+        ,@body))))
+
 ;;; Declarations.
 
 ;;;###autoload
@@ -3705,9 +3731,8 @@ the byte optimizer in those cases."
   ;; byte-optimize.el, we only need to handle those cases where one is
   ;; constant here.
   (let* ((equalp-sym (eval-when-compile (gensym)))
-	(let-form '(progn))
-	(original-y y)
-	equalp-temp checked)
+         (let-form '(progn))
+         equalp-temp checked)
   (macrolet
       ((unordered-check (check)
 	 `(prog1

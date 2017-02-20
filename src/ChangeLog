@@ -1,3 +1,11 @@
+2017-02-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c:
+	Add #'xemacs-hash-table-iterator-next, the runtime part of
+	#'with-hash-table-iterator. 
+	* elhash.c (syms_of_elhash):
+	Make it available to C.
+
 2017-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Further bug fixing in the regexp interval handling code, thank you
