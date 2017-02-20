@@ -1591,11 +1591,6 @@ This can be one of `non-weak', `weak', `key-weak' or `value-weak'.
    functions gethash, puthash and remhash should be implementable
    without having to think about maphash.
 
-   Note: We don't (yet) have Common Lisp's with-hash-table-iterator.
-   If you implement this naively, you cannot have more than one
-   concurrently active iterator over the same hash table.  The `each'
-   function in perl has this limitation.
-
    Note: We GCPRO memory on the heap, not on the stack.  There is no
    obvious reason why this is bad, but as of this writing this is the
    only known occurrence of this technique in the code.
@@ -2682,6 +2677,127 @@ See `define-hash-table-test' and `make-hash-table'.
   return XHASH_TABLE_TEST (XCDR (lookup))->lisp_hash_function;
 }
 
+DEFUN ("xemacs-hash-table-iterator-next", Fxemacs_hash_table_iterator_next,
+       1, 1, 0, /*
+See `with-hash-table-iterator'.  This function is not to be called directly.
+*/
+       (symbol))
+{
+  htentry *entries, *probe, *probe1;
+  Lisp_Hash_Table *ht;
+  Lisp_Object state, index_, saved_next;
+
+  CHECK_SYMBOL (symbol);
+
+  state = XSYMBOL_VALUE (symbol);
+
+  if (UNBOUNDP (state))
+    {
+      /* Out of elements, or someone has passed our state out of scope. */
+      return Qnil;
+    }
+
+  CHECK_CONS (state);
+  CHECK_HASH_TABLE (XCAR (state));
+
+  ht = XHASH_TABLE (XCAR (state));
+  entries = ht->hentries;
+
+  state = XCDR (state);
+  CHECK_CONS (state);
+  index_ = XCAR (state);
+
+  /* #### Check that FIXNUM_MINUS1 creates a negative fixnum correctly, even
+     on union builds! */
+  check_integer_range (index_, FIXNUM_MINUS1 (Qzero), make_fixnum (ht->size));
+
+  if (XREALFIXNUM (index_) < 0)
+    {
+      /* Counter is less than zero -> this is the first iteration. Start from
+         the end, so any renumbering because we removed the current element
+         doesn't trip us up. If we renumber because Lisp removed another
+         element, that's another question. */
+      probe = entries + ht->size - 1;
+    }
+  else
+    {
+      probe = entries + XFIXNUM (index_);
+      saved_next = XCDR (state);
+
+      if (!EQ (probe->key, saved_next))
+        {
+          /* Someone has modified the table when they shouldn't have. Check if
+             they've removed our next value entirely. */
+          probe1 = find_htentry (saved_next, ht);
+          
+          if (!HTENTRY_CLEAR_P (probe1))
+            {
+              /* They haven't. Stick with it as the next value, use its new
+                 index. If Lisp has added sufficiently many entries that the
+                 table needs rehashing, this is where we end up. This is
+                 acceptable enough in that every entry that was in the table
+                 when we started will still be returned. */
+              probe = probe1;
+            }
+          else
+            {
+              /* Otherwise, find some entry that hashes earlier than the old
+                 one, we can at least guarantee that *it* hasn't been
+                 processed already. Though we can't guarantee that we won't
+                 miss an entry.  */
+              Hash_Table_Test *http = XHASH_TABLE_TEST (ht->test);
+              Hashcode thishc = HASHCODE (saved_next, ht, http);
+
+              while (probe >= entries &&
+                     (HTENTRY_CLEAR_P (probe)
+                      || HASHCODE (probe->key, ht, http) >= thishc))
+                {
+                  probe--;
+                }
+            }
+        }
+    }
+
+  while (HTENTRY_CLEAR_P (probe) && probe >= entries)
+    {
+      /* Loop until we find an entry (if we're the first iteration) or until
+         we find an entry before the one we should have (if we're another
+         iteration and there has been a destructive interaction). */
+      probe--;
+    }
+
+  if (probe < entries || HTENTRY_CLEAR_P (probe))
+    {
+      /* Nothing further in the table. */
+      XSYMBOL_VALUE (symbol) = Qunbound;
+      return Qnil;
+    }
+
+  /* Now, find the index of the entry we should give next time. */
+  probe1 = probe - 1;
+  while (HTENTRY_CLEAR_P (probe1) && probe1 >= entries)
+    {
+      probe1--;
+    }
+
+  if (probe1 < entries)
+    {
+      /* Nothing more once we've processed this one. Fail on the next
+         iteration. */
+      XSYMBOL_VALUE (symbol) = Qunbound;
+    }
+  else
+    {
+      XSETCAR (state, make_fixnum (probe1 - entries));
+      XSETCDR (state, probe1->key);
+    }
+
+  {
+    Lisp_Object args[] = { Qt, probe->key, probe->value };
+    return Fvalues (countof (args), args);
+  }
+}
+
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/
@@ -2776,6 +2892,8 @@ syms_of_elhash (void)
   DEFSUBR (Fhash_table_test_list);
   DEFSUBR (Fhash_table_test_equal_function);
   DEFSUBR (Fhash_table_test_hash_function);
+
+  DEFSUBR (Fxemacs_hash_table_iterator_next);
 
   DEFSYMBOL_MULTIWORD_PREDICATE (Qhash_tablep);
 
