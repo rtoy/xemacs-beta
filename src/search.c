@@ -652,7 +652,7 @@ Neither function modifies the match data on failure.
                               !NILP (bufp->case_fold_search), 
                               ERROR_ME, 0);
   return result < 0 ? Qnil
-    : make_fixnum (string_index_byte_to_char (string, result));
+    : make_fixnum (string_index_byte_to_char (string, result + bstart));
 }
 
 

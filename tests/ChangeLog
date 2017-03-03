@@ -1,3 +1,9 @@
+2017-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Check that START is taken into account with a successful result in
+	#'string-match-p.
+
 2017-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:

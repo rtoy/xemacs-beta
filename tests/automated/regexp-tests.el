@@ -69,6 +69,9 @@
   (Assert (string-match "Ä" "Ä"))
   (Assert (not (string-match "Ä" "ä")))
 
+  (Assert (eql (string-match-p "=[0-9a-f]" "=00=af" (length "=00"))
+	       (length "=00")))
+
   (let ((preserve (list 0 most-positive-fixnum (/ most-positive-fixnum 4)
 			(/ most-positive-fixnum 2))))
     (store-match-data preserve)
