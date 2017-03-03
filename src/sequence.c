@@ -21,13 +21,13 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "lisp.h"
 #include "extents.h"
 
-Lisp_Object Qadjoin, Qarray, QassocX, Qbit_vector, Qcar_less_than_car;
+Lisp_Object Qadjoin, Qarray, QassocX, Qcar_less_than_car;
 Lisp_Object QdeleteX, Qdelete_duplicates, Qevery, Qfill, Qfind, Qidentity;
 Lisp_Object Qintersection, Qmap, Qmap_into, Qmapc, Qmapcan, QmapcarX;
 Lisp_Object Qmapconcat, Qmapvector, Qmerge, Qmismatch, Qnintersection;
 Lisp_Object Qnset_difference, Qnsubstitute, Qnunion, Qposition, QrassocX;
 Lisp_Object Qreduce, QremoveX, Qreplace, Qset_difference, Qsome, QsortX;
-Lisp_Object Qstring_lessp, Qsubsetp, Qsubstitute, Qvector;
+Lisp_Object Qstring_lessp, Qsubsetp, Qsubstitute;
 
 Lisp_Object Q_count, Q_descend_structures, Q_end1, Q_end2, Q_from_end;
 Lisp_Object Q_if_, Q_if_not, Q_initial_value, Q_stable, Q_start1, Q_start2;
@@ -44,7 +44,7 @@ mapping_interaction_error (Lisp_Object func, Lisp_Object object)
   invalid_state_2 ("object modified while traversing it", func, object);
 }
 
-static void
+void
 check_sequence_range (Lisp_Object sequence, Lisp_Object start,
 		      Lisp_Object end, Lisp_Object length)
 {
@@ -710,9 +710,6 @@ count_with_tail (Lisp_Object *tail_out, int nargs, Lisp_Object *args,
 
       /* Our callers should have filtered out non-positive COUNT. */
       assert (counting >= 0);
-      /* And we're not prepared to handle COUNT from any other caller at the
-	 moment. */
-      assert (EQ (caller, QremoveX)|| EQ (caller, QdeleteX));
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -1161,12 +1158,12 @@ DEFUN ("copy-tree", Fcopy_tree, 1, 2, 0, /*
 Return a copy of a list and substructures.
 The argument is copied, and any lists contained within it are copied
 recursively.  Circularities and shared substructures are not preserved.
-Second arg VECP causes vectors to be copied, too.  Strings and bit vectors
-are not copied.
+Second arg VECTORP causes vectors to be copied, too.  Strings and bit
+vectors are not copied.
 */
-       (arg, vecp))
+       (arg, vectorp))
 {
-  return safe_copy_tree (arg, vecp, 0);
+  return safe_copy_tree (arg, vectorp, 0);
 }
 
 Lisp_Object
@@ -1192,8 +1189,8 @@ safe_copy_tree (Lisp_Object arg, Lisp_Object vecp, int depth)
     }
   else if (VECTORP (arg) && ! NILP (vecp))
     {
-      int i = XVECTOR_LENGTH (arg);
-      int j;
+      Elemcount i = XVECTOR_LENGTH (arg), j;
+
       arg = Fcopy_sequence (arg);
       for (j = 0; j < i; j++)
 	{
@@ -1878,7 +1875,7 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
 
   PARSE_KEYWORDS (FdeleteX, nargs, args, 9,
 		  (test, if_not, if_, test_not, key, start, end, from_end,
-		   count), (start = Qzero, count = Qunbound));
+		   count), (start = Qzero));
 
   CHECK_SEQUENCE (sequence);
   CHECK_NATNUM (start);
@@ -1890,45 +1887,41 @@ arguments: (ITEM SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (len
       ending = BIGNUMP (end) ? 1 + MOST_POSITIVE_FIXNUM : XFIXNUM (end);
     }
 
-  if (!UNBOUNDP (count))
+  if (!NILP (count))
     {
-      if (!NILP (count))
-	{
-	  CHECK_INTEGER (count);
-          if (FIXNUMP (count))
-            {
-              counting = XFIXNUM (count);
-            }
+      CHECK_INTEGER (count);
+      if (FIXNUMP (count))
+        {
+          counting = XFIXNUM (count);
+        }
 #ifdef HAVE_BIGNUM
-          else
-            {
-              counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-                1 + MOST_POSITIVE_FIXNUM : MOST_NEGATIVE_FIXNUM - 1;
-            }
+      else
+        {
+          counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
+            1 + MOST_POSITIVE_FIXNUM : MOST_NEGATIVE_FIXNUM - 1;
+        }
 #endif
+      if (counting < 1)
+        {
+          return sequence;
+        }
 
-	  if (counting < 1)
-	    {
-	      return sequence;
-	    }
-
-          if (!NILP (from_end))
+      if (!NILP (from_end))
+        {
+          /* Sigh, this is inelegant. Force count_with_tail () to ignore
+             the count keyword, so we get the actual number of matching
+             elements, and can start removing from the beginning for the
+             from-end case.  */
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (FdeleteX))->min_args;
+               ii < nargs; ii += 2)
             {
-              /* Sigh, this is inelegant. Force count_with_tail () to ignore
-                 the count keyword, so we get the actual number of matching
-                 elements, and can start removing from the beginning for the
-                 from-end case.  */
-              for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (FdeleteX))->min_args;
-                   ii < nargs; ii += 2)
+              if (EQ (args[ii], Q_count))
                 {
-                  if (EQ (args[ii], Q_count))
-                    {
-                      args[ii + 1] = Qnil;
-                      break;
-                    }
+                  args[ii + 1] = Qnil;
+                  break;
                 }
-              ii = 0;
             }
+          ii = 0;
         }
     }
 
@@ -3723,15 +3716,15 @@ list_array_merge_into_array (Lisp_Object *output, Elemcount output_len,
   } while (0)
 
 DEFUN ("merge", Fmerge, 4, MANY, 0, /*
-Destructively merge SEQUENCE-ONE and SEQUENCE-TWO, producing a new sequence.
+Destructively merge SEQUENCE1 and SEQUENCE2, producing a new sequence.
 
 TYPE is the type of sequence to return.  PREDICATE is a `less-than'
 predicate on the elements.
 
 Optional keyword argument KEY is a function used to extract an object to be
-used for comparison from each element of SEQUENCE-ONE and SEQUENCE-TWO.
+used for comparison from each element of SEQUENCE1 and SEQUENCE2.
 
-arguments: (TYPE SEQUENCE-ONE SEQUENCE-TWO PREDICATE &key (KEY #'IDENTITY))
+arguments: (TYPE SEQUENCE1 SEQUENCE2 PREDICATE &key (KEY #'IDENTITY))
 */
        (int nargs, Lisp_Object *args))
 {
@@ -4161,6 +4154,52 @@ arguments: (SEQUENCE ITEM &key (START 0) (END (length SEQUENCE)))
   return sequence;
 }
 
+DEFUN ("clear-string", Fclear_string, 1, 1, 0, /*
+Fill STRING with ?\\x00 characters.  Return nil.
+
+This differs from `fill' with a ?\\x00 argument in that it ensures that
+STRING's existing contents are discarded, even in the event of reallocation
+due to a change in the byte length of STRING.  In this implementation, the
+character length of STRING is not changed.
+*/
+       (string))
+{
+  Ibyte nullbyte[MAX_ICHAR_LEN];
+  Bytecount zerolen = set_itext_ichar (nullbyte, 0);
+  Charcount scount;
+
+  CHECK_STRING (string);
+
+  scount = string_char_length (string);
+
+  /* First, clear the original string data. */
+  memset (XSTRING_DATA (string), 0, XSTRING_LENGTH (string));
+
+  /* Now, resize if that's necessary, to make sure Lisp isn't confused by the
+     character length of a string changing. */
+  if (string_char_length (string) != scount)
+    {
+      Ibyte *p, *pend;
+      Bytecount delta = (zerolen * scount) - XSTRING_LENGTH (string);
+
+      resize_string (string, 0, delta);
+      p = XSTRING_DATA (string);
+      pend = p + XSTRING_LENGTH (string);
+
+      while (p < pend)
+        {
+          memcpy (p, nullbyte, zerolen);
+          p += zerolen;
+        }
+    }
+
+  init_string_ascii_begin (string);
+  bump_string_modiff (string);
+  sledgehammer_check_ascii_begin (string);
+
+  return Qnil;
+}
+
 
 /* Replace the substring of DEST beginning at START and ending before END
    with the text at SOURCE, which is END - START characters long and
@@ -4517,7 +4556,7 @@ arguments: (FUNCTION SEQUENCE SEPARATOR &rest SEQUENCES)
   for (i = 1; i < nargs0; i += 2)
     args0[i] = separator;
 
-  return Fconcat (nargs0, args0);
+  return concatenate (nargs0, args0, Qstring, 0);
 }
 
 DEFUN ("mapcar*", FmapcarX, 2, MANY, 0, /*
@@ -4588,11 +4627,14 @@ arguments: (FUNCTION SEQUENCE &rest SEQUENCES)
 {
   Elemcount len = shortest_length_among_sequences (nargs - 1, args + 1);
   Lisp_Object function = args[0], *result = alloca_array (Lisp_Object, len);
+  struct gcpro gcpro1;
 
   mapcarX (len, result, Qnil, function, nargs - 1, args + 1, Qmapcan);
 
-  /* #'nconc GCPROs its args in case of signals and error. */
-  return Fnconc (len, result);
+  GCPRO1 (result[0]);
+  gcpro1.nvars = len;
+
+  RETURN_UNGCPRO (Fnconc (len, result));
 }
 
 DEFUN ("mapc", Fmapc, 2, MANY, 0, /*
@@ -4763,6 +4805,364 @@ arguments: (PREDICATE SEQUENCE &rest SEQUENCES)
   return result;
 }
 
+
+struct merge_string_extents_struct
+{
+  Lisp_Object string;
+  Bytecount entry_offset;
+};
+
+Lisp_Object
+concatenate (int nsequences, Lisp_Object *sequences,
+             Lisp_Object result_type, Boolint reuse_last_listp)
+{
+  Lisp_Object *lisp_staging = NULL, *lisp_cursor = NULL, result = Qnil;
+  Elemcount ii, jj, staging_len = 0;
+  struct gcpro gcpro1, gcpro2;
+
+  /* We can GC in #'coerce, and in copy_string_extents(). Our callers don't
+     all GCPRO our arguments, despite that this is the usual protocol, and we
+     need to GCPRO RESULT ourselves anyway. */
+  GCPRO2 (sequences[0], result);
+  gcpro1.nvars = nsequences;
+
+  /* String result is the commonest case, and can be very cheap for
+     exclusively-string arguments; get the complete byte length, make an
+     uninited string of that length, and memcpy all the arguments' string data
+     into the new string, O(+ NSEQUENCES (reduce #'+ SEQUENCES :key
+     #'byte-length)), no need for character lengths or INC_IBYTEPTR. */
+  if (EQ (result_type, Qstring))
+    {
+      Bytecount bstaging_len = 0;
+      Ibyte *bstaging = NULL, *cursor = NULL;
+      struct merge_string_extents_struct *args_mse
+        = alloca_array (struct merge_string_extents_struct, nsequences);
+      struct merge_string_extents_struct *args_mse_cursor = args_mse;
+
+      for (ii = 0; ii < nsequences; ++ii)
+        {
+          if (STRINGP (sequences[ii]))
+            {
+              bstaging_len += XSTRING_LENGTH (sequences[ii]);
+            }
+          else
+            {
+              /* Get the item count of each sequence; in passing, check their
+                 type and circularity, well-formedness. Allocate item_count *
+                 MAX_ICHAR_LEN of staging space for each non-string sequence
+                 encountered. */
+              bstaging_len
+                += (XFIXNUM (Flength (sequences[ii]))) * MAX_ICHAR_LEN;
+            }
+        }
+
+      result = make_uninit_string (bstaging_len);
+
+#if defined (ERROR_CHECK_TEXT)
+      /* Make sure the data of the string is valid internal-format
+         text. Relatively expensive, in that it adds another traversal of the
+         string data to our algorithm, but avoids an assertion failure with
+         ERROR_CHECK_TEXT. */
+      memset (XSTRING_DATA (result), 0, XSTRING_LENGTH (result));
+#endif
+
+      bstaging = cursor = XSTRING_DATA (result);
+      args_mse_cursor = args_mse;
+
+      for (ii = 0; ii < nsequences; ++ii)
+        {
+          if (STRINGP (sequences[ii]))
+            {
+              memcpy (cursor, XSTRING_DATA (sequences[ii]),
+                      XSTRING_LENGTH (sequences[ii]));
+              if (NULL != string_extent_info (sequences[ii]))
+                {
+                  /* This string has extent info; push its details onto our
+                     stack for copy_string_extents once its string data is
+                     sane. */
+                  args_mse_cursor->string = sequences[ii];
+                  args_mse_cursor->entry_offset = cursor - bstaging;
+                  args_mse_cursor++;
+                }
+              cursor += XSTRING_LENGTH (sequences[ii]);
+            }
+          else if (CONSP (sequences[ii]))
+            {
+              /* We know the list is well-formed, because #'length succeeded,
+                 above, so we can use a simpler loop than usual for external
+                 lists. */
+              LIST_LOOP_2 (elt, sequences[ii])
+                {
+                  CHECK_CHAR_COERCE_INT (elt);
+                  cursor += set_itext_ichar (cursor, XCHAR (elt));
+                }
+            }
+          else if (ARRAYP (sequences[ii]))
+            {
+              Lisp_Object elt = Qnil;
+              Elemcount len = XFIXNUM (Flength (sequences[ii]));
+
+              for (jj = 0; jj < len; ++jj)
+                {
+                  elt = Faref (sequences[ii], make_fixnum (jj));
+                  CHECK_CHAR_COERCE_INT (elt);
+                  cursor += set_itext_ichar (cursor, XCHAR (elt));
+                }
+            }
+          else
+            {
+              assert (NILP (sequences[ii]));
+            }
+        }
+
+      if ((cursor - bstaging) != bstaging_len)
+        {
+          Bytecount used_len = cursor - bstaging;
+
+          text_checking_assert (used_len < bstaging_len);
+
+          /* No-one else has a pointer to RESULT, and calling resize_string()
+             gives crashes in temacs, its implementation isn't thoroughly
+             debugged and its performance is sub-optimal. Create a new RESULT,
+             let the first be GCed instead. */
+          result = make_string (bstaging, used_len);
+        }
+      else
+        {
+          /* copy_string_extents() can call Lisp, make sure
+             init_string_ascii_begin() is called on RESULT before its
+             invocation. */
+          init_string_ascii_begin (result);
+          sledgehammer_check_ascii_begin (result);
+        }
+
+      while (args_mse < args_mse_cursor)
+        {
+          copy_string_extents (result, args_mse->string,
+                               args_mse->entry_offset, 0,
+                               XSTRING_LENGTH (args_mse->string));
+          args_mse++;
+        }
+
+      RETURN_UNGCPRO (result);
+    }
+
+  /* List result is the next commonest case, and benefits from starting from
+     the end and moving towards the beginning; for cons sequences we don't
+     need to traverse the list twice to get the element count, we can traverse
+     once and add as we go, and for string sequences we again don't need the
+     char length if we start at the end and DEC_IBYTEPTR. */
+  if (EQ (result_type, Qlist))
+    {
+      ii = nsequences;
+
+      if (reuse_last_listp && ii > 0)
+        {
+          result = sequences[--ii];
+        }
+
+      while (--ii >= 0)
+        {
+          if (CONSP (sequences[ii]))
+            {
+              Lisp_Object seqcopy = Fcons (XCAR (sequences[ii]), Qnil);
+              Lisp_Object head = seqcopy;
+
+              EXTERNAL_LIST_LOOP_2 (list_elt, XCDR (sequences[ii]))
+                {
+                  XSETCDR (seqcopy, Fcons (list_elt, Qnil));
+                  seqcopy = XCDR (seqcopy);
+                }
+
+              XSETCDR (seqcopy, result);
+              result = head;
+
+            }
+          else if (STRINGP (sequences [ii]))
+            {
+              Ibyte *bstart = XSTRING_DATA (sequences[ii]);
+              Ibyte *bcursor = bstart + XSTRING_LENGTH (sequences[ii]);
+
+              while (bcursor > bstart)
+                {
+                  DEC_IBYTEPTR (bcursor);
+
+                  result = Fcons (make_char (itext_ichar (bcursor)), result);
+                }
+            }
+          else if (ARRAYP (sequences[ii]))
+            {
+              jj = XFIXNUM (Flength (sequences[ii]));
+
+              for (--jj; jj >= 0; --jj)
+                {
+                  result = Fcons (Faref (sequences[ii], make_fixnum (jj)),
+                                  result);
+                }
+            }
+          else if (!NILP (sequences[ii]))
+            {
+              CHECK_SEQUENCE (sequences[ii]);
+            }
+        }
+
+      RETURN_UNGCPRO (result);
+    }
+
+  for (ii = 0; ii < nsequences; ++ii)
+    {
+      if (STRINGP (sequences[ii]))
+        {
+          /* No need to actually get the char length, since the byte length
+             will always be greater than or equal to the char length. We just
+             allocate the byte-count of items, the extra space for the staging
+             doesn't matter. */
+          staging_len += XSTRING_LENGTH (sequences[ii]);
+        }
+      else
+        {
+          /* Get the item count of each sequence; in passing, check their
+             type and circularity, well-formedness. */
+          staging_len += (XFIXNUM (Flength (sequences[ii])));
+        }
+    }
+
+  if (EQ (result_type, Qvector) || EQ (result_type, Qarray))
+    {
+      /* If we know we're creating a vector, be more economic of stack
+         space. */
+      result = make_uninit_vector (staging_len);
+      lisp_staging = lisp_cursor = XVECTOR_DATA (result);
+    }
+  else
+    {
+      /* No need to GCPRO lisp_staging, all its elements are in SEQUENCES. */
+      lisp_staging = lisp_cursor = alloca_array (Lisp_Object, staging_len);
+    }
+
+  for (ii = 0; ii < nsequences; ++ii)
+    {
+      if (CONSP (sequences[ii]))
+        {
+          /* We know the list is well-formed, because #'length succeeded,
+             above, so we can use a cheaper loop than is usual for external
+             lists. */
+          LIST_LOOP_2 (elt, sequences[ii])
+            {
+              *lisp_cursor = elt, lisp_cursor++;
+            }
+        }
+      else if (STRINGP (sequences[ii]))
+        {
+          Ibyte *stringp = XSTRING_DATA (sequences[ii]);
+          Ibyte *endp = stringp + XSTRING_LENGTH (sequences[ii]);
+
+          while (stringp < endp)
+            {
+              *lisp_cursor = make_char (itext_ichar (stringp));
+              INC_IBYTEPTR (stringp);
+              ++lisp_cursor;
+            }
+        }
+      else if (VECTORP (sequences[ii]))
+        {
+          Elemcount len = XVECTOR_LENGTH (sequences[ii]);
+          memcpy (lisp_cursor, XVECTOR_DATA (sequences[ii]),
+                  len * sizeof (Lisp_Object));
+          lisp_cursor += len;
+        }
+      else if (ARRAYP (sequences[ii]))
+        {
+          Elemcount len = XFIXNUM (Flength (sequences[ii]));
+
+          for (jj = 0; jj < len; ++jj, ++lisp_cursor)
+            {
+              *lisp_cursor = Faref (sequences[ii], make_fixnum (jj));
+            }
+        }
+      else
+        {
+          assert (NILP (sequences[ii]));
+        }
+    }
+
+  if (!NILP (result))
+    {
+      if ((lisp_cursor - lisp_staging) == XVECTOR_LENGTH (result))
+        {
+          RETURN_UNGCPRO (result);
+        }
+      else
+        {
+          /* Let the intermediate heap-allocated vector be GCed if its length
+             was not right. It usually will be right. */
+          RETURN_UNGCPRO (Fvector (lisp_cursor - lisp_staging, lisp_staging));
+        }
+    }
+
+  if (EQ (result_type, Qbit_vector))
+    {
+      RETURN_UNGCPRO (Fbit_vector (lisp_cursor - lisp_staging, lisp_staging));
+    }
+
+  result = Flist (lisp_cursor - lisp_staging, lisp_staging);
+  result = call2 (Qcoerce, result, result_type);
+  RETURN_UNGCPRO (result);
+}
+
+DEFUN ("concatenate", Fconcatenate, 1, MANY, 0, /*
+Concatenate, into a sequence of type TYPE, the argument SEQUENCES.
+
+arguments: (TYPE &rest SEQUENCES)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  Lisp_Object type = args[0];
+
+  return concatenate (nargs - 1, args + 1, type, 0);
+}
+
+Lisp_Object
+concat2 (Lisp_Object seq1, Lisp_Object seq2)
+{
+  Lisp_Object args[] = { seq1, seq2 };
+  return concatenate (countof (args), args, Qstring, 0);
+}
+
+Lisp_Object
+concat3 (Lisp_Object seq1, Lisp_Object seq2, Lisp_Object seq3)
+{
+  Lisp_Object args[] = { seq1, seq2, seq3 };
+  return concatenate (countof (args), args, Qstring, 0);
+}
+
+Lisp_Object
+vconcat2 (Lisp_Object seq1, Lisp_Object seq2)
+{
+  Lisp_Object args[] = { seq1, seq2 };
+  return concatenate (countof (args), args, Qvector, 0);
+}
+
+Lisp_Object
+vconcat3 (Lisp_Object seq1, Lisp_Object seq2, Lisp_Object seq3)
+{
+  Lisp_Object args[] = { seq1, seq2, seq3 };
+  return concatenate (countof (args), args, Qvector, 0);
+}
+
+DEFUN ("append", Fappend, 0, MANY, 0, /*
+Concatenate all the arguments and make the result a list.
+The result is a list whose elements are the elements of all the arguments.
+Each argument may be a list, vector, bit vector, or string.
+The last argument is not copied, just used as the tail of the new list.
+Also see: `nconc'.
+
+arguments: (&rest ARGS)
+*/
+       (int nargs, Lisp_Object *args))
+{
+  return concatenate (nargs, args, Qlist, 1);
+}
 
 DEFUN ("reduce", Freduce, 2, MANY, 0, /*
 Combine the elements of SEQUENCE using FUNCTION, a binary operation.
@@ -5139,22 +5539,19 @@ arguments: (FUNCTION SEQUENCE &key (START 0) (END (length SEQUENCE)) FROM-END IN
 		 reachable via SEQUENCE.  */
 	      GCPRO1 (subsequence[0]);
 	      gcpro1.nvars = len;
-	    }
 
-          if (need_accum)
-            {
-              accum = KEY (key, subsequence[len - 1]);
-              --len;
-            }
+              if (need_accum)
+                {
+                  accum = KEY (key, subsequence[len - 1]);
+                  --len;
+                }
 
-          for (ii = len; ii != 0;)
-            {
-              --ii;
-              accum = CALL2 (function, KEY (key, subsequence[ii]), accum);
-            }
+              for (ii = len; ii != 0;)
+                {
+                  --ii;
+                  accum = CALL2 (function, KEY (key, subsequence[ii]), accum);
+                }
 
-	  if (subsequence != NULL)
-	    {
 	      UNGCPRO;
 	    }
         }
@@ -5270,16 +5667,16 @@ replace_string_range_1 (Lisp_Object dest, Lisp_Object start, Lisp_Object end,
 }
 
 DEFUN ("replace", Freplace, 2, MANY, 0, /*
-Replace the elements of SEQUENCE-ONE with the elements of SEQUENCE-TWO.
+Replace the elements of SEQUENCE1 with the elements of SEQUENCE2.
 
-SEQUENCE-ONE is destructively modified, and returned.  Its length is not
+SEQUENCE1 is destructively modified, and returned.  Its length is not
 changed.
 
-Keywords :start1 and :end1 specify a subsequence of SEQUENCE-ONE, and
-:start2 and :end2 a subsequence of SEQUENCE-TWO.  See `search' for more
+Keywords :start1 and :end1 specify a subsequence of SEQUENCE1, and
+:start2 and :end2 a subsequence of SEQUENCE2.  See `search' for more
 information.
 
-arguments: (SEQUENCE-ONE SEQUENCE-TWO &key (START1 0) (END1 (length SEQUENCE-ONE)) (START2 0) (END2 (length SEQUENCE-TWO)))
+arguments: (SEQUENCE1 SEQUENCE2 &key (START1 0) (END1 (length SEQUENCE1)) (START2 0) (END2 (length SEQUENCE2)))
 */
        (int nargs, Lisp_Object *args))
 {
@@ -5797,6 +6194,20 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	{
 	  return sequence;
 	}
+
+      if (!NILP (from_end))
+        {
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (Fnsubstitute))->min_args;
+               ii < nargs; ii += 2)
+            {
+              if (EQ (args[ii], Q_count))
+                {
+                  args[ii + 1] = Qnil;
+                  break;
+                }
+            }
+          ii = 0;
+        }
     }
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
@@ -6015,16 +6426,16 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 {
   Lisp_Object new_ = args[0], item = args[1], sequence = args[2], tail = Qnil;
   Lisp_Object result = Qnil, result_tail = Qnil;
-  Lisp_Object object, position0, matched_count;
+  Lisp_Object object, position0, matched;
   Elemcount starting = 0, ending = MOST_POSITIVE_FIXNUM, encountered = 0;
-  Elemcount ii = 0, counting = MOST_POSITIVE_FIXNUM, presenting = 0;
+  Elemcount ii = 0, counting = MOST_POSITIVE_FIXNUM, skipping = 0;
   Boolint test_not_unboundp = 1;
   check_test_func_t check_test = NULL;
   struct gcpro gcpro1;
 
   PARSE_KEYWORDS (Fsubstitute, nargs, args, 9,
 		  (test, if_, if_not, test_not, key, start, end, count,
-		   from_end), (start = Qzero, count = Qunbound));
+		   from_end), (start = Qzero));
 
   CHECK_SEQUENCE (sequence);
 
@@ -6039,30 +6450,6 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 
   check_test = get_check_test_function (item, &test, test_not, if_, if_not,
 					key, &test_not_unboundp);
-
-  if (!UNBOUNDP (count))
-    {
-      if (!NILP (count))
-	{
-          CHECK_INTEGER (count);
-          if (FIXNUMP (count))
-            {
-              counting = XFIXNUM (count);
-            }
-#ifdef HAVE_BIGNUM
-          else
-            {
-              counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
-                1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
-            }
-#endif
-
-          if (counting <= 0)
-            {
-              return sequence;
-            }
-	}
-    }
 
   if (!CONSP (sequence))
     {
@@ -6081,17 +6468,62 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
 	}
     }
 
-  matched_count = count_with_tail (&tail, nargs - 1, args + 1, Qsubstitute);
+  if (!NILP (count))
+    {
+      CHECK_INTEGER (count);
+      if (FIXNUMP (count))
+        {
+          counting = XFIXNUM (count);
+        }
+#ifdef HAVE_BIGNUM
+      else
+        {
+          counting = bignum_sign (XBIGNUM_DATA (count)) > 0 ?
+            1 + MOST_POSITIVE_FIXNUM : -1 + MOST_NEGATIVE_FIXNUM;
+        }
+#endif
 
-  if (ZEROP (matched_count))
+      if (counting <= 0)
+        {
+          return sequence;
+        }
+
+      /* Sigh, this is inelegant. Force count_with_tail () to ignore the count
+         keyword, so we get the actual number of matching elements, and can
+         start removing from the beginning for the from-end case.  */
+      if (!NILP (from_end))
+        {
+          for (ii = XSUBR (GET_DEFUN_LISP_OBJECT (Fsubstitute))->min_args;
+               ii < nargs; ii += 2)
+            {
+              if (EQ (args[ii], Q_count))
+                {
+                  args[ii + 1] = Qnil;
+                  break;
+                }
+            }
+          ii = 0;
+        }
+    }
+
+  matched = count_with_tail (&tail, nargs - 1, args + 1, Qsubstitute);
+
+  if (ZEROP (matched))
     {
       return sequence;
     }
 
   if (!NILP (count) && !NILP (from_end))
     {
-      presenting = XFIXNUM (matched_count);
-      presenting = presenting <= counting ? 0 : presenting - counting;
+      Elemcount matching = XFIXNUM (matched);
+      if (matching > counting)
+        {
+          /* skipping is the number of elements to be skipped before we start
+             substituting. It is for those cases where both :count and
+             :from-end are specified, and the number of elements present is
+             greater than that limit specified with :count. */
+          skipping = matching - counting;
+        }
     }
 
   GCPRO1 (result);
@@ -6100,20 +6532,32 @@ arguments: (NEW OLD SEQUENCE &key (TEST #'eql) (KEY #'identity) (START 0) (END (
       {
         if (EQ (tail, tailing))
           {
+            /* No need to do check_test, we're sure that this element matches
+               because its cons is what count_with_tail returned as the
+               tail. */
+            if (skipping ? encountered >= skipping : encountered < counting)
+              {
+                if (NILP (result))
+                  {
+                    result = Fcons (new_, XCDR (tail));
+                  }
+                else
+                  {
+                    XSETCDR (result_tail, Fcons (new_, XCDR (tail)));
+                  }
+              }
+            else
+              {
+                XSETCDR (result_tail, tail);
+              }
+
 	    XUNGCPRO (elt);
 	    UNGCPRO;
-
-            if (NILP (result))
-              {
-                return XCDR (tail);
-              }
-	  
-            XSETCDR (result_tail, XCDR (tail));
-	    return result;
+            return result;
           }
         else if (starting <= ii && ii < ending &&
                  (check_test (test, key, item, elt) == test_not_unboundp)
-                 && (presenting ? encountered++ >= presenting
+                 && (skipping ? encountered++ >= skipping
                      : encountered++ < counting))
           {
             if (NILP (result))
@@ -6169,6 +6613,7 @@ subst (Lisp_Object new_, Lisp_Object old, Lisp_Object tree, int depth)
     }
   else if (CONSP (tree))
     {
+      /* Can't funcall, no need to GCPRO. */
       Lisp_Object aa = subst (new_, old, XCAR (tree), depth + 1);
       Lisp_Object dd = subst (new_, old, XCDR (tree), depth + 1);
 
@@ -6192,12 +6637,15 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 	check_test_func_t check_test, Boolint test_not_unboundp,
 	Lisp_Object test, Lisp_Object key, int depth)
 {
-  Lisp_Object keyed = KEY (key, tree), aa, dd;
+  Lisp_Object keyed = KEY (key, tree), aa = Qnil, dd = Qnil;
+  struct gcpro gcpro1, gcpro2, gcpro3;
 
   if (depth + lisp_eval_depth > max_lisp_eval_depth)
     {
       stack_overflow ("Stack overflow in sublis", tree); 
     }
+
+  GCPRO3 (aa, dd, keyed);
 
   {
     GC_EXTERNAL_LIST_LOOP_2 (elt, alist)
@@ -6206,6 +6654,7 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 	    check_test (test, key, XCAR (elt), keyed) == test_not_unboundp)
           {
 	    XUNGCPRO (elt);
+            UNGCPRO;
 	    return XCDR (elt);
           }
       }
@@ -6214,25 +6663,30 @@ sublis (Lisp_Object alist, Lisp_Object tree,
 
   if (!CONSP (tree))
     {
-      return tree;
+      RETURN_UNGCPRO (tree);
     }
 
   aa = sublis (alist, XCAR (tree), check_test, test_not_unboundp, test, key,
 	       depth + 1);
   dd = sublis (alist, XCDR (tree), check_test, test_not_unboundp, test, key,
 	       depth + 1);
+  UNGCPRO;
 
   if (EQ (aa, XCAR (tree)) && EQ (dd, XCDR (tree)))
     {
       return tree;
     }
 
+  /* Our caller gcprotects this. */
   return Fcons (aa, dd);
 }
 
 DEFUN ("sublis", Fsublis, 2, MANY, 0, /*
 Perform substitutions indicated by ALIST in TREE (non-destructively).
 Return a copy of TREE with all matching elements replaced.
+
+Each dotted pair in ALIST describes a map from an old value (the car) to be
+replaced by a new value (the cdr).
 
 See `member*' for the meaning of :test, :test-not and :key.
 
@@ -6361,6 +6815,9 @@ nsublis (Lisp_Object alist, Lisp_Object tree,
 DEFUN ("nsublis", Fnsublis, 2, MANY, 0, /*
 Perform substitutions indicated by ALIST in TREE (destructively).
 Any matching element of TREE is changed via a call to `setcar'.
+
+Each dotted pair in ALIST describes a map from an old value (the car) to be
+replaced by a new value (the cdr).
 
 See `member*' for the meaning of :test, :test-not and :key.
 
@@ -7606,6 +8063,20 @@ venn (Lisp_Object caller, int nargs, Lisp_Object *args, Boolint intersectionp)
   CHECK_LIST (liszt2);
 
   CHECK_KEY_ARGUMENT (key);
+ 
+  /* #### Consider refactoring these tests into callers, and/or optimizing
+     tests. */
+  if (EQ (caller, Qsubsetp))
+    {
+      if (NILP (liszt1))
+	{
+	  return Qt;
+	}
+      if (NILP (liszt2))
+        {
+	  return Qnil;
+        }
+    }
 
   if (NILP (liszt1) && intersectionp)
     {
@@ -8183,11 +8654,9 @@ syms_of_sequence (void)
   DEFSYMBOL (Qmerge);
   DEFSYMBOL (Qfill);
   DEFSYMBOL (Qidentity);
-  DEFSYMBOL (Qvector);
   DEFSYMBOL (Qarray);
   DEFSYMBOL (Qstring);
   DEFSYMBOL (Qlist);
-  DEFSYMBOL (Qbit_vector);
   defsymbol (&QsortX, "sort*");
   DEFSYMBOL (Qreduce);
   DEFSYMBOL (Qreplace);
@@ -8256,6 +8725,7 @@ syms_of_sequence (void)
   DEFSUBR (Fmerge);
   DEFSUBR (FsortX);
   DEFSUBR (Ffill);
+  DEFSUBR (Fclear_string);
   DEFSUBR (Fmapconcat);
   DEFSUBR (FmapcarX);
   DEFSUBR (Fmapvector);
@@ -8267,6 +8737,8 @@ syms_of_sequence (void)
   DEFSUBR (Fmap_into);
   DEFSUBR (Fsome);
   DEFSUBR (Fevery);
+  DEFSUBR (Fconcatenate);
+  DEFSUBR (Fappend);
   DEFSUBR (Freduce);
   DEFSUBR (Freplace);
   DEFSUBR (Fnsubstitute);

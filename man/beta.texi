@@ -34,7 +34,8 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.@end ifinfo
+along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
+@end ifinfo
 
 @c Combine indices.
 @syncodeindex fn cp

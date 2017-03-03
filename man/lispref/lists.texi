@@ -27,7 +27,7 @@ the whole list.
 * Weak Lists::              A list with special garbage-collection behavior.
 @end menu
 
-@node Cons Cells
+@node Cons Cells, Lists as Boxes, Lists, Lists
 @section Lists and Cons Cells
 @cindex lists and cons cells
 @cindex @code{nil} and lists
@@ -60,7 +60,7 @@ considered to have @code{nil} as its @sc{cdr} (and also as its
   The @sc{cdr} of any nonempty list @var{l} is a list containing all the
 elements of @var{l} except the first.
 
-@node Lists as Boxes
+@node Lists as Boxes, List-related Predicates, Cons Cells, Lists
 @section Lists as Linked Pairs of Boxes
 @cindex box representation for lists
 @cindex lists represented as boxes
@@ -143,7 +143,7 @@ two-element list:
   @xref{Cons Cell Type}, for the read and print syntax of cons cells and
 lists, and for more ``box and arrow'' illustrations of lists.
 
-@node List-related Predicates
+@node List-related Predicates, List Elements, Lists as Boxes, Lists
 @section Predicates on Lists
 
   The following predicates test whether a Lisp object is an atom, is a
@@ -221,7 +221,7 @@ considered a list and @code{not} when it is considered a truth value
 
 @need 2000
 
-@node List Elements
+@node List Elements, Building Lists, List-related Predicates, Lists
 @section Accessing Elements of Lists
 @cindex list elements
 
@@ -442,7 +442,7 @@ These are equivalent to @code{(nth 2 @var{list})} through
 elements of @var{list}.
 @end defun
 
-@node Building Lists
+@node Building Lists, Modifying Lists, List Elements, Lists
 @section Building Cons Cells and Lists
 @cindex cons cells
 @cindex building lists
@@ -674,7 +674,7 @@ x
 @end example
 @end defun
 
-@node Modifying Lists
+@node Modifying Lists, Sets And Lists, Building Lists, Lists
 @section Modifying Existing List Structure
 
   You can modify the @sc{car} and @sc{cdr} contents of a cons cell with the
@@ -698,7 +698,7 @@ new @sc{car} or @sc{cdr}.
 * Rearrangement::   Reordering the elements in a list; combining lists.
 @end menu
 
-@node Setcar
+@node Setcar, Setcdr, Modifying Lists, Modifying Lists
 @subsection Altering List Elements with @code{setcar}
 
   Changing the @sc{car} of a cons cell is done with @code{setcar}.  When
@@ -800,7 +800,7 @@ x2:              |
 @end group
 @end example
 
-@node Setcdr
+@node Setcdr, Rearrangement, Setcar, Modifying Lists
 @subsection Altering the CDR of a List
 
   The lowest-level primitive for modifying a @sc{cdr} is @code{setcdr}:
@@ -900,7 +900,7 @@ x1
 @end group
 @end smallexample
 
-@node Rearrangement
+@node Rearrangement,  , Setcdr, Modifying Lists
 @subsection Functions that Rearrange Lists
 @cindex rearrangement of lists
 @cindex modification of lists
@@ -1139,7 +1139,7 @@ See @code{documentation} in @ref{Accessing Documentation}, for a
 useful example of @code{sort*}.
 @end defun
 
-@node Sets And Lists
+@node Sets And Lists, Association Lists, Modifying Lists, Lists
 @section Using Lists as Sets
 @cindex lists as sets
 @cindex sets
@@ -1386,7 +1386,7 @@ the same way @code{delete*} does.
   See also the function @code{add-to-list}, in @ref{Setting Variables},
 for another way to add an element to a list stored in a variable.
 
-@node Association Lists
+@node Association Lists, Property Lists, Sets And Lists, Lists
 @section Association Lists
 @cindex association list
 @cindex alist
@@ -1629,7 +1629,7 @@ this behavior, but they are neither available under GNU Emacs nor Common Lisp.
 They are marked as obsolete, and it is preferable to fix your code to avoid
 adding non-cons objects to alists.
 
-@node Property Lists
+@node Property Lists, Weak Lists, Association Lists, Lists
 @section Property Lists
 @cindex property list
 @cindex plist
@@ -1676,7 +1676,7 @@ with it.  This means that it's a malformed or circular plist.
 * Converting Plists To/From Alists:: Alist to plist and vice-versa.
 @end menu
 
-@node Working With Normal Plists
+@node Working With Normal Plists, Working With Lax Plists, Property Lists, Property Lists
 @subsection Working With Normal Plists
 
 @defun plist-get plist property &optional default
@@ -1732,7 +1732,7 @@ return value may not be @code{eq} to the passed-in value, so make sure
 to @code{setq} the value back into where it came from.
 @end defun
 
-@node Working With Lax Plists
+@node Working With Lax Plists, Converting Plists To/From Alists, Working With Normal Plists, Property Lists
 @subsection Working With Lax Plists
 
 Recall that a @dfn{lax plist} is a property list whose keys are compared
@@ -1786,7 +1786,7 @@ return value may not be @code{eq} to the passed-in value, so make sure
 to @code{setq} the value back into where it came from.
 @end defun
 
-@node Converting Plists To/From Alists
+@node Converting Plists To/From Alists,  , Working With Lax Plists, Property Lists
 @subsection Converting Plists To/From Alists
 
 @defun alist-to-plist alist
@@ -1838,7 +1838,7 @@ This function destructively converts property list @var{plist} into the
 equivalent association-list form.  The alist is returned.
 @end defun
 
-@node Weak Lists
+@node Weak Lists,  , Property Lists, Lists
 @section Weak Lists
 @cindex weak list
 

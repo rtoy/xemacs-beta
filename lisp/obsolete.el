@@ -36,38 +36,56 @@
 
 ;;; Code:
 
-(defsubst define-obsolete-function-alias (oldfun newfun)
+(defsubst define-obsolete-function-alias (oldfun newfun
+					  &optional when docstring)
   "Define OLDFUN as an obsolete alias for function NEWFUN.
 This makes calling OLDFUN equivalent to calling NEWFUN and marks OLDFUN
-as obsolete."
+as obsolete.
+Optional WHEN is for GNU compatibility.  XEmacs ignores it.  \(In Emacs, WHEN
+is a string indicating the version where OLDFUN was first marked obsolete.)
+Optional DOCSTRING describes any changes in semantics users should be aware of."
   (define-function oldfun newfun)
-  (make-obsolete oldfun newfun))
+  (make-obsolete oldfun (or docstring newfun) when))
 
-(defsubst define-compatible-function-alias (oldfun newfun)
+(defsubst define-compatible-function-alias (oldfun newfun
+					    &optional when docstring)
   "Define OLDFUN as a compatible alias for function NEWFUN.
 This makes calling OLDFUN equivalent to calling NEWFUN and marks OLDFUN
-as provided for compatibility only."
+as provided for compatibility only.
+Optional WHEN is for consistency with `define-obsolete-function-alias'.  XEmacs
+ignores it.  \(If present, it is a string indicating the version where OLDFUN
+was first marked as a compatibility API.)
+Optional DOCSTRING describes any changes in semantics users should be aware of."
   (define-function oldfun newfun)
-  (make-compatible oldfun newfun))
+  (make-compatible oldfun (or docstring newfun)))
 
-(defsubst define-obsolete-variable-alias (oldvar newvar)
+(defsubst define-obsolete-variable-alias (oldvar newvar
+					  &optional when docstring)
   "Define OLDVAR as an obsolete alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
 setting NEWVAR and marks OLDVAR as obsolete.
-If OLDVAR was bound and NEWVAR was not, Set NEWVAR to OLDVAR.
+If OLDVAR was bound and NEWVAR was not, set NEWVAR to OLDVAR.
+Note: Use this before any other references (defvar/defcustom) to NEWVAR.
 
-Note: Use this before any other references (defvar/defcustom) to NEWVAR."
+Optional WHEN is for GNU compatibility.  XEmacs ignores it.  \(In Emacs, WHEN
+is a string indicating the version where OLDVAR was first marked obsolete.)
+Optional DOCSTRING describes any changes in semantics users should be aware of."
   (let ((needs-setting (and (boundp oldvar) (not (boundp newvar))))
         (value (and (boundp oldvar) (symbol-value oldvar))))
-     (defvaralias oldvar newvar)
-     (make-obsolete-variable oldvar newvar)
+     (defvaralias oldvar newvar docstring)
+     (make-obsolete-variable oldvar newvar when)
      (and needs-setting (set newvar value))))
 
-(defsubst define-compatible-variable-alias (oldvar newvar)
+(defsubst define-compatible-variable-alias (oldvar newvar
+					    &optional when docstring)
   "Define OLDVAR as a compatible alias for variable NEWVAR.
 This makes referencing or setting OLDVAR equivalent to referencing or
-setting NEWVAR and marks OLDVAR as provided for compatibility only."
-  (defvaralias oldvar newvar)
+setting NEWVAR and marks OLDVAR as provided for compatibility only.
+Optional WHEN is for consistency with `define-obsolete-variable-alias'.  XEmacs
+ignores it.  \(If present, it is a string indicating the version where OLDFUN
+was first marked as a compatibility API.)
+Optional DOCSTRING describes any changes in semantics users should be aware of."
+  (defvaralias oldvar newvar docstring)
   (make-compatible-variable oldvar newvar))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; buffers
@@ -363,6 +381,12 @@ Predefined tests are `eq', `eql', and `equal'.  Default is `eql'."
   (cdr (mouse-position (frame-device frame))))
 (make-obsolete 'read-mouse-position 'mouse-position)
 
+(define-obsolete-function-alias 'mwheel-scroll 'mouse-wheel-scroll)
+(define-obsolete-variable-alias 'mwheel-scroll-amount
+    'mouse-wheel-scroll-amount nil "Now a list with modifiers specified")
+(define-obsolete-variable-alias 'mwheel-follow-mouse
+    'mouse-wheel-follow-mouse)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;; paths
 
 (defvar Info-default-directory-list nil
@@ -410,7 +434,8 @@ It always returns 1 in XEmacs, and in recent FSF Emacs versions."
   "Return a list of charsets in the STRING except ascii.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp 'charsets-in-string (charsets-in-string string))))
+  (delete* 'ascii
+           (and-fboundp 'charsets-in-string (charsets-in-string string))))
 (make-obsolete 'find-non-ascii-charset-string
 	       "use (delq 'ascii (charsets-in-string STRING)) instead.")
 
@@ -418,8 +443,8 @@ because its `find-charset-string' ignores ASCII charset."
   "Return a list of charsets except ascii in the region between START and END.
 It might be available for compatibility with Mule 2.3,
 because its `find-charset-string' ignores ASCII charset."
-  (delq 'ascii (and-fboundp 'charsets-in-region
-                 (charsets-in-region start end))))
+  (delete* 'ascii (and-fboundp 'charsets-in-region
+                    (charsets-in-region start end))))
 (make-obsolete 'find-non-ascii-charset-region
 	       "use (delq 'ascii (charsets-in-region START END)) instead.")
 
@@ -465,6 +490,21 @@ because its `find-charset-string' ignores ASCII charset."
 (make-obsolete 'remassq "use delete* with :test #'eq, :key #'car")
 (make-obsolete 'remrassoc "use delete* with :test #'equal, :key #'cdr")
 (make-obsolete 'remrassq "use delete* with :test #'eq, :key #'cdr")
+
+(defun max-char ()
+  "Return a fixnum one less than `char-code-limit'.
+
+In contrast with GNU Emacs, this is not necessarily a valid character, but it
+is an inclusive upper bound on the possible values returned by `char-int'."
+  (1- char-code-limit))
+(make-compatible
+ 'max-char
+ "consider `char-code-limit', which gives an exclusive upper bound")
+
+(autoload 'xemacs-intern-in-vector "obarray")
+(autoload 'xemacs-intern-soft-in-vector "obarray")
+(autoload 'xemacs-unintern-in-vector "obarray")
+(autoload 'xemacs-mapatoms-in-vector "obarray")
 
 (provide 'obsolete)
 ;;; obsolete.el ends here

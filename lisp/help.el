@@ -1,6 +1,6 @@
 ;; help.el --- help commands for XEmacs.
 
-;; Copyright (C) 1985, 1986, 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1986, 1992-4, 1997, 2014 Free Software Foundation, Inc.
 ;; Copyright (C) 2001, 2002, 2003, 2010 Ben Wing.
 
 ;; Maintainer: FSF
@@ -55,6 +55,9 @@
 		    map (gettext "(Type ? for further options)"))
                    map)
   "Keymap for characters following the Help key.")
+
+(defvar help-mode-link-positions nil)
+(make-variable-buffer-local 'help-mode-link-positions)
 
 ;; global-map definitions moved to keydefs.el
 (fset 'help-command help-map)
@@ -142,6 +145,7 @@
 Entry to this mode runs the normal hook `help-mode-hook'.
 Commands:
 \\{help-mode-map}"
+  (help-mode-get-link-positions)
   )
 
 (define-key help-mode-map "q" 'help-mode-quit)
@@ -152,9 +156,9 @@ Commands:
 (define-key help-mode-map "i" 'Info-elisp-ref)
 (define-key help-mode-map "c" 'customize-variable)
 (define-key help-mode-map [tab] 'help-next-symbol)
-(define-key help-mode-map [(shift tab)] 'help-prev-symbol)
-(define-key help-mode-map [return] 'help-find-source-or-scroll-up)
-(define-key help-mode-map [button2] 'help-mouse-find-source-or-track)
+(define-key help-mode-map [iso-left-tab] 'help-prev-symbol)
+(define-key help-mode-map [backtab] 'help-prev-symbol)
+(define-key help-mode-map [return] 'help-activate-function-or-scroll-up)
 (define-key help-mode-map "n" 'help-next-section)
 (define-key help-mode-map "p" 'help-prev-section)
 
@@ -185,14 +189,26 @@ Commands:
       (describe-variable symb))))
 
 (defun help-next-symbol ()
-  "Move point to the next quoted symbol."
+  "Move point to the next link."
   (interactive)
-  (search-forward "`" nil t))
+  (let ((p (point))
+	(positions help-mode-link-positions)
+	(firstpos (car help-mode-link-positions)))
+    (while (and positions (>= p (car positions)))
+      (setq positions (cdr positions)))
+    (if (or positions firstpos)
+	(goto-char (or (car positions) firstpos)))))
 
 (defun help-prev-symbol ()
-  "Move point to the previous quoted symbol."
+  "Move point to the previous link."
   (interactive)
-  (search-backward "'" nil t))
+  (let* ((p (point))
+	(positions (reverse help-mode-link-positions))
+	(lastpos (car positions)))
+    (while (and positions (<= p (car positions)))
+      (setq positions (cdr positions)))
+    (if (or positions lastpos)
+	(goto-char (or (car positions) lastpos)))))
 
 (defun help-next-section ()
   "Move point to the next quoted symbol."
@@ -226,6 +242,16 @@ otherwise it is killed."
 (defun help-quit ()
   (interactive)
   nil)
+
+(defun help-mode-get-link-positions ()
+  "Get the positions of the links in the help buffer"
+  (let ((el (extent-list nil (point-min) (point-max) nil 'activate-function))
+	(positions nil))
+    (while el
+      (setq positions (append positions (list (extent-start-position (car el)))))
+      (setq el (cdr el)))
+    (setq help-mode-link-positions positions)))
+    
 
 (define-obsolete-function-alias 'deprecated-help-command 'help-for-help)
 
@@ -1017,58 +1043,94 @@ Miscellaneous:
 )
   help-map)
 
-(defun function-called-at-point ()
-  "Return the function which is called by the list containing point.
+(labels
+    ((function-really-at-point ()
+       (ignore-errors
+         (save-excursion
+           (save-restriction
+             (narrow-to-region (max (point-min) (- (point) 1000))
+                               (point-max))
+             (backward-up-list 1)
+             (forward-char 1)
+             (let (obj)
+               (setq obj (read (current-buffer)))
+               (and (functionp obj) obj))))))
+     (function-around-point ()
+       (ignore-errors
+         (with-syntax-table emacs-lisp-mode-syntax-table
+           (save-excursion
+             (or (not (zerop (skip-syntax-backward "_w")))
+                 (memq (char-syntax (char-after (point)))
+                       '(?w ?_))
+                 (forward-sexp -1))
+             (skip-chars-forward "`'")
+             (let ((obj (read (current-buffer))))
+               (and (functionp obj) obj))))))
+     (transform-function-name (string)
+       (and string
+            (setq string (substitute ?* ?X (substitute ?- ?_ string))
+                  string (if (member (aref string 0) '(?F ?Q))
+                             (subseq string 1)
+                           string))))
+     (guess-c-symbol ()
+       ;; This is info-lookup-guess-c-symbol, from info-look.el
+       (ignore-errors
+         (skip-syntax-backward "w_")
+         (let ((start (point)) prefix name)
+           ;; Test for a leading `struct', `union', or `enum' keyword
+           ;; but ignore names like `foo_struct'.
+           (setq prefix (and (< (skip-chars-backward " \t\n") 0)
+                             (< (skip-chars-backward "_a-zA-Z0-9") 0)
+                             (looking-at
+                              "\\(struct\\|union\\|enum\\)\\s ")
+                             (concat (match-string 1) " ")))
+           (goto-char start)
+           (and (looking-at "[_a-zA-Z][_a-zA-Z0-9]*")
+                (setq name (match-string 0)))
+           ;; Caveat!  Look forward if point is at `struct' etc.
+           (and (not prefix)
+                (or (equal name "struct") (equal name "union")
+                    (equal name "enum"))
+                (looking-at "[a-z]+\\s +\\([_a-zA-Z][_a-zA-Z0-9]*\\)")
+                (setq prefix (concat name " ")
+                      name (match-string 1)))
+           (and (or prefix name) (concat prefix name))))))
+
+  ;; Byte compiler limitations mean each function gets its own copies
+  ;; of these, inline them instead.
+  (declare (inline function-really-at-point function-around-point
+		   transform-function-name guess-c-symbol))
+
+  (defun function-called-at-point ()
+    "Return the function which is called by the list containing point.
 If that gives no function, return the function whose name is around point.
 If that doesn't give a function, return nil."
-  (or (ignore-errors
-	(save-excursion
-	  (save-restriction
-	    (narrow-to-region (max (point-min) (- (point) 1000))
-			      (point-max))
-	    (backward-up-list 1)
-	    (forward-char 1)
-	    (let (obj)
-	      (setq obj (read (current-buffer)))
-	      (and (symbolp obj) (fboundp obj) obj)))))
-      (ignore-errors
-	(with-syntax-table emacs-lisp-mode-syntax-table
-	  (save-excursion
-	    (or (not (zerop (skip-syntax-backward "_w")))
-		(eq (char-syntax (char-after (point))) ?w)
-		(eq (char-syntax (char-after (point))) ?_)
-		(forward-sexp -1))
-	    (skip-chars-forward "`'")
-	    (let ((obj (read (current-buffer))))
-	      (and (symbolp obj) (fboundp obj) obj)))))))
+    (or 
+     (function-really-at-point)
+     (function-around-point)
+     (and 
+      (member major-mode '(c-mode c++-mode c++-c-mode objc-mode java-mode))
+      (intern-soft (transform-function-name (guess-c-symbol))))
+     (and
+      (fboundp 'add-log-current-defun)
+      (intern-soft (transform-function-name (add-log-current-defun))))))
 
-(defun function-at-point ()
-  "Return the function whose name is around point.
+  (defun function-at-point ()
+    "Return the function whose name is around point.
 If that gives no function, return the function which is called by the
 list containing point.  If that doesn't give a function, return nil."
-  (or (ignore-errors
-	(with-syntax-table emacs-lisp-mode-syntax-table
-	  (save-excursion
-	    (or (not (zerop (skip-syntax-backward "_w")))
-		(eq (char-syntax (char-after (point))) ?w)
-		(eq (char-syntax (char-after (point))) ?_)
-		(forward-sexp -1))
-	    (skip-chars-forward "`'")
-	    (let ((obj (read (current-buffer))))
-	      (and (symbolp obj) (fboundp obj) obj)))))
-      (ignore-errors
-	(save-excursion
-	  (save-restriction
-	    (narrow-to-region (max (point-min) (- (point) 1000))
-			      (point-max))
-	    (backward-up-list 1)
-	    (forward-char 1)
-	    (let (obj)
-	      (setq obj (read (current-buffer)))
-	      (and (symbolp obj) (fboundp obj) obj)))))))
+    (or 
+     (function-around-point)
+     (function-really-at-point)
+     (and 
+      (member major-mode '(c-mode c++-mode c++-c-mode objc-mode java-mode))
+      (intern-soft (transform-function-name (guess-c-symbol))))
+     (and
+      (fboundp 'add-log-current-defun)
+      (intern-soft (transform-function-name (add-log-current-defun))))))
 
-(defun function-at-event (event)
-  "Return the function whose name is around the position of EVENT.
+  (defun function-at-event (event)
+    "Return the function whose name is around the position of EVENT.
 EVENT should be a mouse event.  When calling from a popup or context menu,
 use `last-popup-menu-event' to find out where the mouse was clicked.
 \(You cannot use (interactive \"e\"), unfortunately.  This returns a
@@ -1076,11 +1138,11 @@ misc-user event.)
 
 If the event contains no position, or the position is not over text, or
 there is no function around that point, nil is returned."
-  (if (and event (event-buffer event) (event-point event))
-      (save-excursion
-	(set-buffer (event-buffer event))
-	(goto-char (event-point event))
-	(function-at-point))))
+    (and event (event-buffer event) (event-point event)
+         (save-excursion
+           (set-buffer (event-buffer event))
+           (goto-char (event-point event))
+           (function-at-point)))))
 
 ;; Default to nil for the non-hackers?  Not until we find a way to
 ;; distinguish hackers from non-hackers automatically!
@@ -1283,11 +1345,13 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
   (let ((help-sticky-window
 	 ;; if we were called from a help buffer, make sure the new help
 	 ;; goes in the same window.
-	 (if (and (event-buffer ev)
+	 (if (and ev 
+		  (event-buffer ev)
 		  (symbol-value-in-buffer 'help-window-config
 					  (event-buffer ev)))
 	     (event-window ev)
-	   help-sticky-window)))
+	   (if ev help-sticky-window
+	     (get-buffer-window (current-buffer))))))
     (funcall fun (extent-property ex 'help-symbol))))
 
 (defun help-symbol-run-function (fun)
@@ -1445,7 +1509,8 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 				 standard-output))
 	    (set-extent-property e 'face 'hyper-apropos-hyperlink)
 	    (set-extent-property e 'mouse-face 'highlight)
-	    (set-extent-property e 'find-function-symbol function)))
+	    (set-extent-property e 'help-symbol function)
+	    (set-extent-property e 'activate-function  #'(lambda (ev ex) (help-symbol-run-function-1 ev ex 'find-function)))))
 	(princ "\"\n"))
     (if describe-function-show-arglist
 	(let ((arglist (function-arglist function)))
@@ -1497,7 +1562,9 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 		       (global-tty-binding 
 			(where-is-internal function global-tty-map))
 		       (global-window-system-binding 
-			(where-is-internal function global-window-system-map)))
+			(where-is-internal function global-window-system-map))
+                       (command-remapping (command-remapping function))
+                       (commands-remapped-to (commands-remapped-to function)))
                    (if (or global-binding global-tty-binding
                            global-window-system-binding)
                        (if (and (equal global-binding
@@ -1531,11 +1598,23 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
                              "\n%s\n        -- generally (that is, unless\
  overridden by TTY- or
            window-system-specific mappings)\n"
-                             (mapconcat #'key-description
-                                        global-binding
+                             (mapconcat #'key-description global-binding
                                         ", ")))))
-                     (princ (substitute-command-keys
-                             (format "\n\\[%s]" function))))))))))))
+                       (if command-remapping
+                           (progn
+                             (princ "Its keys are remapped to `")
+                             (princ (symbol-name command-remapping))
+                             (princ "'.\n"))
+                           (princ (substitute-command-keys
+                                   (format "\n\\[%s]" function))))
+                       (when commands-remapped-to
+                         (if (cdr commands-remapped-to)
+                             (princ (format "\n\nThe following functions are \
+remapped to it:\n`%s'" (mapconcat #'prin1-to-string commands-remapped-to
+                                  "', `")))
+                           (princ (format "\n\n`%s' is remapped to it.\n"
+                                          (car
+                                           commands-remapped-to))))))))))))))
 
 ;;; [Obnoxious, whining people who complain very LOUDLY on Usenet
 ;;; are binding this to keys.]
@@ -1619,6 +1698,30 @@ there is no variable around that point, nil is returned."
        (if type "an unknown type of built-in variable?"
 	 "a variable declared in Lisp")))))
 
+(defun describe-variable-custom-version-info (variable)
+  (let ((custom-version (get variable 'custom-version))
+	(cpv (get variable 'custom-package-version))
+	(output nil))
+    (if custom-version
+	(setq output
+	      (format "This variable was introduced, or its default value was changed, in\nversion %s of XEmacs.\n"
+		      custom-version))
+      (when cpv
+	(let* ((package (car-safe cpv))
+	       (version (if (listp (cdr-safe cpv))
+			    (car (cdr-safe cpv))
+			  (cdr-safe cpv)))
+	       (pkg-versions (assq package customize-package-emacs-version-alist))
+	       (emacsv (cdr (assoc version pkg-versions))))
+	  (if (and package version)
+	      (setq output
+		    (format (concat "This variable was introduced, or its default value was changed, in\nversion %s of the %s package"
+				    (if emacsv
+					(format " that is part of XEmacs %s" emacsv))
+				    ".\n")
+			    version package))))))
+    output))
+
 (defun describe-variable (variable)
   "Display the full documentation of VARIABLE (a symbol)."
   (interactive
@@ -1670,7 +1773,8 @@ there is no variable around that point, nil is returned."
 				      standard-output))
 		 (set-extent-property e 'face 'hyper-apropos-hyperlink)
 		 (set-extent-property e 'mouse-face 'highlight)
-		 (set-extent-property e 'find-variable-symbol variable))
+		 (set-extent-property e 'help-symbol variable)
+		 (set-extent-property e 'activate-function  #'(lambda (ev ex) (help-symbol-run-function-1 ev ex 'find-variable))))
 	       (princ"\"\n")))
 	 (princ "\nValue: ")
     	 (if (not (boundp variable))
@@ -1725,6 +1829,33 @@ there is no variable around that point, nil is returned."
 		 (frob-help-extents standard-output)
 		 (goto-char newp standard-output))
 	     (princ "not documented as a variable."))))
+       ;; Make a link to customize if this variable can be customized.
+       (when (custom-variable-p variable)
+	 (let ((customize-label "customize"))
+	   (terpri)
+	   (terpri)
+	   (princ (concat "You can " customize-label " this variable."))
+	   (with-current-buffer standard-output
+	     (save-excursion
+	       (re-search-backward
+		(concat "\\(" customize-label "\\)") nil t)
+	       (let ((opoint (point standard-output))
+		     e)
+		 (require 'hyper-apropos)
+		 ;; (princ variable)
+		 (re-search-forward (concat "\\(" customize-label "\\)") nil t)
+		 (setq e (make-extent opoint (point standard-output)
+				      standard-output))
+		 (set-extent-property e 'face 'hyper-apropos-hyperlink)
+		 (set-extent-property e 'mouse-face 'highlight)
+		 (set-extent-property e 'help-symbol variable)
+		 (set-extent-property e 'activate-function  #'(lambda (ev ex) (help-symbol-run-function-1 ev ex 'customize-variable)))))))
+	 ;; Note variable's version or package version
+	 (let ((output (describe-variable-custom-version-info variable)))
+	   (when output
+	     (terpri)
+	     (terpri)
+	     (princ output))))
        (terpri)))
    (format "variable `%s'" variable)))
 
@@ -1836,53 +1967,19 @@ after the listing is made.)"
 		(if cmd (princ " ")))))
 	  (terpri))))))
 
-;; Stop gap for 21.0 until we do help-char etc properly.
-(defun help-keymap-with-help-key (keymap form)
-  "Return a copy of KEYMAP with an help-key binding according to help-char
- invoking FORM like help-form.  An existing binding is not overridden.
- If FORM is nil then no binding is made."
-  (let ((map (copy-keymap keymap))
-	(key (if (characterp help-char)
-		 (vector (character-to-event help-char))
-	       help-char)))
-    (when (and form key (not (lookup-key map key)))
-      (define-key map key
-	`(lambda () (interactive) (help-print-help-form ,form))))
-    map))
-
 (defun help-print-help-form (form)
   (let ((string (eval form)))
     (if (stringp string)
 	(with-displaying-help-buffer
 	 (insert string)))))
 
-(defun help-find-source-or-scroll-up (&optional pos)
+(defun help-activate-function-or-scroll-up (&optional pos)
   "Follow any cross reference to source code; if none, scroll up.  "
   (interactive "d")
-  (let ((e (extent-at pos nil 'find-function-symbol)))
-    (if (and-fboundp 'find-function e)
-        (with-fboundp 'find-function
-          (find-function (extent-property e 'find-function-symbol)))
-      (setq e (extent-at pos nil 'find-variable-symbol))
-      (if (and-fboundp 'find-variable e)
-          (with-fboundp 'find-variable
-            (find-variable (extent-property e 'find-variable-symbol)))
-	(scroll-up 1)))))
-
-(defun help-mouse-find-source-or-track (event)
-  "Follow any cross reference to source code under the mouse; 
-if none, call mouse-track.  "
-  (interactive "e")
-  (mouse-set-point event)
-  (let ((e (extent-at (point) nil 'find-function-symbol)))
-    (if (and-fboundp 'find-function e)
-        (with-fboundp 'find-function
-          (find-function (extent-property e 'find-function-symbol)))
-      (setq e (extent-at (point) nil 'find-variable-symbol))
-      (if (and-fboundp 'find-variable e)
-          (with-fboundp 'find-variable
-            (find-variable (extent-property e 'find-variable-symbol)))
-	(mouse-track event)))))
+  (let ((e (extent-at pos nil 'activate-function)))
+    (if e
+	(funcall (extent-property e 'activate-function) nil e)
+      (scroll-up 1))))
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle the mode which makes windows smaller for temporary buffers.

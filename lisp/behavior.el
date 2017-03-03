@@ -62,7 +62,7 @@
 ;;    package is enabled, the user doesn't have to do anything specific for
 ;;    the package to do its thing -- it happens automatically if the user is
 ;;    using the area whose behavior has been changed.  These include packages
-;;    such as `avoid' (which makes the mouse poointer move when the cursor
+;;    such as `avoid' (which makes the mouse pointer move when the cursor
 ;;    gets too close), EFS (which adds the ability to treat an FTP site as
 ;;    part of the local file system), the packages that supply the
 ;;    mode-specific handling for various files, etc
@@ -285,7 +285,9 @@ have no user-invocable behavior."
 Normally, groups are created and assigned properties by individual packages.
 The resulting hierarchy may not make much sense globally.  This function
 allows the hierarchy and appearance of a group to be specified globally,
-and will take precendence over the properties assigned by `define-behavior-group'.  This allows a global organization to be imposed on groups, while still allowing for graceful handling of new or unknown groups.
+and will take precendence over the properties assigned by
+`define-behavior-group'.  This allows a global organization to be imposed on
+groups, while still allowing for graceful handling of new or unknown groups.
 
 NAME can be a symbol specifying a group name, or a list of
 \(PARENT [...] NAME), where a path from a particular parent is explicitly
@@ -345,16 +347,10 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
  for history command, and as the value to return if the user enters the
  empty string."
   (let ((result
-	 (completing-read
-	  prompt
-	  (let (list)
-	    (maphash #'(lambda (key value)
-			 (push (cons (symbol-name key) value) list))
-		     behavior-hash-table)
-	    list)
-	  nil must-match initial-contents (or history 'behavior-history)
-	  default-value)))
-    (if (and result (stringp result))
+	 (completing-read prompt behavior-hash-table nil must-match
+                          initial-contents (or history 'behavior-history)
+                          default-value)))
+    (if (stringp result)
 	(intern result)
       result)))
 
@@ -403,7 +399,7 @@ Fourth arg DEFAULT-VALUE is the default value.  If non-nil, it is used
       (message "Disabling behavior %s...done" behavior)
       (let ((within-behavior-enabling-disabling t))
 	(customize-set-variable 'enabled-behavior-list
-				(delq behavior enabled-behavior-list))))))
+				(delete* behavior enabled-behavior-list))))))
 
 (defun compute-behavior-group-children (group hash)
   "Compute the actual children for GROUP and its subgroups.
@@ -414,90 +410,96 @@ This takes into account the override information specified."
     )
   )
 
-(defun behavior-menu-filter-1 (menu group)
-  (submenu-generate-accelerator-spec
-   (let* (
-	  ;;options
-	  ;;help
-	  (enable
-	   (menu-split-long-menu
-	    (menu-sort-menu
-	     (let ((group-plist (gethash group behavior-group-hash-table)))
-	       (loop for behavior in (getf group-plist :children)
-		 nconc (if (behavior-group-p behavior)
-			   (list
-			    (cons (getf
-				   (gethash behavior behavior-group-hash-table)
-				   :short-doc)
-				  (behavior-menu-filter-1 menu behavior)))
-			 (let* ((plist (gethash behavior behavior-hash-table))
-				(commands (getf plist :commands)))
-			   (nconc
-			    (if (getf plist :enable)
-				`([,(format "%s (%s) [toggle]"
-					    (getf plist :short-doc)
-					    behavior)
-				   (if (memq ',behavior
-					     enabled-behavior-list)
-				       (disable-behavior ',behavior)
-				     (enable-behavior ',behavior))
-				   :active ,(if (getf plist :disable) t
-					      (not (memq
-						    ',behavior
-						    enabled-behavior-list)))
-				   :style toggle
-				   :selected (memq ',behavior
-						   enabled-behavior-list)]))
-			    (cond ((null commands) nil)
-				  ((and (eq (length commands) 1)
-					(vectorp (elt commands 0)))
-				   (let ((comm (copy-sequence
-						(elt commands 0))))
-				     (setf (elt comm 0)
-					   (format "%s (%s)"
-						   (elt comm 0) behavior))
-				     (list comm)))
-				  (t (list
-				      (cons (format "%s (%s) Commands"
-						    (getf plist :short-doc)
-						    behavior)
-					    commands)))))))))
-	     ))
-	   )
-	  )
-     enable)
-   '(?p)))
-
 (defun behavior-menu-filter (menu)
-  (append
-   `(("%_Package Utilities"
-       ("%_Set Download Site"
-	("%_Official Releases"
-	 :filter ,#'(lambda (&rest junk)
-                      (menu-split-long-menu
-                       (submenu-generate-accelerator-spec
-                        (package-ui-download-menu)))))
-	("%_Pre-Releases"
-	 :filter ,#'(lambda (&rest junk)
-                      (menu-split-long-menu
-                       (submenu-generate-accelerator-spec
-                        (package-ui-pre-release-download-menu)))))
-	("%_Site Releases"
-	 :filter ,#'(lambda (&rest junk)
-                      (menu-split-long-menu
-                       (submenu-generate-accelerator-spec
-                        (package-ui-site-release-download-menu))))))
-       "--:shadowEtchedIn"
-      ["%_Update Package Index" package-get-update-base]
-      ["%_List and Install" pui-list-packages]
-      ["U%_pdate Installed Packages" package-get-update-all]
-      ["%_Help" (Info-goto-node "(xemacs)Packages")])
-     "----")
-   (behavior-menu-filter-1 menu nil)))
+  (labels
+      ((behavior-menu-filter-1 (menu group)
+	 (submenu-generate-accelerator-spec
+	  (let* ((enable
+		  (menu-split-long-menu
+		   (menu-sort-menu
+		    (let ((group-plist (gethash group
+						behavior-group-hash-table)))
+		      (loop for behavior in (getf group-plist :children)
+			nconc (if (behavior-group-p behavior)
+				  (list
+				   (cons (getf
+					  (gethash behavior
+						   behavior-group-hash-table)
+					  :short-doc)
+					 (behavior-menu-filter-1
+					  menu behavior)))
+				(let* ((plist (gethash behavior
+						       behavior-hash-table))
+				       (commands (getf plist :commands)))
+				  (nconc
+				   (if (getf plist :enable)
+				       `([,(format "%s (%s) [toggle]"
+						   (getf plist :short-doc)
+						   behavior)
+					  (if (memq ',behavior
+						    enabled-behavior-list)
+					      (disable-behavior ',behavior)
+					    (enable-behavior ',behavior))
+					  :active ,(if (getf plist :disable)
+						       t
+						     (not
+						      (memq
+						       ',behavior
+						       enabled-behavior-list)))
+					  :style toggle
+					  :selected (memq
+						     ',behavior
+						     enabled-behavior-list)]))
+				   (cond ((null commands) nil)
+					 ((and (eq (length commands) 1)
+					       (vectorp (elt commands 0)))
+					  (let ((comm (copy-sequence
+						       (elt commands 0))))
+					    (setf (elt comm 0)
+						  (format "%s (%s)"
+							  (elt comm 0)
+							  behavior))
+					    (list comm)))
+					 (t (list
+					     (cons (format "%s (%s) Commands"
+							   (getf plist
+								 :short-doc)
+							   behavior)
+						   commands)))))))))
+		    ))
+		  )
+		 )
+	    enable)
+	  '(?p))))
+    (append
+     `(("%_Package Utilities"
+	("%_Set Download Site"
+	 ("%_Official Releases"
+	  :filter ,#'(lambda (&rest junk)
+		       (menu-split-long-menu
+			(submenu-generate-accelerator-spec
+			 (package-ui-download-menu)))))
+	 ("%_Pre-Releases"
+	  :filter ,#'(lambda (&rest junk)
+		       (menu-split-long-menu
+			(submenu-generate-accelerator-spec
+			 (package-ui-pre-release-download-menu)))))
+	 ("%_Site Releases"
+	  :filter ,#'(lambda (&rest junk)
+		       (menu-split-long-menu
+			(submenu-generate-accelerator-spec
+			 (package-ui-site-release-download-menu))))))
+	"--:shadowEtchedIn"
+	["%_Update Package Index" package-get-update-base]
+	["%_List and Install" pui-list-packages]
+	["U%_pdate Installed Packages" package-get-update-all]
+	["%_Help" (Info-goto-node "(xemacs)Packages")])
+       "----")
+     (behavior-menu-filter-1 menu nil))))
 
 ;; Initialize top-level group.
 (puthash nil '(:children nil :short-doc "Root") behavior-group-hash-table)
 
 (provide 'behavior)
 
-;;; finder-inf.el ends here
+;;; behavior.el ends here

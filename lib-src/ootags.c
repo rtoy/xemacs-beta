@@ -4869,7 +4869,7 @@ substitute (in, out, regs)
       *t++ = *out;
   *t = '\0';
 
-  if (DEBUG && (t > result + size || t - result != strlen (result)))
+  if (DEBUG && (t > result + size || t - result != (int) (strlen (result))))
     abort ();
 
   return result;

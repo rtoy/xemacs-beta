@@ -9,7 +9,7 @@ allow you to specify which part of the text you want to see.
 @table @kbd
 @item C-l
 Clear frame and redisplay, scrolling the selected window to center
-point vertically within it (@code{recenter}).
+point vertically within it (@code{recenter-top-bottom}).
 @item C-v
 @itemx pgdn
 @itemx next
@@ -38,12 +38,14 @@ Make deeply indented lines invisible (@code{set-selective-display}).
 
 @menu
 * Scrolling::	           Moving text up and down in a window.
+* Recentering::            A scroll command that centers the current line.
+* Automatic Scrolling::    Redisplay scrolls text automatically when needed.
 * Horizontal Scrolling::   Moving text left and right in a window.
 * Selective Display::      Hiding lines with lots of indentation.
 * Display Vars::           Information on variables for customizing display.
 @end menu
 
-@node Scrolling, Horizontal Scrolling, Display, Display
+@node Scrolling, Recentering, Display, Display
 @section Scrolling
 
   If a buffer contains text that is too large to fit entirely within the
@@ -62,9 +64,6 @@ in this section.
 
 @ifinfo
 @table @kbd
-@item C-l
-Clear frame and redisplay, scrolling the selected window to center
-point vertically within it (@code{recenter}).
 @item C-v
 @itemx pgdn
 @itemx next
@@ -73,17 +72,8 @@ Scroll forward (a windowful or a specified number of lines) (@code{scroll-up}).
 @itemx pgup
 @itemx prior
 Scroll backward (@code{scroll-down}).
-@item @var{arg} C-l
-Scroll so point is on line @var{arg} (@code{recenter}).
 @end table
 @end ifinfo
-
-@kindex C-l
-@findex recenter
-  The most basic scrolling command is @kbd{C-l} (@code{recenter}) with no
-argument.  It clears the entire frame and redisplays all windows.  In
-addition, it scrolls the selected window so that point is halfway down
-from the top of the window.
 
 @kindex C-v
 @kindex M-v
@@ -111,17 +101,64 @@ moves backward with similar overlap.  The number of lines of overlap
 across a @kbd{C-v} or @kbd{M-v} is controlled by the variable
 @code{next-screen-context-lines}; by default, it is two.
 
-  Another way to scroll is using @kbd{C-l} with a numeric argument.
-@kbd{C-l} does not clear the frame when given an argument; it only
-scrolls the selected window.  With a positive argument @var{n}, @kbd{C-l}
-repositions text to put point @var{n} lines down from the top.  An
-argument of zero puts point on the very top line.  Point does not move
-with respect to the text; rather, the text and point move rigidly on the
-frame.  @kbd{C-l} with a negative argument puts point that many lines
-from the bottom of the window.  For example, @kbd{C-u - 1 C-l} puts
-point on the bottom line, and @kbd{C-u - 5 C-l} puts it five lines from
-the bottom.  Just @kbd{C-u} as argument, as in @kbd{C-u C-l}, scrolls
-point to the center of the frame.
+@node Recentering, Automatic Scrolling, Scrolling, Display
+@section Recentering
+
+@table @kbd
+@item C-l
+Scroll the selected window so the current line is the center-most text
+line; on subsequent consecutive invocations, make the current line the
+top line, the bottom line, and so on in cyclic order.  Possibly
+redisplay the screen too (@code{recenter-top-bottom}).
+
+@item M-x recenter
+Scroll the selected window so the current line is the center-most text
+line.  Possibly redisplay the screen too.
+
+@item C-M-l
+Scroll heuristically to bring useful information onto the screen
+(@code{reposition-window}).
+@end table
+
+@kindex C-l
+@findex recenter-top-bottom
+  The @kbd{C-l} (@code{recenter-top-bottom}) command @dfn{recenters}
+the selected window, scrolling it so that the current screen line is
+exactly in the center of the window, or as close to the center as
+possible.
+
+  Typing @kbd{C-l} twice in a row (@kbd{C-l C-l}) scrolls the window
+so that point is on the topmost screen line.  Typing a third @kbd{C-l}
+scrolls the window so that point is on the bottom-most screen line.
+Each successive @kbd{C-l} cycles through these three positions.
+
+@vindex recenter-positions
+  You can change the cycling order by customizing the list variable
+@code{recenter-positions}.  Each list element should be the symbol
+@code{top}, @code{middle}, or @code{bottom}, or a number; an integer
+means to move the line to the specified screen line, while a
+floating-point number between 0.0 and 1.0 specifies a percentage of
+the screen space from the top of the window.  The default,
+@code{(middle top bottom)}, is the cycling order described above.
+Furthermore, if you change the variable @code{scroll-margin} to a
+non-zero value @var{n}, @kbd{C-l} always leaves at least @var{n}
+screen lines between point and the top or bottom of the window
+(@pxref{Automatic Scrolling}).
+
+  You can also give @kbd{C-l} a prefix argument.  A plain prefix
+argument, @kbd{C-u C-l}, simply recenters point.  A positive argument
+@var{n} puts point @var{n} lines down from the top of the window.  An
+argument of zero puts point on the topmost line.  A negative argument
+@var{-n} puts point @var{n} lines from the bottom of the window.  When
+given an argument, @kbd{C-l} does not clear the screen or cycle
+through different screen positions.
+
+@findex recenter
+  The more primitive command @kbd{M-x recenter} behaves like
+@code{recenter-top-bottom}, but does not cycle among screen positions.
+
+@node Automatic Scrolling, Horizontal Scrolling, Recentering, Display
+@section Automatic Scrolling
 
 @vindex scroll-step
   Scrolling happens automatically if point has moved out of the visible
@@ -146,7 +183,7 @@ scrolling fast, regardless of @code{scroll-step}.  To prevent this, set
 @code{scroll-conservatively} to a small value, which will have the
 result of overriding the redisplay preemption.
 
-@node Horizontal Scrolling,, Scrolling, Display
+@node Horizontal Scrolling, Selective Display, Automatic Scrolling, Display
 @section Horizontal Scrolling
 
 @ifinfo
@@ -179,7 +216,7 @@ similarly to the right.  The window cannot be scrolled any farther to
 the right once it is displaying normally (with each line starting at the
 window's left margin); attempting to do so has no effect.
 
-@node Selective Display, Display Vars, Display, Display
+@node Selective Display, Display Vars, Horizontal Scrolling, Display
 @section Selective Display
 @findex set-selective-display
 @kindex C-x $

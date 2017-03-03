@@ -142,7 +142,7 @@ print_charset (Lisp_Object obj, Lisp_Object printcharfun,
     printing_unreadable_lisp_object
       (obj, XSTRING_DATA (XSYMBOL (XCHARSET_NAME (obj))->name));
 
-  write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S", 4,
+  write_fmt_string_lisp (printcharfun, "#<charset %s %S %S %S",
 			 CHARSET_NAME (cs), CHARSET_SHORT_NAME (cs),
 			 CHARSET_LONG_NAME (cs), CHARSET_DOC_STRING (cs));
   write_fmt_string (printcharfun, " %s %s cols=%d g%d final='%c' reg=",
@@ -912,7 +912,7 @@ and use the text that appears at the top of the window.
 */
        (charset, registries, force))
 {
-  int i; 
+  Elemcount i; 
   charset = Fget_charset (charset);
   CHECK_VECTOR (registries);
 

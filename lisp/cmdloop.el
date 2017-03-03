@@ -280,6 +280,10 @@ or go back to just one window (by deleting all but the selected window)."
          (princ (gettext " not defined.") stream) ; doo dah, doo dah.
          ))
 
+(put 'no-character-typed 'display-error
+     #'(lambda (error-object stream)
+         (write-sequence "Not a character keystroke, " stream)
+         (write-sequence (key-description (cadr error-object)) stream)))
 
 (defcustom teach-extended-commands-p t
   "*If true, then `\\[execute-extended-command]' will teach you keybindings.
@@ -450,8 +454,7 @@ Also accepts Space to mean yes, or Delete to mean no."
               (message "%s%s%s%s" pre prompt yn (single-key-description event))
               (setq quit-flag nil)
               (signal 'quit '())))
-        (let* ((keys (events-to-keys (vector event)))
-	       (def (lookup-key query-replace-map keys)))
+        (let ((def (lookup-key query-replace-map (vector event))))
           (cond ((eq def 'skip)
                  (message "%s%sNo" prompt yn)
 		 (setq yn nil))
@@ -521,129 +524,216 @@ Also accepts Space to mean yes, or Delete to mean no."
     (y-or-n-p-minibuf prompt)))
 
 
-
-(defun read-char ()
-  "Read a character from the command input (keyboard or macro).
-If a mouse click or non-ASCII character is detected, an error is
-signalled.  The character typed is returned as an ASCII value.  This
-is most likely the wrong thing for you to be using: consider using
-the `next-command-event' function instead."
-  (save-excursion
-    (let ((event (next-command-event)))
-      (or inhibit-quit
-	  (and (event-matches-key-specifier-p event (quit-char))
-	       (signal 'quit nil)))
-      (prog1 (or (event-to-character event)
-                 ;; Kludge.  If the event we read was a mouse-release,
-                 ;; discard it and read the next one.
-                 (if (button-release-event-p event)
-                     (event-to-character (next-command-event event)))
-                 (error "Key read has no ASCII equivalent %S" event))
-        ;; this is not necessary, but is marginally more efficient than GC.
-        (deallocate-event event)))))
-
-(defun read-char-exclusive ()
-  "Read a character from the command input (keyboard or macro).
-If a mouse click or non-ASCII character is detected, it is discarded.
-The character typed is returned as an ASCII value.  This is most likely
-the wrong thing for you to be using: consider using the
-`next-command-event' function instead."
-  (let (event ch)
-    (while (progn
-	     (setq event (next-command-event))
-	     (or inhibit-quit
-		 (and (event-matches-key-specifier-p event (quit-char))
-		      (signal 'quit nil)))
-	     (setq ch (event-to-character event))
-	     (deallocate-event event)
-	     (null ch)))
-    ch))
-
-;;;; Input and display facilities.
-
-;; BEGIN SYNCHED WITH FSF 21.2.
-
 (defcustom read-quoted-char-radix 8 
- "*Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
-Legitimate radix values are 8, 10 and 16."
+  "Radix for \\[quoted-insert] and other uses of `read-quoted-char'.
+See `digit-char-p' and its RADIX argument for possible values."
   :type '(choice (const 8) (const 10) (const 16))
   :group 'editing-basics)
 
-(defun read-quoted-char (&optional prompt)
-  ;; XEmacs change; description of the character code input
-  "Like `read-char', but do not allow quitting.
+(labels
+    ((read-function-key-map (events prompt)
+       "Read keystrokes scanning `function-key-map'. Return an event vector."
+       (let (binding)
+         (while (keymapp
+                 (setq binding
+                       (lookup-key function-key-map
+                                   (setq events
+                                         (vconcat events
+                                                  (list (next-key-event
+                                                         nil prompt))))))))
+	 (when binding
+	   ;; Found something in function-key-map. If it's a function
+	   ;; (e.g. synthesize-keysym), call it.
+	   (if (functionp binding)
+	       (setq binding (funcall binding nil)))
+	   (setq events (map 'vector #'character-to-event binding)))
+         events))
+     (read-char-1 (errorp prompt inherit-input-method seconds)
+       "Return a character from command input or the current macro.
+Look up said input in `function-key-map' as appropriate.
 
-Also, if the first character read is a digit of base (the value of)
-`read-quoted-char-radix', we read as many of such digits as are
-typed and return a character with the corresponding Unicode code
-point.  Any input that is not a digit (in the base used) terminates
-the sequence.  If the terminator is RET, it is discarded; any other
-terminator is used itself as input.
+PROMPT is a prompt for `next-command-event', which see.
+
+If ERRORP is non-nil, error if the key sequence has no character equivalent.
+Otherwise, loop, discarding non-character keystrokes or mouse movements.
+
+If INHERIT-INPUT-METHOD is non-nil, and a Quail input method is active in
+the current buffer, use its translation when choosing a character to return.
+
+If SECONDS is non-nil, only wait that number of seconds for input. If no
+input is received in that time, return nil."
+       (let ((timeout
+              (if seconds
+                  (add-timeout seconds #'(lambda (ignore)
+                                           (return-from read-char-1 nil))
+                               nil)))
+             (events []) character)
+         (unwind-protect
+              (while t
+                (setq events (read-function-key-map events prompt)
+                      ;; Put the remaining keystrokes back on the input queue.
+                      unread-command-events (reduce #'cons events
+                                                    :start 1 :from-end t
+                                                    :initial-value
+                                                    unread-command-events))
+                (unless inhibit-quit
+                  (and (event-matches-key-specifier-p (aref events 0)
+                                                      (quit-char))
+                       (signal 'quit nil)))
+                (if (setq character (event-to-character (aref events 0)))
+                    (progn
+                      ;; If we have a character (the usual case), deallocate
+                      ;; the event and return the character.
+                      (deallocate-event (aref events 0))
+                      ;; Handle quail, if we've been asked to (maybe we
+                      ;; should default to this).
+                      (if (and inherit-input-method (and-boundp 'quail-mode
+                                                      quail-mode))
+                          (with-fboundp
+                              '(quail-map-definition quail-lookup-key)
+                            (let ((binding
+                                   (quail-map-definition
+                                    (quail-lookup-key (string character)))))
+                              (if (characterp binding)
+                                  (return-from read-char-1 binding))
+                              ;; #### Bug, we don't allow users to select from
+                              ;; among multiple characters that may be input
+                              ;; with the same key sequence.
+                              (if (and (consp binding)
+                                       (characterp
+                                        (aref (cdr binding) (caar binding))))
+                                  (return-from read-char-1
+                                    (aref (cdr binding) (caar binding)))))))
+                      (return-from read-char-1 character)))
+                (if errorp
+                    (error 'no-character-typed (aref events 0)))
+                ;; If we're not erroring, loop until we get a character
+                (setq events []))
+           (if timeout (disable-timeout timeout))))))
+  ;; Because of byte compiler limitations, each function has its own copy of
+  ;; #'read-char-1, so why not inline it.
+  (declare (inline read-char-1))
+
+  (defun read-char (&optional prompt inherit-input-method seconds)
+    "Read a character from the command input (keyboard or macro).
+If a mouse click or non-character keystroke is detected, signal an error.
+The character typed is returned as a Lisp object.  This is most likely the
+wrong thing for you to be using: consider using the `next-command-event'
+function instead.
+
+PROMPT is a prompt, as used by `next-command-event'.
+
+If INHERIT-INPUT-METHOD is non-nil, and a Quail input method is active in
+the current buffer, use its translation for the character returned.
+
+If SECONDS is non-nil, only wait that number of seconds for input. If no
+input is received in that time, return nil."
+    (read-char-1 t prompt inherit-input-method seconds))
+
+  (defun read-char-exclusive (&optional prompt inherit-input-method seconds)
+    "Read a character from the command input (keyboard or macro).
+
+If a mouse click or a non-character keystroke is detected, it is discarded.
+The character typed is returned as a Lisp object. This is most likely the
+wrong thing for you to be using: consider using the `next-command-event'
+function instead.
+
+PROMPT is a prompt, as used by `next-command-event'.
+
+If INHERIT-INPUT-METHOD is non-nil, and a Quail input method is active in
+the current buffer, use its translation for the character returned.
+
+If SECONDS is non-nil, only wait that number of seconds for input. If no
+input is received in that time, return nil."
+    (read-char-1 nil prompt inherit-input-method seconds))
+
+  (defun read-quoted-char (&optional prompt)
+    "Like `read-char', but do not allow quitting.
+
+Also, if the first character read is a digit of base `read-quoted-char-radix',
+we read as many of such digits as are typed and return a character with the
+corresponding Unicode code point.  Any input that is not a digit (in the base
+used) terminates the sequence.  If the terminator is RET, it is discarded; any
+other terminator is used itself as input.
 
 The optional argument PROMPT specifies a string to use to prompt the user.
 The variable `read-quoted-char-radix' controls which radix to use
-for numeric input."
-  (let (;(message-log-max nil)
-	done (first t) (code 0) char event
-	(prompt (and prompt (gettext prompt)))
-	)
-    (while (not done)
-      (let ((inhibit-quit first)
-	    ;; Don't let C-h get the help message--only help
-	    ;; function keys. 
-	    ;; XEmacs: we don't support the help function keys as of
-	    ;; 2006-04-16. GNU have a Vhelp_event_list in addition
-	    ;; to help-char in src/keyboard.c, and it's only useful
-	    ;; to set help-form while help-char is nil when that
-	    ;; functionality is available.
-	    (help-char nil)
-	    (help-form (format 
-	     "Type the special character you want to use,
-or the character code, base %d (the value of `read-quoted-char-radix')
-RET terminates the character code and is discarded;
-any other non-digit terminates the character code and is then used as input."
-	     read-quoted-char-radix)))
-	(and prompt (display-message 'prompt (format "%s-" prompt)))
-	(setq event (next-command-event)
-	      ;; If event-to-character fails, this is fine, we handle that
-	      ;; with the (null char) cond branch below.
-	      char (event-to-character event))
-	(if inhibit-quit (setq quit-flag nil)))
-      ;; Translate TAB key into control-I ASCII character, and so on.
-      (and char
-	   (let ((translated (lookup-key function-key-map (vector char))))
-	     (if (arrayp translated)
-		 (setq char (aref translated 0)))))
-      (cond ((null char))
-	    ((not (characterp char))
-	     ;; XEmacs change; event instead of char. 
-	     (setq unread-command-events (list event)
-		   done t))
-; 	    ((/= (logand char ?\M-\^@) 0)
-; 	     ;; Turn a meta-character into a character with the 0200 bit set.
-; 	     (setq code (logior (logand char (lognot ?\M-\^@)) 128)
-; 		   done t))
-	    ((and (<= ?0 char) (< char (+ ?0 (min 10 read-quoted-char-radix))))
-	     (setq code (+ (* code read-quoted-char-radix) (- char ?0)))
-	     (and prompt (setq prompt (display-message 'prompt
-					(format "%s %c" prompt char)))))
-	    ((and (<= ?a (downcase char))
-		  (< (downcase char) (+ ?a -10 (min 26 read-quoted-char-radix))))
-	     (setq code (+ (* code read-quoted-char-radix)
-			   (+ 10 (- (downcase char) ?a))))
-	     (and prompt (setq prompt (display-message 'prompt
-					(format "%s %c" prompt char)))))
-	    ((and (not first) (eq char ?\C-m))
-	     (setq done t))
-	    ((not first)
-	     ;; XEmacs change; event instead of char. 
-	     (setq unread-command-events (list event)
-		   done t))
-	    (t (setq code (char-to-int char)
-		     done t)))
-      (setq first nil))
-    ;; XEmacs change; unicode-to-char instead of int-to-char
-    (unicode-to-char code)))
+for numeric input.
+
+There is no INHERIT-INPUT-METHOD option, the intent is that `read-quoted-char'
+is a mechanism to escape briefly from an input method and from other key
+bindings."
+    (let (done (first t) (code 0) char (events []) event fixnum
+          (prompt (and prompt (gettext prompt)))
+          (help-event-list
+           ;; Don't let C-h get the help message--only help function
+           ;; keys.
+           (remove-if #'event-to-character
+		      ;; Fold help-char into help-event-list to make
+		      ;; our code below easier.
+		      (cons help-char help-event-list)
+		      :key #'character-to-event))
+          (help-char nil)
+          (help-form
+           (format 
+            "Type the special character you want to use, or the \
+character code, \nbase %d (the value of `read-quoted-char-radix').
+
+RET terminates the character code and is discarded; any other non-digit
+terminates the character code and is then used as input."
+            read-quoted-char-radix))
+	  window-configuration)
+      (while (not done)
+	(let ((inhibit-quit first))
+	  (setq events (read-function-key-map events
+                                              (and prompt (concat prompt
+                                                                  " - ")))
+		event (aref events 0)
+		unread-command-events (reduce #'cons events :from-end t
+					      :start 1 :initial-value
+					      unread-command-events)
+		events []
+                ;; Possibly the only place within XEmacs we still want meta
+                ;; equivalence, always!
+		char (event-to-character event nil 'meta))
+	  (if inhibit-quit (setq quit-flag nil))
+	  (cond ((null char)
+                 (if (find event help-event-list
+			   :test #'event-matches-key-specifier-p)
+                     ;; If we're on a TTY and f1 comes from function-key-map,
+                     ;; event-stream.c may not handle it as it should. Show
+                     ;; help ourselves.
+                     (when (not window-configuration)
+                       (with-output-to-temp-buffer (help-buffer-name nil)
+                         (setq window-configuration
+                               (current-window-configuration))
+                         (write-sequence help-form)))
+                   ;; Require at least one keystroke that can be converted
+                   ;; into a character, no point inserting ^@ into the buffer
+                   ;; when the user types F8. This differs from GNU Emacs.
+                   (if first
+                       (error 'no-character-typed event)
+                     ;; Not first; a non-character keystroke terminates.
+                     (setq unread-command-events 
+                           (cons event unread-command-events)
+                           done t))))
+		((setq fixnum (digit-char-p char read-quoted-char-radix))
+		 (setq code (+ (* code read-quoted-char-radix) fixnum))
+		 (and prompt (setq prompt
+				   (concat prompt " " (list char)))))
+		((and (not first) (eql char ?\C-m))
+		 (setq done t))
+		((not first)
+		 (setq unread-command-events (cons event
+						   unread-command-events)
+		       done t))
+		(t
+		 (setq code (char-to-unicode char)
+		       done t)))
+	  (setq first (and first (null char)))))
+      (and window-configuration
+	   (set-window-configuration window-configuration))
+      (unicode-to-char code))))
 
 ;; in passwd.el.
 ; (defun read-passwd (prompt &optional confirm default)

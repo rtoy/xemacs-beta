@@ -411,7 +411,7 @@ Returns the actual column that it moved to.
   buffer = wrap_buffer (buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
 
-  check_integer_range (column, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (column, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
   goal = XFIXNUM (column);
 
  retry:

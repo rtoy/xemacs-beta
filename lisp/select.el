@@ -426,9 +426,12 @@ any more, because just about anything could be a valid selection now."
   "Attempt to convert the specified external VALUE to the specified DATA-TYPE,
 for the specified SELECTION. Return nil if this is impossible, or a
 suitable internal representation otherwise."
-  (and value
-       (funcall (or (cdr (assq type selection-converter-in-alist)) #'ignore)
-                selection type value)))
+  (when value
+    (let ((handler (cdr (assq type selection-converter-in-alist))))
+      (if handler
+          (funcall handler selection type value)
+        ;; Else, the value is already in Lisp, pass it through.
+        value))))
 
 (defun select-convert-out (selection type value)
   "Attempt to convert the specified internal VALUE for the specified DATA-TYPE
@@ -443,7 +446,7 @@ representation otherwise."
 suitable for return from `get-selection' in the specified DATA-TYPE. Return
 nil if this is impossible, or a suitable representation otherwise."
   (and value
-       (funcall (or (cdr (assq type selection-conversion-alist)) #'ignore)
+       (funcall (or (cdr (assq type selection-coercion-alist)) #'ignore)
                 selection type value)))
 
 ;; The rest of the functions on this "page" are conversion handlers,
@@ -782,19 +785,22 @@ corresponding to that data as an end-glyph extent property of that space. "
 ;;; CF_xxx conversions
 (defun select-convert-from-cf-text (selection type value)
   (if (find-coding-system 'mswindows-multibyte)
-      (let ((value (decode-coding-string value 'mswindows-multibyte)))
-	(replace-in-string (if (string-match "\0" value)
-			       (substring value 0 (match-beginning 0))
-			     value)
+      (let* ((value (decode-coding-string value 'mswindows-multibyte))
+             (position (position ?\x00 value)))
+	(replace-in-string (subseq value 0 position)
 			   "\\(\r\n\\|\n\r\\)" "\n" t))))
 
 (defun select-convert-from-cf-unicodetext (selection type value)
-  (if (find-coding-system 'mswindows-unicode)
-      (let ((value (decode-coding-string value 'mswindows-unicode)))
-	(replace-in-string (if (string-match "\0" value)
-			       (substring value 0 (match-beginning 0))
-			     value)
-			   "\\(\r\n\\|\n\r\\)" "\n" t))))
+  (cond
+    ((find-coding-system 'mswindows-unicode)
+     (let* ((value (decode-coding-string value 'mswindows-unicode))
+            (position (position ?\x00 value)))
+       (replace-in-string (subseq value 0 position)
+                          "\\(\r\n\\|\n\r\\)" "\n" t)))
+    ((find-coding-system 'utf-16-le-dos)
+     (let* ((value (decode-coding-string value 'utf-16-le-dos))
+            (position (position ?\x00 value)))
+       (subseq value 0 position)))))
 
 (defun select-convert-to-cf-text (selection type value)
   (if (find-coding-system 'mswindows-multibyte)
@@ -886,7 +892,7 @@ corresponding to that data as an end-glyph extent property of that space. "
 
 ;; Types listed in here can be selections of XEmacs
 (setq selection-converter-out-alist
-      '((TIMESTAMP . select-convert-to-timestamp)
+      `((TIMESTAMP . select-convert-to-timestamp)
 	(UTF8_STRING . select-convert-to-utf-8-text)	
 	(TEXT . select-convert-to-text)
 	(STRING . select-convert-to-string)
@@ -906,9 +912,9 @@ corresponding to that data as an end-glyph extent property of that space. "
 	(NAME . select-convert-to-name)
 	(ATOM . select-convert-to-atom)
 	(INTEGER . select-convert-to-integer)
-	(CF_TEXT . select-convert-to-cf-text)
-	(CF_UNICODETEXT . select-convert-to-cf-unicodetext)
-	))
+	,@(when (find-coding-system 'mswindows-multibyte)
+                '((CF_TEXT . select-convert-to-cf-text)))
+	(CF_UNICODETEXT . select-convert-to-cf-unicodetext)))
 
 ;; Types listed here can be selections foreign to XEmacs
 (setq selection-converter-in-alist
@@ -924,7 +930,8 @@ corresponding to that data as an end-glyph extent property of that space. "
 	;; at least, does bad things with non-Latin-1 Unicode characters in
 	;; STRING.
  	(UTF8_STRING . select-convert-from-utf-8-text)
-	(CF_TEXT . select-convert-from-cf-text)
+	,@(when (find-coding-system 'mswindows-multibyte)
+                '((CF_TEXT . select-convert-from-cf-text)))
 	(CF_UNICODETEXT . select-convert-from-cf-unicodetext)
  	(text/html . select-convert-from-utf-16-le-text)  ; Mozilla
  	(text/_moz_htmlcontext . select-convert-from-utf-16-le-text)
@@ -956,23 +963,24 @@ corresponding to that data as an end-glyph extent property of that space. "
 
 ;; Types listed here can be appended by own-selection
 (setq selection-appender-alist
-      '((nil . select-append-default)
+      `((nil . select-append-default)
 	(TEXT . select-append-to-text)
 	(STRING . select-append-to-string)
 	(COMPOUND_TEXT . select-append-to-compound-text)
-	(CF_TEXT . select-append-to-cf-text)
+	,@(when (find-coding-system 'mswindows-multibyte)
+                '((CF_TEXT . select-append-to-cf-text)))
 	(CF_UNICODETEXT . select-append-to-cf-unicodetext)
 	))
 
 ;; Types listed here have buffer-kill handlers
 (setq selection-buffer-killed-alist
-      '((nil . select-buffer-killed-default)
+      `((nil . select-buffer-killed-default)
 	(TEXT . select-buffer-killed-text)
 	(STRING . select-buffer-killed-text)
 	(COMPOUND_TEXT . select-buffer-killed-text)
-	(CF_TEXT . select-buffer-killed-text)
-	(CF_UNICODETEXT . select-buffer-killed-text)
-	))
+	,@(when (find-coding-system 'mswindows-multibyte)
+                '((CF_TEXT . select-buffer-killed-text)))
+	(CF_UNICODETEXT . select-buffer-killed-text)))
 
 ;; Lists of types that are coercible (can be converted to other types)
 (setq selection-coercible-types '(TEXT STRING COMPOUND_TEXT CF_TEXT CF_UNICODETEXT))

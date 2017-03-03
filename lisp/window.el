@@ -202,7 +202,7 @@ The value returned is the value of the last form in BODY."
 Restores which buffer appears in which window, where display starts,
 as well as the current buffer.
 Does not restore the value of point in current buffer."
-  (let ((window-config (gensym 'window-config)))
+  (let ((window-config (gensym "window-config")))
     `(let ((,window-config (current-window-configuration)))
       (unwind-protect
 	  (progn ,@body)
@@ -580,7 +580,7 @@ and the buffer that is killed or buried is the one in that window."
     ;; Get rid of the frame, if it has just one dedicated window
     ;; and other visible frames exist.
     (and (or (window-minibuffer-p) (window-dedicated-p window))
-	 (delq frame (visible-frame-list))
+	 (delete* frame (visible-frame-list))
 	 window-solitary
 	 (if (and (eq default-minibuffer-frame frame)
 		  (eql 1 (length (minibuffer-frame-list))))

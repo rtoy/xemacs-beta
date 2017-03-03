@@ -62,7 +62,9 @@ in dumped-lisp.el and is not itself listed.")
        "frame"			; needed by faces
        ;; #### this should be (featurep 'xft)
        (when (featurep 'xft-fonts) "fontconfig") ; needed by x-faces
-       (when (featurep 'x) "x-faces") ; needed by faces
+       (when (featurep 'x) (cons "x-faces" ; needed by faces
+                                 (when (featurep 'menubar)
+                                   '("x-font-menu"))))
        (when (featurep 'gtk) "gtk-faces")
        (when (valid-console-type-p 'mswindows) "msw-faces")
        "faces"			; must be loaded before any make-face call
@@ -156,7 +158,7 @@ in dumped-lisp.el and is not itself listed.")
        ;; should just be able to assume that, if (featurep 'menubar),
        ;; the menubar should work and if items are added, they can be
        ;; seen clearly and usefully.
-       (when (featurep 'menubar) "menubar-items")
+       (when (featurep 'menubar) '("menubar-items" "font-menu"))
        (when (featurep 'gutter) "gutter-items")
        (when (featurep 'toolbar) "toolbar-items")
        (when (featurep 'dialog) "dialog-items")
@@ -178,8 +180,6 @@ in dumped-lisp.el and is not itself listed.")
 	   "mule/mule-composite"
 	   ))
        ;; may initialize coding systems
-       (when (featurep '(and mule x)) "mule/mule-x-init")
-       (when (featurep '(and mule tty)) "mule/mule-tty-init")
        (when (and (featurep 'mule) (memq system-type '(windows-nt cygwin32)))
 	 "mule/mule-win32-init")
        "code-init" ; set up defaults
@@ -235,7 +235,8 @@ in dumped-lisp.el and is not itself listed.")
 	 "mule/mule-msw-init-late")
 
        (when (featurep 'mule)
-	 "mule/general-late")
+	 '("mule/digit"
+           "mule/general-late"))
 
 ;;; mule-load.el ends here
 

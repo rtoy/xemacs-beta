@@ -62,17 +62,17 @@
 (defun hack-font-truename (fn)
   ;; #### This is duplicated from x-font-menu.el.
   "Filter the output of `font-instance-truename' to deal with font sets."
-  (if (string-match "," (font-instance-truename fn))
-      (let ((fpnt (nth 8 (split-string (font-instance-name fn) "-")))
-	    (flist (split-string (font-instance-truename fn) ","))
-	    ret)
-	(while flist
-	  (if (string-equal fpnt (nth 8 (split-string (car flist) "-")))
-	      (progn (setq ret (car flist)) (setq flist nil))
-	    (setq flist (cdr flist))
-	    ))
-	ret)
-    (font-instance-truename fn)))
+  (let ((font-instance-truename (font-instance-truename fn)))
+    (if (find ?, font-instance-truename)
+        (let ((fpnt (nth 8 (split-string-by-char (font-instance-name fn) ?-)))
+              (flist (split-string-by-char font-instance-truename ?,))
+              ret)
+          (while flist
+            (if (equal fpnt (nth 8 (split-string (car flist) "-")))
+                (progn (setq ret (car flist)) (setq flist nil))
+              (setq flist (cdr flist))))
+          ret)
+      font-instance-truename)))
 
 (defvar gtk-font-regexp-ascii nil
   "This is used to filter out font families that can't display ASCII text.
@@ -113,16 +113,14 @@ or if you change your font path, you can call this to re-initialize the menus."
 	    (error "internal error"))
 	(setq monospaced-p (string= "m" (match-string 1 name)))
 	(unless (string-match gtk-fonts-menu-junk-families family)
-	  (setq entry (or (vassoc family cache)
-			  (car (setq cache
-				     (cons (vector family nil nil t)
-					   cache)))))
+	  (setq entry (or (assoc family cache)
+                          (car (push `(,family nil nil t) cache))))
 	  (or (member family families) (push family families))
 	  (or (member weight weights)  (push weight weights))
 	  (or (member size   sizes)    (push size   sizes))
-	  (or (member weight (aref entry 1)) (push weight (aref entry 1)))
-	  (or (member size   (aref entry 2)) (push size   (aref entry 2)))
-	  (aset entry 3 (and (aref entry 3) monospaced-p)))))
+	  (or (member weight (elt entry 1)) (push weight (elt entry 1)))
+	  (or (member size (elt entry 2)) (push size (elt entry 2)))
+	  (setf (elt entry 3) (and (elt entry 3) monospaced-p)))))
     ;;
     ;; Hack scalable fonts.
     ;; Some fonts come only in scalable versions (the only size is 0)
@@ -146,15 +144,15 @@ or if you change your font path, you can call this to re-initialize the menus."
 	       done)
 	     (setq sizes (cons (car common) sizes)))
 	    (setq common (cdr common)))
-	  (setq sizes (delq 0 sizes))))
+	  (setq sizes (delete* 0 sizes))))
     
     (setq families (sort families 'string-lessp)
 	  weights  (sort weights 'string-lessp)
 	  sizes    (sort sizes '<))
     
     (dolist (entry cache)
-      (aset entry 1 (sort (aref entry 1) 'string-lessp))
-      (aset entry 2 (sort (aref entry 2) '<)))
+      (setf (elt entry 1) (sort (elt entry 1) 'string-lessp))
+      (setf (elt entry 2) (sort (elt entry 2) '<)))
 
     (setq dev-cache (assq device device-fonts-cache))
     (or dev-cache
@@ -205,11 +203,11 @@ or if you change your font path, you can call this to re-initialize the menus."
 	 family size weight entry slant)
     (when (string-match gtk-font-regexp-foundry-and-family name)
       (setq family (capitalize (match-string 1 name)))
-      (setq entry (vassoc family (aref dcache 0))))
+      (setq entry (assoc family (aref dcache 0))))
     (when (and (null entry)
 	       (string-match gtk-font-regexp-foundry-and-family truename))
       (setq family (capitalize (match-string 1 truename)))
-      (setq entry  (vassoc family (aref dcache 0))))
+      (setq entry  (assoc family (aref dcache 0))))
     (when (null entry)
       (return-from gtk-font-menu-font-data (make-vector 5 nil)))
     
@@ -218,9 +216,9 @@ or if you change your font path, you can call this to re-initialize the menus."
       (setq size   (string-to-int (match-string 6 name))))
       
     (when (string-match gtk-font-regexp truename)
-      (when (not (member weight (aref entry 1)))
+      (when (not (member weight (elt entry 1)))
 	(setq weight (capitalize (match-string 1 truename))))
-      (when (not (member size   (aref entry 2)))
+      (when (not (member size   (elt entry 2)))
 	(setq size (string-to-int (match-string 6 truename))))
       (setq slant (capitalize (match-string 2 truename))))
       

@@ -24,6 +24,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef INCLUDED_lstream_h_
 #define INCLUDED_lstream_h_
 
+#include "tls.h"
+
+struct extent_info;
+
 /************************************************************************/
 /*                     definition of Lstream object                     */
 /************************************************************************/
@@ -32,9 +36,16 @@ DECLARE_LISP_OBJECT (lstream, struct lstream);
 #define XLSTREAM(x) XRECORD (x, lstream, struct lstream)
 #define wrap_lstream(p) wrap_record (p, lstream)
 #define LSTREAMP(x) RECORDP (x, lstream)
-/* #define CHECK_LSTREAM(x) CHECK_RECORD (x, lstream)
-   Lstream pointers should never escape to the Lisp level, so
-   functions should not be doing this. */
+/* Can't use the usual CONCHECK_RECORD() macros, since the type is lstream in
+   C and stream in Lisp. */
+#define CHECK_LSTREAM(x) do {                           \
+ if (!RECORD_TYPEP (x, lrecord_type_lstream))		\
+   dead_wrong_type_argument (Qstreamp, x);		\
+ } while (0)
+#define CONCHECK_LSTREAM(x) do {			\
+ if (!RECORD_TYPEP (x, lrecord_type_lstream))		\
+   x = wrong_type_argument (Qstreamp, x);		\
+}  while (0)
 
 #ifndef EOF
 #define EOF (-1)
@@ -170,10 +181,20 @@ typedef struct lstream_implementation
      This function can be NULL if the stream is input-only. */
   Bytecount (*writer) (Lstream *stream, const unsigned char *data,
 		       Bytecount size);
+
+  /* Like WRITER, but take the data from RELOC, a Lisp string, and copy any
+     extent information to the other end of the stream. */
+  Bytecount (*write_with_extents) (Lstream *stream, Lisp_Object reloc,
+                                   Bytecount position, Bytecount length);
+
   /* Return non-zero if the last write operation on the stream resulted
      in an attempt to block (EWOULDBLOCK). If this method does not
      exists, the implementation returns 0 */
   int (*was_blocked_p) (Lstream *stream);
+  /* If the reader or writer method returned LSTREAM_ERROR, the errno
+     associated with the error, or zero if there was no system error or this
+     method is not implemented. */
+  int (*error) (Lstream *stream);
   /* Rewind the stream.  If this is NULL, the stream is not seekable. */
   int (*rewinder) (Lstream *stream);
   /* Indicate whether this stream is seekable -- i.e. it can be rewound.
@@ -181,6 +202,10 @@ typedef struct lstream_implementation
      method.  If this method is not present, the result is determined
      by whether a rewind method is present. */
   int (*seekable_p) (Lstream *stream);
+
+  /* Return the number of complete characters read so far. Respects
+     buffering and unget. Returns -1 if unknown or not implemented. */
+  Charcount (*character_tell) (Lstream *stream);
   /* Perform any additional operations necessary to flush the
      data in this stream. */
   int (*flusher) (Lstream *stream);
@@ -200,6 +225,15 @@ typedef struct lstream_implementation
   /* Mark this object for garbage collection.  Same semantics as
      a standard Lisp_Object marker.  This function can be NULL. */
   Lisp_Object (*marker) (Lisp_Object lstream);
+  /* Return nonzero if this stream is using a TLS connection */
+  int (*tls_p) (Lstream *stream);
+  /* Perform STARTTLS negotiation on a pair of streams, one for input and one
+     for output.  Both are transformed if negotiation is successful. */
+  int (*tls_negotiater) (Lstream *instream, Lstream *outstream,
+			 const Extbyte *host, Lisp_Object keylist);
+
+  /* Return the extent info associated with the stream, or NULL if none. */ 
+  struct extent_info *(*extent_info)(Lstream *stream);
 } Lstream_implementation;
 
 #define DEFINE_LSTREAM_IMPLEMENTATION(name, c_name)	\
@@ -250,8 +284,9 @@ struct lstream
      similarly has to push the data on backwards. */
   unsigned char *unget_buffer; /* holds characters pushed back onto input */
   Bytecount unget_buffer_size; /* allocated size of buffer */
-  Bytecount unget_buffer_ind; /* pointer to next buffer spot
-					  to write a character */
+  Bytecount unget_buffer_ind; /* Next buffer spot to write a character */
+
+  Charcount unget_character_count; /* Count of complete characters ever ungot. */
 
   Bytecount byte_count;
   int flags;
@@ -297,16 +332,22 @@ int Lstream_flush_out (Lstream *lstr);
 int Lstream_fputc (Lstream *lstr, int c);
 int Lstream_fgetc (Lstream *lstr);
 void Lstream_fungetc (Lstream *lstr, int c);
-Bytecount Lstream_read (Lstream *lstr, void *data,
-				 Bytecount size);
-int Lstream_write (Lstream *lstr, const void *data,
-		   Bytecount size);
+Bytecount Lstream_read (Lstream *lstr, void *data, Bytecount size);
+Charcount Lstream_character_tell (Lstream *);
+int Lstream_write (Lstream *lstr, const void *data, Bytecount size);
+int Lstream_write_with_extents (Lstream *lstr, Lisp_Object object,
+                                Bytexpos position, Bytecount len);
+int Lstream_errno (Lstream *lstr);
 int Lstream_was_blocked_p (Lstream *lstr);
 void Lstream_unread (Lstream *lstr, const void *data, Bytecount size);
 int Lstream_rewind (Lstream *lstr);
 int Lstream_seekable_p (Lstream *lstr);
 int Lstream_close (Lstream *lstr);
 int Lstream_close_noflush (Lstream *lstr);
+
+int Lstream_tls_p (Lstream *lstr);
+int Lstream_tls_negotiate (Lstream *instr, Lstream *outstr,
+			   const Extbyte *host, Lisp_Object keylist);
 
 void Lstream_delete (Lstream *lstr);
 void Lstream_set_character_mode (Lstream *str);
@@ -353,22 +394,35 @@ void Lstream_unset_character_mode (Lstream *lstr);
    reverse order they were pushed back -- most recent first. (This is
    necessary for consistency -- if there are a number of bytes that
    have been unread and I read and unread a byte, it needs to be the
-   first to be read again.) This is a macro and so it is very
-   efficient.  The C argument is only evaluated once but the STREAM
-   argument is evaluated more than once.
- */
+   first to be read again.) */
 
-#define Lstream_ungetc(stream, c)					\
-/* Add to the end if it won't overflow buffer; otherwise call the	\
-   function equivalent */						\
-  ((stream)->unget_buffer_ind >= (stream)->unget_buffer_size ?		\
-   Lstream_fungetc (stream, c) :					\
-   (void) ((stream)->byte_count--,					\
-   ((stream)->unget_buffer[(stream)->unget_buffer_ind++] =		\
-    (unsigned char) (c))))
+DECLARE_INLINE_HEADER (
+void
+Lstream_ungetc (Lstream *lstr, int c)
+)
+{
+  /* Add to the end if it won't overflow buffer; otherwise call the
+     function equivalent */
+  if (lstr->unget_buffer_ind >= lstr->unget_buffer_size)
+    {
+      Lstream_fungetc (lstr, c);
+    }
+  else
+    {
+      lstr->byte_count--;
+      lstr->unget_buffer[lstr->unget_buffer_ind] = (unsigned char) (c);
+      lstr->unget_character_count
+        += valid_ibyteptr_p (lstr->unget_buffer + lstr->unget_buffer_ind);
+      lstr->unget_buffer_ind++;
+    }
+}
 
-#define Lstream_data(stream) ((void *) ((stream)->data))
+/* Rawbyte *, not void *, access through void * is undefined under
+   strict-aliasing rules. */
+#define Lstream_data(stream) ((Rawbyte *) ((stream)->data))
 #define Lstream_byte_count(stream) ((stream)->byte_count)
+
+struct extent_info *Lstream_extent_info (Lstream *stream);
 
 
 /************************************************************************/
@@ -418,7 +472,6 @@ Lstream_unget_ichar (Lstream *stream, Ichar ch)
 # define Lstream_unget_ichar(stream, ch) Lstream_ungetc (stream, ch)
 
 #endif /* not MULE */
-
 
 /************************************************************************/
 /*                        Lstream implementations                       */
@@ -445,9 +498,9 @@ Lstream_unget_ichar (Lstream *stream, Ichar ch)
 Lisp_Object make_stdio_input_stream (FILE *stream, int flags);
 Lisp_Object make_stdio_output_stream (FILE *stream, int flags);
 Lisp_Object make_filedesc_input_stream (int filedesc, int offset, int count,
-					int flags);
+					int flags, tls_state_t *state);
 Lisp_Object make_filedesc_output_stream (int filedesc, int offset, int count,
-					 int flags);
+					 int flags, tls_state_t *state);
 void filedesc_stream_set_pty_flushing (Lstream *stream,
 				       int pty_max_bytes,
 				       Ibyte eof_char);
@@ -459,10 +512,10 @@ Lisp_Object make_fixed_buffer_input_stream (const void *buf,
 					    Bytecount size);
 Lisp_Object make_fixed_buffer_output_stream (void *buf,
 					     Bytecount size);
-const unsigned char *fixed_buffer_input_stream_ptr (Lstream *stream);
-unsigned char *fixed_buffer_output_stream_ptr (Lstream *stream);
+const Ibyte *fixed_buffer_input_stream_ptr (Lstream *stream);
+Ibyte *fixed_buffer_output_stream_ptr (Lstream *stream);
 Lisp_Object make_resizing_buffer_output_stream (void);
-unsigned char *resizing_buffer_stream_ptr (Lstream *stream);
+const Ibyte *resizing_buffer_stream_ptr (Lstream *stream);
 Lisp_Object resizing_buffer_to_lisp_string (Lstream *stream);
 Lisp_Object make_dynarr_output_stream (unsigned_char_dynarr *dyn);
 #define LSTR_SELECTIVE 1
@@ -472,5 +525,52 @@ Lisp_Object make_lisp_buffer_input_stream (struct buffer *buf, Charbpos start,
 Lisp_Object make_lisp_buffer_output_stream (struct buffer *buf, Charbpos pos,
 					    int flags);
 Charbpos lisp_buffer_stream_startpos (Lstream *stream);
+
+#ifdef EXPOSE_FIXED_BUFFER_INTERNALS
+
+/* These internals are exposed for the sake of emacs_vsnprintf (), which needs
+   to function as well as possible when the heap and/or Lisp object allocation
+   are no longer working. As such, it creates its lstream on the stack. No
+   other code should be doing this. */
+
+DECLARE_LSTREAM (fixed_buffer);
+
+struct fixed_buffer_stream
+{
+  const Ibyte *inbuf;
+  Ibyte *outbuf;
+  Bytecount size;
+  Bytecount offset;
+};
+
+#define FIXED_BUFFER_STREAM_DATA(stream) \
+  LSTREAM_TYPE_DATA (stream, fixed_buffer)
+
+#define DECLARE_STACK_FIXED_BUFFER_LSTREAM(lname)                       \
+  union                                                                 \
+  {                                                                     \
+    struct lstream l;                                                   \
+    /* Make sure we have enough stack space for the type-specific       \
+       data. */                                                         \
+    Rawbyte s[offsetof (struct lstream, data) +                         \
+              sizeof (struct fixed_buffer_stream) ];                    \
+  } lname##u;                                                           \
+  Lisp_Object lname = wrap_pointer_1 (&(lname##u.l))                    \
+
+#define INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM(lname, buf, size) do      \
+    {                                                                   \
+      memset (lname##u.s, 0, max (sizeof (lname##u.s),                  \
+                                  sizeof (lname##u.l)));                \
+      set_lheader_implementation ((struct lrecord_header *)&(lname##u.l), \
+                                  &lrecord_lstream);                    \
+      lname##u.l.imp = lstream_fixed_buffer;                            \
+      Lstream_set_buffering (&(lname##u.l), LSTREAM_UNBUFFERED, 0);     \
+      lname##u.l.flags = LSTREAM_FL_IS_OPEN;                            \
+      lname##u.l.flags |= LSTREAM_FL_WRITE;                             \
+      FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->outbuf = buf;           \
+      FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->size = size;            \
+    } while (0)
+
+#endif
 
 #endif /* INCLUDED_lstream_h_ */

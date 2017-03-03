@@ -1,3 +1,54 @@
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gnuserv.c (echo_request):
+	No longer close the file handle unconditionally, leave this to the
+	individual socket types.
+	* gnuserv.c (handle_internet_request):
+	Close the file handle here.
+	* gnuserv.c (handle_unix_request):
+	Don't close the file handle here, document why (it broke gnuclient
+	under OS X). It should actually be OK, but my suspicion is that
+	the issues is that the Unix (local) domain sockets are still
+	underdocumented compared to the internet sockets.
+
+2014-12-05  Jerry James  <james@xemacs.org>
+
+	* gnuserv.c (echo_request): close the socket when done
+	(handle_unix_request): do not call echo_request on accept failure
+
+2014-12-05  Jerry James  <james@xemacs.org>
+
+	* pop.c (socket_connection): Do not leak a socket if the POP
+	server's address cannot be determined.
+
+2014-10-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* ootags.c (substitute):
+	Cast the result of strlen to int before comparing it with a signed
+	value, for the sake of compiler warnings.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-03-06  Jerry James  <james@xemacs.org>
+
+	* Makefile.in.in: Fix reversed test for insert-data-in-exec build.
+
+2013-03-04  Jerry James  <james@xemacs.org>
+
+	* insert-data-in-exec.c (main): Use OFF_T, FSEEK, and FTELL macros,
+	and adjust variable types and printf specifiers for large file
+	support on supporting systems.
+
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
 2011-06-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gnuslib.c (connect_to_unix_server):

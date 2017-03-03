@@ -35,6 +35,7 @@ SHELL=/bin/sh
 RM=rm -f
 PROGNAME=@PROGNAME@
 CFLAGS=@XE_CFLAGS@
+CPPFLAGS=@CPPFLAGS@
 INSTALL=@INSTALL@
 version=@version@
 prefix=@prefix@
@@ -67,7 +68,7 @@ IMPORT_LIB=../../src/xemacs-import.a
 all: $(OBJECT_TO_BUILD)
 
 .c.o:
-	$(MODCC) $(MODCFLAGS) -c $<
+	$(MODCC) $(MODCFLAGS) $(CPPFLAGS) -c $<
 
 $(MODNAME).ell: $(OBJS) $(MODNAME)_i.o $(IMPORT_LIB)
 	$(MODCC) --mode=link --mode=verbose --mod-output=$@ \
@@ -89,7 +90,7 @@ distclean-noconfig: clean
 ## This is used in making a distribution.
 ## Do not use it on development directories!
 distclean: distclean-noconfig
-	-$(RM) GNUmakefile Makefile Makefile.in configure
+	-$(RM) GNUmakefile Makefile Makefile.in
 realclean-noconfig: distclean-noconfig
 realclean: distclean
 extraclean-noconfig: realclean-noconfig

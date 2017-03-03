@@ -1,6 +1,6 @@
 ;;; process.el --- commands for subprocesses; split out of simple.el
 
-;; Copyright (C) 1985-7, 1993,4, 1997, 2011 Free Software Foundation, Inc.
+;; Copyright (C) 1985-7, 1993,4, 1997, 2011, 2012 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 2000, 2001, 2002 Ben Wing.
 
 ;; Author: Ben Wing
@@ -81,28 +81,33 @@ Wildcards and redirection are handled as usual in the shell."
   (start-process name buffer shell-file-name shell-command-switch
 		 (mapconcat #'identity args " ")))
 
-(defun process-synchronize-point (proc)
-  "Set the point(s) in buffer and stderr-buffer according to the process mark."
-  ;; We need this because the documentation says to insert *BEFORE* point,
-  ;; but we end up inserting after because only the process mark moves
-  ;; forward, not point.  We synchronize after every place output might
-  ;; happen, in sentinels, and in an unwind-protect, to make *SURE* that
-  ;; point is correct. (We could do this more easily and perhaps more
-  ;; safely using a process filter, but that would create a LOT of garbage
-  ;; since all the data would get sent in strings.) We make this a separate
-  ;; function, not an flet, due to dynamic binding problems -- the flet may
-  ;; not still be in scope when the sentinel is called.
-  (let ((pb (process-buffer proc))
-	(pm (process-mark proc)))
-    (if (and pb (buffer-live-p pb) (marker-buffer pm))
-	(goto-char pm pb))
-    (if (process-has-separate-stderr-p proc)
-	(let ((pseb (process-stderr-buffer proc))
-	      (psem (process-stderr-mark proc)))
-	  (if (and pseb (not (eq pb pseb))
-		   (buffer-live-p pseb)
-		   (marker-buffer psem))
-	      (goto-char psem pseb))))))
+(defun call-process-shell-command (command &optional infile buffer display
+				   &rest args)
+  "Execute the shell command COMMAND synchronously in separate process.
+The remaining arguments are optional.
+The program's input comes from file INFILE (nil means `/dev/null').
+Insert output in BUFFER before point; t means current buffer;
+ nil for BUFFER means discard it; 0 means discard and don't wait.
+BUFFER can also have the form (REAL-BUFFER STDERR-FILE); in that case,
+REAL-BUFFER says what to do with standard output, as above,
+while STDERR-FILE says what to do with standard error in the child.
+STDERR-FILE may be nil (discard standard error output),
+t (mix it with ordinary output), or a file name string.
+
+Fourth arg DISPLAY non-nil means redisplay buffer as output is inserted.
+Remaining arguments are strings passed as additional arguments for COMMAND.
+Wildcards and redirection are handled as usual in the shell.
+
+If BUFFER is 0, `call-process-shell-command' returns immediately with value nil.
+Otherwise it waits for COMMAND to terminate and returns a numeric exit
+status or a signal description string.
+If you quit, the process is killed with SIGINT, or SIGKILL if you quit again."
+  ;; We used to use `exec' to replace the shell with the command,
+  ;; but that failed to handle (...) and semicolon, etc.
+  (call-process shell-file-name
+		infile buffer display
+		shell-command-switch
+		(mapconcat 'identity (cons command args) " ")))
 
 (defun call-process-internal (program &optional infile buffer display
 				      &rest args)
@@ -151,7 +156,33 @@ Coding systems for the process are the same as for `start-process-internal'."
     ;; note that we need to be *very* careful in this code to handle C-g
     ;; at any point.
     (unwind-protect
-	(progn
+	(labels
+            ((process-synchronize-point (proc)
+               ;; Set the point(s) in buffer and stderr-buffer according to
+               ;; the process mark.
+               ;; 
+               ;; We need this because the documentation says to insert
+               ;; *BEFORE* point, but we end up inserting after because only
+               ;; the process mark moves forward, not point.  We synchronize
+               ;; after every place output might happen, in sentinels, and
+               ;; in an unwind-protect, to make *SURE* that point is
+               ;; correct. (We could do this more easily and perhaps more
+               ;; safely using a process filter, but that would create a LOT
+               ;; of garbage since all the data would get sent in strings.) 
+               ;; We make this a label, not an flet, due to dynamic binding
+               ;; problems -- the flet may not still be in scope when the
+               ;; sentinel is called.
+               (let ((pb (process-buffer proc))
+                     (pm (process-mark proc)))
+                 (if (and pb (buffer-live-p pb) (marker-buffer pm))
+                     (goto-char pm pb))
+                 (if (process-has-separate-stderr-p proc)
+                     (let ((pseb (process-stderr-buffer proc))
+                           (psem (process-stderr-mark proc)))
+                       (if (and pseb (not (eq pb pseb))
+                                (buffer-live-p pseb)
+                                (marker-buffer psem))
+                           (goto-char psem pseb)))))))
 	  ;; first handle INFILE.
 	  (cond ((stringp infile)
 		 (setq infile (expand-file-name infile))
@@ -235,25 +266,20 @@ Coding systems for the process are the same as for `start-process-internal'."
 		     ;; we finish.
 		     ;;
 		     ;; #### not clear if we should be doing this.
-		     ;;
-		     ;; NOTE NOTE NOTE: Due to the total bogosity of
-		     ;; dynamic scoping, and the lack of closures, we
-		     ;; have to be careful how we write the first
-		     ;; sentinel below since it may be executed after
-		     ;; this function has returned -- thus we fake a
-		     ;; closure. (This doesn't apply to the second one,
-		     ;; which only gets executed within the
-		     ;; unwind-protect.)
-		     `(lambda (proc status)
-			(set-process-sentinel proc nil)
-			(process-synchronize-point proc)
-			(with-current-buffer ,errbuf
-			  (write-region-internal
-			   1 (1+ (buffer-size))
-			   ,stderr
-			   nil 'major-rms-kludge-city nil
-			   coding-system-for-write))
-			(kill-buffer ,errbuf)))
+                     (apply-partially
+                      #'(lambda (errbuf stderr proc status)
+                          (set-process-sentinel proc nil)
+                          (process-synchronize-point proc)
+                          (with-current-buffer errbuf
+                            (write-region-internal
+                             1 (1+ (buffer-size))
+                             stderr
+                             nil 'major-rms-kludge-city nil
+                             coding-system-for-write))
+                          (kill-buffer errbuf))
+                      ;; Close around these two variables, the lambda may be
+                      ;; called outside this enclosing unwind-protect.
+                      errbuf stderr))
 		    (no-wait nil)
 		    (t
 		     ;; normal sentinel: maybe write out stderr and return
@@ -611,10 +637,8 @@ specifies the value of ERROR-BUFFER."
 Optional second arg MUSTMATCH, if non-nil, means require existing envvar name.
 If it is also not t, RET does not exit if it does non-null completion."
   (completing-read prompt
-		   (mapcar (function
-			    (lambda (enventry)
-			      (list (substring enventry 0
-					       (string-match "=" enventry)))))
+		   (mapcar #'(lambda (variable)
+                               (substring variable 0 (position ?= variable)))
 			   process-environment)
 		   nil mustmatch nil 'read-envvar-name-history))
 
@@ -695,7 +719,7 @@ a side-effect."
 
   ;; But then right now our find-coding-systems analogue is in packages.
 
-  (if (string-match "=" variable)
+  (if (position ?= variable)
       (error "Environment variable name `%s' contains `='" variable)
     (let ((pattern (concat "\\`" (regexp-quote (concat variable "="))))
 	  (case-fold-search nil)
@@ -707,7 +731,8 @@ a side-effect."
 	(cond ((string-match pattern (car scan))
 	       (setq found t)
 	       (if (eq nil value)
-		   (setq process-environment (delq (car scan) process-environment))
+		   (setq process-environment
+                         (delete* (car scan) process-environment))
 		 (setcar scan (concat variable "=" value)))
 	       (setq scan nil)))
 	(setq scan (cdr scan)))

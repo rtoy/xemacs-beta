@@ -94,47 +94,70 @@
   "Warnings customizations."
   :group 'minibuffer)
 
-
 (defcustom search-caps-disable-folding t
   "*If non-nil, upper case chars disable case fold searching.
 This does not apply to \"yanked\" strings."
   :type 'boolean
   :group 'editing-basics)
 
-;; This is stolen (and slightly modified) from FSF emacs's
-;; `isearch-no-upper-case-p'.
-(defun no-upper-case-p (string &optional regexp-flag)
-  "Return t if there are no upper case chars in STRING.
-If REGEXP-FLAG is non-nil, disregard letters preceded by `\\' (but not `\\\\')
-since they have special meaning in a regexp."
-  (let ((case-fold-search nil))
-    (not (string-match (if regexp-flag
-			   "\\(^\\|\\\\\\\\\\|[^\\]\\)[A-Z]"
-			 "[A-Z]")
-		       string))
-    ))
+(defun no-case-regexp-p (regexp)
+  "Return t if there are no case-specific constructs in REGEXP.
 
-(defmacro with-search-caps-disable-folding (string regexp-flag &rest body) "\
-Eval BODY with `case-fold-search' let to nil if `search-caps-disable-folding'
-is non-nil, and if STRING (either a string or a regular expression according
-to REGEXP-FLAG) contains uppercase letters."
+Lower case characters are regarded as not case-specific.  Upper case
+characters are usually regarded as case-specific, but upper case characters
+used in special regexp constructs, where they do not match upper case
+characters specifically, are regarded as not case-specific.  In contrast, the
+character classes [:lower:] and [:upper:] are viewed as case-specific.
+
+This is intended to be used by interactive searching code to decide, in a
+do-what-I-mean fashion, whether a given search should be case-sensitive."
+  (let ((case-fold-search nil))
+    (save-match-data
+      (not (or (string-match "\\(^\\|\\\\\\\\\\|[^\\]\\)[[:upper:]]" regexp)
+               (and (string-match "\\[:\\(upp\\|low\\)er:]" regexp)
+                    (condition-case err
+                        (progn
+                          (string-match (substring regexp 0
+                                                   (match-beginning 0)) "")
+                          nil)
+                      (invalid-regexp
+                       (equal "Unmatched [ or [^" (cadr err))))))))))
+
+(defmacro* with-search-caps-disable-folding (string regexp-p &body body)
+  "Execute the forms in BODY, respecting `search-caps-disable-folding'.
+
+Within BODY, bind `case-fold-search' to nil if `search-caps-disable-folding'
+is non-nil, REGEXP-P is nil, and if STRING contains any uppercase characters.
+
+If REGEXP-P is non-nil, treat STRING as a regular expression, and bind
+`case-fold-search' to nil if it contains uppercase characters that are
+not special regular expression constructs, or if it contains
+case-specific character classes such as `[[:upper:]]' or
+`[[:lower:]]'.  See `no-case-regexp-p'."
   `(let ((case-fold-search
           (if (and case-fold-search search-caps-disable-folding)
-              (no-upper-case-p ,string ,regexp-flag)
+              (if ,regexp-p
+                  (no-case-regexp-p ,string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" ,string)))))
             case-fold-search)))
      ,@body))
 (put 'with-search-caps-disable-folding 'lisp-indent-function 2)
 (put 'with-search-caps-disable-folding 'edebug-form-spec
      '(sexp sexp &rest form))
 
-(defmacro with-interactive-search-caps-disable-folding (string regexp-flag
-							       &rest body)
-  "Same as `with-search-caps-disable-folding', but only in the case of a
-function called interactively."
+(defmacro* with-interactive-search-caps-disable-folding (string regexp-p
+                                                                &body body)
+  "Like `with-search-caps-disable-folding', but only when interactive."
   `(let ((case-fold-search
-	  (if (and (interactive-p)
-		   case-fold-search search-caps-disable-folding)
-              (no-upper-case-p ,string ,regexp-flag)
+	  (if (and (interactive-p) case-fold-search
+                   search-caps-disable-folding)
+              (if ,regexp-p
+                  (no-case-regexp-p ,string)
+                (save-match-data
+                  (let (case-fold-search)
+                    (not (string-match "[[:upper:]]" ,string)))))
             case-fold-search)))
      ,@body))
 (put 'with-interactive-search-caps-disable-folding 'lisp-indent-function 2)
@@ -252,7 +275,14 @@ With arg N, insert N newlines."
 (defun quoted-insert (arg)
   "Read next input character and insert it.
 This is useful for inserting control characters.
-You may also type up to 3 octal digits, to insert a character with that code.
+With argument, insert ARG copies of the character.
+
+If the first character you type after this command is an octal digit,
+you should type a sequence of octal digits which specify a Unicode character.
+Any nondigit terminates the sequence.  If the terminator is a RET,
+it is discarded; any other terminator is used itself as input.
+The variable `read-quoted-char-radix' specifies the radix for this feature;
+set it to 10 or 16 to use decimal or hex instead of octal.
 
 In overwrite mode, this function inserts the character anyway, and
 does not handle octal digits specially.  This means that if you use
@@ -369,6 +399,59 @@ On nonblank line, delete any immediately following blank lines."
     (if (looking-at "^[ \t]*\n\\'")
 	(delete-region (point) (point-max)))))
 
+(defcustom delete-trailing-lines t
+  "If non-nil, \\[delete-trailing-whitespace] deletes trailing lines.
+Trailing lines are deleted only if `delete-trailing-whitespace'
+is called on the entire buffer (rather than an active region)."
+  :type 'boolean
+  :group 'editing)
+  ; :version "24.2")
+
+(defun delete-trailing-whitespace (&optional start end)
+  "Delete trailing whitespace between START and END.
+If called interactively, START and END are the start/end of the
+region if the mark is active, or of the buffer's accessible
+portion if the mark is inactive.
+
+This command deletes whitespace characters after the last
+non-whitespace character in each line between START and END.  It
+does not consider formfeed characters to be whitespace.
+
+If this command acts on the entire buffer (i.e. if called
+interactively with the mark inactive, or called from Lisp with
+END nil), it also deletes all trailing lines at the end of the
+buffer if the variable `delete-trailing-lines' is non-nil."
+  (interactive (progn
+                 (barf-if-buffer-read-only)
+                 (if (if zmacs-regions
+                         zmacs-region-active-p
+                       (eq (marker-buffer (mark-marker t)) (current-buffer)))
+                     (list (region-beginning) (region-end))
+                   (list nil nil))))
+  (save-match-data
+    (save-excursion
+      (let ((end-marker (copy-marker (or end (point-max))))
+            (start (or start (point-min))))
+        (goto-char start)
+        (while (re-search-forward "\\s-$" end-marker t)
+          (skip-syntax-backward "-" (line-beginning-position))
+          ;; Don't delete formfeeds, even if they are considered whitespace.
+          ;; XEmacs; #'looking-at-p not (yet) available
+          (if (save-match-data (looking-at ".*\f")) 
+              (goto-char (match-end 0)))
+          (delete-region (point) (match-end 0)))
+        ;; Delete trailing empty lines.
+        (goto-char end-marker)
+        (when (and (not end)
+		   delete-trailing-lines
+                   ;; Really the end of buffer.
+                   (save-restriction (widen) (eobp))
+                   (<= (skip-chars-backward "\n") -2))
+          (delete-region (1+ (point)) end-marker))
+        (set-marker end-marker nil))))
+  ;; Return nil for the benefit of `write-file-functions'.
+  nil)
+
 (defun back-to-indentation ()
   "Move point to the first non-whitespace character on this line."
   ;; XEmacs change
@@ -406,12 +489,6 @@ column specified by the function `current-left-margin'."
   (if (listp arg) (setq arg (car arg)))
   (if (eq arg '-) (setq arg -1))
   (kill-region (point) (+ (point) arg)))
-
-;; Internal subroutine of backward-delete-char
-(defun kill-backward-chars (arg)
-  (if (listp arg) (setq arg (car arg)))
-  (if (eq arg '-) (setq arg -1))
-  (kill-region (point) (- (point) arg)))
 
 (defun backward-delete-char-untabify (arg &optional killp)
   "Delete characters backward, changing tabs into spaces.
@@ -732,19 +809,7 @@ BUFFER defaults to the current buffer."
 		 (message "Line %d" buffer-line)))))))
   (setq zmacs-region-stays t))
 
-;; new in XEmacs 21.2 (not in FSF).
-(defun line-number (&optional pos respect-narrowing)
-  "Return the line number of POS (defaults to point).
-If RESPECT-NARROWING is non-nil, then the narrowed line number is returned;
-otherwise, the absolute line number is returned.  The returned line can always
-be given to `goto-line' to get back to the current line."
-  (if (and pos (/= pos (point)))
-      (save-excursion
-	(goto-char pos)
-	(line-number nil respect-narrowing))
-    (1+ (count-lines (if respect-narrowing (point-min) 1) (point-at-bol)))))
-
-;; FSF 22.0.50.1 (CVS) version of above.
+;; FSF 22.0.50.1 (CVS) version of #'line-number.
 (defun line-number-at-pos (&optional pos)
   (line-number pos t))
 
@@ -824,8 +889,7 @@ separate buffer.  See also the command `describe-char'."
                        percent narrowed-details col hscroll)
         (message "Char: %s (%s %s) point=%d of %d(%d%%)%s column %d %s"
                  (text-char-description char) unicode-string
-                 (mapconcat (lambda (arg) (format "%S" arg))
-                            (split-char char) " ")
+                 (mapconcat #'prin1-to-string (split-char char) " ")
                  pos total
                  percent narrowed-details col hscroll)))))
 
@@ -958,7 +1022,7 @@ A numeric argument serves as a repeat count."
 	(if (fixnump (car tail))
 	    (progn
 	      (setq done t)
-	      (setq buffer-undo-list (delq (car tail) buffer-undo-list))))
+	      (setq buffer-undo-list (delete* (car tail) buffer-undo-list))))
 	(setq tail (cdr tail))))
     (and modified (not (buffer-modified-p))
 	 (delete-auto-save-file-if-necessary recent-save)))
@@ -2100,7 +2164,7 @@ either a character or a symbol, uppercase or lowercase."
          (loop
            for keysym in motion-keys-for-shifted-motion
            with key = (event-key last-input-event)
-           with mods = (delq 'shift (event-modifiers last-input-event))
+           with mods = (delete* 'shift (event-modifiers last-input-event))
            with char-list = '(?a) ;; Some random character; the list will be
 				  ;; modified in the constants vector over
 				  ;; time.
@@ -2395,7 +2459,7 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 
 ;; This is the guts of next-line and previous-line.
 ;; Count says how many lines to move.
-(defun line-move (count)
+(defun line-move (count &optional noerror)
   ;; Don't run any point-motion hooks, and disregard intangibility,
   ;; for intermediate positions.
   (let ((inhibit-point-motion-hooks t)
@@ -2424,14 +2488,16 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 			     (zerop (forward-line 1)))
 		    (and (zerop (forward-line count))
 			 (bolp)))
-		  (signal (if (< count 0)
-			      'beginning-of-buffer
-			    'end-of-buffer)
-			  nil))
+		  (if (not noerror)
+		      (signal (if (< count 0)
+				  'beginning-of-buffer
+				'end-of-buffer)
+			      nil)))
 	    ;; Move by count lines, but ignore invisible ones.
 	    (while (> count 0)
 	      (end-of-line)
 	      (and (zerop (vertical-motion 1))
+		   (not noerror)
 		   (signal 'end-of-buffer nil))
 	      ;; If the following character is currently invisible,
 	      ;; skip all characters with that same `invisible' property value.
@@ -2449,6 +2515,7 @@ Use with care, as it slows down movement significantly.  Outline mode sets this.
 	    (while (< count 0)
 	      (beginning-of-line)
 	      (and (zerop (vertical-motion -1))
+		   (not noerror)
 		   (signal 'beginning-of-buffer nil))
 	      (while (and (not (bobp))
 			  (let ((prop
@@ -3258,9 +3325,10 @@ when it is off screen."
 	 (save-excursion
 	   (save-restriction
 	     (if blink-matching-paren-distance
-		 (narrow-to-region (max (point-min)
-					(- (point) blink-matching-paren-distance))
-				   oldpos))
+		 (narrow-to-region
+                  (max (point-min)
+                       (- (point) blink-matching-paren-distance))
+                  oldpos))
 	     (condition-case ()
 		 (let ((parse-sexp-ignore-comments
 			(and parse-sexp-ignore-comments
@@ -3276,46 +3344,75 @@ when it is off screen."
 			      (matching-paren (char-after blinkpos))))))
 	   (if mismatch (setq blinkpos nil))
 	   (if blinkpos
-	       (progn
-		(goto-char blinkpos)
-		(if (pos-visible-in-window-p)
-		    (and blink-matching-paren-on-screen
-			 (progn
-			   (auto-show-make-point-visible)
-			   (sit-for blink-matching-delay)))
-		  (goto-char blinkpos)
-		  (lmessage 'command "Matches %s"
-		    ;; Show what precedes the open in its line, if anything.
-		    (if (save-excursion
-			  (skip-chars-backward " \t")
-			  (not (bolp)))
-			(buffer-substring (progn (beginning-of-line) (point))
-					  (1+ blinkpos))
-		      ;; Show what follows the open in its line, if anything.
-		      (if (save-excursion
-			    (forward-char 1)
-			    (skip-chars-forward " \t")
-			    (not (eolp)))
-			  (buffer-substring blinkpos
-					    (progn (end-of-line) (point)))
-			;; Otherwise show the previous nonblank line,
-			;; if there is one.
-			(if (save-excursion
-			      (skip-chars-backward "\n \t")
-			      (not (bobp)))
-			    (concat
-			     (buffer-substring (progn
-						 (skip-chars-backward "\n \t")
-						 (beginning-of-line)
-						 (point))
-					       (progn (end-of-line)
-						      (skip-chars-backward " \t")
-						      (point)))
-			     ;; Replace the newline and other whitespace with `...'.
-			     "..."
-			     (buffer-substring blinkpos (1+ blinkpos)))
-			  ;; There is nothing to show except the char itself.
-			  (buffer-substring blinkpos (1+ blinkpos))))))))
+	       (labels
+                   ((buffer-substring-highlight-blinkpos (start end)
+                      ;; Sometimes there are sufficiently many
+                      ;; parentheses on a line that it's *very*
+                      ;; useful to see exactly which is the match.
+                      (let* ((string (buffer-substring start end))
+                             (extent (make-extent (- blinkpos start)
+                                                  (1+ (- blinkpos start))
+                                                  string)))
+                        (set-extent-face extent 'isearch)
+                        (set-extent-property extent 'duplicable t)
+                        string))
+                    (before-backquote-context ()
+                      ;; Just showing the backquote context is often not
+                      ;; informative enough, if you're writing vaguely
+                      ;; complex macros. Move past it.
+                      (skip-chars-backward "`,@.")))
+                 (declare (inline before-backquote-context))
+                 (goto-char blinkpos)
+                 (if (pos-visible-in-window-p)
+                     (and blink-matching-paren-on-screen
+                          (progn
+                            (auto-show-make-point-visible)
+                            (sit-for blink-matching-delay)))
+                   (goto-char blinkpos)
+                   (lmessage
+                       'command
+                       (concat
+                        "Matches "
+                        ;; Show what precedes the open in its line, if
+                        ;; anything.
+                        (if (save-excursion
+                              (before-backquote-context)
+                              (skip-chars-backward " \t")
+                              (not (bolp)))
+                            (buffer-substring-highlight-blinkpos
+                             (progn (beginning-of-line) (point))
+                             (1+ blinkpos))
+                         ;; Show what follows the open in its line, if
+                         ;; anything.
+                         (if (save-excursion
+                               (forward-char 1)
+                               (skip-chars-forward " \t")
+                               (not (eolp)))
+                             (buffer-substring-highlight-blinkpos
+                              (progn (before-backquote-context) (point))
+                              (progn (end-of-line (point))))
+                           ;; Otherwise show the previous nonblank line,
+                           ;; if there is one.
+                           (if (save-excursion
+                                 (skip-chars-backward "\n \t")
+                                 (not (bobp)))
+                               (concat
+                                (buffer-substring
+                                 (progn (skip-chars-backward "\n \t")
+                                        (beginning-of-line)
+                                        (point))
+                                 (progn (end-of-line)
+                                        (skip-chars-backward " \t")
+                                        (point)))
+                                ;; Replace the newline and other whitespace
+                                ;; with `...'.
+                                "..."
+                                (buffer-substring-highlight-blinkpos
+                                 blinkpos (1+ blinkpos)))
+                             ;; There is nothing to show except the char
+                             ;; itself.
+                             (buffer-substring-highlight-blinkpos
+                              blinkpos (1+ blinkpos)))))))))
 	     (cond (mismatch
 		    (display-message 'no-log "Mismatched parentheses"))
 		   ((not blink-matching-paren-distance)
@@ -4081,14 +4178,19 @@ when appropriate.  Calling this function will call the hook
 (defvar message-stack nil
   "An alist of label/string pairs representing active echo-area messages.
 The first element in the list is currently displayed in the echo area.
-Do not modify this directly--use the `message' or
-`display-message'/`clear-message' functions.")
+
+Each string is represented by a STRING START END triplet, reflecting the
+MESSAGE, START, and END arguments to `append-message'.
+
+Do not modify this directly--use the `message', `display-message', or
+`clear-message' functions.")
 
 (defvar remove-message-hook 'log-message
   "A function or list of functions to be called when a message is removed
 from the echo area at the bottom of the frame.  The label of the removed
-message is passed as the first argument, and the text of the message
-as the second argument.")
+message is passed as the first argument, the text of the message as the second
+argument, and the start and end of the substring of the message can be
+supplied as keyword arguments.")
 
 (defcustom log-message-max-size 50000
   "Maximum size of the \" *Message-Log*\" buffer.  See `log-message'."
@@ -4221,7 +4323,7 @@ or whose label appears in `log-message-ignore-labels' are not saved."
   "For use as the `log-message-filter-function'.  Only logs error messages."
   (eq label 'error))
 
-(defun log-message (label message)
+(defun* log-message (label message &key (start 0) end)
   "Stuff a copy of the message into the \" *Message-Log*\" buffer,
 if it satisfies the `log-message-filter-function'.
 
@@ -4237,12 +4339,10 @@ For use on `remove-message-hook'."
       (let (extent)
 	;; Mark multiline message with an extent, which `view-lossage'
 	;; will recognize.
-	(save-match-data
-	  (when (string-match "\n" message)
-	    (setq extent (make-extent (point) (point)))
-	    (set-extent-properties extent '(end-open nil message-multiline t)))
-	  )
-	(insert message "\n")
+        (when (find ?\n message :start start :end end)
+          (setq extent (make-extent (point) (point)))
+          (set-extent-properties extent '(end-open nil message-multiline t)))
+	(write-line message (current-buffer) :start start :end end)
 	(when extent
 	  (set-extent-property extent 'end-open t)))
       (when (> (point-max) (max log-message-max-size (point-min)))
@@ -4298,73 +4398,93 @@ you should just use (message nil)."
     (if no-restore
 	nil			; just preparing to put another msg up
       (if message-stack
-	  (let ((oldmsg (cdr (car message-stack))))
-	    (raw-append-message oldmsg frame stdout-p)
-	    oldmsg)
+          (let ((oldmsg (second (car message-stack))))
+            (prog1
+                ;; #### Doesn't pass back information about the substring of
+                ;; OLDMSG displayed. None of our callers use this, as of
+                ;; 20150311, though.
+                oldmsg
+              (raw-append-message oldmsg frame stdout-p
+                                  :start (third (car message-stack))
+                                  :end (fourth (car message-stack)))))
 	;; #### Should we (redisplay-echo-area) here?  Messes some
 	;; things up.
 	nil))))
 
 (defun remove-message (&optional label frame)
-  ;; If label is nil, we want to remove all matching messages.
-  ;; Must reverse the stack first to log them in the right order.
-  (let ((log nil))
-    (while (and message-stack
-		(or (null label)	; null label means clear whole stack
-		    (eq label (car (car message-stack)))))
-      (push (car message-stack) log)
-      (setq message-stack (cdr message-stack)))
-    (let ((s  message-stack))
-      (while (cdr s)
-	(let ((msg (car (cdr s))))
-	  (if (eq label (car msg))
-	      (progn
-		(push msg log)
-		(setcdr s (cdr (cdr s))))
-	    (setq s (cdr s))))))
+  "Remove any message with a specified LABEL from `message-stack'.
+
+With nil LABEL, remove all messages from `message-stack'. Calls those
+functions specified by `remove-message-hook' with the details of each removed
+message."
+  (let (log)
+    (if label
+        (setq log (reverse (remove* label message-stack :test-not #'eq
+                                    :key #'car))
+              message-stack (delete* label message-stack :key #'car))
+      ;; If label is nil, we want to remove all messages.  Must reverse the
+      ;; stack first to log them in the right order.
+      (setq log (nreverse message-stack)
+            message-stack nil))
     ;; (possibly) log each removed message
     (while log
-      (with-trapping-errors
-	:operation 'remove-message-hook
-	:class 'message-log
-	:error-form (progn
-		      (setq remove-message-hook nil)
-		      (let ((inhibit-read-only t))
-			(erase-buffer " *Echo Area*")))
-	:resignal t
-	(run-hook-with-args 'remove-message-hook
-			    (car (car log)) (cdr (car log))))
+      (call-with-condition-handler
+          ((macro . (lambda (function) (subst '#:xEbgpd2 'error function)))
+           #'(lambda (error)
+               (setq remove-message-hook nil)
+               (let ((inhibit-read-only t))
+                 (erase-buffer " *Echo Area*"))
+               (lwarn 'message-log 'warning
+                 "Error in `remove-message-hook': %s\n\nBacktrace follows:\n%s"
+                 (error-message-string error)
+                 (backtrace-in-condition-handler-eliminating-handler 'error))))
+          #'run-hook-with-args 'remove-message-hook (caar log)
+	  (cadar log) :start (third (car log)) :end (fourth (car log)))
       (setq log (cdr log)))))
 
-(defun append-message (label message &optional frame stdout-p)
+(defun* append-message (label message &optional frame stdout-p
+                              &key (start 0) end)
   "Add MESSAGE to the message-stack, or append it to the existing text.
+
 LABEL is the class of the message.  If it is the same as that of the top of
 the message stack, MESSAGE is appended to the existing message, otherwise
 it is pushed on the stack.
+
 FRAME determines the minibuffer window to send the message to.
+
 STDOUT-P is ignored, except for output to stream devices.  For streams,
-STDOUT-P non-nil directs output to stdout, otherwise to stderr."
+STDOUT-P non-nil directs output to stdout, otherwise to stderr.
+
+START and END, if supplied, designate a substring of MESSAGE to add. See
+`write-sequence'."
   (or frame (setq frame (selected-frame)))
   ;; If outputting to the terminal, make sure output from anyone else clears
   ;; the left side first, but don't do it ourselves, otherwise we won't be
   ;; able to append to an existing message.
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) nil))
-  (let ((top (car message-stack)))
-    (if (eq label (car top))
-	(setcdr top (concat (cdr top) message))
-      (push (cons label message) message-stack)))
-  (raw-append-message message frame stdout-p)
+  (if (eq label (caar message-stack))
+      (setf (cadar message-stack)
+            (concat (subseq (cadar message-stack) (third (car message-stack))
+                            (fourth (car message-stack)))
+                    (if (or end (not (eql start 0)))
+                        (subseq message start end)
+                      message))
+            (caddar message-stack) 0
+            (car (cdddar message-stack)) nil)
+    (push (list label message start end) message-stack))
+  (raw-append-message message frame stdout-p :start start :end end)
   (if (eq 'stream (frame-type frame))
       (set-device-clear-left-side (frame-device frame) t)))
 
 ;; Really append the message to the echo area.  No fiddling with
 ;; message-stack.
-(defun raw-append-message (message &optional frame stdout-p)
+(defun* raw-append-message (message &optional frame stdout-p
+                                    &key (start 0) end)
   (unless (equal message "")
     (let ((inhibit-read-only t))
       (with-current-buffer " *Echo Area*"
-	(insert-string message)
+	(write-sequence message (current-buffer) :start start :end end)
 	;; #### This needs to be conditional; cf discussion by Stefan Monnier
 	;; et al on emacs-devel in mid-to-late April 2007.  One problem is
 	;; there is no known good way to guess whether the user wants to have
@@ -4413,7 +4533,8 @@ STDOUT-P non-nil directs output to stdout, otherwise to stderr."
 	  ;; we ever create another non-redisplayable device type (e.g.
 	  ;; processes?  printers?).
 	  (if (eq 'stream (frame-type frame))
-	      (send-string-to-terminal message stdout-p (frame-device frame))
+	      (send-string-to-terminal (subseq message start end) stdout-p
+                                       (frame-device frame))
 	    (funcall redisplay-echo-area-function))))))
 
 (defun display-message (label message &optional frame stdout-p)
@@ -4437,7 +4558,8 @@ by default--see the `log-message-ignore-labels' variable):
 (defun current-message (&optional frame)
   "Return the current message in the echo area, or nil.
 The FRAME argument is currently unused."
-  (cdr (car message-stack)))
+  (subseq (cadar message-stack) (or (caddar message-stack) 0)
+	  (fourth (car message-stack))))
 
 ;;; may eventually be frame-dependent
 (defun current-message-label (&optional frame)
@@ -4455,9 +4577,9 @@ minibuffer contents show."
   (if (and (null fmt) (null args))
       (prog1 nil
 	(clear-message nil))
-    (let ((str (apply 'format fmt args)))
-      (display-message 'message str)
-      str)))
+    (let ((string (if args (apply 'format fmt args) fmt)))
+      (display-message 'message string)
+      string)))
 
 (defun lmessage (label fmt &rest args)
   "Print a one-line message at the bottom of the frame.
@@ -4468,10 +4590,9 @@ See `display-message' for a list of standard labels."
   (if (and (null fmt) (null args))
       (prog1 nil
 	(clear-message label nil))
-    (let ((str (apply 'format fmt args)))
-      (display-message label str)
-      str)))
-
+    (let ((string (if args (apply 'format fmt args) fmt)))
+      (display-message label string)
+      string)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                              warning code                             ;;
@@ -4766,8 +4887,8 @@ The C code calls this periodically, right before redisplay."
   (cond ((featurep 'xemacs) "XEmacs")
 	(t "Emacs")))
 
-(defun debug-print-1 (&rest args)
-  "Send a debugging-type string to standard output.
+(defun debug-print (&rest args)
+  "Send a string to the debugging output.
 If the first argument is a string, it is considered to be a format
 specifier if there are sufficient numbers of other args, and the string is
 formatted using (apply #'format args).  Otherwise, each argument is printed
@@ -4789,15 +4910,6 @@ individually in a numbered list."
 	  (prin1 sgra)
 	  (incf i))
 	(terpri)))))
-
-(defun debug-print (&rest args)
-  "Send a string to the debugging output.
-If the first argument is a string, it is considered to be a format
-specifier if there are sufficient numbers of other args, and the string is
-formatted using (apply #'format args).  Otherwise, each argument is printed
-individually in a numbered list."
-  (let ((standard-output 'external-debugging-output))
-    (apply #'debug-print-1 args)))
 
 (defun debug-backtrace ()
   "Send a backtrace to the debugging output."

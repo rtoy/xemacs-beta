@@ -159,7 +159,7 @@ nVolume (0 for default): ")
 		      (if (file-name-absolute-p filename)
 			  (list (file-name-directory filename))
 			default-sound-directory-list)
-		      (split-string sound-extension-list ":")))
+		      (split-string-by-char sound-extension-list ?:)))
 	buf data)
     (unless file
       (error "Couldn't load sound file %s" filename))
@@ -174,8 +174,7 @@ nVolume (0 for default): ")
 	  (erase-buffer))
       (and buf (kill-buffer buf)))
     (let ((old (assq sound-name sound-alist)))
-      ;; some conses in sound-alist might have been dumped with emacs.
-      (if old (setq sound-alist (delq old (copy-sequence sound-alist)))))
+      (if old (setq sound-alist (remove* old sound-alist))))
     (setq sound-alist (cons
 		       (nconc (list sound-name)
 			      (if (and volume (not (eq 0 volume)))

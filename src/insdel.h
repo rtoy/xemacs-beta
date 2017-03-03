@@ -38,7 +38,7 @@ void end_multiple_change (struct buffer *buf, int count);
 Charcount buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
 				  const Ibyte *nonreloc, Lisp_Object reloc,
 				  Bytecount offset, Bytecount length,
-				  int flags);
+				  Charcount clen, int flags);
 Charcount buffer_insert_raw_string_1 (struct buffer *buf, Charbpos pos,
 				      const Ibyte *nonreloc,
 				      Bytecount length, int flags);
@@ -58,7 +58,7 @@ Charcount buffer_insert_from_buffer_1 (struct buffer *buf, Charbpos pos,
    All of these can GC. */
 
 #define buffer_insert_string(buf, nonreloc, reloc, offset, length) \
-  buffer_insert_string_1 (buf, -1, nonreloc, reloc, offset, length, 0)
+  buffer_insert_string_1 (buf, -1, nonreloc, reloc, offset, length, -1, 0)
 #define buffer_insert_raw_string(buf, string, length) \
   buffer_insert_raw_string_1 (buf, -1, string, length, 0)
 #define buffer_insert_ascstring(buf, s) \
@@ -99,7 +99,7 @@ struct each_buffer_change_data
   /* redisplay needs to know if a newline was deleted so its
      incremental-redisplay algorithm will fail */
   int newline_was_deleted;
-  Charcount begin_extent_unchanged, end_extent_unchanged;
+  Bytecount begin_extent_unchanged, end_extent_unchanged;
 };
 
 /* Number of characters at the beginning and end of the buffer that
@@ -111,7 +111,7 @@ struct each_buffer_change_data
 #define BUF_BEGIN_UNCHANGED(buf) ((buf)->changes->begin_unchanged)
 #define BUF_END_UNCHANGED(buf) ((buf)->changes->end_unchanged)
 
-/* Number of characters at the beginning and end of the buffer that
+/* Number of bytes at the beginning and end of the buffer that
    have not had a covering extent change since the last call to
    buffer_reset_changes ().  If no changes have occurred since then,
    both values will be -1.
@@ -139,10 +139,6 @@ void buffer_reset_changes (struct buffer *buf);
 
 Membpos do_marker_adjustment (Membpos mpos, Membpos from,
 			     Membpos to, Bytecount amount);
-
-void fixup_internal_substring (const Ibyte *nonreloc,
-			       Lisp_Object reloc,
-			       Bytecount offset, Bytecount *len);
 
 /* In font-lock.c */
 void font_lock_maybe_update_syntactic_caches (struct buffer *buf,

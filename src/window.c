@@ -41,6 +41,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "commands.h"
 #include "device-impl.h"
 #include "elhash.h"
+#include "extents.h"
 #include "faces.h"
 #include "frame-impl.h"
 #include "glyphs.h"
@@ -317,7 +318,7 @@ print_window (Lisp_Object obj, Lisp_Object printcharfun,
     {
       
       Lisp_Object name = XBUFFER (buf)->name;
-      write_fmt_string_lisp (printcharfun, " on %S", 1, name);
+      write_fmt_string_lisp (printcharfun, " on %S", name);
     }
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
@@ -2047,17 +2048,29 @@ unshow_buffer (struct window *w)
 		 BUF_ZV (b)));
 
   {
-    Lisp_Object marker = Fgethash (buf, w->saved_point_cache, Qnil);
+    Lisp_Object marker;
+    Lisp_Object saved_point = Fgethash (buf, w->saved_point_cache, Qnil);
     int selected = EQ (wrap_window (w), Fselected_window (Qnil));
 
-    if (NILP (marker))
+    if (NILP (saved_point))
       {
-	marker = Fmake_marker ();
-	Fputhash (buf, marker, w->saved_point_cache);
+	saved_point = Fmake_extent (Qnil, Qnil, buf);
+        Fset_extent_property (saved_point, Qstart_open, Qt);
+	Fputhash (buf, saved_point, w->saved_point_cache);
       }
-    Fset_marker (marker,
-		 selected ? make_fixnum (BUF_PT (b)) : w->pointm[CURRENT_DISP],
-		 buf);
+
+    if (selected)
+      {
+        set_extent_endpoints (XEXTENT (saved_point),
+                              BYTE_BUF_PT (b), BYTE_BUF_PT (b), buf);
+      }
+    else
+      {
+        set_extent_endpoints (XEXTENT (saved_point),
+                              byte_marker_position (w->pointm[CURRENT_DISP]),
+                              byte_marker_position (w->pointm[CURRENT_DISP]),
+                              buf);
+      }
 
     marker = Fgethash (buf, w->saved_last_window_start_cache, Qnil);
 
@@ -2193,6 +2206,14 @@ contains_window (Lisp_Object window, Lisp_Object pwindow)
     return 0;
 }
 
+static int
+delete_saved_point (Lisp_Object UNUSED (buffer), Lisp_Object saved_point,
+                    void *UNUSED (closure))
+{
+  Fdelete_extent (saved_point);
+  return 0;
+}
+
 DEFUN ("delete-window", Fdelete_window, 0, 2, "", /*
 Remove WINDOW from the display.  Default is selected window.
 If window is the only one on its frame, the frame is deleted as well.
@@ -2305,6 +2326,11 @@ will automatically call `save-buffers-kill-emacs'.)
       unchain_marker (w->sb_point);
       w->buffer = Qnil;
     }
+
+  /* Delete the saved point extents, since they will still be referenced
+     from the buffer and thus won't be garbage-collected until the buffer
+     is. */
+  elisp_maphash_unsafe (delete_saved_point, w->saved_point_cache, NULL);
 
   /* close up the hole in the sibling list */
   if (!NILP (w->next))
@@ -3710,10 +3736,12 @@ global or per-frame buffer ordering.
 			 buffer);
 #else
   {
-    Lisp_Object marker = Fgethash (buffer, w->saved_point_cache, Qnil);
+    Lisp_Object saved_point = Fgethash (buffer, w->saved_point_cache, Qnil);
     Lisp_Object newpoint =
-      !NILP (marker) ? make_fixnum (marker_position (marker)) :
-      make_fixnum (BUF_PT (XBUFFER (buffer)));
+      (EXTENTP (saved_point) && NILP (Fextent_detached_p (saved_point)))
+      ? Fextent_start_position (saved_point)
+      : make_fixnum (BUF_PT (XBUFFER (buffer)));
+    Lisp_Object marker;
     /* Previously, we had in here set-window-point, which did one of the
        following two, but not both.  However, that could result in pointm
        being in a different buffer from the window's buffer!  Probably

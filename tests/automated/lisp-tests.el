@@ -29,6 +29,9 @@
 ;;; See test-harness.el for instructions on how to run these tests.
 
 (eval-when-compile
+  ;; The labels below give trouble with a max-lisp-eval-depth of less than
+  ;; about 2000, work around that:
+  (setq max-lisp-eval-depth (max 2000 max-lisp-eval-depth))
   (condition-case nil
       (require 'test-harness)
     (file-error
@@ -102,12 +105,16 @@
   (Assert (eq (elt my-bit-vector 2) 0))
   )
 
-(defun make-circular-list (length)
-  "Create evil emacs-crashing circular list of length LENGTH"
+(defun make-circular-list (length &optional value)
+  "Create evil emacs-crashing circular list of length LENGTH.
+
+Optional VALUE is the value to go into the cars. If nil, some non-nil value
+will be used to make debugging easier."
   (let ((circular-list
 	 (make-list
 	  length
-	  'you-are-trapped-in-a-twisty-maze-of-cons-cells-all-alike)))
+          (or value
+              'you-are-trapped-in-a-twisty-maze-of-cons-cells-all-alike))))
     (setcdr (last circular-list) circular-list)
     circular-list))
 
@@ -557,6 +564,56 @@
     (Assert (eq 2 (logxor one three)) (list one three))))
 
 ;;-----------------------------------------------------
+;; Test `integer-length', `logcount'
+;;-----------------------------------------------------
+
+(Check-Error wrong-type-argument (integer-length 0.0))
+(Check-Error wrong-type-argument (integer-length 'symbol))
+(Assert (eql (integer-length 0) 0))
+(Assert (eql (integer-length -1) 0))
+(Assert (eql (integer-length 1) 1))
+(Assert (eql (integer-length #x-F) 4))
+(Assert (eql (integer-length #xF) 4))
+(Assert (eql (integer-length #x-10) 4))
+(Assert (eql (integer-length #x10) 5))
+
+(Check-Error wrong-type-argument (logcount 0.0))
+(Check-Error wrong-type-argument (logcount 'symbol))
+(Assert (eql (logcount 0) 0))
+(Assert (eql (logcount 1) 1))
+(Assert (eql (logcount -1) 0))
+(Assert (eql (logcount #x-F) 3))
+(Assert (eql (logcount #xF) 4))
+(Assert (eql (logcount #x-10) 4))
+(Assert (eql (logcount #x10) 1))
+
+(macrolet
+    ((random-sample-n () 10) ;; Increase this to get a bigger sample.
+     (test-integer-length-random-sample ()
+       (cons
+        'progn
+        (loop for index from 0 to (random-sample-n)
+              nconc (let* ((value (random (if (featurep 'bignum)
+                                              (lsh most-positive-fixnum 4)
+                                            most-positive-fixnum)))
+                           (length (length (format "%b" value))))
+                      `((Assert (eql (integer-length ,value) ,length))
+                        (Assert (eql (integer-length ,(1- (- value)))
+                                                     ,length)))))))
+     (test-logcount-random-sample ()
+       (cons
+        'progn
+        (loop for index from 0 to (random-sample-n)
+              nconc (let* ((value (random (if (featurep 'bignum)
+                                              (lsh most-positive-fixnum 4)
+                                            most-positive-fixnum)))
+                           (count (count ?1 (format "%b" value))))
+                      `((Assert (eql (logcount ,value) ,count))
+                        (Assert (eql (logcount ,(lognot value)) ,count))))))))
+  (test-integer-length-random-sample)
+  (test-logcount-random-sample))
+
+;;-----------------------------------------------------
 ;; Test `%', mod
 ;;-----------------------------------------------------
 (Check-Error wrong-number-of-arguments (%))
@@ -931,6 +988,18 @@
   (Assert (let* ((x (a)) (y (remrassq  "6" x))) (and (eq x y) (equal y (a))))))
 
 ;;-----------------------------------------------------
+;; Check a specific bug in #'mapcon has been fixed.
+;;-----------------------------------------------------
+
+(Assert (equal
+         (mapcon
+          #'(lambda (tail)
+              (unless (eq (car tail) '&optional)
+                (list (cons (car tail) 4))))
+          '(opcode stack-adjust opname &optional docstring))
+         '((opcode . 4) (stack-adjust . 4) (opname . 4) (docstring . 4))))
+
+;;-----------------------------------------------------
 ;; function-max-args, function-min-args
 ;;-----------------------------------------------------
 (defmacro check-function-argcounts (fun min max)
@@ -986,7 +1055,7 @@
 ;; Test `type-of'
 ;;-----------------------------------------------------
 (Assert (eq (type-of load-path) 'cons))
-(Assert (eq (type-of obarray) 'vector))
+(Assert (eq (type-of obarray) 'hash-table))
 (Assert (eq (type-of 42) 'fixnum))
 (Assert (eq (type-of ?z) 'character))
 (Assert (eq (type-of "42") 'string))
@@ -1290,11 +1359,12 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (eq t (remprop obj ?3)) obj)
   (when (or (stringp obj) (symbolp obj))
     (Assert (eq '() (object-plist obj)) obj))
-  (Assert (eq nil (remprop obj ?3)) obj)
-  (when (or (stringp obj) (symbolp obj))
-    (Assert (eq '() (object-plist obj)) obj))
+  (Assert (eql 200 (put obj most-positive-fixnum 200)))
+  (Assert (eql (get obj most-positive-fixnum) 200))
   (Assert (eq 5 (get obj ?3 5)) obj)
-  )
+  (Assert (eq t (remprop obj most-positive-fixnum)))
+  (when (or (stringp obj) (symbolp obj))
+    (Assert (eq '() (object-plist obj)) obj)))
 
 (Check-Error-Message
  error "Object type has no properties"
@@ -1350,125 +1420,6 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;;-----------------------------------------------------
 (Assert (= (length (current-time-string)) 24))
 
-;;-----------------------------------------------------
-;; format test
-;;-----------------------------------------------------
-(Assert (string= (format "%d" 10) "10"))
-(Assert (string= (format "%o" 8) "10"))
-(Assert (string= (format "%b" 2) "10"))
-(Assert (string= (format "%x" 31) "1f"))
-(Assert (string= (format "%X" 31) "1F"))
-(Assert (string= (format "%b" 0) "0"))
-(Assert (string= (format "%b" 3) "11"))
-;; MS-Windows uses +002 in its floating-point numbers.  #### We should
-;; perhaps fix this, but writing our own floating-point support in doprnt.c
-;; is very hard.
-(Assert (or (string= (format "%e" 100) "1.000000e+02")
-	    (string= (format "%e" 100) "1.000000e+002")))
-(Assert (or (string= (format "%E" 100) "1.000000E+02")
-	    (string= (format "%E" 100) "1.000000E+002")))
-(Assert (or (string= (format "%E" 100) "1.000000E+02")
-	    (string= (format "%E" 100) "1.000000E+002")))
-(Assert (string= (format "%f" 100) "100.000000"))
-(Assert (string= (format "%7.3f" 12.12345) " 12.123"))
-(Assert (string= (format "%07.3f" 12.12345) "012.123"))
-(Assert (string= (format "%-7.3f" 12.12345) "12.123 "))
-(Assert (string= (format "%-07.3f" 12.12345) "12.123 "))
-(Assert (string= (format "%g" 100.0) "100"))
-(Assert (or (string= (format "%g" 0.000001) "1e-06")
-	    (string= (format "%g" 0.000001) "1e-006")))
-(Assert (string= (format "%g" 0.0001) "0.0001"))
-(Assert (string= (format "%G" 100.0) "100"))
-(Assert (or (string= (format "%G" 0.000001) "1E-06")
-	    (string= (format "%G" 0.000001) "1E-006")))
-(Assert (string= (format "%G" 0.0001) "0.0001"))
-
-(Assert (string= (format "%2$d%1$d" 10 20) "2010"))
-(Assert (string= (format "%-d" 10) "10"))
-(Assert (string= (format "%-4d" 10) "10  "))
-(Assert (string= (format "%+d" 10) "+10"))
-(Assert (string= (format "%+d" -10) "-10"))
-(Assert (string= (format "%+4d" 10) " +10"))
-(Assert (string= (format "%+4d" -10) " -10"))
-(Assert (string= (format "% d" 10) " 10"))
-(Assert (string= (format "% d" -10) "-10"))
-(Assert (string= (format "% 4d" 10) "  10"))
-(Assert (string= (format "% 4d" -10) " -10"))
-(Assert (string= (format "%0d" 10) "10"))
-(Assert (string= (format "%0d" -10) "-10"))
-(Assert (string= (format "%04d" 10) "0010"))
-(Assert (string= (format "%04d" -10) "-010"))
-(Assert (string= (format "%*d" 4 10) "  10"))
-(Assert (string= (format "%*d" 4 -10) " -10"))
-(Assert (string= (format "%*d" -4 10) "10  "))
-(Assert (string= (format "%*d" -4 -10) "-10 "))
-(Assert (string= (format "%#d" 10) "10"))
-(Assert (string= (format "%#o" 8) "010"))
-(Assert (string= (format "%#x" 16) "0x10"))
-(Assert (or (string= (format "%#e" 100) "1.000000e+02")
-	    (string= (format "%#e" 100) "1.000000e+002")))
-(Assert (or (string= (format "%#E" 100) "1.000000E+02")
-	    (string= (format "%#E" 100) "1.000000E+002")))
-(Assert (string= (format "%#f" 100) "100.000000"))
-(Assert (string= (format "%#g" 100.0) "100.000"))
-(Assert (or (string= (format "%#g" 0.000001) "1.00000e-06")
-	    (string= (format "%#g" 0.000001) "1.00000e-006")))
-(Assert (string= (format "%#g" 0.0001) "0.000100000"))
-(Assert (string= (format "%#G" 100.0) "100.000"))
-(Assert (or (string= (format "%#G" 0.000001) "1.00000E-06")
-	    (string= (format "%#G" 0.000001) "1.00000E-006")))
-(Assert (string= (format "%#G" 0.0001) "0.000100000"))
-(Assert (string= (format "%.1d" 10) "10"))
-(Assert (string= (format "%.4d" 10) "0010"))
-;; Combination of `-', `+', ` ', `0', `#', `.', `*'
-(Assert (string= (format "%-04d" 10) "10  "))
-(Assert (string= (format "%-*d" 4 10) "10  "))
-;; #### Correctness of this behavior is questionable.
-;; It might be better to signal error.
-(Assert (string= (format "%-*d" -4 10) "10  "))
-;; These behavior is not specified.
-;; (format "%-+d" 10)
-;; (format "%- d" 10)
-;; (format "%-01d" 10)
-;; (format "%-#4x" 10)
-;; (format "%-.1d" 10)
-
-(Assert (string= (format "%01.1d" 10) "10"))
-(Assert (string= (format "%03.1d" 10) " 10"))
-(Assert (string= (format "%01.3d" 10) "010"))
-(Assert (string= (format "%1.3d" 10) "010"))
-(Assert (string= (format "%3.1d" 10) " 10"))
-
-;;; The following two tests used to use 1000 instead of 100,
-;;; but that merely found buffer overflow bugs in Solaris sprintf().
-(Assert (= 102 (length (format "%.100f" 3.14))))
-(Assert (= 100 (length (format "%100f" 3.14))))
-
-;;; Check for 64-bit cleanness on LP64 platforms.
-(Assert (= (read (format "%d"  most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%ld" most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%u"  most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%lu" most-positive-fixnum)) most-positive-fixnum))
-(Assert (= (read (format "%d"  most-negative-fixnum)) most-negative-fixnum))
-(Assert (= (read (format "%ld" most-negative-fixnum)) most-negative-fixnum))
-
-;; These used to crash. 
-(Assert (eql (read (format "%f" 1.2e+302)) 1.2e+302))
-(Assert (eql (read (format "%.1000d" 1)) 1))
-
-;;; "%u" is undocumented, and Emacs Lisp has no unsigned type.
-;;; What to do if "%u" is used with a negative number?
-;;; For non-bignum XEmacsen, the most reasonable thing seems to be to print an
-;;; un-read-able number.  The printed value might be useful to a human, if not
-;;; to Emacs Lisp.
-;;; For bignum XEmacsen, we make %u with a negative value throw an error.
-(if (featurep 'bignum)
-    (progn
-      (Check-Error wrong-type-argument (format "%u" most-negative-fixnum))
-      (Check-Error wrong-type-argument (format "%u" -1)))
-  (Check-Error invalid-read-syntax (read (format "%u" most-negative-fixnum)))
-  (Check-Error invalid-read-syntax (read (format "%u" -1))))
-
 ;; Check all-completions ignore element start with space.
 (Assert (not (all-completions "" '((" hidden" . "object")))))
 (Assert (all-completions " " '((" hidden" . "object"))))
@@ -1504,10 +1455,10 @@ via the hepatic alpha-tocopherol transfer protein")))
        "\
 ;; Lisp should not be able to modify #$, which is
 ;; Vload_file_name_internal of lread.c.
-(Check-Error setting-constant (aset #$ 0 ?\\ ))
+\(Check-Error setting-constant (aset #$ 0 ?\\ ))
 
 ;; But modifying load-file-name should work:
-(let ((new-char ?\\ )
+\(let ((new-char ?\\ )
       old-char)
   (setq old-char (aref load-file-name 0))
   (if (= new-char old-char)
@@ -1516,7 +1467,7 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (= new-char (aref load-file-name 0))
 	  \"Check that we can modify the string value of load-file-name\"))
 
-(let* ((new-load-file-name \"hi there\")
+\(let* ((new-load-file-name \"hi there\")
        (load-file-name new-load-file-name))
   (Assert (eq new-load-file-name load-file-name)
 	  \"Checking that we can bind load-file-name successfully.\"))
@@ -1527,6 +1478,46 @@ via the hepatic alpha-tocopherol transfer protein")))
    (kill-buffer nil)
    (load test-file-name nil t nil)
    (delete-file test-file-name))
+
+;; These used to crash with bignum support thanks to GMP:
+(symbol-macrolet
+    ((positive-infinity
+      (expt (+ most-positive-fixnum 0.0) most-positive-fixnum))
+     (negative-infinity
+      (expt (+ most-negative-fixnum 0.0) most-positive-fixnum))
+     (not-a-number (expt -1 0.5)))
+  (Check-Error range-error (ceiling positive-infinity))
+  (Check-Error range-error (ceiling negative-infinity))
+  (Check-Error range-error (ceiling positive-infinity 1))
+  (Check-Error range-error (ceiling negative-infinity 1))
+  (Check-Error range-error (floor positive-infinity))
+  (Check-Error range-error (floor negative-infinity))
+  (Check-Error range-error (floor positive-infinity 1))
+  (Check-Error range-error (floor negative-infinity 1))
+  (Check-Error range-error (round positive-infinity))
+  (Check-Error range-error (round negative-infinity))
+  (Check-Error range-error (round positive-infinity 1))
+  (Check-Error range-error (round negative-infinity 1))
+  (Check-Error range-error (ceiling not-a-number))
+  (Check-Error range-error (ceiling not-a-number 1))
+  (Check-Error range-error (floor not-a-number))
+  (Check-Error range-error (floor not-a-number 1))
+  (Check-Error range-error (round not-a-number))
+  (Check-Error range-error (round not-a-number 1))
+  (Check-Error range-error (coerce positive-infinity 'fixnum)) 
+  (Check-Error range-error (coerce negative-infinity 'fixnum)) 
+  (Check-Error range-error (coerce not-a-number 'fixnum))
+  (Check-Error range-error (coerce positive-infinity 'integer)) 
+  (Check-Error range-error (coerce negative-infinity 'integer)) 
+  (Check-Error range-error (coerce not-a-number 'integer))
+  (when (ignore-errors (coerce 1 'ratio))
+    (Check-Error range-error (coerce positive-infinity 'ratio)) 
+    (Check-Error range-error (coerce negative-infinity 'ratio)) 
+    (Check-Error range-error (coerce not-a-number 'ratio)))
+  (when (ignore-errors (coerce 1 'bigfloat))
+    (Check-Error range-error (coerce positive-infinity 'bigfloat)) 
+    (Check-Error range-error (coerce negative-infinity 'bigfloat)) 
+    (Check-Error range-error (coerce not-a-number 'bigfloat))))
 
 (labels ((cl-floor (x &optional y)
            (let ((q (floor x y)))
@@ -1939,6 +1930,9 @@ via the hepatic alpha-tocopherol transfer protein")))
   (when (featurep 'bignum)
     (assert (not (evenp most-positive-fixnum)) t
       "In the unlikely event that most-positive-fixnum is even, rewrite this.")
+    (Assert (equal (multiple-value-list (truncate (+ most-positive-fixnum 2.0)))
+                   (list (+ most-positive-fixnum 2) 0.0))
+            "checking a bug in single-argument truncate's remainder fixed")
     (Assert-rounding (1+ most-positive-fixnum) (* 2 most-positive-fixnum)
       :one-floor-result `(,(1+ most-positive-fixnum) 0)
       :two-floor-result `(0 ,(1+ most-positive-fixnum))
@@ -2036,23 +2030,39 @@ via the hepatic alpha-tocopherol transfer protein")))
 			      1)))
   (when (featurep 'ratio)
     (Assert-rounding (read "4/3") (read "8/7")
-     :one-floor-result '(1 1/3) :two-floor-result '(1 4/21)
-     :one-ffloor-result '(1.0 1/3) :two-ffloor-result '(1.0 4/21)
-     :one-ceiling-result '(2 -2/3) :two-ceiling-result '(2 -20/21)
-     :one-fceiling-result '(2.0 -2/3) :two-fceiling-result '(2.0 -20/21)
-     :one-round-result '(1 1/3) :two-round-result '(1 4/21)
-     :one-fround-result '(1.0 1/3) :two-fround-result '(1.0 4/21)
-     :one-truncate-result '(1 1/3) :two-truncate-result '(1 4/21)
-     :one-ftruncate-result '(1.0 1/3) :two-ftruncate-result '(1.0 4/21))
+     :one-floor-result `(1 ,(read "1/3"))
+     :two-floor-result `(1 ,(read "4/21"))
+     :one-ffloor-result `(1.0 ,(read "1/3"))
+     :two-ffloor-result `(1.0 ,(read "4/21"))
+     :one-ceiling-result `(2 ,(read "-2/3"))
+     :two-ceiling-result `(2 ,(read "-20/21"))
+     :one-fceiling-result `(2.0 ,(read "-2/3"))
+     :two-fceiling-result `(2.0 ,(read "-20/21"))
+     :one-round-result `(1 ,(read "1/3"))
+     :two-round-result `(1 ,(read "4/21"))
+     :one-fround-result `(1.0 ,(read "1/3"))
+     :two-fround-result `(1.0 ,(read "4/21"))
+     :one-truncate-result `(1 ,(read "1/3"))
+     :two-truncate-result `(1 ,(read "4/21"))
+     :one-ftruncate-result `(1.0 ,(read "1/3"))
+     :two-ftruncate-result `(1.0 ,(read "4/21")))
     (Assert-rounding (read "-4/3") (read "8/7")
-     :one-floor-result '(-2 2/3) :two-floor-result '(-2 20/21)
-     :one-ffloor-result '(-2.0 2/3) :two-ffloor-result '(-2.0 20/21)
-     :one-ceiling-result '(-1 -1/3) :two-ceiling-result '(-1 -4/21)
-     :one-fceiling-result '(-1.0 -1/3) :two-fceiling-result '(-1.0 -4/21)
-     :one-round-result '(-1 -1/3) :two-round-result '(-1 -4/21)
-     :one-fround-result '(-1.0 -1/3) :two-fround-result '(-1.0 -4/21)
-     :one-truncate-result '(-1 -1/3) :two-truncate-result '(-1 -4/21)
-     :one-ftruncate-result '(-1.0 -1/3) :two-ftruncate-result '(-1.0 -4/21))))
+     :one-floor-result `(-2 ,(read "2/3"))
+     :two-floor-result `(-2 ,(read "20/21"))
+     :one-ffloor-result `(-2.0 ,(read "2/3"))
+     :two-ffloor-result `(-2.0 ,(read "20/21"))
+     :one-ceiling-result `(-1 ,(read "-1/3"))
+     :two-ceiling-result `(-1 ,(read "-4/21"))
+     :one-fceiling-result `(-1.0 ,(read "-1/3"))
+     :two-fceiling-result `(-1.0 ,(read "-4/21"))
+     :one-round-result `(-1 ,(read "-1/3"))
+     :two-round-result `(-1 ,(read "-4/21"))
+     :one-fround-result `(-1.0 ,(read "-1/3"))
+     :two-fround-result `(-1.0 ,(read "-4/21"))
+     :one-truncate-result `(-1 ,(read "-1/3"))
+     :two-truncate-result `(-1 ,(read "-4/21"))
+     :one-ftruncate-result `(-1.0 ,(read "-1/3"))
+     :two-ftruncate-result `(-1.0 ,(read "-4/21")))))
 
 ;; Run this function in a Common Lisp with two arguments to get results that
 ;; we should compare against, above. Though note the dancing-around with the
@@ -2268,28 +2278,34 @@ via the hepatic alpha-tocopherol transfer protein")))
      `(,@(when (featurep 'bignum)
 	  (read "((111111111111111111111111111111111111111111111111111
 		111111111111111111111111111111111111111111111111111.0))"))
-       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio) '(0/5 -0/5)))
+       (0 0.0 0.000 -0 -0.0 -0.000 #b0 ,@(when (featurep 'ratio)
+                                               (read "(0/5 -0/5)")))
        (21845 #b101010101010101 #x5555)
        (1.5 1.500000000000000000000000000000000000000000000000000000000
-	    ,@(when (featurep 'ratio) '(3/2)))
+	    ,@(when (featurep 'ratio) (read "(3/2)")))
        ;; Can't use this, these values aren't `='.
        ;;(-12345678901234567890123457890123457890123457890123457890123457890
        ;; -12345678901234567890123457890123457890123457890123457890123457890.0)
-       (-55 -55.000 ,@(when (featurep 'ratio) '(-110/2)))))
+       (-55 -55.000 ,@(when (featurep 'ratio) (read "(-110/2)")))))
     (equalp-diff-list-tests
      `(0 1 2 3 1000 5000000000
        ,@(when (featurep 'bignum)
 	   (read "(5555555555555555555555555555555555555
                        -5555555555555555555555555555555555555)"))
        -1 -2 -3 -1000 -5000000000 
-       1/2 1/3 2/3 8/2 355/113
-       ,@(when (featurep 'ratio) (mapcar* #'/ '(3/2 3/2) '(0.2 0.7)))
-       55555555555555555555555555555555555555555/2718281828459045
+       ,@(if (featurep 'ratio) 
+             (list
+              (read "(1/2 1/3 2/3 8/2 355/113)")
+              (mapcar* #'/ (read "(3/2 3/2)") '(0.2 0.7))
+              (read
+               "55555555555555555555555555555555555555555/2718281828459045")))
        0.111111111111111111111111111111111111111111111111111111111111111
        1e+300 1e+301 -1e+300 -1e+301))
 
     (Assert-equalp "hi there" "Hi There"
                    "checking equalp isn't case-sensitive")
+    (Assert (not (equalp (emacs-version) #*))
+	    "checking a bug with constants and equalp is fixed.")
     (Assert-equalp
      99 99.0
      "checking equalp compares numerical values of different types")
@@ -2435,6 +2451,23 @@ via the hepatic alpha-tocopherol transfer protein")))
 	       (gethash hashed-bignum hashing))
 	      "checking hashing works correctly with #'eql tests and bignums"))))
 
+;; #'subsetp tests.
+;; Return non-nil if every element of LIST1 also appears in LIST2.
+;; A couple of non-nondegenerate false cases.
+(Assert (not (subsetp (list ?a ?b) (list ?c ?d))))
+(Assert (not (subsetp (list ?a ?b) (list ?b ?c ?d))))
+;; Next five thanks to Steven and Benson Mitchell on XEmacs Beta
+;; <50D16FF7.4090708@bnin.net>.
+;; Two non-degenerate true cases.
+(Assert (subsetp (list ?a) (list ?a ?b ?c ?d)))
+(Assert (subsetp (list ?a ?b) (list ?a ?b ?c ?d)))
+;; The three degenerate cases involving nil.
+(Assert (not (subsetp (list ?a) nil)))
+(Assert (subsetp nil (list ?a ?b ?c ?d)))
+(Assert (subsetp nil nil))
+;; #### We should also test the keywords.
+;; #### We should also test the error conditions.
+
 ;; 
 (when (decode-char 'ucs #x0192)
   (Check-Error
@@ -2468,6 +2501,11 @@ via the hepatic alpha-tocopherol transfer protein")))
 				     (garbage-collect))))))
  "checking we can amputate lists without crashing #'reduce")
 
+(Assert (eq 'placeholder (reduce #'cons '(a b c d e f g h i j)
+                                 :from-end t :start 0 :end 0
+                                 :initial-value 'placeholder))
+        "checking :from-end and zero-length ranges don't crash, #'reduce")
+
 (Assert (not (eq t (canonicalize-inst-list
 		    `(((mswindows) . [string :data ,(make-string 20 0)])
 		      ((tty) . [string :data " "])) 'image t)))
@@ -2498,9 +2536,9 @@ via the hepatic alpha-tocopherol transfer protein")))
 ;; in series rather than in parallel.
 
 (when (featurep 'ratio)
-  (Assert (not (eql '1/2 (read (prin1-to-string (intern "1/2")))))
+  (Assert (not (eql (div 1 2) (read (prin1-to-string (intern "1/2")))))
 	  "checking symbols with ratio-like names are printed distinctly")
-  (Assert (not (eql '1/5 (read (prin1-to-string (intern "2/10")))))
+  (Assert (not (eql (div 1 5) (read (prin1-to-string (intern "2/10")))))
 	  "checking symbol named \"2/10\" not eql to ratio 1/5 on read"))
 
 (let* ((count 0)
@@ -2624,7 +2662,7 @@ via the hepatic alpha-tocopherol transfer protein")))
   (when (featurep 'xbm)
     (Check-Error-Message
      invalid-argument
-     "^data is too short for width and height"
+     "^Height must be a natural number"
      (set-face-background-pixmap
       'left-margin
       `[xbm :data (20 ,(* 2 most-positive-fixnum) "random-text")])))
@@ -2850,8 +2888,10 @@ via the hepatic alpha-tocopherol transfer protein")))
 			#'(lambda (object) (if (fixnump object) 1 0)) list))
        (string (map 'string 
 		    #'(lambda (object) (or (and (fixnump object)
-						(int-char object))
-					   (decode-char 'ucs #x20ac))) list))
+                                                (int-char object))
+					   (decode-char 'ucs #x20ac)
+                                           ?\x20))
+                    list))
        (gensym (gensym)))
   (Assert (null (find 'not-in-it list)))
   (Assert (null (find 'not-in-it vector)))
@@ -2911,6 +2951,9 @@ via the hepatic alpha-tocopherol transfer protein")))
    (Assert (eql 0 (needs-lexical-context 2 nil nil))
            "the function special operator doesn't create a lexical context.")))
 
+(Assert (eql 10 (catch ':keyword (+ (catch :keyword (throw :keyword 9)) 1)))
+        "checking `byte-compile-catch' doesn't strip keyword TAGs")
+
 ;; Test symbol-macrolet with symbols with identical string names.
 
 (macrolet
@@ -2930,12 +2973,154 @@ via the hepatic alpha-tocopherol transfer protein")))
        (times-four (apply-partially '* four))
        (plus-twelve (apply-partially '+ 6 (* 3 2)))
        (construct-list (apply-partially 'list (incf four) (incf four)
-                                        (incf four))))
+                                        (incf four)))
+       (list-and-multiply
+        (apply-partially #'(lambda (a b c d &optional e)
+                             (cons (apply #'+ a b c d (if e (list e)))
+                                   (list* a b c d e)))
+                         ;; Constant arguments -> function can be
+                         ;; constructed at compile time
+                         1 2 3))
+       (list-and-four
+        (apply-partially #'(lambda (a b c d &optional e)
+                             (cons (apply #'+ a b c d (if e (list e)))
+                                   (list* a b c d e)))
+                         ;; Not constant arguments -> function constructed
+                         ;; at runtime.
+                         1 2 four)))
   (Assert (eql (funcall times-four 6) 24))
   (Assert (eql (funcall times-four 4 4) 64))
   (Assert (eql (funcall plus-twelve (funcall times-four 4) 4 4) 36))
   (Check-Error wrong-number-of-arguments (apply-partially))
-  (Assert (equal (funcall construct-list) '(5 6 7))))
+  (Assert (equal (funcall construct-list) '(5 6 7)))
+  (Assert (equal (funcall list-and-multiply 5 6) '(17 1 2 3 5 . 6)))
+  (Assert (equal (funcall list-and-multiply 7) '(13 1 2 3 7)))
+  (Check-Error wrong-number-of-arguments
+               (funcall list-and-multiply 7 8 9 10))
+  (Assert (equal (funcall list-and-four 5 6) '(21 1 2 7 5 . 6)))
+  (Assert (equal (funcall list-and-four 7) '(17 1 2 7 7)))
+  (Check-Error wrong-number-of-arguments
+               (funcall list-and-four 7 8 9 10)))
+
+;; Test #'substitute. Paul Dietz has much more comprehensive tests.
+
+(Assert (equal (substitute 'a 'b '(a b c d e f g)) '(a a c d e f g)))
+(Assert (equal (substitute 'a 'b '(a b c d e b f g) :from-end t :count 1)
+               '(a b c d e a f g)))
+
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x)))
+                 (and (equal nomodif x) y))
+               '(z b c z b d z c b z e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :count nil)))
+                 (and (equal nomodif x) y))
+               '(z b c z b d z c b z e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :key nil)))
+                 (and (equal nomodif x) y))
+               '(z b c z b d z c b z e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :count 100)))
+                 (and (equal nomodif x) y))
+               '(z b c z b d z c b z e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :count 0)))
+                 (and (equal nomodif x) y))
+               '(a b c a b d a c b a e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :count 1)))
+                 (and (equal nomodif x) y))
+               '(z b c a b d a c b a e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'c x :count 1)))
+                 (and (equal nomodif x) y))
+               '(a b z a b d a c b a e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :from-end t)))
+                 (and (equal nomodif x) y))
+               '(z b c z b d z c b z e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :from-end t :count 1)))
+                 (and (equal nomodif x) y))
+               '(a b c a b d a c b z e)))
+(Assert (equal (let* ((nomodif '(a b c a b d a c b a e))
+                      (x (copy-list nomodif))
+                      (y (substitute 'z 'a x :from-end t :count 4)))
+                 (and (equal nomodif x) y))
+               '(z b c z b d z c b z e)))
+(Assert (equal (multiple-value-list
+                   (let* ((nomodif '(a b c a b d a c b a e))
+                          (x (copy-list nomodif)))
+                     (values
+                      (loop for i from 0 to 10
+                            collect (substitute 'z 'a x :start i))
+                      (equal nomodif x))))
+               '(((z b c z b d z c b z e) (a b c z b d z c b z e)
+                  (a b c z b d z c b z e) (a b c z b d z c b z e)
+                  (a b c a b d z c b z e) (a b c a b d z c b z e)
+                  (a b c a b d z c b z e) (a b c a b d a c b z e)
+                  (a b c a b d a c b z e) (a b c a b d a c b z e)
+                  (a b c a b d a c b a e))
+                 t)))
+(Assert (equal (multiple-value-list
+                   (let* ((nomodif '(a b c a b d a c b a e))
+                          (x (copy-list nomodif)))
+                     (values
+                      (loop for i from 0 to 10
+                            collect (substitute 'z 'a x :start i :end nil))
+                      (equal nomodif x))))
+               '(((z b c z b d z c b z e) (a b c z b d z c b z e)
+                  (a b c z b d z c b z e) (a b c z b d z c b z e)
+                  (a b c a b d z c b z e) (a b c a b d z c b z e)
+                  (a b c a b d z c b z e) (a b c a b d a c b z e)
+                  (a b c a b d a c b z e) (a b c a b d a c b z e)
+                  (a b c a b d a c b a e))
+                 t)))
+(Assert (equal
+         (let* ((nomodif '(1 2 3 2 6 1 2 4 1 3 2 7))
+                (x (copy-list nomodif))
+                (y (substitute 300 1 x :key #'1-)))
+           (and (equal nomodif x) y))
+         '(1 300 3 300 6 1 300 4 1 3 300 7)))
+
+;; Test a bug fixed in #'sublis. Again, Paul Dietz has much more
+;; comprehensive tests.
+(let ((tree-alist (list (cons 'old 'new)))
+      box1 box2)
+  (Assert
+   (equal
+    (sublis tree-alist 
+	    '(baa baa ("black1" sheep ("have2" you any wool) yes sir))
+	    :test #'(lambda (new old)
+		      (garbage-collect) ; Attempt to GC the
+					; replacement for "black1"
+					; just created
+		      (cond
+		       ((and (stringp old) (find ?1 old))
+			(setf (cdar tree-alist)
+			      (string ?a ?b ?c ?d ?e)
+			      box1 (make-weak-box (cdar tree-alist)))
+			t)
+		       ((and (stringp old) (find ?2 old))
+			(setf (cdar tree-alist)
+			      (string ?f ?g ?h ?i ?j)
+			      box2 (make-weak-box (cdar tree-alist)))
+			t))))
+    '(baa baa ("abcde" sheep ("fghij" you any wool) yes sir))))
+  (Assert (equal (weak-box-ref box1) "abcde")
+	  "checking first string newly-created inside #'sublis not GCed")
+  (Assert (equal (weak-box-ref box2) "fghij")
+	  "checking second string newly-created inside #'sublis not GCed"))
 
 ;; Test labels and inlining.
 (labels
@@ -2954,10 +3139,10 @@ via the hepatic alpha-tocopherol transfer protein")))
         (append form (list 1 [hi there] 40 "this is a string" pi)))
        (with-second-arguments (&optional form)
          (append form (list pi e ''hello ''there [40 50 60])))
-       (with-both-arguments (&optional form)
+       (with-both-arguments (&optional form &environment env)
          (append form
-                 (macroexpand '(with-first-arguments))
-                 (macroexpand '(with-second-arguments)))))
+                 (macroexpand '(with-first-arguments) env)
+                 (macroexpand '(with-second-arguments) env))))
 
     (with-temp-buffer
       (Assert
@@ -2982,5 +3167,742 @@ via the hepatic alpha-tocopherol transfer protein")))
               "checking the buffer contents are as expected at the end.")
       (Assert (not (funcall (intern "eq") #'bookend #'refer-to-bookend))
 	      "checking two mutually recursive functions compiled OK"))))
+
+;; Test macroexpand's handling of the ENVIRONMENT argument. We augmented it
+;; quietly for about four months, and this was incorrect.
+
+(Check-Error
+ void-variable
+ (macrolet
+     ((with-first-arguments (&optional form)
+        (append form (list 1 [hi there] 40 "this is a string" pi)))
+      (with-second-arguments (&optional form)
+        (append form (list pi e ''hello ''there [40 50 60])))
+      (with-both-arguments (&optional form)
+        (append form
+                (macroexpand '(with-first-arguments))
+                (macroexpand '(with-second-arguments)))))
+   (with-both-arguments (list))))
+
+;; Test arithmetic comparisons of markers and operations on markers. Most
+;; relevant with Mule, but also worth doing on non-Mule.
+(let ((character (if (featurep 'mule) (decode-char 'ucs #x20ac) ?\xff))
+      (translation (make-char-table 'generic))
+      markers fixnums)
+  (macrolet
+      ((Assert-arith-equivalences (markers context)
+	 `(progn
+	   (Assert (apply #'> markers)
+		   ,(concat "checking #'> correct with long arguments list, "
+		     context))
+	   (Assert 0 ,context)
+	   (Assert (apply #'< (reverse markers))
+		   ,(concat "checking #'< correct with long arguments list, "
+			    context))
+	   (map-plist #'(lambda (object1 object2)
+			  (Assert (> object1 object2)
+				  ,(concat 
+				    "checking markers correctly ordered, >, "
+				    context))
+			  (Assert (< object2 object1)
+				  ,(concat
+				    "checking markers correctly ordered, <, "
+				    context)))
+		      markers)
+	   ;; OK, so up to this point there has been no need for byte-char
+	   ;; conversion. The following requires it, though:
+	   (map-plist #'(lambda (object1 object2)
+			  (Assert
+			   (= (max object1 object2) object1)
+			   ,(concat
+			     "checking max correct, two markers, " context))
+			  (Assert
+			   (= (min object1 object2) object2)
+			   ,(concat
+			     "checking min, correct, two markers, " context))
+			  ;; It is probably reasonable to change this design
+			  ;; decision.
+			  (Assert
+			   (fixnump (max object1 object2))
+			   ,(concat
+			     "checking fixnum conversion as documented, max, "
+			     context))
+			  (Assert
+			   (fixnump (min object1 object2))
+			   ,(concat
+			     "checking fixnum conversion as documented, min, "
+			     context)))
+	              markers))))
+    (with-temp-buffer
+      (loop for ii from 0 to 100
+	do (progn
+	     (insert " " character " " character " " character " "
+			 character "\n")
+	     (insert character)
+	     (push (copy-marker (1- (point)) t) markers)
+	     (insert ?\x20)
+	     (push (copy-marker (1- (point)) t) markers)))
+      (Assert-arith-equivalences markers "with Euro sign")
+      ;; Save the markers as fixnum character positions:
+      (setq fixnums (mapcar #'marker-position markers))
+      ;; Check that the equivalences work with the fixnums, while we
+      ;; have them:
+      (Assert-arith-equivalences fixnums "fixnums, with Euro sign")
+      ;; Now, transform the characters that may be problematic to ASCII,
+      ;; check our equivalences still hold.
+      (put-char-table character ?\x7f translation)
+      (translate-region (point-min) (point-max) translation)
+      ;; Sigh, restore the markers #### shouldn't the insertion and
+      ;; deletion code do this?!
+      (map nil #'set-marker markers fixnums)
+      (Assert-arith-equivalences markers "without Euro sign")
+      ;; Restore the problematic character.
+      (put-char-table ?\x7f character translation)
+      (translate-region (point-min) (point-max) translation)
+      (map nil #'set-marker markers fixnums)
+      (Assert-arith-equivalences markers "with Euro sign restored"))))
+
+;;-----------------------------------------------------
+;; Test #'write-sequence and friends.
+;;-----------------------------------------------------
+
+(macrolet
+    ((Assert-write-results (function context &key short-string long-string
+                                 sequences-too output-stream
+                                 clear-output get-last-output)
+       "Check correct output in CONTEXT for `write-sequence' and friends."
+       (let* ((short-bit-vector (map 'bit-vector #'logand short-string
+                                     (make-circular-list 1 1)))
+              (long-bit-vector (map 'bit-vector #'logand long-string
+                                    (make-circular-list 1 1)))
+              (short-bit-vector-string
+               (map #'string #'int-char short-bit-vector))
+              (long-bit-vector-string
+               (map #'string #'int-char long-bit-vector)))
+       `(progn
+          (,clear-output ,output-stream)
+          (,function ,short-string ,output-stream)
+          (Assert (equal ,short-string
+			 (,get-last-output ,output-stream
+					   ,(length short-string)))
+                  ,(format "checking %s with short string, %s"
+                           function context))
+          ,@(when sequences-too
+              `((,clear-output ,output-stream)
+                (,function ,(vconcat short-string) ,output-stream)
+                (Assert (equal ,short-string
+			       (,get-last-output ,output-stream
+						 ,(length short-string)))
+                        ,(format "checking %s with short vector, %s"
+                                 function context))
+                (,clear-output ,output-stream)
+                (,function ',(append short-string nil) ,output-stream)
+                (Assert (equal ,short-string
+			       (,get-last-output ,output-stream
+						 ,(length short-string)))
+                        ,(format "checking %s with short list, %s"
+                                 function context))
+                (,clear-output ,output-stream)
+                (,function ,short-bit-vector ,output-stream)
+                (Assert (equal ,short-bit-vector-string
+			       (,get-last-output
+				,output-stream
+				,(length short-bit-vector-string)))
+                        ,(format
+                          "checking %s with short bit-vector, %s"
+                          function context))
+                (,clear-output ,output-stream)
+                (,function ,long-bit-vector ,output-stream)
+                (Assert (equal ,long-bit-vector-string
+			       (,get-last-output
+				,output-stream
+				,(length long-bit-vector-string)))
+                        ,(format
+                          "checking %s with long bit-vector, %s"
+                          function context))))
+          ,(cons
+            'progn
+            (loop
+              for (subseq-start subseq-end description)
+              in `((0 ,(length short-string) "trivial range")
+                   (4 7 "harder range"))
+              nconc
+              `((,clear-output ,output-stream)                  
+                (,function ,short-string ,output-stream :start ,subseq-start
+                           :end ,subseq-end)
+                (Assert
+                  (equal ,(subseq short-string subseq-start subseq-end)
+			 (,get-last-output ,output-stream
+                                           ,(- subseq-end subseq-start)))
+                  ,(format
+                    "checking %s with short string, %s, %s"
+                    function context description))
+                 ,@(when sequences-too
+                     `((,clear-output ,output-stream)
+                       (,function ,(vconcat short-string) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq short-string subseq-start subseq-end)
+			       (,get-last-output ,output-stream
+                                                 ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with short vector, %s, %s"
+                          function context description))
+                       (,clear-output ,output-stream)
+                       (,function ',(append short-string nil) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq short-string subseq-start subseq-end)
+			       (,get-last-output
+				,output-stream
+				,(- subseq-end subseq-start )))
+                        ,(format "checking %s with short list, %s, %s"
+                                 function context description))
+                       (,clear-output ,output-stream)
+                       (,function ,short-bit-vector ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq short-bit-vector-string subseq-start
+                                        subseq-end)
+			       (,get-last-output ,output-stream
+                                                 ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with short bit-vector, %s, %s"
+                          function context description)))))))
+          ,(cons
+            'progn
+            (loop
+              for (subseq-start subseq-end description)
+              in `((0 ,(length long-string) "trivial range")
+                   (4 90 "harder range"))
+              nconc
+              `((,clear-output ,output-stream)                  
+                (,function ,long-string ,output-stream :start ,subseq-start
+                           :end ,subseq-end)
+                (Assert
+		 (equal ,(subseq long-string subseq-start subseq-end)
+			(,get-last-output ,output-stream
+                                          ,(- subseq-end subseq-start)))
+                  ,(format
+                    "checking %s with long string, %s, %s"
+                    function context description))
+                 ,@(when sequences-too
+                     `((,clear-output ,output-stream)
+                       (,function ,(vconcat long-string) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq long-string subseq-start subseq-end)
+			       (,get-last-output
+				,output-stream
+                                ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with long vector, %s, %s"
+                          function context description))
+                       (,clear-output ,output-stream)
+                       (,function ',(append long-string nil) ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq long-string subseq-start subseq-end)
+			       (,get-last-output ,output-stream
+                                                 ,(- subseq-end subseq-start)))
+                        ,(format "checking %s with long list, %s, %s"
+                                 function context description))
+                       (,clear-output ,output-stream)
+                       (,function ,long-bit-vector ,output-stream
+                                  :start ,subseq-start :end ,subseq-end)
+                       (Assert
+                        (equal ,(subseq long-bit-vector-string
+					subseq-start subseq-end)
+			       (,get-last-output
+				,output-stream
+                                ,(- subseq-end subseq-start)))
+                        ,(format
+                          "checking %s with long bit-vector, %s, %s"
+                          function context description)))))))
+          (,clear-output ,output-stream))))
+     (test-write-string (function &key sequences-too worry-about-newline)
+       (let* ((short-string "hello there")
+              (long-string
+               (decode-coding-string
+                (concat
+                 "\xd8\xb3\xd9\x84\xd8\xa7\xd9\x85 \xd8\xb9\xd9\x84"
+                 "\xdb\x8c\xda\xa9\xd9\x85\x2c \xd8\xa7\xd8\xb3\xd9"
+                 "\x85 \xd9\x85\xd9\x86 \xd8\xa7\xdb\x8c\xd8\xaf\xd9"
+                 "\x86 \xda\xa9\xdb\x8c\xd9\x88 \xd8\xa7\xd8\xb3\xd8"
+                 "\xaa\x2e \xd9\x85\xd9\x86 \xd8\xa7\xdb\x8c\xd8\xb1"
+                 "\xd9\x84\xd9\x86\xd8\xaf\xdb\x8c \xd8\xa7\xd9\x85"
+                 "\x2c \xd9\x88 \xd9\x85\xd9\x86 \xd8\xaf\xd8\xb1 "
+                 "\xd8\xa8\xdb\x8c\xd9\x85\xd8\xa7\xd8\xb1\xd8\xb3"
+                 "\xd8\xaa\xd8\xa7\xd9\x86 \xda\xa9\xd8\xa7\xd8\xb1"
+                 "\xd9\x85\xdb\x8c\xe2\x80\x8c\xda\xa9\xd9\x86\xd9"
+                 "\x85\x2e")
+                (if (featurep 'mule) 'utf-8 'raw-text-unix)))
+              (long-string (concat long-string long-string long-string
+                                   long-string long-string long-string
+                                   long-string long-string long-string
+                                   long-string long-string long-string)))
+         `(with-temp-buffer
+            (let* ((long-string ,long-string)
+                   (stashed-data
+                    (get-buffer-create
+                     (generate-new-buffer-name " *stash*")))
+                   (function-output-stream
+                    (apply-partially
+                     #'(lambda (buffer character)
+                         (insert-char character 1 nil buffer))
+                     stashed-data))
+                   (marker-buffer
+                    (get-buffer-create
+                     (generate-new-buffer-name " *for-marker*")))
+                   (marker-base-position 40)
+                   (marker
+                    (progn
+                      (insert-char ?\xff 90 nil marker-buffer)
+                      (set-marker (make-marker) 40 marker-buffer))))
+              (unwind-protect
+                   (labels
+		       ((clear-buffer (buffer)
+			  (delete-region (point-min buffer) (point-max buffer)
+					 buffer))
+			(clear-stashed-data (ignore)
+			  (delete-region (point-min stashed-data)
+					 (point-max stashed-data)
+					 stashed-data))
+			(clear-marker-data (marker)
+			  (delete-region marker-base-position marker
+					 (marker-buffer marker)))
+			(buffer-output (buffer length)
+			  (and (> (point buffer) length)
+			       (buffer-substring (- (point buffer) length)
+						 (point buffer) buffer)))
+			(stashed-data-output (ignore length)
+			  (and (> (point stashed-data) length)
+			       (buffer-substring (- (point stashed-data)
+						    length)
+						 (point stashed-data)
+						 stashed-data)))
+			(marker-data (marker length)
+			  (and (> marker length)
+			       (buffer-substring (- marker length) marker
+						 (marker-buffer marker))))
+			(buffer-output-sans-newline (buffer length)
+			  (and (> (point buffer) (+ length 1))
+			       (buffer-substring (- (point buffer) length 1)
+						 (1- (point buffer)))))
+			(stashed-data-output-sans-newline (ignore length)
+			  (and (> (point stashed-data) (+ length 1))
+			       (buffer-substring (- (point stashed-data)
+						    length 1)
+						 (1- (point stashed-data))
+						 stashed-data)))
+			(marker-data-sans-newline (marker length)
+			  (and (> marker (+ length 1))
+			       (buffer-substring (- marker length 1)
+						 (1- marker)
+						 (marker-buffer marker)))))
+                     (Check-Error wrong-number-of-arguments (,function))
+		     (,(if (subrp (symbol-function function))
+			   'progn
+			 'Implementation-Incomplete-Expect-Failure)
+		      (Check-Error wrong-number-of-arguments
+				   (,function ,short-string
+					      (current-buffer) :start))
+		      (Check-Error wrong-number-of-arguments
+				   (,function ,short-string
+					      (current-buffer) :start 0
+					      :end nil :start)))
+                     (Check-Error invalid-keyword-argument
+                                  (,function ,short-string
+                                             (current-buffer)
+                                             :test #'eq))
+                     (Check-Error wrong-type-argument (,function pi))
+                     ,@(if sequences-too
+                           `((Check-Error
+                              args-out-of-range
+                              (,function (vector most-positive-fixnum)))
+                             (Check-Error
+                              args-out-of-range
+                              (,function (list most-positive-fixnum)))
+                             ,@(if (featurep 'mule)
+                                   `((Check-Error
+                                      args-out-of-range
+                                      (,function
+                                       (vector
+                                        (char-int
+                                         (decode-char 'ucs #x20ac))))))))
+                           `((Check-Error wrong-type-argument
+                                          (,function
+                                           ',(append short-string nil)))
+                             (Check-Error wrong-type-argument
+                                          (,function
+                                           ,(vconcat long-string)))
+                             (Check-Error wrong-type-argument
+                                          (,function #*010010001010101))))
+                     (Check-Error wrong-type-argument
+                                  (,function ,short-string (current-buffer)
+                                             :start 0.0))
+                     (Check-Error wrong-type-argument
+                                  (,function ,short-string (current-buffer)
+                                             :end 4.0))
+                     (Check-Error invalid-function
+                                  (,function ,short-string pi))
+                     (Check-Error args-out-of-range
+                                  (,function ,short-string (current-buffer)
+                                             :end ,(1+ (length short-string))))
+                     (Check-Error args-out-of-range
+                                  (,function ,short-string nil
+                                             :start
+                                             ,(1+ (length short-string))))
+                     ;; Not checked here; output to a stdio stream, output
+                     ;; to an lstream, output to a frame.
+                     (Assert-write-results
+                      ,function "buffer point" :short-string ,short-string
+                      :long-string ,long-string :sequences-too ,sequences-too
+                      :output-stream (current-buffer)
+                      :clear-output clear-buffer
+                      :get-last-output
+                      ,(if worry-about-newline 'buffer-output-sans-newline
+                         'buffer-output))
+                     (Assert-write-results
+                      ,function "function output" :short-string ,short-string
+                      :long-string ,long-string :sequences-too ,sequences-too
+                      :output-stream function-output-stream
+                      :clear-output clear-stashed-data
+                      :get-last-output
+                      ,(if worry-about-newline
+                           'stashed-data-output-sans-newline
+                         'stashed-data-output))
+                     (Assert-write-results
+                      ,function "marker output" :short-string ,short-string
+                      :long-string ,long-string :sequences-too ,sequences-too
+                      :output-stream marker :clear-output clear-marker-data
+                      :get-last-output ,(if worry-about-newline
+                                            'marker-data-sans-newline
+                                          'marker-data)))
+                (kill-buffer stashed-data)
+                (kill-buffer marker-buffer)))))))
+  (test-write-string write-sequence :sequences-too t)
+  (test-write-string write-string :sequences-too nil)
+  (test-write-string write-line :worry-about-newline t :sequences-too nil))
+
+;;-----------------------------------------------------
+;; Test #'parse-integer and friends.
+;;-----------------------------------------------------
+
+(Check-Error wrong-type-argument (parse-integer 123456789))
+
+(if (featurep 'bignum)
+    (progn
+      (Check-Error args-out-of-range
+                   (parse-integer "123456789" :start (1+ most-positive-fixnum)))
+      (Check-Error args-out-of-range
+                   (parse-integer "123456789" :end (1+ most-positive-fixnum))))
+  (Check-Error wrong-type-argument
+               (parse-integer "123456789" :start (1+ most-positive-fixnum)))
+  (Check-Error wrong-type-argument
+               (parse-integer "123456789" :end (1+ most-positive-fixnum))))
+
+(Check-Error args-out-of-range (parse-integer "123456789" :radix -1))
+(Check-Error args-out-of-range
+             (parse-integer "123456789" :radix (1+ most-positive-fixnum)))
+(Check-Error wrong-number-of-arguments
+             (parse-integer "123456789" :junk-allowed))
+(Check-Error invalid-keyword-argument
+             (parse-integer "123456789" :no-such-keyword t))
+(Check-Error wrong-type-argument (parse-integer "123456789" :start -1))
+(Check-Error invalid-argument (parse-integer "abc"))
+(Check-Error invalid-argument (parse-integer "efz" :radix 16))
+
+(macrolet
+    ((with-digits (ascii alternate script)
+       (let ((tree-alist (list (cons 'old 'new)))
+             (text-alist (mapcar* #'cons ascii alternate)))
+         (list*
+          'progn
+          (cons
+           'progn
+           (loop for ascii-digit across ascii
+                 for non-ascii across alternate
+                 collect `(Assert (eql (digit-char-p ,non-ascii)
+                                   ,(- ascii-digit ?0))
+                           ,(concat "checking `digit-char-p', base-10, "
+                                    script))))
+          (sublis
+           tree-alist 
+           '((Assert (equal (multiple-value-list
+                                (parse-integer "	-123  "))
+                      '(-123 7)))
+             (Assert (equal (multiple-value-list
+                               (parse-integer "-3efz" :radix 16
+                                              :junk-allowed t))
+                      '(-1007 4)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "zzef9" :radix 16 :start 2))
+                      '(3833 5)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "0123456789" :radix 8
+                                               :junk-allowed t))
+                      '(342391 8)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "":junk-allowed t))
+                      '(nil 0)))
+             (Assert (equal (multiple-value-list
+                                (parse-integer "abc" :junk-allowed t))
+                      '(nil 0)))
+             (Assert (eql (ignore-errors (parse-integer "100000000"
+                                                        :radix 16))
+                          (if (featurep 'bignum) (lsh 1 32) nil))
+                     "checking an overflow bug has been fixed")
+             (Assert (eql (ignore-errors (parse-integer "-100000000"
+                                                        :radix 16))
+                          (if (featurep 'bignum) (- (lsh 1 32)) nil))
+                     "checking an overflow bug has been fixed, negative int")
+             (Assert (eql (ignore-errors (parse-integer
+                                           (format "%d4/" most-negative-fixnum)
+                                           :junk-allowed t))
+                          (if (featurep 'bignum)
+                              (- (* most-negative-fixnum 10) 4)
+                            nil))
+                      "checking a bug with :junk-allowed, negative bignum")
+             (Check-Error invalid-argument (parse-integer "0123456789"
+                                            :radix 8))
+             (Check-Error invalid-argument (parse-integer "abc"))
+             (Check-Error invalid-argument (parse-integer "efz" :radix 16))
+             
+             ;; In contravention of Common Lisp, we allow both 0 and 1 as
+             ;; values for RADIX, useless as that is.
+             (Assert (equal (multiple-value-list
+                                (parse-integer "00000" :radix 1)) '(0 5))
+              "checking 1 is allowed as a value for RADIX")
+             (Assert (equal (multiple-value-list
+                                (parse-integer "" :radix 0 :junk-allowed t))
+                      '(nil 0))
+              "checking 0 is allowed as a value for RADIX"))
+             :test #'(lambda (new old)
+                       ;; This function replaces any ASCII decimal digits in
+                       ;; any string encountered in the tree with the
+                       ;; non-ASCII digits supplied in ALTERNATE.
+                       (when (and (stringp old) (find-if #'digit-char-p old))
+                         (setf (cdar tree-alist)
+                               (concatenate 'string
+                                            (sublis text-alist
+                                                    (append old nil))))
+                         t))))))
+     (repeat-parse-integer-non-ascii ()
+       (when (featurep 'mule)
+         (cons
+          'progn
+          (loop for (code-point . script)
+            in '((#x0660 . "Arabic-Indic")
+                 (#x06f0 . "Extended Arabic-Indic")
+                 (#x07c0 . "Nko")
+                 (#x0966 . "Devanagari")
+                 (#x09e6 . "Bengali")
+                 (#x0a66 . "Gurmukhi")
+                 (#x0ae6 . "Gujarati")
+                 (#x0b66 . "Oriya")
+                 (#x0be6 . "Tamil")
+                 (#x0c66 . "Telugu")
+                 (#x0ce6 . "Kannada")
+                 (#x0d66 . "Malayalam")
+                 (#x0de6 . "Sinhala Lith")
+                 (#x0e50 . "Thai")
+                 (#x0ed0 . "Lao")
+                 (#x0f20 . "Tibetan")
+                 (#x1040 . "Myanmar")
+                 (#x1090 . "Myanmar Shan")
+                 (#x17e0 . "Khmer")
+                 (#x1810 . "Mongolian")
+                 (#x1946 . "Limbu")
+                 (#x19d0 . "New Tai Lue")
+                 (#x1a80 . "Tai Tham Hora")
+                 (#x1a90 . "Tai Tham Tham")
+                 (#x1b50 . "Balinese")
+                 (#x1bb0 . "Sundanese")
+                 (#x1c40 . "Lepcha")
+                 (#x1c50 . "Ol Chiki")
+                 (#xa620 . "Vai")
+                 (#xa8d0 . "Saurashtra")
+                 (#xa900 . "Kayah Li")
+                 (#xa9d0 . "Javanese")
+                 (#xa9f0 . "Myanmar Tai Laing")
+                 (#xaa50 . "Cham")
+                 (#xabf0 . "Meetei Mayek")
+                 (#xff10 . "Fullwidth")
+                 (#x000104a0 . "Osmanya")
+                 (#x00011066 . "Brahmi")
+                 (#x000110f0 . "Sora Sompeng")
+                 (#x00011136 . "Chakma")
+                 (#x000111d0 . "Sharada")
+                 (#x000112f0 . "Khudawadi")
+                 (#x000114d0 . "Tirhuta")
+                 (#x00011650 . "Modi")
+                 (#x000116c0 . "Takri")
+                 (#x000118e0 . "Warang Citi")
+                 (#x00016a60 . "Mro")
+                 (#x00016b50 . "Pahawh Hmong")
+                 (#x0001d7ce . "Mathematical Bold")
+                 (#x0001d7d8 . "Mathematical Double-Struck")
+                 (#x0001d7e2 . "Mathematical Sans-Serif")
+                 (#x0001d7ec . "Mathematical Sans-Serif Bold")
+                 (#x0001d7f6 . "Mathematical Monospace"))
+            collect `(with-digits "0123456789"
+                      ;; All the Unicode decimal digits have contiguous code
+                      ;; point ranges as documented by the Unicode standard,
+                      ;; we can just increment.
+                      ,(concat (loop for fixnum from code-point
+                                     to (+ code-point 9)
+                                     collect (decode-char 'ucs fixnum))
+                               "")
+		      ,script))))))
+  (with-digits "0123456789" "0123456789" "ASCII")
+  (repeat-parse-integer-non-ascii))
+
+;; Next two paragraphs of tests from GNU, thank you Leo Liu.
+(Assert (eql (digit-char-p ?3) 3))
+(Assert (eql (digit-char-p ?a 11) 10))
+(Assert (eql (digit-char-p ?w 36) 32))
+(Assert (not (digit-char-p ?a)))
+(Check-Error args-out-of-range (digit-char-p ?a 37))
+(Assert (not (digit-char-p ?a 1)))
+
+(loop for fixnum from 0 below 36
+      do (Assert (eql fixnum (digit-char-p (digit-char fixnum 36) 36))))
+
+(let ((max -1)
+      (min most-positive-fixnum)
+      (max-char nil) (min-char nil))
+  (map-char-table #'(lambda (key value)
+                      (if (> value max)
+                          (setf max value
+                                max-char key))
+                      (if (< value min)
+                          (setf min value
+                                min-char key))
+                      nil)
+                  digit-fixnum-map)
+  (Assert (>= 35 max) "checking base 36 is supported, `digit-fixnum-map'")
+  (Assert (<= min 2) "checking base two supported, `digit-fixnum-map'")
+  (Assert (eql (digit-char-p max-char (1+ max)) max))
+  (Assert (eql (digit-char-p min-char (1+ min)) min))
+
+(let ((binary-table
+       (copy-char-table #s(char-table :type generic :default -1 :data ()))))
+  (loop for fixnum from 00 to #xff
+        do (put-char-table (int-char fixnum) fixnum binary-table))
+  (Assert (eql most-positive-fixnum
+               (parse-integer
+                (concatenate 'string "\x3f"
+                             (make-string
+                              (/ (- (integer-length most-positive-fixnum)
+                                    (integer-length #x3f)) 8)
+                              ?\xff))
+                :radix-table binary-table :radix #x100))
+          "checking parsing text using base 256 (big endian binary) works")
+  (Assert (equal
+           (multiple-value-list 
+               (parse-integer " \1\7\1\7 " :radix-table binary-table))
+           '(1717 6))
+          "checking whitespace treated as such when it is not < radix")
+  (Assert (equal
+           (multiple-value-list 
+               (parse-integer " \1\7\1\7 " :radix-table binary-table
+                              :junk-allowed t))
+           '(1717 5))
+          "checking whitespace treated as junk when it is not < radix")
+  (Check-Error invalid-argument
+               (parse-integer "1234" :radix-table binary-table))
+  (Assert (equal
+           (multiple-value-list
+               (parse-integer "--" :radix-table binary-table :radix #x100))
+           '(-45 2))
+          "checking ?- always treated as minus sign initially")
+  (Assert (equal
+           (multiple-value-list
+               (parse-integer "+20" :radix-table binary-table :radix #x100))
+           '(2830896 3))
+          "checking ?+ not dropped initially if it has integer weight")
+  (Assert (eql #xff (digit-char-p ?ÿ #x100 binary-table))
+          "checking `digit-char-p' behaves correctly with base 256")
+  (Assert (eql ?\xff (digit-char #xff #x100 binary-table))
+          "checking `digit-char' behaves correctly with base 256")
+  (Assert (eql (parse-integer " " :radix-table binary-table :radix #x100)
+               #x20)
+          "checking whitespace not treated as such when it has fixnum weight")
+  (Assert (null (digit-char-p ?0 nil binary-table))
+          "checking `digit-char-p' reflects RADIX-TABLE, ?0")
+  (Assert (null (digit-char-p ?9 nil binary-table))
+          "checking `digit-char-p' reflects RADIX-TABLE, ?9")
+  (Assert (null (digit-char-p ?a 16 binary-table))
+          "checking `digit-char-p' reflects RADIX-TABLE, ?a")
+  (Assert (eql ?ÿ (digit-char #xff #x100 binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, #xff")
+  (Assert (eql ?a (digit-char #x61 #x100 binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, #x61")
+  (Assert (null (digit-char #xff nil binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, #xff, base 10")
+  (Assert (eql ?\x0a (digit-char 10 16 binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, 10, base 16")
+  (Assert (eql ?\x09 (digit-char 9 nil binary-table))
+          "checking `digit-char' reflects RADIX-TABLE, 9, base 10"))
+
+;; Test #'clear-string.
+
+(Check-Error wrong-type-argument (clear-string [?\x00 ?\xff]))
+(Check-Error wrong-type-argument (clear-string '(?\x00 ?\xff)))
+(Check-Error wrong-type-argument (clear-string #*1010))
+(Check-Error wrong-number-of-arguments (clear-string "hello" ?*))
+
+(let* ((template (concat
+                  "this is a template string, "
+                  (if (unicode-to-char #x06af)
+                      (decode-coding-string
+                       (concat
+                        "\xd8\xa8\xd9\x87 \xd9\x86\xd8\xb8\xd8\xb1 "
+                        "\xd9\x85\xd9\x86 \xd8\xae\xd9\x88\xda\xa9 "
+                        "\xd8\xae\xd9\x88\xd8\xb4\xd9\x85\xd8\xb2\xd9\x87 "
+                        "\xd8\xa7\xd8\xb3\xd8\xaa")
+                       'utf-8))))
+       (length (length template))
+       (null (make-string length ?\x00)))
+  (Assert (null (clear-string (copy-sequence template))))
+  (Assert (eql length (let ((string (copy-sequence template)))
+                        (clear-string string)
+                        (length string))))
+  (Assert (equal null (let ((string (copy-sequence template)))
+                        (clear-string string)
+                        string))))
+
+;; No way to check from Lisp whether the data was actually nulled.
+
+;; Check that a bug in #'check-type with non-setfable PLACE (something not
+;; actually specified by Common Lisp) has been fixed.
+(Assert (prog1 t (check-type 300 fixnum))
+        "checking #'check-type OK, fixnum literal PLACE")
+(Check-Error wrong-type-argument
+             (check-type 300 (integer -1 100))
+             "checking #'check-type errors properly on fixnum literal PLACE")
+(Assert (prog1 t (check-type (+ 100 200) fixnum))
+        "checking #'check-type OK, non-setfable PLACE")
+(Check-Error wrong-type-argument
+             (check-type (+ 600 1000) (integer 0 20))
+             "checking #'check-type errors properly, non-setfable PLACE")
+
+;; Probe some limits with #'decode-time.
+
+(Assert (progn
+	  (ignore-errors (decode-time '(#x3fffffff . #xffff)))
+	  t))
+
+(when (ignore-errors (coerce 2147483647.0 'integer))
+  (Assert (consp (decode-time (coerce 2147483647.0 'integer))))
+  (when (ignore-errors (coerce 1099511627776.0 'integer))
+    (Assert (progn 
+	      (ignore-errors (decode-time
+			      (cons
+			       (coerce 1099511627776.0 'integer)
+			       0)))
+	      t)
+	    "checking we haven't crashed, localtime returning NULL")))
 
 ;;; end of lisp-tests.el

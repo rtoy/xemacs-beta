@@ -3,7 +3,7 @@
 @c Copyright (C) 1995, 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/consoles-devices.info
-@node Consoles and Devices, Positions, Frames, top
+@node Consoles and Devices, Positions, Frames, Top
 @chapter Consoles and Devices
 @cindex devices
 @cindex consoles

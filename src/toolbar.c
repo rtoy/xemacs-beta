@@ -339,10 +339,9 @@ update_toolbar_button (struct frame *f, struct toolbar_button *tb,
      button. */
   if (KEYWORDP (glyphs))
     {
-      int pos;
-      int style_seen = 0;
-      int size_seen = 0;
-      int len = XVECTOR_LENGTH (desc);
+      Boolint style_seen = 0;
+      Boolint size_seen = 0;
+      Elemcount len = XVECTOR_LENGTH (desc), pos;
 
       if (!tb->blank)
 	{
@@ -798,13 +797,12 @@ update_frame_toolbars_geometry (struct frame *f)
 				   &width, &height);
 	  internal_set_frame_size (f, width, height, 0);
 	  MARK_FRAME_LAYOUT_CHANGED (f);
-	}
-      
-      /* Clear the previous toolbar locations. If we do it later
-	 (after redisplay) we end up clearing what we have just
-	 displayed. */
-      MAYBE_DEVMETH (d, clear_frame_toolbars, (f));
 
+          /* Clear the previous toolbar locations. If we do it later
+             (after redisplay) we end up clearing what we have just
+             displayed. */
+          MAYBE_DEVMETH (d, clear_frame_toolbars, (f));
+	}
     }
 }
 

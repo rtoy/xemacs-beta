@@ -137,14 +137,14 @@ that buffer is rejected."
   (or
    ;; 1. If one window on the selected frame displays such buffer, return it.
    (let ((window-buffers
-          (delete-dups
-           (delq nil (mapcar (lambda (w)
-                               (if (next-error-buffer-p
-				    (window-buffer w)
-                                    avoid-current
-                                    extra-test-inclusive extra-test-exclusive)
-                                   (window-buffer w)))
-                             (window-list))))))
+          (delete-duplicates
+           (mapcan #'(lambda (w)
+                       (if (next-error-buffer-p
+                            (window-buffer w)
+                            avoid-current
+                            extra-test-inclusive extra-test-exclusive)
+                           (list (window-buffer w))))
+                   (window-list)))))
      (if (eq (length window-buffers) 1)
          (car window-buffers)))
    ;; 2. If next-error-last-buffer is an acceptable buffer, use that.

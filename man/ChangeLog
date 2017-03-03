@@ -1,3 +1,302 @@
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document %u here.
+	Correct the spelling of zeroes.
+	Add documentation of the new &, !, and ~ flags.
+	Add documentation of the length modifiers, specifying truncation
+	to a bit width, newly implemented though long accepted.
+	Document the new u modifier, used to specify that integer
+	converters should treat their arguments as unsigned. (It is new to
+	XEmacs that the non-base-10 converters treat their arguments as
+	signed).
+
+2016-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Be a little clearer in documentation of the STREAM argument to
+	#'format-into.
+
+2016-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi :
+	* internals/internals.texi (Old Future Work -- Everything should
+	obey duplicable extents):
+	Move this section to Old Future Work from Future Work, now it is
+	implemented.
+
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document that #'format-into now accepts any stream argument as
+	accepted by #'print.
+
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Describe #'format a little more clearly, don't mislead readers
+	about the algorithm.
+	Describe the newly-added #'format-into, something that makes more
+	sense now the resizing-buffer time is visible from Lisp.
+
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Formatting Strings):
+	Document the new support for extents in control string and in
+	arguments to #'format.
+
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Syntax of Regexps):
+	Clarify that backreferences can use numbers greater than ten.
+
+2014-11-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/strings.texi (String Properties):
+	Note that string properties are separate from extent properties.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/numbers.texi (Numbers):
+	Describe the newly-supported arbitrary-base syntax for rationals
+	(integers and ratios). Describe that ratios can take the same base
+	specification as integers, something also new.
+
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Character Codes):
+	Document `char-code-limit' here too.
+
+2015-03-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/help.texi (Help Functions):
+	Document help-event-list, just added.
+
+2015-02-23  Mike Kupfer  <mike.kupfer@xemacs.org>
+
+	* internals/internals.texi (The Redisplay Mechanism):
+	Add notes about pixel_to_glyph_translation and related code.
+	(pixel_to_glyph_translation): New section.	
+
+2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/strings.texi (Predicates for Characters):
+	Document `digit-char-p', `digit-char' here.
+	* lispref/strings.texi (String Conversion):
+	Document `parse-integer' here.
+
+2014-03-28  Jerry James  <james@xemacs.org>
+
+	* Makefile.in: Do not build texinfo files.
+	* texinfo/fdl.texi:
+	* texinfo/texinfo.texi:
+	* texinfo/version.texi:
+	Remove files belonging to an external project.
+
+2014-03-28  Jerry James  <james@xemacs.org>
+
+	* lispref/loading.texi:
+	* lispref/macros.texi:
+	Fix broken next/prev pointers caught by texinfo 4.x, but not by
+	texinfo 5.x.  Thanks to Thomas Mittelstaedt for reporting.
+
+2014-02-11  Jerry James  <james@xemacs.org>
+
+	* lispref/consoles-devices.texi:
+	* lispref/control.texi:
+	* lispref/customize.texi:
+	* lispref/databases.texi:
+	* lispref/debugging.texi:
+	* lispref/dialog.texi:
+	* lispref/display.texi:
+	* lispref/eval.texi:
+	* lispref/extents.texi:
+	* lispref/faces.texi:
+	* lispref/files.texi:
+	* lispref/frames.texi:
+	* lispref/functions.texi:
+	* lispref/glyphs.texi:
+	* lispref/gutter.texi:
+	* lispref/hash-tables.texi:
+	* lispref/help.texi:
+	* lispref/internationalization.texi:
+	* lispref/intro.texi:
+	* lispref/keymaps.texi:
+	* lispref/ldap.texi:
+	* lispref/lispref.texi:
+	* lispref/lists.texi:
+	* lispref/loading.texi:
+	* lispref/macros.texi:
+	* lispref/markers.texi:
+	* lispref/menus.texi:
+	* lispref/minibuf.texi:
+	* lispref/modes.texi:
+	* lispref/mule.texi:
+	* lispref/numbers.texi:
+	* lispref/objects.texi:
+	* lispref/os.texi:
+	* lispref/positions.texi:
+	* lispref/postgresql.texi:
+	* lispref/processes.texi:
+	* lispref/range-tables.texi:
+	* lispref/scrollbars.texi:
+	* lispref/searching.texi:
+	* lispref/sequences.texi:
+	* lispref/specifiers.texi:
+	* lispref/streams.texi:
+	* lispref/strings.texi:
+	* lispref/symbols.texi:
+	* lispref/syntax.texi:
+	* lispref/text.texi:
+	* lispref/tips.texi:
+	* lispref/toolbar.texi:
+	* lispref/tooltalk.texi:
+	* lispref/variables.texi:
+	* lispref/windows.texi:
+	* lispref/x-windows.texi:
+	* xemacs/custom.texi:
+	* xemacs/menus.texi:
+	* xemacs/programs.texi:
+	Add next, prev, and up pointers to each node for texinfo 5.2.
+
+	* texinfo/fdl.texi:
+	* texinfo/texinfo.texi:
+	* texinfo/version.texi:
+	Sync with texinfo 5.2.
+
+2013-09-15  Mats Lidell  <matsl@xemacs.org>
+
+	* xemacs/files.texi (Saving): New variable
+	mode-require-final-newline. Update info for require-final-newline.
+
+2013-06-25  Jerry James  <james@xemacs.org>
+
+	* Makefile.in: New file, so we can replace @MAKEINFO@.
+	* Makefile: Removed.
+	* lispref/packaging.texi: Update required version of makeinfo.
+	* xemacs/packages.texi: Ditto.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-06-19  Jerry James  <james@xemacs.org>
+
+	* beta.texi: Move "@end info" to its own line.
+	* lispref/edebug-inc.texi (Instrumenting Macro Calls): "@table
+	@bullet" is not supported by texinfo 5.x; use "@table @asis"
+	instead, since each table entry has a label already.
+	* lispref/packaging.texi (Makefile Targets): Use @section instead
+	of @subsection inside a @chapter.
+	* texinfo.tex: Update to new version that is known to work with
+	texinfo 5.x.
+	* texinfo/texinfo.texi (documentencoding): @itemx must always
+	follow an @item.
+	* widget.texi: Sync with the Emacs 24.3 version.  Change all
+	@section to @chapter, and all @subsection to @section.
+	* xemacs-faq.texi (11.0: The XEmacs repositories): Add
+	@unnumberedsec entry to contain the @unnumberedsubsec for each
+	question.
+	(11.1: Working with CVS): Ditto.
+	(11.2: Working with Mercurial): Ditto.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* internals/internals.texi (Numeric Types): New chapter describing
+	the implementation of bignums, ratios, and bigfloats.
+	* lispref/numbers.texi (The Bignum Extension): Update description
+	to include MPIR, fix broken URLs, and note that BSD MP support is
+	now more complete.
+	(Bignum Basics): Note MPIR support.
+	(Ratio Basics): Add a missing comma.
+	(Bigfloat Basics): Fix an incomplete sentence and add examples.
+	* xemacs-faq.texi (Q7.2.1): Update description to include MPIR,
+	note that BSD MP support is now more complete, and remove the
+	paragraph where I promise to write internals documentation.
+	(Q7.2.3): Update ancient section that mentions the Pentium III.
+
+2013-01-22  Jerry James  <james@xemacs.org>
+
+	* lispref/glyphs.texi (Image Instantiators): Add :visible to the
+	list of allowed menu keywords.
+	* lispref/menus.tex (Menu Format): Document that :visible is an
+	alias for :included.
+
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
+2013-01-02  Vin Shelton  <acs@xemacs.org>
+
+	* lispref/menus.texi (Creating Menu Accelerators): Clarify that
+	the menu accelerator must be lowercase.
+
+2012-12-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* xemacs/programs.texi (Defuns): Improve description of `mark-defun'.
+	Thanks to Steven Mitchell for the suggestion.
+
+2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
+
+	* lispref/menus.texi (Menu Format):
+	Document use of :active in submenu specs.
+
+2012-12-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* internals/internals.texi (Mercurial Basics):
+	Update references to repository to reflect current reality.
+
+2012-12-28  Byrel Mitchell  <byrel.mitchell@gmail.com>
+
+	* lispref/menus.texi (Creating Menu Accelerators): Typo fix.
+
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* lispref/processes.texi (Synchronous Processes): New function
+	call-process-shell-command.
+
+2012-09-18  Mats Lidell  <matsl@xemacs.org>
+
+	* lispref/windows.texi (Vertical Scrolling): Added
+	recenter-top-bottom and recenter-positions
+
+	* xemacs/display.texi (Display): Rearranged and added
+	documentation due to new function recenter-top-bottom.
+
+2012-08-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/symbols.texi (Symbol Components):
+	Document the new syntax of ## for the symbol with name "" interned
+	in obarray.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/keymaps.texi (Keymaps):
+	* lispref/keymaps.texi (Changing Key Bindings):
+	* lispref/keymaps.texi (Scanning Keymaps):
+	* lispref/keymaps.texi (Remapping commands):
+	* lispref/keymaps.texi (XEmacs): New.
+	* lispref/keymaps.texi (Other Keymap Functions):
+	Document the new command remapping functionality in this file.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/macros.texi (Expansion):
+	Cross-reference to documentation of #'cl-prettyexpand, #'defmacro*
+	when talking about #'macroexpand.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/searching.texi (Regular Expressions):
+	* lispref/searching.texi (Syntax of Regexps):
+	* lispref/searching.texi (Char Classes):
+	* lispref/searching.texi (Regexp Example):
+	Document the predefined character classes in this file.
+
 2011-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.texi (Top):

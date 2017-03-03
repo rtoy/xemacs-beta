@@ -4,7 +4,7 @@
 @c Copyright (C) 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/extents.info
-@node Extents, Specifiers, Abbrevs, top
+@node Extents, Specifiers, Abbrevs, Top
 @chapter Extents
 @cindex extent
 
@@ -33,7 +33,7 @@ This returns @code{t} if @var{object} is an extent.
 * Atomic Extents::	   Treating a block of text as a single entity.
 @end menu
 
-@node Intro to Extents
+@node Intro to Extents, Creating and Modifying Extents, Extents, Extents
 @section Introduction to Extents
 @cindex extent priority
 @cindex priority of an extent
@@ -105,7 +105,7 @@ When the string is re-inserted into a buffer, the extent will also
 be re-inserted.  This mechanism is used in the kill, yank, and undo
 commands.  @xref{Duplicable Extents}.
 
-@node Creating and Modifying Extents
+@node Creating and Modifying Extents, Extent Endpoints, Intro to Extents, Extents
 @section Creating and Modifying Extents
 
 @defun make-extent from to &optional buffer-or-string
@@ -140,7 +140,7 @@ This function returns @code{t} if @var{object} is an extent that has not
 been deleted, and @code{nil} otherwise.
 @end defun
 
-@node Extent Endpoints
+@node Extent Endpoints, Finding Extents, Creating and Modifying Extents, Extents
 @section Extent Endpoints
 @cindex extent endpoint
 @cindex extent start position
@@ -220,7 +220,7 @@ See documentation on @code{detach-extent} for a discussion of undo
 recording.
 @end defun
 
-@node Finding Extents
+@node Finding Extents, Mapping Over Extents, Extent Endpoints, Extents
 @section Finding Extents
 @cindex extents, locating
 
@@ -312,7 +312,7 @@ in the buffer or string's display order.  If @var{extent} is a buffer or
 string, this returns the last extent in the buffer or string.
 @end defun
 
-@node Mapping Over Extents
+@node Mapping Over Extents, Extent Properties, Finding Extents, Extents
 @section Mapping Over Extents
 @cindex extents, mapping
 
@@ -449,7 +449,7 @@ This function returns @code{t} if @code{map-extents} would visit
 @var{extent} if called with the given arguments.
 @end defun
 
-@node Extent Properties
+@node Extent Properties, Detached Extents, Mapping Over Extents, Extents
 @section Properties of Extents
 @cindex extent property
 @cindex property of an extent
@@ -727,7 +727,7 @@ This function sets the @code{initial-redisplay-function} property of the
 extent to @var{function}.
 @end defun
 
-@node Detached Extents
+@node Detached Extents, Extent Parents, Extent Properties, Extents
 @section Detached Extents
 @cindex detached extent
 
@@ -770,7 +770,7 @@ inserted, except that if @var{no-hooks} is non-@code{nil},
 @xref{Duplicable Extents}.
 @end defun
 
-@node Extent Parents
+@node Extent Parents, Duplicable Extents, Detached Extents, Extents
 @section Extent Parents
 @cindex extent parent
 @cindex extent children
@@ -815,7 +815,7 @@ including @var{extent}.  This recursively applies @code{extent-children}
 to any children of @var{extent}, until no more children can be found.
 @end defun
 
-@node Duplicable Extents
+@node Duplicable Extents, Extents and Events, Extent Parents, Extents
 @section Duplicable Extents
 @cindex duplicable extent
 @cindex unique extents
@@ -891,7 +891,7 @@ overlaps the new range, the extent will simply be extended and the
 @code{paste-function} will not be called.
 @end itemize
 
-@node Extents and Events
+@node Extents and Events, Atomic Extents, Duplicable Extents, Extents
 @section Interaction of Extents with Keyboard and Mouse Events
 
   If an extent has the @code{mouse-face} property set, it will be
@@ -931,7 +931,7 @@ consulted for mouse clicks on the extent and keypresses made while
 @code{point} is within the extent.  The behavior of mouse clicks and
 keystrokes not defined in the keymap is as normal for the buffer.
 
-@node Atomic Extents
+@node Atomic Extents,  , Extents and Events, Extents
 @section Atomic Extents
 @cindex atomic extent
 

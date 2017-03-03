@@ -84,20 +84,26 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "buffer.h"
 
 Lisp_Object Qhash_tablep;
-Lisp_Object Qeq, Qeql, Qequal, Qequalp;
-Lisp_Object Qeq_hash, Qeql_hash, Qequal_hash, Qequalp_hash;
 
 static Lisp_Object Qhashtable, Qhash_table, Qmake_hash_table;
 static Lisp_Object Qweakness, Qvalue, Qkey_or_value, Qkey_and_value;
+static Lisp_Object Qobarray;
+static Lisp_Object Qxemacs_intern_in_vector, Qxemacs_intern_soft_in_vector;
+static Lisp_Object Qxemacs_unintern_in_vector, Qxemacs_mapatoms_in_vector;
+
 static Lisp_Object Vall_weak_hash_tables;
 static Lisp_Object Qrehash_size, Qrehash_threshold;
 static Lisp_Object Q_size, Q_weakness, Q_rehash_size, Q_rehash_threshold;
-static Lisp_Object Vhash_table_test_eq, Vhash_table_test_eql;
+static Lisp_Object Veq_hash_table_test, Veql_hash_table_test;
+static Lisp_Object Vequal_hash_table_test, Vequalp_hash_table_test;
 static Lisp_Object Vhash_table_test_weak_list;
 
 /* obsolete as of 19990901 in xemacs-21.2 */
 static Lisp_Object Qweak, Qkey_weak, Qvalue_weak, Qkey_or_value_weak;
 static Lisp_Object Qnon_weak;
+
+Lisp_Object Qeq, Qeql, Qequal, Qequalp;
+Lisp_Object Qeq_hash, Qeql_hash, Qequal_hash, Qequalp_hash;
 
 /* A hash table test, with its associated hash function. equal_function may
    call lisp_equal_function, and hash_function similarly may call
@@ -117,11 +123,10 @@ mark_hash_table_test (Lisp_Object obj)
 {
   Hash_Table_Test *http = XHASH_TABLE_TEST (obj);
 
-  mark_object (http->name);
   mark_object (http->lisp_equal_function);
   mark_object (http->lisp_hash_function);
 
-  return Qnil;
+  return http->name;
 }
 
 static const struct memory_description hash_table_test_description_1[] =
@@ -168,15 +173,15 @@ struct Lisp_Hash_Table
 #define HASH_TABLE_DEFAULT_REHASH_SIZE 1.3
 #define HASH_TABLE_MIN_SIZE 10
 #define HASH_TABLE_DEFAULT_REHASH_THRESHOLD(size, test)   \
-  (((size) > 4096 && EQ (Vhash_table_test_eq, test)) ? 0.7 : 0.6)
+  (((size) > 4096 && EQ (Veq_hash_table_test, test)) ? 0.7 : 0.6)
 
 #define HASHCODE(key, ht, http)						\
-  ((((!EQ (Vhash_table_test_eq, ht->test)) ?                            \
+  ((((!EQ (Veq_hash_table_test, ht->test)) ?                            \
      (http)->hash_function (http, key) :                                \
      LISP_HASH (key)) * (ht)->golden_ratio) % (ht)->size)
 
 #define KEYS_EQUAL_P(key1, key2, test, http)                      \
-  (EQ (key1, key2) || ((!EQ (Vhash_table_test_eq, test) &&        \
+  (EQ (key1, key2) || ((!EQ (Veq_hash_table_test, test) &&        \
                         (http->equal_function) (http, key1, key2))))
 
 #define LINEAR_PROBING_LOOP(probe, entries, size)		\
@@ -345,9 +350,7 @@ mark_hash_table (Lisp_Object obj)
 	  }
     }
 
-  mark_object (ht->test);
-
-  return Qnil;
+  return ht->test;
 }
 
 static int
@@ -549,7 +552,8 @@ print_hash_table_data (Lisp_Hash_Table *ht, Lisp_Object printcharfun)
 	    break;
 	  }
 	print_internal (e->key, printcharfun, 1);
-	write_fmt_string_lisp (printcharfun, " %S", 1, e->value);
+        write_ascstring (printcharfun, " ");
+	print_internal (e->value, printcharfun, 1);        
 	count++;
       }
 
@@ -566,19 +570,20 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
   write_ascstring (printcharfun,
 		  print_readably ? "#s(hash-table" : "#<hash-table");
 
-  if (!(EQ (ht->test, Vhash_table_test_eql)))
+  if (!(EQ (ht->test, Veql_hash_table_test)))
     {
-      write_fmt_string_lisp (printcharfun, " :test %S",
-                             1, XHASH_TABLE_TEST (ht->test)->name);
+      write_ascstring (printcharfun, " :test ");
+      /* Can't just write the symbol name, it may be uninterned. */
+      print_internal (XHASH_TABLE_TEST (ht->test)->name, printcharfun, 1);
     }
 
   if (ht->count || !print_readably)
     {
       if (print_readably)
-	write_fmt_string (printcharfun, " :size %ld", (long) ht->count);
+	write_fmt_string (printcharfun, " :size %ld", ht->count);
       else
-	write_fmt_string (printcharfun, " :size %ld/%ld", (long) ht->count,
-			  (long) ht->size);
+	write_fmt_string (printcharfun, " :size %ld/%ld", ht->count,
+			  ht->size);
     }
 
   if (ht->weakness != HASH_TABLE_NON_WEAK)
@@ -594,15 +599,17 @@ print_hash_table (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (ht->rehash_size != HASH_TABLE_DEFAULT_REHASH_SIZE)
     {
-      float_to_string (pigbuf, ht->rehash_size);
-      write_fmt_string (printcharfun, " :rehash-size %s", pigbuf);
+      write_ascstring (printcharfun, " :rehash-size ");
+      write_string_1 (printcharfun, (const Ibyte *) pigbuf,
+                      float_to_string (pigbuf, ht->rehash_size));
     }
 
   if (ht->rehash_threshold
       != HASH_TABLE_DEFAULT_REHASH_THRESHOLD (ht->size, ht->test))
     {
-      float_to_string (pigbuf, ht->rehash_threshold);
-      write_fmt_string (printcharfun, " :rehash-threshold %s", pigbuf);
+      write_ascstring (printcharfun, " :rehash-threshold ");
+      write_string_1 (printcharfun, (const Ibyte *) pigbuf,
+                      float_to_string (pigbuf, ht->rehash_threshold));
     }
 
   if (ht->count)
@@ -820,7 +827,7 @@ hash_table_size_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
           /* hash_table_size() can't handle excessively large sizes. */
           maybe_signal_error_1 (Qargs_out_of_range,
                                 list3 (value, Qzero,
-                                       make_integer (MOST_POSITIVE_FIXNUM)),
+                                       make_fixnum (MOST_POSITIVE_FIXNUM)),
                                 Qhash_table, errb);
           return 0;
         }
@@ -1353,7 +1360,6 @@ find_htentry (Lisp_Object key, const Lisp_Hash_Table *ht)
 
   return probe;
 }
-
 /* A version of Fputhash() that increments the value by the specified
    amount and dispenses with all error checks.  Assumes that tables does
    comparison using EQ.  Used by the profiling routines to avoid
@@ -1756,7 +1762,376 @@ elisp_map_remhash (maphash_function_t predicate,
   unbind_to (speccount);
   UNGCPRO;
 }
+
+static Hashcode itext_equalp_hash (const Ibyte *, Bytecount, Charcount);
 
+/************************************************************************/
+/*	Lisp packages and intern, a special case of hash tables.        */
+/************************************************************************/
+
+/* Return the symbol in PACKAGE whose name matches the C string of SIZE bytes
+   at PTR.  If there is no such symbol in PACKAGE, return the next available
+   bucket number within PACKAGE appropriate for PTR, as a Lisp fixnum.
+
+   Error if PACKAGE is not a hash table mapping strings to symbols having as
+   its test one of Vequal_hash_table_test, Vequalp_hash_table_test. */
+Lisp_Object
+oblookup (Lisp_Object package, const Ibyte *ptr, Bytecount size)
+{
+  Lisp_Hash_Table *ht;
+  htentry *entries, *probe;
+  Fixnum hash;
+
+  ht = XHASH_TABLE (package);
+  entries = ht->hentries;
+
+  if (EQ (ht->test, Vequal_hash_table_test))
+    {
+      hash = (hash_string (ptr, size) * (ht)->golden_ratio) % ht->size;
+      probe = entries + hash;
+
+      LINEAR_PROBING_LOOP (probe, entries, ht->size)
+        {
+          if (!STRINGP (probe->key))
+            {
+              goto corrupt;
+            }
+          if (XSTRING_LENGTH (probe->key) == size
+              && !memcmp (XSTRING_DATA (probe->key), ptr, size))
+            {
+              if (!SYMBOLP (probe->value))
+                {
+                  goto corrupt;
+                }
+              return probe->value;
+            }
+        }
+    }
+  else if (EQ (ht->test, Vequalp_hash_table_test))
+    {
+      hash = (itext_equalp_hash (ptr, size,
+                                 bytecount_to_charcount (ptr, size))
+              * (ht)->golden_ratio) % ht->size;
+      probe = entries + hash;
+
+      LINEAR_PROBING_LOOP (probe, entries, ht->size)
+        {
+          if (!STRINGP (probe->key))
+            {
+              goto corrupt;
+            }
+
+          if (!qxetextcasecmp (XSTRING_DATA (probe->key),
+                               XSTRING_LENGTH (probe->key), ptr, size))
+            {
+              if (!SYMBOLP (probe->value))
+                {
+                  goto corrupt;
+                }
+
+              return probe->value;
+            }
+        }
+    }
+  else
+    {
+      invalid_argument ("Not a Lisp package", package);
+    }
+
+  return make_fixnum (probe - entries);
+
+ corrupt:
+  signal_error (Qinvalid_state, "Lisp package internals corrupt",
+                Qunbound);
+  return Qunbound;
+}
+
+
+
+/**********************************************************************/
+/*                              Intern				      */
+/**********************************************************************/
+
+/* As of So 20 Nov 2016 13:16:04 GMT obarray has about 16000 entries after
+   starting up with -vanilla with all packages in the load path, but none
+   installed. OBARRAY_INITIAL_SIZE reflects the :size argument to
+   #'make-hash-table, and not the number of buckets, as previously. */
+#define OBARRAY_INITIAL_SIZE 16000
+
+Lisp_Object Vobarray;
+static Lisp_Object initial_obarray;
+
+Lisp_Object
+intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
+                Lisp_Object package)
+{
+  Lisp_Object lookup;
+  Lisp_Hash_Table *ht;
+  htentry *entries, *probe;
+
+  lookup = oblookup (package, str, len);
+  if (FIXNUMP (lookup))
+    {
+      ht = XHASH_TABLE (package);
+      entries = ht->hentries;
+      probe = entries + XREALFIXNUM (lookup);
+    }
+  else
+    {
+      return lookup;
+    }
+
+#ifdef ERROR_CHECK_STRUCTURES
+  assert (HTENTRY_CLEAR_P (probe));
+  assert (NILP (reloc) ||
+          (EQ (Vequal_hash_table_test, ht->test)
+           && !memcmp (XSTRING_DATA (reloc), str, len)));
+#endif
+
+  probe->key = NILP (reloc) ? make_string (str, len) : reloc;
+  probe->value = Fmake_symbol (probe->key);
+
+  XSYMBOL (probe->value)->u.v.package_count = 1;
+  XSYMBOL (probe->value)->u.v.first_package_id
+    = (EQ (package, Vobarray)) ? 1 : 2;
+
+  if (string_byte (XSYMBOL_NAME (probe->value), 0) == ':'
+      && EQ (package, Vobarray))
+    {
+      /* The LISP way is to put keywords in their own package, but we
+         don't have packages, so we do something simpler.  Someday,
+         maybe we'll have packages and then this will be reworked.
+         --Stig. */
+      XSYMBOL_VALUE (probe->value) = probe->value;
+    }
+
+  lookup = probe->value;
+
+  /* Enlarge and rehash only after we're done with the htentry. */
+  if (++ht->count >= ht->rehash_count)
+    enlarge_hash_table (ht);
+
+  return lookup;
+}
+
+Lisp_Object
+intern (const CIbyte *str)
+{
+  return intern_istring ((Ibyte *) str, strlen (str), Qnil, Vobarray);
+}
+
+Lisp_Object
+intern_massaging_name (const CIbyte *str)
+{
+  Bytecount len = strlen (str);
+  Ibyte *tmp = alloca_ibytes (len);
+  Bytecount i;
+
+  memcpy (tmp, str, len);
+  for (i = 0; i < len; i++)
+    {
+      if (tmp[i] == '_')
+	{
+	  tmp[i] = '-';
+	}
+      else if (tmp[i] == 'X')
+	{
+	  tmp[i] = '*';
+	}
+    }
+  return intern_istring (tmp, len, Qnil, Vobarray);
+}
+
+DEFUN ("intern", Fintern, 1, 2, 0, /*
+Return the symbol with name STRING in PACKAGE.
+If there is none, one is created by this function and returned.
+PACKAGE specifies the package to use; it defaults to the value of the variable
+`obarray'.
+*/
+       (string, package))
+{
+  CHECK_STRING (string);
+  if (NILP (package)) package = Vobarray;
+
+  if (VECTORP (package))
+    {
+      int speccount = specpdl_depth ();
+      Lisp_Object result;
+      specbind (Qobarray, initial_obarray);
+      result = call2 (Qxemacs_intern_in_vector, string, package);
+      unbind_to (speccount);
+      return result;
+    }
+
+  CONCHECK_HASH_TABLE (package);
+  return intern_istring (XSTRING_DATA (string), XSTRING_LENGTH (string),
+                         string, package);
+}
+
+DEFUN ("intern-soft", Fintern_soft, 1, 3, 0, /*
+Return the symbol named NAME in PACKAGE.
+
+NAME may be a string or a symbol.  If it is a symbol, that exact symbol is
+searched for.
+
+Optional second argument PACKAGE specifies the package to use;
+it defaults to the value of the variable `obarray'.
+
+Optional third argument DEFAULT says what Lisp object to return if there is no
+symbol named NAME in PACKAGE, and defaults to the symbol nil (as interned in
+`obarray').
+*/
+       (name, package, default_))
+{
+  Lisp_Object string, lookup;
+
+  if (SYMBOLP (name))
+    {
+      string = XSYMBOL_NAME (name);
+    }
+  else
+    {
+      CHECK_STRING (name);
+      string = name;
+    }
+
+  if (NILP (package)) package = Vobarray;
+
+  if (VECTORP (package))
+    {
+      int speccount = specpdl_depth ();
+      Lisp_Object result;
+      specbind (Qobarray, initial_obarray);
+      result = call3 (Qxemacs_intern_soft_in_vector, string, package,
+                      default_);
+      unbind_to (speccount);
+      return result;
+    }
+
+  CONCHECK_HASH_TABLE (package);
+
+  lookup = oblookup (package, XSTRING_DATA (string), XSTRING_LENGTH (string));
+
+  if (FIXNUMP (lookup) || (SYMBOLP (name) && !EQ (name, lookup)))
+    return default_;
+
+  return lookup;
+}
+
+DEFUN ("unintern", Funintern, 1, 2, 0, /*
+Delete the symbol named NAME, if any, from PACKAGE.
+The value is t if a symbol was found and deleted, nil otherwise.
+NAME may be a string or a symbol.  If it is a symbol, that symbol
+is deleted, if it belongs to PACKAGE--no other symbol is deleted.
+PACKAGE defaults to the value of the variable `obarray'.
+*/
+       (name, package))
+{
+  Lisp_Object string, lookup;
+  int package_count;
+
+  if (SYMBOLP (name))
+    {
+      string = XSYMBOL_NAME (name);
+    }
+  else
+    {
+      CHECK_STRING (name);
+      string = name;
+    }
+
+  if (NILP (package)) package = Vobarray;
+
+  if (VECTORP (package))
+    {
+      int speccount = specpdl_depth ();
+      Lisp_Object result;
+      specbind (Qobarray, initial_obarray);
+      result = call2 (Qxemacs_unintern_in_vector, name, package);
+      unbind_to (speccount);
+      return result;
+    }
+
+  CONCHECK_HASH_TABLE (package);
+
+  lookup = oblookup (package, XSTRING_DATA (string), XSTRING_LENGTH (string));
+
+  if (FIXNUMP (lookup) || (SYMBOLP (name) && !EQ (name, lookup)))
+    {
+      /* Not in package, or a symbol was supplied and it is not the symbol to
+         unintern. */
+      return Qnil;
+    }
+
+  package_count = XSYMBOL (lookup)->u.v.package_count;
+  if (package_count > 0)
+    {
+      if (1 == package_count)
+        {
+          XSYMBOL (lookup)->u.v.first_package_id = 0;
+        }
+      XSYMBOL (lookup)->u.v.package_count = package_count - 1;
+    }
+
+  /* In contrast to the other symbol-manipulation primitives, #'unintern is
+     called rarely enough that it's perfectly reasonable to use the normal
+     #'remhash. */
+  Fremhash (string, package);
+  return Qt;
+}
+
+/* An excellent string hashing function.
+   Adapted from glib's g_str_hash().
+   Investigation by Karl Nelson <kenelson@ece.ucdavis.edu>.
+   Do a web search for "g_str_hash X31_HASH" if you want to know more. */
+unsigned int
+hash_string (const Ibyte *ptr, Bytecount len)
+{
+  unsigned int hash;
+
+  for (hash = 0; len; len--, ptr++)
+    /* (31 * hash) will probably be optimized to ((hash << 5) - hash). */
+    hash = 31 * hash + *ptr;
+
+  return hash;
+}
+
+static int
+mapatoms_1 (Lisp_Object key, Lisp_Object sym, void *arg)
+{
+  if (!STRINGP (key) || !SYMBOLP (sym))
+    {
+      signal_error (Qinvalid_state, "Lisp package internals corrupt",
+                    Qunbound);
+    }
+  call1 (*(Lisp_Object *)arg, sym);
+  return 0;
+}
+
+DEFUN ("mapatoms", Fmapatoms, 1, 2, 0, /*
+Call FUNCTION on every symbol in PACKAGE.
+PACKAGE defaults to the value of `obarray'.
+*/
+       (function, package))
+{
+  if (NILP (package))
+    package = Vobarray;
+
+  if (VECTORP (package))
+    {
+      int speccount = specpdl_depth ();
+      Lisp_Object result;
+      specbind (Qobarray, initial_obarray);
+      result = call2 (Qxemacs_mapatoms_in_vector, function, package);
+      unbind_to (speccount);
+      return result;
+    }
+
+  CONCHECK_HASH_TABLE (package);
+  elisp_maphash (mapatoms_1, package, &function);
+
+  return Qnil;
+}
 
 /************************************************************************/
 /*		   garbage collecting weak hash tables			*/
@@ -1950,35 +2325,24 @@ internal_array_hash (Lisp_Object *arr, int size, int depth, Boolint equalp)
 /* This needs to be algorithmically the same as
    internal_array_hash(). Unfortunately, for strings with non-ASCII content,
    it has to be O(2N), I don't see a reasonable alternative to hashing
-   sequence relying on their length. It is O(1) for pure ASCII strings,
+   sequences relying on their length. It is O(1) for pure ASCII Lisp strings,
    though. */
 
 static Hashcode
-string_equalp_hash (Lisp_Object string)
+itext_equalp_hash (const Ibyte *data, Bytecount len, Charcount clen)
 {
-  Bytecount len = XSTRING_LENGTH (string),
-    ascii_begin = (Bytecount) XSTRING_ASCII_BEGIN (string);
-  const Ibyte *ptr = XSTRING_DATA (string), *pend = ptr + len;
-  Charcount clen;
+  const Ibyte *pend = data + len;
   Hashcode hash = 0;
-
-  if (len == ascii_begin)
-    {
-      clen = len;
-    }
-  else
-    {
-      clen = string_char_length (string);
-    }
 
   if (clen <= 5)
     {
-      while (ptr < pend)
+      while (data < pend)
         {
-          hash = HASH2 (hash,
-                        LISP_HASH (make_char (CANONCASE (NULL,
-                                                         itext_ichar (ptr)))));
-          INC_IBYTEPTR (ptr);
+          hash
+            = HASH2 (hash,
+                     LISP_HASH (make_char (CANONCASE (NULL,
+                                                      itext_ichar (data)))));
+          INC_IBYTEPTR (data);
         }
     }
   else
@@ -1992,7 +2356,7 @@ string_equalp_hash (Lisp_Object string)
               hash = HASH2 (hash,
                             LISP_HASH (make_char
                                        (CANONCASE (NULL,
-                                                   ptr[ii * clen / 5]))));
+                                                   data[ii * clen / 5]))));
             }
         }
       else
@@ -2001,18 +2365,23 @@ string_equalp_hash (Lisp_Object string)
           for (ii = 0; ii < 5; ii++)
             {
               this_char = ii * clen / 5;
-              ptr = itext_n_addr (ptr, this_char - last_char);
+              data = itext_n_addr (data, this_char - last_char);
               last_char = this_char;
 
               hash = HASH2 (hash,
                             LISP_HASH (make_char
-                                       (CANONCASE (NULL, itext_ichar (ptr)))));
+                                       (CANONCASE (NULL,
+                                                   itext_ichar (data)))));
             }
         }
     }
 
   return HASH2 (clen, hash);
 }
+
+#define string_equalp_hash(string)                                      \
+      itext_equalp_hash (XSTRING_DATA (string), XSTRING_LENGTH (string), \
+                         string_char_length (string))
 
 /* Return a hash value for a Lisp_Object.  This is for use when hashing
    objects with the comparison being `equal' (for `eq', you can just
@@ -2336,6 +2705,50 @@ hash_table_objects_create (void)
 void
 syms_of_elhash (void)
 {
+  /* This was set incorrectly since init_elhash_once_early() was called before
+     Qunbound had a useful value. */
+  xhash_table (Vobarray)->next_weak = Qunbound;
+
+  /* This must NOT be staticpro'd */
+  Vall_weak_hash_tables = Qnil;
+  dump_add_weak_object_chain (&Vall_weak_hash_tables);
+ 
+  staticpro (&Vhash_table_test_weak_list);
+  Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
+
+  DEFSYMBOL (Qeq);
+  DEFSYMBOL (Qeql);
+  DEFSYMBOL (Qequal);
+  DEFSYMBOL (Qequalp);
+
+  DEFSYMBOL (Qeq_hash);
+  DEFSYMBOL (Qeql_hash);
+  DEFSYMBOL (Qequal_hash);
+  DEFSYMBOL (Qequalp_hash);
+
+  staticpro (&Veq_hash_table_test);
+  Veq_hash_table_test
+    = define_hash_table_test (Qeq, NULL, NULL, Qeq, Qeq_hash);
+  staticpro (&Veql_hash_table_test);
+  Veql_hash_table_test
+    = define_hash_table_test (Qeql, lisp_object_eql_equal,
+                              lisp_object_eql_hash, Qeql, Qeql_hash);
+
+  /* Vequal_hash_table_test was initialized very early, before
+     define_hash_table_test was truly available. Do much of that work now. */
+  XHASH_TABLE_TEST (Vequal_hash_table_test)->lisp_equal_function
+    = Qequal;
+  XHASH_TABLE_TEST (Vequal_hash_table_test)->lisp_hash_function
+    = Qequal_hash;
+  XHASH_TABLE_TEST (Vequal_hash_table_test)->name = Qequal;
+  XWEAK_LIST_LIST (Vhash_table_test_weak_list)
+    = Fcons (Fcons (Qequal, Vequal_hash_table_test),
+             XWEAK_LIST_LIST (Vhash_table_test_weak_list));
+
+  Vequalp_hash_table_test
+    = define_hash_table_test (Qequalp, lisp_object_equalp_equal,
+                              lisp_object_equalp_hash, Qequalp, Qequalp_hash);
+
   DEFSUBR (Fhash_table_p);
   DEFSUBR (Fmake_hash_table);
   DEFSUBR (Fcopy_hash_table);
@@ -2344,6 +2757,12 @@ syms_of_elhash (void)
   DEFSUBR (Fputhash);
   DEFSUBR (Fclrhash);
   DEFSUBR (Fmaphash);
+
+  DEFSUBR (Fintern);
+  DEFSUBR (Fintern_soft);
+  DEFSUBR (Funintern);
+  DEFSUBR (Fmapatoms);
+
   DEFSUBR (Fhash_table_count);
   DEFSUBR (Fhash_table_test);
   DEFSUBR (Fhash_table_size);
@@ -2382,6 +2801,13 @@ syms_of_elhash (void)
   DEFSYMBOL (Qvalue_weak); /* obsolete */
   DEFSYMBOL (Qnon_weak);     /* obsolete */
 
+  DEFSYMBOL (Qobarray);
+
+  DEFSYMBOL (Qxemacs_intern_in_vector);
+  DEFSYMBOL (Qxemacs_intern_soft_in_vector);
+  DEFSYMBOL (Qxemacs_unintern_in_vector);
+  DEFSYMBOL (Qxemacs_mapatoms_in_vector); 
+
   DEFKEYWORD (Q_data);
   DEFKEYWORD (Q_size);
   DEFKEYWORD (Q_rehash_size);
@@ -2412,6 +2838,14 @@ vars_of_elhash (void)
   OBJECT_HAS_PROPERTY
     (hash_table, memusage_stats_list, list1 (intern ("hash-entries")));
 #endif /* MEMORY_USAGE_STATS */
+
+  DEFVAR_LISP ("obarray", &Vobarray /*
+Package for use by `intern' and `read'.
+This is a hash table mapping from strings to symbol objects with the
+corresponding strings as their names.  To find all the symbols in a package,
+use `mapatoms'.
+*/ );
+  /* obarray has been initialized long before */
 }
 
 void
@@ -2424,34 +2858,20 @@ init_elhash_once_early (void)
   INIT_LISP_OBJECT (hash_table_entry);
 #endif /* NEW_GC */
 
-  /* init_elhash_once_early() is called very early, we can't have these
-     DEFSYMBOLs in syms_of_elhash(), unfortunately. */
+  /* Create Vequal_hash_table_test so we can create Vobarray. */
+  staticpro (&Vequal_hash_table_test);
+  Vequal_hash_table_test
+    /* Qequal isn't yet available, so this gets ugly. It's corrected in
+       syms_of_elhash. */
+    = make_hash_table_test (Qnull_pointer, lisp_object_equal_equal,
+                            lisp_object_equal_hash, Qnull_pointer,
+                            Qnull_pointer);
 
-  DEFSYMBOL (Qeq);
-  DEFSYMBOL (Qeql);
-  DEFSYMBOL (Qequal);
-  DEFSYMBOL (Qequalp);
-
-  DEFSYMBOL (Qeq_hash);
-  DEFSYMBOL (Qeql_hash);
-  DEFSYMBOL (Qequal_hash);
-  DEFSYMBOL (Qequalp_hash);
-
-  /* This must NOT be staticpro'd */
-  Vall_weak_hash_tables = Qnil;
-  dump_add_weak_object_chain (&Vall_weak_hash_tables);
- 
-  staticpro (&Vhash_table_test_weak_list);
-  Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
-
-  staticpro (&Vhash_table_test_eq);
-  Vhash_table_test_eq = define_hash_table_test (Qeq, NULL, NULL, Qeq, Qeq_hash);
-  staticpro (&Vhash_table_test_eql);
-  Vhash_table_test_eql
-    = define_hash_table_test (Qeql, lisp_object_eql_equal,
-                              lisp_object_eql_hash, Qeql, Qeql_hash);
-  (void) define_hash_table_test (Qequal, lisp_object_equal_equal,
-                                 lisp_object_equal_hash, Qequal, Qequal_hash);
-  (void) define_hash_table_test (Qequalp, lisp_object_equalp_equal,
-                                 lisp_object_equalp_hash, Qequalp, Qequalp_hash);
+  /* Create obarray here, not in symbols.c, symbols.c can't see
+     Vequal_hash_table_test. */
+  Vobarray = make_general_lisp_hash_table (Vequal_hash_table_test,
+                                           OBARRAY_INITIAL_SIZE, -1.0, -1.0,
+                                           HASH_TABLE_NON_WEAK);
+  initial_obarray = Vobarray;
+  staticpro (&initial_obarray);
 }

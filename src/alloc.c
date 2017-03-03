@@ -832,23 +832,25 @@ zero_nonsized_lisp_object (Lisp_Object obj)
   zero_sized_lisp_object (obj, lisp_object_size (obj));
 }
 
+#ifdef NEW_GC
+void
+free_normal_lisp_object (Lisp_Object UNUSED(obj))
+{
+  /* Manual frees are not allowed with asynchronous finalization */
+  return;
+}
+#else
 void
 free_normal_lisp_object (Lisp_Object obj)
 {
-#ifndef NEW_GC
   const struct lrecord_implementation *imp =
     XRECORD_LHEADER_IMPLEMENTATION (obj);
-#endif /* not NEW_GC */
 
-#ifdef NEW_GC
-  /* Manual frees are not allowed with asynchronous finalization */
-  return;
-#else
   assert (!imp->frob_block_p);
   assert (!imp->size_in_bytes_method);
   old_free_lcrecord (obj);
-#endif
 }
+#endif
 
 #ifndef NEW_GC
 int
@@ -1583,7 +1585,7 @@ Return a new list of length LENGTH, with each element being OBJECT.
   Lisp_Object val = Qnil;
   Elemcount size;
 
-  check_integer_range (length, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (length, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 
   size = XFIXNUM (length);
 
@@ -1638,6 +1640,45 @@ make_bignum (long bignum_value)
   ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
   bignum_init (bignum_data (b));
   bignum_set_long (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_un (unsigned long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_ulong (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_ll (long long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_llong (bignum_data (b), bignum_value);
+  return wrap_bignum (b);
+}
+
+/* WARNING: This function returns a bignum even if its argument fits into a
+   fixnum.  See Fcanonicalize_number(). */
+Lisp_Object
+make_bignum_ull (unsigned long long bignum_value)
+{
+  Lisp_Bignum *b;
+
+  ALLOC_FROB_BLOCK_LISP_OBJECT (bignum, Lisp_Bignum, b, &lrecord_bignum);
+  bignum_init (bignum_data (b));
+  bignum_set_ullong (bignum_data (b), bignum_value);
   return wrap_bignum (b);
 }
 
@@ -1738,8 +1779,7 @@ static Lisp_Object
 mark_vector (Lisp_Object obj)
 {
   Lisp_Vector *ptr = XVECTOR (obj);
-  int len = vector_length (ptr);
-  int i;
+  Elemcount len = vector_length (ptr), i;
 
   for (i = 0; i < len - 1; i++)
     mark_object (ptr->contents[i]);
@@ -1757,7 +1797,7 @@ size_vector (Lisp_Object obj)
 static int
 vector_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
 {
-  int len = XVECTOR_LENGTH (obj1);
+  Elemcount len = XVECTOR_LENGTH (obj1);
   if (len != XVECTOR_LENGTH (obj2))
     return 0;
 
@@ -1819,7 +1859,7 @@ vector_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
 }
 
 static const struct memory_description vector_description[] = {
-  { XD_LONG,              offsetof (Lisp_Vector, size) },
+  { XD_ELEMCOUNT,              offsetof (Lisp_Vector, size) },
   { XD_LISP_OBJECT_ARRAY, offsetof (Lisp_Vector, contents), XD_INDIRECT(0, 0) },
   { XD_END }
 };
@@ -1831,8 +1871,9 @@ DEFINE_DUMPABLE_SIZABLE_LISP_OBJECT ("vector", vector,
 				     vector_description,
 				     size_vector, Lisp_Vector);
 /* #### should allocate `small' vectors from a frob-block */
-static Lisp_Vector *
-make_vector_internal (Elemcount sizei)
+
+Lisp_Object
+make_uninit_vector (Elemcount sizei)
 {
   /* no `next' field; we use lcrecords */
   Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
@@ -1841,19 +1882,19 @@ make_vector_internal (Elemcount sizei)
   Lisp_Vector *p = XVECTOR (obj);
 
   p->size = sizei;
-  return p;
+  return obj;
 }
 
 Lisp_Object
 make_vector (Elemcount length, Lisp_Object object)
 {
-  Lisp_Vector *vecp = make_vector_internal (length);
-  Lisp_Object *p = vector_data (vecp);
+  Lisp_Object result = make_uninit_vector (length);
+  Lisp_Object *p = XVECTOR_DATA (result);
 
   while (length--)
     *p++ = object;
 
-  return wrap_vector (vecp);
+  return result;
 }
 
 DEFUN ("make-vector", Fmake_vector, 2, 2, 0, /*
@@ -1874,13 +1915,9 @@ arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Vector *vecp = make_vector_internal (nargs);
-  Lisp_Object *p = vector_data (vecp);
-
-  while (nargs--)
-    *p++ = *args++;
-
-  return wrap_vector (vecp);
+  Lisp_Object result = make_uninit_vector (nargs);
+  memcpy (XVECTOR_DATA (result), args, sizeof (Lisp_Object) * nargs);
+  return result;
 }
 
 Lisp_Object
@@ -2038,7 +2075,7 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 static Hashcode
 internal_bit_vector_equalp_hash (Lisp_Bit_Vector *v)
 {
-  int ii, size = bit_vector_length (v);
+  Elemcount ii, size = bit_vector_length (v);
   Hashcode hash = 0;
 
   if (size <= 5)
@@ -2343,7 +2380,6 @@ Its value and function definition are void, and its property list is nil.
   p->plist    = Qnil;
   p->value    = Qunbound;
   p->function = Qunbound;
-  symbol_next (p) = 0;
   return wrap_symbol (p);
 }
 
@@ -2631,15 +2667,21 @@ static const struct memory_description string_description[] = {
   { XD_END }
 };
 
-/* We store the string's extent info as the first element of the string's
-   property list; and the string's MODIFF as the first or second element
-   of the string's property list (depending on whether the extent info
-   is present), but only if the string has been modified.  This is ugly
-   but it reduces the memory allocated for the string in the vast
-   majority of cases, where the string is never modified and has no
-   extent info.
+/* The vast majority of strings have no associated extent info and will never
+   be modified. In the interest of conserving memory, we do not keep extent
+   info or the modified counter directly in the string object. Instead, we
+   abuse the string plist attribute.
 
-   #### This means you can't use an int as a key in a string's plist. */
+   If the first element of the plist is EXTENT_INFOP (a type of object not
+   visible to Lisp and which consequently will never end up in the plist in
+   the normal course of events), then that is the string's extent info.
+
+   If the next element of the plist is a fixnum and we have flipped a bit in
+   the header to document that this string has ever been modified, then that
+   fixnum is the string's modified counter.
+
+   The string's true plist starts after any extent info and any modified
+   tick. */
 
 static Lisp_Object *
 string_plist_ptr (Lisp_Object string)
@@ -2648,8 +2690,11 @@ string_plist_ptr (Lisp_Object string)
 
   if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
     ptr = &XCDR (*ptr);
-  if (CONSP (*ptr) && FIXNUMP (XCAR (*ptr)))
-    ptr = &XCDR (*ptr);
+  if (CONSP (*ptr) && XSTRING_MODIFFP (string))
+    {
+      structure_checking_assert (FIXNUMP (XCAR (*ptr)));
+      ptr = &XCDR (*ptr);
+    }
   return ptr;
 }
 
@@ -2676,6 +2721,42 @@ static Lisp_Object
 string_plist (Lisp_Object string)
 {
   return *string_plist_ptr (string);
+}
+
+struct extent_info *
+string_extent_info (Lisp_Object string)
+{
+  Lisp_Object plist = XSTRING_PLIST (string);
+
+  if (CONSP (plist) && EXTENT_INFOP (XCAR (plist)))
+    return XEXTENT_INFO (XCAR (plist));
+
+  return NULL;
+}
+
+void
+bump_string_modiff (Lisp_Object str)
+{
+  Lisp_Object *ptr = &XSTRING_PLIST (str);
+
+#ifdef I18N3
+  /* #### remove the `string-translatable' property from the string,
+     if there is one. */
+#endif
+
+  /* skip over extent info if it's there */
+  if (CONSP (*ptr) && EXTENT_INFOP (XCAR (*ptr)))
+    ptr = &XCDR (*ptr);
+  if (CONSP (*ptr) && XSTRING_MODIFFP (str))
+    {
+      structure_checking_assert (FIXNUMP (XCAR (*ptr)));
+      XCAR (*ptr) = make_fixnum (1 + XFIXNUM (XCAR (*ptr)));
+    }
+  else
+    {
+      XSET_STRING_MODIFFP (str);
+      *ptr = Fcons (make_fixnum (1), *ptr);
+    }
 }
 
 #ifndef NEW_GC
@@ -2881,6 +2962,9 @@ make_uninit_string (Bytecount length)
   /* The above allocations set the UID field, which overlaps with the
      ascii-length field, to some non-zero value.  We need to zero it. */
   XSET_STRING_ASCII_BEGIN (wrap_string (s), 0);
+
+  /* They also override the MODIFFP flag. */
+  XCLEAR_STRING_MODIFFP (wrap_string (s));
 
 #ifdef NEW_GC
   set_lispstringp_direct (s);
@@ -3175,6 +3259,30 @@ arguments: (&rest ARGS)
   return make_string (storage, p - storage);
 }
 
+DEFUN ("string-modified-tick", Fstring_modified_tick, 1, 1, 0, /*
+Return STRING's tick counter, incremented for each change to the string.
+Each string has a tick counter which is incremented each time the contents
+of the string are changed (e.g. with `aset').  It wraps around occasionally.
+*/
+       (string))
+{
+  Lisp_Object plist;
+  CHECK_STRING (string);
+
+  plist = XSTRING_PLIST (string);
+  if (CONSP (plist) && EXTENT_INFOP (XCAR (plist)))
+    {
+      plist = XCDR (plist);
+    }
+
+  if (CONSP (plist) && XSTRING_MODIFFP (string))
+    {
+      return XCAR (plist);
+    }
+
+  return Qzero;
+}
+
 /* Initialize the ascii_begin member of a string to the correct value. */
 
 void
@@ -3454,9 +3562,19 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
   if (!NILP (list->free))
     {
       Lisp_Object val = list->free;
-      struct free_lcrecord_header *free_header =
-	(struct free_lcrecord_header *) XPNTR (val);
-      struct lrecord_header *lheader = &free_header->lcheader.lheader;
+      struct free_lcrecord_header *free_header;
+      struct lrecord_header *lheader;
+
+      if (EQ (val, Qnull_pointer))
+        {
+          /* This can happen for those objects created before Qnil is
+             initialized. */
+          list->free = Qnil;
+          goto normal_alloc;
+        }
+
+      free_header = (struct free_lcrecord_header *) XPNTR (val);
+      lheader = &free_header->lcheader.lheader;
 
 #ifdef ERROR_CHECK_GC
       /* Major overkill here. */
@@ -3484,8 +3602,9 @@ alloc_managed_lcrecord (Lisp_Object lcrecord_list)
       zero_sized_lisp_object (val, list->size);
       return val;
     }
-  else
-    return old_alloc_sized_lcrecord (list->size, list->implementation);
+
+ normal_alloc:
+  return old_alloc_sized_lcrecord (list->size, list->implementation);
 }
 
 /* "Free" a Lisp object LCRECORD by placing it on its associated free list
@@ -4570,8 +4689,7 @@ tree_memory_usage_1 (Lisp_Object arg, int vectorp, int depth)
     }
   else if (VECTORP (arg) && vectorp)
     {
-      int i = XVECTOR_LENGTH (arg);
-      int j;
+      Elemcount i = XVECTOR_LENGTH (arg), j;
       total += lisp_object_memory_usage (arg);
       for (j = 0; j < i; j++)
 	{
@@ -5950,6 +6068,7 @@ syms_of_alloc (void)
   DEFSUBR (Fmake_bit_vector);
   DEFSUBR (Fmake_string);
   DEFSUBR (Fstring);
+  DEFSUBR (Fstring_modified_tick);
   DEFSUBR (Fmake_symbol);
   DEFSUBR (Fmake_marker);
 #ifdef ALLOC_TYPE_STATS

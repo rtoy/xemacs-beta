@@ -50,8 +50,8 @@
 (defvar source-src (expand-file-name "../src" source-lisp))
 
 (defun message (fmt &rest args)
-  (princ (apply #'format fmt args))
-  (terpri))
+  (write-sequence (apply #'format fmt args))
+  (write-char ?\n))
 
 ;; Gobble up the stuff we don't wish to pass on.
 (setq command-line-args (cdr (cdr (cdr (cdr command-line-args)))))
@@ -118,10 +118,11 @@
 		   (not (member arg processed)))
 	  (when (string-match "\\(.*\\)\\.obj$" arg)
 	    (setq arg (expand-file-name
-		       (concat 
-			(file-name-nondirectory
-			 ;; no match-string so use its implementation.
-			 (subseq arg (match-beginning 1) (match-end 1)))
+		       (concatenate
+                        'string 
+                        (file-name-nondirectory
+                         ;; no match-string so use its implementation.
+                         (subseq arg (match-beginning 1) (match-end 1)))
 			".c")
 		       source-src)))
 	  (if (and (null docfile-out-of-date)
@@ -221,7 +222,7 @@
 
 (setq processed (nreverse processed))
 
-(terpri)
+(write-sequence "\n")
 
 ;(message (prin1-to-string (append options processed)))
 

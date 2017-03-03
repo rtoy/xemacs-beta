@@ -50,7 +50,7 @@ Makes the commands to define mode-specific abbrevs define global ones instead."
   :group 'abbrev)
 
 (defcustom defining-abbrev-turns-on-abbrev-mode t
-  "*NOn-nil turns on abbrev-mode whenever an abbrev is defined.
+  "*Non-nil turns on abbrev-mode whenever an abbrev is defined.
 This occurs only when the user-level commands (e.g. `add-global-abbrev')
 are used.  abbrev-mode is turned on in all buffers or the current-buffer
 only, depending on whether a global or mode-specific abbrev is defined."
@@ -68,11 +68,11 @@ This causes `save-some-buffers' to offer to save the abbrevs.")
 
 (defun make-abbrev-table ()
   "Return a new, empty abbrev table object."
-  (make-vector 59 0)) ; 59 is prime
+  (make-hash-table :test #'equal))
 
 (defun clear-abbrev-table (table)
   "Undefine all abbrevs in abbrev table TABLE, leaving it empty."
-  (fillarray table 0)
+  (clrhash table)
   (setq abbrevs-changed t)
   nil)
 
@@ -81,7 +81,7 @@ This causes `save-some-buffers' to offer to save the abbrevs.")
 Define abbrevs in it according to DEFINITIONS, which is a list of elements
 of the form (ABBREVNAME EXPANSION HOOK USECOUNT)."
   (let ((table (and (boundp table-name) (symbol-value table-name))))
-    (cond ((vectorp table))
+    (cond ((hash-table-p table))
           ((not table)
            (setq table (make-abbrev-table))
            (set table-name table)
@@ -89,7 +89,7 @@ of the form (ABBREVNAME EXPANSION HOOK USECOUNT)."
 		 (sort (cons table-name abbrev-table-name-list)
 		       #'string-lessp)))
           (t
-           (setq table (wrong-type-argument 'vectorp table))
+           (setq table (wrong-type-argument 'hash-table-p table))
            (set table-name table)))
     (while definitions
       (apply (function define-abbrev) table (car definitions))
@@ -101,8 +101,9 @@ NAME and EXPANSION are strings.  Hook is a function or `nil'.
 To undefine an abbrev, define it with an expansion of `nil'."
   (check-type expansion (or null string))
   (check-type count (or null integer))
-  (check-type table vector)
-  (let* ((sym (intern name table))
+  (check-type table hash-table)
+  (let* ((sym (or (gethash name table)
+                  (puthash name (make-symbol name) table)))
          (oexp (and (boundp sym) (symbol-value sym)))
          (ohook (and (fboundp sym) (symbol-function sym))))
     (unless (and (equal ohook hook)
@@ -112,7 +113,7 @@ To undefine an abbrev, define it with an expansion of `nil'."
       (setq abbrevs-changed t)
       ;; If there is a non-word character in the string, set the flag.
       (if (string-match "\\W" name)
-	  (set (intern " " table) nil)))
+          (puthash " " nil table)))
     (set sym expansion)
     (fset sym hook)
     (setplist sym (or count 0))
@@ -145,17 +146,15 @@ it is interned in an abbrev-table rather than the normal obarray.
 The value is nil if that abbrev is not defined.
 Optional second arg TABLE is abbrev table to look it up in.
 The default is to try buffer's mode-specific abbrev table, then global table."
-  (let ((frob (function (lambda (table)
-                (let ((sym (intern-soft abbrev table)))
-                  (if (and (boundp sym)
-                           (stringp (symbol-value sym)))
-                      sym
-                      nil))))))
+  (labels ((frob (table)
+             (let ((sym (intern-soft abbrev table)))
+               (if (and (boundp sym)
+                        (stringp (symbol-value sym)))
+                   sym))))
     (if table
-        (funcall frob table)
-        (or (and local-abbrev-table
-                 (funcall frob local-abbrev-table))
-            (funcall frob global-abbrev-table)))))
+        (frob table)
+      (or (and local-abbrev-table (frob local-abbrev-table))
+          (frob global-abbrev-table)))))
 
 (defun abbrev-expansion (abbrev &optional table)
   "Return the string that ABBREV expands into in the current buffer.
@@ -490,7 +489,7 @@ the user declines to confirm redefining an existing abbrev."
 	    (not (abbrev-expansion name table))
 	    (y-or-n-p (format "%s expands to \"%s\"; redefine? "
 			      name (abbrev-expansion name table))))
-	(define-abbrev table (downcase name) exp))))
+	(define-abbrev table (canoncase name) exp))))
 
 (defun inverse-abbrev-string-to-be-defined (arg)
   "Return the string for which an inverse abbrev will be defined.
@@ -536,7 +535,7 @@ Expands the abbreviation after defining it."
 	    (y-or-n-p (format "%s expands to \"%s\"; redefine? "
 			      name (abbrev-expansion name table))))
 	(progn
-	 (define-abbrev table (downcase name) exp)
+	 (define-abbrev table (canoncase name) exp)
 	 (save-excursion
 	  (goto-char nameloc)
 	  (expand-abbrev))))))
@@ -568,7 +567,7 @@ If called from a Lisp program, arguments are START END &optional NOQUERY."
 			 (<= (setq pnt (point)) (- (point-max) lim))))
 	(if (abbrev-expansion
 	     (setq string
-		   (downcase (buffer-substring
+		   (canoncase (buffer-substring
 			      (save-excursion (backward-word) (point))
 			      pnt))))
 	    (if (or noquery (y-or-n-p (format "Expand `%s'? " string)))

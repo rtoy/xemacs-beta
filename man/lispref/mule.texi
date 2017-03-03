@@ -3,7 +3,7 @@
 @c Copyright (C) 1996 Ben Wing, 2001-2002 Free Software Foundation.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/internationalization.info
-@node MULE, Tips, Internationalization, top
+@node MULE, Tips, Internationalization, Top
 @chapter MULE
 
   @dfn{MULE} is the name originally given to the version of GNU Emacs

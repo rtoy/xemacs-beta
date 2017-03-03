@@ -56,7 +56,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 */
 
 /* Load the library definitions */
-#ifdef WITH_GMP
+#if defined(WITH_GMP) || defined(WITH_MPIR)
 #include "number-gmp.h"
 #endif
 #ifdef WITH_MP
@@ -101,17 +101,48 @@ DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 #if SIZEOF_EMACS_INT == SIZEOF_LONG
 # define bignum_fits_emacs_int_p(b) bignum_fits_long_p(b)
 # define bignum_to_emacs_int(b) bignum_to_long(b)
+# define bignum_to_emacs_uint(b) bignum_to_ulong(b)
+# define bignum_set_emacs_int bignum_set_long
+# define make_bignum_emacs_uint(b) make_bignum_un(b)
 #elif SIZEOF_EMACS_INT == SIZEOF_INT
 # define bignum_fits_emacs_int_p(b) bignum_fits_int_p(b)
 # define bignum_to_emacs_int(b) bignum_to_int(b)
+# define bignum_to_emacs_uint(b) bignum_to_uint(b)
+# define bignum_set_emacs_int bignum_set_long
+# define make_bignum_emacs_uint(b) make_bignum_un(b)
 #else
-# error Bignums currently do not work with long long Emacs integers.
+# define bignum_fits_emacs_int_p(b) bignum_fits_llong_p(b)
+# define bignum_to_emacs_int(b) bignum_to_llong(b)
+# define bignum_to_emacs_uint(b) bignum_to_ullong(b)
+# define bignum_set_emacs_int bignum_set_llong
+# define make_bignum_emacs_uint(b) make_bignum_ull(b)
+#endif
+
+#if SIZEOF_LONG == 8
+# define bignum_to_int_64_bit bignum_to_long
+# define bignum_to_uint_64_bit bignum_to_ulong
+# define make_bignum_int_64_bit make_bignum
+# define make_bignum_uint_64_bit make_bignum_un
+#elif SIZEOF_LONG_LONG == 8
+# define bignum_to_int_64_bit bignum_to_llong
+# define bignum_to_uint_64_bit bignum_to_ullong
+# define make_bignum_int_64_bit make_bignum_ll
+# define make_bignum_uint_64_bit make_bignum_ull
+#elif SIZEOF_INT == 8
+# define bignum_to_int_64_bit bignum_to_int
+# define bignum_to_uint_64_bit bignum_to_uint
+# define make_bignum_int_64_bit make_bignum
+# define make_bignum_uint_64_bit make_bignum_un
+#else
+#error "Do you really have no 64-bit integers?"
 #endif
 
 extern Lisp_Object make_bignum (long);
+extern Lisp_Object make_bignum_un (unsigned long);
+extern Lisp_Object make_bignum_ll (long long);
+extern Lisp_Object make_bignum_ull (unsigned long long);
 extern Lisp_Object make_bignum_bg (bignum);
 extern bignum scratch_bignum, scratch_bignum2;
-
 #else /* !HAVE_BIGNUM */
 
 #define BIGNUMP(x)         0
@@ -119,6 +150,7 @@ extern bignum scratch_bignum, scratch_bignum2;
 #define CONCHECK_BIGNUM(x) dead_wrong_type_argument (Qbignump, x)
 typedef void bignum;
 #define make_bignum(l)     This XEmacs does not support bignums
+#define make_bignum_ll(l)  This XEmacs does not support bignums
 #define make_bignum_bg(b)  This XEmacs does not support bignums
 
 #endif /* HAVE_BIGNUM */
@@ -140,10 +172,15 @@ EXFUN (Fbignump, 1);
 }  while (0)
 
 #ifdef HAVE_BIGNUM
-#define make_integer(x) \
-  (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x) : make_bignum (x))
+#define make_integer(x)							\
+  (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)			\
+   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ll (x) : make_bignum (x)))
+#define make_unsigned_integer(x)					\
+  (UNSIGNED_NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)		\
+   : (sizeof (x) > SIZEOF_LONG ? make_bignum_ull (x) : make_bignum_un (x)))
 #else
 #define make_integer(x) make_fixnum (x)
+#define make_unsigned_integer(x) make_fixnum ((EMACS_INT) x)
 #endif
 
 extern Fixnum Vmost_negative_fixnum, Vmost_positive_fixnum;
@@ -170,7 +207,7 @@ EXFUN (Foddp, 1);
 
 #ifdef HAVE_BIGNUM
 #define NATNUMP(x) ((FIXNUMP (x) && XFIXNUM (x) >= 0) || \
-                    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
+		    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
 #else
 #define NATNUMP(x) (FIXNUMP (x) && XFIXNUM (x) >= 0)
 #endif
@@ -363,12 +400,56 @@ EXFUN (Frealp, 1);
 
 EXFUN (Fcanonicalize_number, 1);
 
-enum number_type {FIXNUM_T, BIGNUM_T, RATIO_T, FLOAT_T, BIGFLOAT_T};
+#define NUMBER_TYPES(prefix) prefix##FIXNUM_T, prefix##BIGNUM_T, \
+    prefix##RATIO_T, prefix##FLOAT_T, prefix##BIGFLOAT_T
+
+#ifdef _MSC_VER
+/* Disable warning 4003:
+ * warning C4003: not enough actual parameters for macro 'NUMBER_TYPES'
+ */
+#pragma warning( push )
+#pragma warning( disable : 4003)
+#endif
+
+enum number_type { NUMBER_TYPES() };
+enum lazy_number_type { NUMBER_TYPES(LAZY_), LAZY_MARKER_T };
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
+
+#undef NUMBER_TYPES
 
 extern enum number_type get_number_type (Lisp_Object);
 extern enum number_type promote_args (Lisp_Object *, Lisp_Object *);
 
 #ifdef WITH_NUMBER_TYPES
+
+/* promote_args() *always* converts a marker argument to a fixnum.
+
+   Unfortunately, for a marker with byte position N, getting the (character)
+   marker position is O(N). Getting the character position isn't necessary
+   for bytecode_arithcompare() if two markers being compared are in the same
+   buffer, comparing the byte position is enough.
+
+   Similarly, min and max don't necessarily need to have their arguments
+   converted from markers, though we have always promised up to this point
+   that the result is a fixnum rather than a marker, and that's what we're
+   continuing to do. */
+
+DECLARE_INLINE_HEADER (
+enum lazy_number_type
+promote_args_lazy (Lisp_Object *obj1, Lisp_Object *obj2))
+{
+  if (MARKERP (*obj1) && MARKERP (*obj2) &&
+      XMARKER (*obj1)->buffer == XMARKER (*obj2)->buffer)
+    {
+      return LAZY_MARKER_T;
+    }
+
+  return (enum lazy_number_type) promote_args (obj1, obj2);
+}
+
 DECLARE_INLINE_HEADER (
 int
 non_fixnum_number_p (Lisp_Object object))
@@ -376,19 +457,19 @@ non_fixnum_number_p (Lisp_Object object))
   if (LRECORDP (object))
     {
       switch (XRECORD_LHEADER (object)->type)
-        {
-        case lrecord_type_float:
+	{
+	case lrecord_type_float:
 #ifdef HAVE_BIGNUM
-        case lrecord_type_bignum:
+	case lrecord_type_bignum:
 #endif
 #ifdef HAVE_RATIO
-        case lrecord_type_ratio:
+	case lrecord_type_ratio:
 #endif
 #ifdef HAVE_BIGFLOAT
-        case lrecord_type_bigfloat:
+	case lrecord_type_bigfloat:
 #endif
-          return 1;
-        }
+	  return 1;
+	}
     }
   return 0;
 }

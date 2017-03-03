@@ -22,7 +22,7 @@ deleted, so that it stays with the two characters on either side of it.
 * The Region::               How to access ``the region''.
 @end menu
 
-@node Overview of Markers
+@node Overview of Markers, Predicates on Markers, Markers, Markers
 @section Overview of Markers
 
   A marker specifies a buffer and a position in that buffer.  The marker
@@ -150,7 +150,7 @@ m1
 @end group
 @end example
 
-@node Predicates on Markers
+@node Predicates on Markers, Creating Markers, Overview of Markers, Markers
 @section Predicates on Markers
 
   You can test an object to see whether it is a marker, or whether it is
@@ -184,7 +184,7 @@ This function returns @code{t} if @var{object} is a number (either
 kind), a character, or a marker, @code{nil} otherwise.
 @end defun
 
-@node Creating Markers
+@node Creating Markers, Information from Markers, Predicates on Markers, Markers
 @section Functions That Create Markers
 
   When you create a new marker, you can make it point nowhere, or point
@@ -340,7 +340,7 @@ of the new marker; see @code{marker-insertion-type}.
 @end example
 @end defun
 
-@node Information from Markers
+@node Information from Markers, Changing Markers, Creating Markers, Markers
 @section Information from Markers
 
   This section describes the functions for accessing the components of a
@@ -388,7 +388,7 @@ This function returns the buffer that @var{marker} points into, or
 @code{eq}) to each other if they have the same position and buffer, or
 if they both point nowhere.
 
-@node Changing Markers
+@node Changing Markers, The Mark, Information from Markers, Markers
 @section Changing Marker Positions
 
   This section describes how to change the position of an existing
@@ -437,7 +437,7 @@ The value returned is @var{marker}.
 This is another name for @code{set-marker}.
 @end defun
 
-@node The Mark
+@node The Mark, The Region, Changing Markers, Markers
 @section The Mark
 @cindex mark, the
 @cindex mark ring
@@ -661,7 +661,7 @@ This function pops a mark off the global mark ring and jumps to that
 location.
 @end deffn
 
-@node The Region
+@node The Region,  , The Mark, Markers
 @section The Region
 @cindex region, the
 

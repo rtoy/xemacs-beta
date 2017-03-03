@@ -1033,8 +1033,8 @@ XLIKE_output_string (struct window *w, struct display_line *dl,
      color.  See ca. line 759 this file.
      #### Maybe xft_convert_color should take an XColor, not a pixel. */
 #define XFT_FROB_LISP_COLOR(color, dim)					\
-  xft_convert_color (dpy, cmap, visual,					\
-		     XCOLOR_INSTANCE_X_COLOR (color).pixel, (dim))
+  xft_convert_color_1 (dpy, cmap, visual,					\
+		     &(XCOLOR_INSTANCE_X_COLOR (color)), (dim))
 #endif /* USE_XFT */
 
   if (width < 0)

@@ -3,7 +3,7 @@
 @c Copyright (C) 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/databases.info
-@node Databases, Processes, Range Tables, top
+@node Databases, Processes, Range Tables, Top
 @chapter Databases
 @cindex database
 
@@ -17,7 +17,7 @@ This function returns non-@code{nil} if @var{object} is a database.
 * Other Database Functions::
 @end menu
 
-@node Connecting to a Database
+@node Connecting to a Database, Working With a Database, Databases, Databases
 @section Connecting to a Database
 
 @defun open-database file &optional type subtype access mode
@@ -48,7 +48,7 @@ This function returns @code{t} if @var{object} is an active database, else
 @code{nil}.
 @end defun
 
-@node Working With a Database
+@node Working With a Database, Other Database Functions, Connecting to a Database, Databases
 @section Working With a Database
 
 @defun get-database key database &optional default
@@ -72,7 +72,7 @@ existing entry in the database.
 This function removes @var{key} from @var{database}.
 @end defun
 
-@node Other Database Functions
+@node Other Database Functions,  , Working With a Database, Databases
 @section Other Database Functions
 
 @defun database-file-name database

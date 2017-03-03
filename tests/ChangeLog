@@ -1,3 +1,441 @@
+2016-11-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test extent propagation by #'split-string-by-char, #'upcase.
+
+2016-11-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/hash-table-tests.el:
+	Creating sufficiently many symbols in a hash table that is being
+	treated as an obarray shouldn't crash:
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	obarray is now a hash table, not a vector.
+
+2016-11-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check a specific bug in #'mapcon has been fixed.
+
+2016-11-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check we don't crash with arguments to #'decode-time where
+	localtime() may return nil.
+
+2016-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	* automated/lisp-tests.el:
+	The Lisp reader now errors when it has no ratio support but
+	encounters a ratio. Revise these files to delay calling #'read
+	until we're sure there is ratio support available.
+
+2016-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	* automated/format-tests.el (slow-integer-to-string):
+	Extend this to take an optional RADIX argument.
+	* automated/format-tests.el (slow-ratio-to-string):
+	Ditto.
+	* automated/format-tests.el (Assert-formatting-integers):
+	Use this RADIX argument.
+	* automated/format-tests.el:
+	Test %S with a selection of objects.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Correct a couple of details with the #'substitute-command-keys
+	tests.
+
+2016-10-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Test #'substitute-command-keys, particularly that extents are
+	passed through.
+
+2016-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	* automated/extent-tests.el (Assert-format-into-extents) New.
+	Check the combination of #'format-into, buffer, marker, string
+	arguments, check that extent info is passed through as expected.
+	* automated/format-tests.el (invalid-function):
+	(format-into "hello" "hello") now throws a slightly different
+	error.
+
+2016-10-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (slow-ratio-to-string): New.
+	* automated/format-tests.el:
+	Extent assert-formatting-integers to accept a GUARD argument, a
+	feature to check for before doing some tests.
+	Check formatting of various bignums.
+	Check formatting of various ratios, using #'slow-ratio-to-string.
+	%c is not a number specifier, allow trailing zeroes with it since
+	they do not guarantee misinterpretation in the way they do for
+	numbers.
+	Check the pad char implementation.
+	Check the newly-implemented bit-width modifiers.
+	
+2016-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	Refactor out the format tests in lisp-tests.el.
+	Correct the checks for the extent lengths.
+	Add extensive tests from Wine's printf test suite, document the
+	authors and licence.
+	* automated/lisp-tests.el:
+	Move the format tests from here to format-tests.el
+
+2016-09-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (Assert-with-format-extents):
+	Test #'format-into, just added. Not exhaustive, given the overlap
+	in implementation with #'format.
+
+2016-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	* automated/format-tests.el (Assert-with-format-extents):
+	Test support for extents in #'format, just added. Not exhaustive.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (slow-integer-to-string): New.
+	* automated/format-tests.el: Test %d in this file.
+
+2016-08-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	New file, initially testing %c and its features and limitations.
+
+2016-08-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el: 
+	Test #'make-string-output-stream, #'get-output-stream-string.
+	Test the associated newly-added support for extents in the
+	underlying resizing_buffer stream implementation.
+	* automated/mule-tests.el:
+	Whoops, #'print, not #'princ here, so surround the output when
+	checked with newlines.
+
+2016-07-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Correct a bug in these tests looking at object plists.
+	* automated/mule-tests.el:
+	Correct a bug in this test, I was inaccurate in what I expected to
+	be output with modification of a symbol name while printing it.
+
+2016-06-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Test high-numbered backreferences. Check that non-ASCII decimal
+	digits are not accepted for this syntax.
+
+2016-05-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'reduce can handle :from-end non-nil and a zero length
+	range, list sequence.
+
+2016-05-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test for insufficient GCPRO statements in sublis(), a bug just
+	fixed.
+
+2016-04-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that a fixnum works correctly as a key in a string plist, a
+	bug just fixed.
+
+2016-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Check that the Lisp printer handles relocation of string data OK, 
+	something that only happens when strings are modified with
+	characters of differing byte lengths.
+
+2016-02-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check that the Lisp printer realises a trailing sign excludes a
+	symbol from potentially having number syntax and so does not need
+	escaping.
+
+2015-06-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a test looking for a bug just fixed in the equalp compiler
+	macro.
+
+2015-06-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/file-tests.el:
+	Gross sanity check for #'load and #'load-internal with a
+	zero-length FILE, something that crashed until today.
+
+2015-05-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'integer-length, #'logcount in this file.
+
+2015-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Assert that a character which we know has no Unicode mapping is
+	represented as REPLACEMENT CHARACTER in UTF-8, rather than as a
+	character corresponding to a very large codepoint.
+
+2015-05-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Backslash a few parentheses in the first column for the sake of
+	fontification.
+	* automated/lisp-tests.el:
+	Check that the rounding functions signal Lisp errors correctly
+	when handed positive and negative infinity and NaN.
+	Check that a bug when supplying #'truncate with one float that
+	rounds to a bignum, has been fixed.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check the arbitrary-base integer reader syntax support, just
+	added.  Check the reader base support for ratios, just added.
+	Check the non-ASCII-digit support in the reader, just added.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check for a bug just fixed with the interaction of negative
+	bignums and :junk-allowed non-nil.
+
+2015-05-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el:
+	Check read and print handling of symbols that look like
+	numbers. In passing, check the read and print handling of the
+	associated numbers.
+
+2015-04-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check for a bug just fixed in cl-macs.el.
+
+2015-04-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'clear-string, just added. Unfortunately there's no way to
+	be certain from Lisp that the old password data has been erased
+	after realloc; it may be worth adding a test to tests.c, but
+	*we'll be reading memory we shouldn't be*, so that gives me pause.
+
+2015-04-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a couple of tests for #'parse-integer to check for a bug just
+	fixed.
+
+2015-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Extend the tests for #'parse-integer, #'digit-char, #'digit-char-p
+	substantially, testing the Unicode decimal digits in detail.
+
+2015-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el (test-chars):
+	Use char-code-limit explicitly here, instead of hardcoding the
+	corresponding values.
+
+2015-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add some tests for #'substitute.
+
+2015-02-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	parse_integer(), used in #'read, now signals invalid-argument
+	rather than invalid-read-syntax, check for that.
+	* automated/lisp-tests.el:
+	Check #'parse-integer now it's available to Lisp, check
+	#'digit-char, #'digit-char-p and the congruence in behaviour,
+	check the XEmacs-specific RADIX-TABLE argument behaviour.
+
+2014-10-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/keymap-tests.el:
+	Reformat loops for readability and maintainability.
+
+2014-10-11  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/keymap-tests.el:
+	Avoid commands defined in packages in some tests.
+	Packages may not be available at make check time.
+
+2014-07-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Check that extent information is passed through to the echo area
+	correctly with #'next-event's PROMPT argument.
+
+2014-04-19  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/keymap-tests.el: Use
+	help-activate-function-or-scroll-up.
+
+2013-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Up max-lisp-eval-depth when compiling this file, some of what
+	we're doing in testing #'write-sequence is demanding.
+	* automated/lisp-tests.el (make-circular-list):
+	New argument VALUE, the car of the conses to create.
+	* automated/lisp-tests.el:
+	Test #'write-sequence, #'write-string, #'write-line with function,
+	buffer and marker STREAMs; test argument types, keyword argument
+	ranges and values.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el (character):
+	Remove a debugging statement from this.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/face-tests.el:
+	Only test fontconfig if the font-mgr feature is available, avoid
+	errors when it isn't.
+
+2013-12-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test arithmetic comparisons with markers, check the type of the
+	returned values for #'min and #'max.
+
+2013-09-15  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/files-tests.el: New file. Test new states in
+	require-final-newline and new variable mode-require-final-newline.
+
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/process-tests.el: Should work on all POSIX systems.
+
+2013-09-10  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/face-tests.el: New file.  Start with fontconfig tests.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-06-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test #'apply-partially more extensively, given changes in
+	cl-macs.el.
+
+2013-06-17  Jerry James  <james@xemacs.org>
+
+	* automated/lisp-tests.el: Adjust expected failure message due to
+	changes in check_valid_xbm_inline().
+
+2013-04-20  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/dired-tests.el: New. Tests for file-attributes.
+
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
+2012-12-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* automated/lisp-tests.el: Add tests of #'subsetp.
+	Thanks Steven and Benson Mitchell <smitchell@bnin.net>.
+
+2012-12-14  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/register-tests.el: New. Test for register.el. Test
+	case for bug in regular expression in describe-register-1
+
+2012-10-13  Mats Lidell  <matsl@xemacs.org>
+
+	* automated/process-tests.el: Simple test cases for
+	call-process-shell-command.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	Make sure we can search for character ranges successfully when the
+	syntax table is dirty.
+
+2012-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/keymap-tests.el:
+	Test the new command remapping functionality.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
+2012-05-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Test #'truncate-string-to-width, thank you Colin Walters.
+
+2012-05-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Use &environment appropriately in #'macrolet, instead of relying
+	on #'macroexpand to guess what we mean.
+
+2012-05-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el (equal):
+	* automated/regexp-tests.el (Assert-char-class):
+	Correct a stray parenthesis; add tests for the predefined
+	character classes with #'skip-chars-{forward,backward}; update the
+	tests to reflect some changed design decisions on my part.
+
+2012-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el: Check that #'posix-string-match
+	actually returns the longest match; thank you Ilya Shlyakhter in
+	jn1j8t$ujq$1@dough.gmane.org !
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
+	Check that #'string-match errors correctly with an over-long
+	character class name.
+	Add tests for character class functionality that supports
+	non-ASCII characters. These tests expose bugs in GNU Emacs
+	24.0.94.2, but pass under current XEmacs.
+
+2012-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/regexp-tests.el:
+	* automated/regexp-tests.el (Assert-char-class):
+	Test the character classes functionality that was always in
+	regex.c but that has only just been turned on. These tests pass on
+	GNU Emacs 24.0.94.2.
+
+2012-01-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check that `byte-compile-catch' doesn't strip keyword (as such,
+	non-quoted) TAGs.
+
 2012-01-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/completion-tests.el: New.

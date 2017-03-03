@@ -50,7 +50,7 @@ byte compilation.
 * Different Behavior::          When compiled code gives different results.
 @end menu
 
-@node Speed of Byte-Code
+@node Speed of Byte-Code, Compilation Functions, Byte Compilation, Byte Compilation
 @section Performance of Byte-Compiled Code
 
   A byte-compiled function is not as efficient as a primitive function
@@ -95,7 +95,7 @@ Here is an example:
 whereas the byte-compiled code required 6 seconds.  These results are
 representative, but actual results will vary greatly.
 
-@node Compilation Functions
+@node Compilation Functions, Compilation Options, Speed of Byte-Code, Byte Compilation
 @comment  node-name,  next,  previous,  up
 @section The Compilation Functions
 @cindex compilation functions
@@ -282,7 +282,7 @@ of Emacs @code{byte-code} is only used to run isolated fragments of lisp
 code without an associated argument list.
 @end defun
 
-@node Compilation Options
+@node Compilation Options, Docs and Compilation, Compilation Functions, Byte Compilation
 @section Options for the Byte Compiler
 @cindex compilation options
 
@@ -563,7 +563,7 @@ For example, something like this might appear at the top of a source file:
 @end example
 @end defun
 
-@node Docs and Compilation
+@node Docs and Compilation, Dynamic Loading, Compilation Options, Byte Compilation
 @section Documentation Strings and Compilation
 @cindex dynamic loading of documentation
 
@@ -626,7 +626,7 @@ construct skips the next @var{count} characters.  It also uses the
 @samp{#$} construct, which stands for ``the name of this file, as a
 string.''  It is best not to use these constructs in Lisp source files.
 
-@node Dynamic Loading
+@node Dynamic Loading, Eval During Compile, Docs and Compilation, Byte Compilation
 @section Dynamic Loading of Individual Functions
 
 @cindex dynamic loading of functions
@@ -685,7 +685,7 @@ its byte-compiled file, if it is not fully loaded already.  The argument
 @var{function} may be a compiled-function object or a function name.
 @end defun
 
-@node Eval During Compile
+@node Eval During Compile, Compiled-Function Objects, Dynamic Loading, Byte Compilation
 @section Evaluation During Compilation
 
   These features permit you to write code to be evaluated during
@@ -714,7 +714,7 @@ At top level, this is analogous to the Common Lisp idiom
 @code{eval-when-compile} does.
 @end defmac
 
-@node Compiled-Function Objects
+@node Compiled-Function Objects, Disassembly, Eval During Compile, Byte Compilation
 @section Compiled-Function Objects
 @cindex compiled function
 @cindex byte-code function
@@ -842,7 +842,7 @@ This function returns the domain of compiled-function object
 @xref{Domain Specification}.
 @end defun
 
-@node Disassembly
+@node Disassembly, Different Behavior, Compiled-Function Objects, Byte Compilation
 @section Disassembled Byte-Code
 @cindex disassembled byte-code
 
@@ -1075,7 +1075,7 @@ The @code{silly-loop} function is somewhat more complex:
 @end example
 
 
-@node Different Behavior
+@node Different Behavior,  , Disassembly, Byte Compilation
 @section Different Behavior
 
 The intent is that compiled byte-code and the corresponding code

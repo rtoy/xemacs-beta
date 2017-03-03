@@ -31,7 +31,7 @@
 ;;; Code:
 
 ;jwz: this is preloaded so don't ;;;###autoload
-(defvar auto-save-timeout 960
+(defcustom auto-save-timeout 960
   "*Number of seconds idle time before auto-save.
 Zero or nil means disable auto-saving due to idleness.
 
@@ -42,7 +42,9 @@ the timeout will be 2 1/4 times this in a 200k buffer, 3 3/4 times this in a
 1000k buffer, and 4 1/2 times this in a 2000k buffer.
 
 See also the variable `auto-save-interval', which controls auto-saving based
-on the number of characters typed.")
+on the number of characters typed."
+  :type 'integer
+  :group 'auto-save)
 
 ;jwz: this is preloaded so don't ;;;###autoload
 (defvar auto-gc-threshold (/ gc-cons-threshold 3)

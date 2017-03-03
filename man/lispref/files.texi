@@ -38,7 +38,7 @@ substitutions such as @samp{$HOME}.  @xref{File Name Expansion}.
 * Files and MS-DOS::         Distinguishing text and binary files on MS-DOS.
 @end menu
 
-@node Visiting Files
+@node Visiting Files, Saving Buffers, Files, Files
 @section Visiting Files
 @cindex finding files
 @cindex visiting files
@@ -70,7 +70,7 @@ however, it is good to keep the distinction in mind.
 * Subroutines of Visiting::    Lower-level subroutines that they use.
 @end menu
 
-@node Visiting Functions
+@node Visiting Functions, Subroutines of Visiting, Visiting Files, Visiting Files
 @subsection Functions for Visiting Files
 
   This section describes the functions normally used to visit files.
@@ -197,7 +197,7 @@ This is not a normal hook because the values of the functions are
 used and they may not all be called.
 @end defvar
 
-@node Subroutines of Visiting
+@node Subroutines of Visiting,  , Visiting Functions, Visiting Files
 @subsection Subroutines of Visiting
 
   The @code{find-file-noselect} function uses the
@@ -257,7 +257,7 @@ The last thing @code{after-find-file} does is call all the functions
 in @code{find-file-hooks}.
 @end defun
 
-@node Saving Buffers
+@node Saving Buffers, Reading from Files, Visiting Files, Files
 @section Saving Buffers
 
   When you edit a file in XEmacs, you are actually working on a buffer
@@ -399,7 +399,7 @@ doesn't add newlines at all.  @code{nil} is the default value, but a few
 major modes set it to @code{t} in particular buffers.
 @end defopt
 
-@node Reading from Files
+@node Reading from Files, Writing to Files, Saving Buffers, Files
 @section Reading from Files
 
   You can copy a file from the disk and insert it into a buffer
@@ -446,7 +446,7 @@ If you want to pass a file name to another process so that another
 program can read the file, use the function @code{file-local-copy}; see
 @ref{Magic File Names}.
 
-@node Writing to Files
+@node Writing to Files, File Locks, Reading from Files, Files
 @section Writing to Files
 
   You can write the contents of a buffer, or part of a buffer, directly
@@ -504,7 +504,7 @@ feature is useful for programs that use files for internal purposes,
 files that the user does not need to know about.
 @end deffn
 
-@node File Locks
+@node File Locks, Information about Files, Writing to Files, Files
 @section File Locks
 @cindex file locks
 
@@ -587,7 +587,7 @@ function with your own version that decides in another way.  The code
 for its usual definition is in @file{userlock.el}.
 @end defun
 
-@node Information about Files
+@node Information about Files, Changing File Attributes, File Locks, Files
 @section Information about Files
 
   The functions described in this section all operate on strings that
@@ -603,7 +603,7 @@ or directories unless otherwise noted.
 * File Attributes::         How large is it?  Any other names?  Etc.
 @end menu
 
-@node Testing Accessibility
+@node Testing Accessibility, Kinds of Files, Information about Files, Information about Files
 @subsection Testing Accessibility
 @cindex accessibility of a file
 @cindex file accessibility
@@ -738,7 +738,7 @@ You can use @code{file-attributes} to get a file's last modification
 time as a list of two numbers.  @xref{File Attributes}.
 @end defun
 
-@node Kinds of Files
+@node Kinds of Files, Truenames, Testing Accessibility, Information about Files
 @subsection Distinguishing Kinds of Files
 
   This section describes how to distinguish various kinds of files, such
@@ -811,7 +811,7 @@ a regular file (not a directory, symbolic link, named pipe, terminal, or
 other I/O device).
 @end defun
 
-@node Truenames
+@node Truenames, File Attributes, Kinds of Files, Information about Files
 @subsection Truenames
 @cindex truename (of file)
 
@@ -836,7 +836,7 @@ value of @code{default-directory} is used.
 
   @xref{Buffer File Name}, for related information.
 
-@node File Attributes
+@node File Attributes,  , Truenames, Information about Files
 @subsection Other Information about Files
 
   This section describes the functions for getting detailed information
@@ -1029,7 +1029,7 @@ is on file system number -32252.
 @end table
 @end defun
 
-@node Changing File Attributes
+@node Changing File Attributes, File Names, Information about Files, Files
 @section Changing File Names and Attributes
 @cindex renaming files
 @cindex copying files
@@ -1209,7 +1209,7 @@ So Emacs considers a file executable if its name ends in @samp{.com},
 @samp{.bat} or @samp{.exe}.  This is reflected in the values returned
 by @code{file-modes} and @code{file-attributes}.
 
-@node File Names
+@node File Names, Contents of Directories, Changing File Attributes, Files
 @section File Names
 @cindex file names
 
@@ -1242,7 +1242,7 @@ change.  Similarly for other operating systems.
 * User Name Completion::  Finding the completions for a given user name.
 @end menu
 
-@node File Name Components
+@node File Name Components, Directory Names, File Names, File Names
 @subsection File Name Components
 @cindex directory part (of file name)
 @cindex nondirectory part (of file name)
@@ -1331,7 +1331,7 @@ The extension, in a file name, is the part that starts with the last
 @end example
 @end defun
 
-@node Directory Names
+@node Directory Names, Relative File Names, File Name Components, File Names
 @subsection Directory Names
 @cindex directory name
 @cindex file name of directory
@@ -1432,7 +1432,7 @@ and so on.
 @c directory.
 @c @end defun
 
-@node Relative File Names
+@node Relative File Names, File Name Expansion, Directory Names, File Names
 @subsection Absolute and Relative File Names
 @cindex absolute file name
 @cindex relative file name
@@ -1465,7 +1465,7 @@ file name, @code{nil} otherwise.
 @end example
 @end defun
 
-@node File Name Expansion
+@node File Name Expansion, Unique File Names, Relative File Names, File Names
 @subsection Functions that Expand Filenames
 @cindex expansion of file names
 
@@ -1597,7 +1597,7 @@ example:
 @end example
 @end defun
 
-@node Unique File Names
+@node Unique File Names, File Name Completion, File Name Expansion, File Names
 @subsection Generating Unique File Names
 
   Some programs need to write temporary files.  Here is the usual way to
@@ -1643,7 +1643,7 @@ To avoid confusion, each Lisp application should preferably use a unique
 @var{prefix} to @code{make-temp-name}.
 @end defun
 
-@node File Name Completion
+@node File Name Completion, User Name Completion, Unique File Names, File Names
 @subsection File Name Completion
 @cindex file name completion subroutines
 @cindex completion, file name
@@ -1744,7 +1744,7 @@ completion-ignored-extensions
 @end example
 @end defopt
 
-@node User Name Completion
+@node User Name Completion,  , File Name Completion, File Names
 @subsection User Name Completion
 @cindex user name completion subroutines
 @cindex completion, user name
@@ -1780,7 +1780,7 @@ completion was unique.
 @end defun
 
 
-@node Contents of Directories
+@node Contents of Directories, Create/Delete Dirs, File Names, Files
 @section Contents of Directories
 @cindex directory-oriented functions
 @cindex file names in directory
@@ -1867,7 +1867,7 @@ This variable's value is the program to run to generate a directory listing
 for the function @code{insert-directory}.
 @end defvar
 
-@node Create/Delete Dirs
+@node Create/Delete Dirs, Magic File Names, Contents of Directories, Files
 @section Creating and Deleting Directories
 @c Emacs 19 features
 
@@ -1894,7 +1894,7 @@ This function deletes the directory named @var{dirname}.  The function
 must use @code{delete-directory} in that case.
 @end deffn
 
-@node Magic File Names
+@node Magic File Names, Partial Files, Create/Delete Dirs, Files
 @section Making Certain File Names ``Magic''
 @cindex magic file names
 
@@ -2039,7 +2039,7 @@ non-magic directory to serve as its current directory, and this function
 is a good way to come up with one.
 @end defun
 
-@node Partial Files
+@node Partial Files, Format Conversion, Magic File Names, Files
 @section Partial Files
 @cindex partial files
 
@@ -2049,7 +2049,7 @@ is a good way to come up with one.
 * Detached Partial Files::
 @end menu
 
-@node Intro to Partial Files
+@node Intro to Partial Files, Creating a Partial File, Partial Files, Partial Files
 @subsection Intro to Partial Files
 
 A @dfn{partial file} is a section of a buffer (called the @dfn{master
@@ -2073,7 +2073,7 @@ When a partial file buffer is first modified, the master buffer is
 automatically marked as modified so that saving the master buffer will
 work correctly.
 
-@node Creating a Partial File
+@node Creating a Partial File, Detached Partial Files, Intro to Partial Files, Partial Files
 @subsection Creating a Partial File
 
 @deffn Command make-file-part &optional start end name buffer
@@ -2091,7 +2091,7 @@ name generated from @var{buffer}'s name, and the current buffer,
 respectively.
 @end deffn
 
-@node Detached Partial Files
+@node Detached Partial Files,  , Creating a Partial File, Partial Files
 @subsection Detached Partial Files
 
 Every partial file has an extent in the master buffer associated with it
@@ -2111,7 +2111,7 @@ deleted out of the master buffer, disconnecting the file part.  The file
 part's filename is cleared and thus must be explicitly specified if the
 detached file part is to be saved.
 
-@node Format Conversion
+@node Format Conversion, Files and MS-DOS, Partial Files, Files
 @section File Format Conversion
 
 @cindex file format conversion
@@ -2258,7 +2258,7 @@ a list of format names, just like the value of
 is always local in all buffers.
 @end defvar
 
-@node Files and MS-DOS
+@node Files and MS-DOS,  , Format Conversion, Files
 @section Files and MS-DOS
 @cindex MS-DOS file types
 @cindex file types on MS-DOS

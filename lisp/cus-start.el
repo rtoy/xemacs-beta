@@ -152,6 +152,7 @@
 	     (focus-follows-mouse x boolean)
 	     (help-char keyboard (choice character
 					 (sexp :tag "Single key specifier")))
+	     (help-event-list keyboard (repeat (sexp :format "%v")))
 	     (max-lisp-eval-depth limits integer)
 	     (max-specpdl-size limits integer)
 	     (meta-prefix-char keyboard character)

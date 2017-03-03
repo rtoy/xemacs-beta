@@ -305,52 +305,54 @@ Regardless of MAPVAR, COMMAND's function-value is always set to the keymap."
 
 
 ;;; Converting vectors of events to a read-equivalent form.
-;;; This is used both by call-interactively (for the command history)
-;;; and by macros.el (for saving keyboard macros to a file).
-
-;; #### why does (events-to-keys [backspace]) return "\C-h"?
-;; BTW, this function is a mess, and macros.el does *not* use it, in
-;; spite of the above comment.  `format-kbd-macro' is used to save
-;; keyboard macros to a file.
 (defun events-to-keys (events &optional no-mice)
- "Given a vector of event objects, returns a vector of key descriptors,
-or a string (if they all fit in the ASCII range).
-Optional arg NO-MICE means that button events are not allowed."
+ "Given a vector of event objects, return a vector of key descriptors.
+
+If all events can be represented unambiguously as characters, return a
+string.  Both the string and the vector will be equivalent to the events, if
+the elements are passed to `character-to-event'.
+
+If an event represents a key press of a printable ASCII character between ?@
+and ?_, with the control modifier and only the control modifier, it is
+returned as a character between ?\x00 and ?\x1f, inclusive. ?\\C-i, ?\\C-j,
+?\\C-m are returned as the symbols `tab', `linefeed' and `return',
+respectively.
+
+There is a similar equivalence between ASCII characters with the meta
+modifier and Latin 1 characters, but this function does not use that
+equivalence.
+
+Obsolete optional argument NO-MICE means that mouse events are not allowed.
+These are actually never allowed, since `character-to-event' never accepts
+them.
+
+EVENTS can be a string, and will be treated as a vector of the events
+corresponding to those characters."
+ ;; This is only used in packages. There were some contexts where it was
+ ;; used in core, but those dated from before #'lookup-key accepted events
+ ;; in KEYS; it conses less and is more accurate to use the events directly,
+ ;; rather than calling this function. It'd be nice to move this to
+ ;; xemacs-base and add an autoload, there's no need for it to be dumped.
  (if (and events (symbolp events)) (setq events (vector events)))
- (cond ((stringp events)
-        events)
-       ((not (vectorp events))
-        (signal 'wrong-type-argument (list 'vectorp events)))
-       ((let* ((length (length events))
+ (check-type events array)
+ (cond ((let* ((length (length events))
                (string (make-string length 0))
                c ce
                (i 0))
           (while (< i length)
             (setq ce (aref events i))
             (or (eventp ce) (setq ce (character-to-event ce)))
-            ;; Normalize `c' to `?c' and `(control k)' to `?\C-k'
-            ;; By passing t for the `allow-meta' arg we could get kbd macros
-            ;; with meta in them to translate to the string form instead of
-            ;; the list/symbol form; but I expect that would cause confusion,
-            ;; so let's use the list/symbol form whenever there's
-            ;; any ambiguity.
+            ;; Normalize `c' to `?c' and `(control k)' to `?\C-k' We don't
+            ;; "normalize" Latin 1 to the corresponding meta characters, or
+            ;; vice-versa.
             (setq c (event-to-character ce))
             (if (and c
                      (key-press-event-p ce))
-                (cond ((symbolp (event-key ce))
-                       (if (get (event-key ce) 'character-of-keysym)
-                           ;; Don't use a string for `backspace' and `tab' to
-                           ;;  avoid that unpleasant little ambiguity.
-                           (setq c nil)))
-                      ((and (= (event-modifier-bits ce) 1) ;control
-                            (integerp (event-key ce)))
-                       (let* ((te (character-to-event c)))
-                         (if (and (symbolp (event-key te))
-                                  (get (event-key te) 'character-of-keysym))
-                             ;; Don't "normalize" (control i) to tab
-                             ;;  to avoid the ambiguity in the other direction
-                             (setq c nil))
-                         (deallocate-event te)))))
+                (if (symbolp (event-key ce))
+                    (if (get (event-key ce) 'character-of-keysym)
+                        ;; Don't use a string `tab' to avoid that unpleasant
+                        ;; little ambiguity.
+                        (setq c nil))))
             (if c
                 (aset string i c)
                 (setq i length string nil))
@@ -358,33 +360,15 @@ Optional arg NO-MICE means that button events are not allowed."
           string))
        (t
         (let* ((length (length events))
-               (new (copy-sequence events))
+               (new (vconcat events nil))
                event mods key
                (i 0))
           (while (< i length)
             (setq event (aref events i))
+            (or (eventp event) (setq event (character-to-event event)))
             (cond ((key-press-event-p event)
                    (setq mods (event-modifiers event)
                          key (event-key event))
-                   (if (numberp key)
-                       (setq key (intern (make-string 1 key))))
-                   (aset new i (if mods
-                                   (nconc mods (cons key nil))
-                                   key)))
-                  ((misc-user-event-p event)
-                   (aset new i (list 'menu-selection
-                                     (event-function event)
-                                     (event-object event))))
-                  ((or (button-press-event-p event)
-                       (button-release-event-p event))
-                   (if no-mice
-                       (error
-                         "Mouse events can't be saved in keyboard macros."))
-                   (setq mods (event-modifiers event)
-                         key (intern (format "button%d%s"
-                                             (event-button event)
-                                             (if (button-release-event-p event)
-                                                 "up" ""))))
                    (aset new i (if mods
                                    (nconc mods (cons key nil))
                                    key)))
@@ -392,17 +376,17 @@ Optional arg NO-MICE means that button events are not allowed."
                        (and (consp event) (symbolp (car event))))
                    (aset new i event))
                   (t
-                   (signal 'wrong-type-argument (list 'eventp event))))
+                   (signal 'wrong-type-argument
+                           (list 'key-press-event-p event))))
             (setq i (1+ i)))
           new))))
-
 
-(defun next-key-event ()
+(defun next-key-event (&optional event prompt)
   "Return the next available keyboard event."
-  (let (event)
-    (while (not (key-press-event-p (setq event (next-command-event))))
-      (dispatch-event event))
-    event))
+  (while (not (key-press-event-p
+               (setq event (next-command-event event prompt))))
+    (dispatch-event event))
+  event)
 
 (defun key-sequence-list-description (keys)
   "Convert a key sequence KEYS to the full [(modifiers... key)...] form.
@@ -461,7 +445,7 @@ by comparing the respective outputs of this function using `equal'."
   "Return the next key event, with a list of modifiers applied.
 LIST describes the names of these modifier, a list of symbols.
 `function-key-map' is scanned for prefix bindings."
-  (let (events binding)
+  (let (events binding key-sequence-list-description symbol-name)
     ;; read keystrokes scanning `function-key-map'
     (while (keymapp
 	    (setq binding
@@ -473,7 +457,7 @@ LIST describes the names of these modifier, a list of symbols.
     (if binding				; found a binding
 	(progn
 	  ;; allow for several modifiers
-	  (if (and (symbolp binding) (fboundp binding))
+	  (if (functionp binding)
 	      (setq binding (funcall binding nil)))
 	  (setq events (append binding nil))
 	  ;; put remaining keystrokes back into input queue
@@ -481,11 +465,21 @@ LIST describes the names of these modifier, a list of symbols.
 		(mapcar 'character-to-event (cdr events))))
       (setq unread-command-events (cdr events)))
     ;; add modifiers LIST to the first keystroke or event
+    (setf key-sequence-list-description
+          (aref (key-sequence-list-description (car events)) 0))
+    (if (and (member 'shift list)
+	     (symbolp (car (last key-sequence-list-description)))
+             (eql 1 (length
+                     (setq symbol-name
+                           (symbol-name
+                            (car (last key-sequence-list-description))))))
+             (not (eql (aref symbol-name 0) (upcase (aref symbol-name 0)))))
+        (setf (car (last key-sequence-list-description))
+              (intern (upcase symbol-name))
+              list (remove* 'shift list)))
     (vector
      (append list
-             (set-difference (aref (key-sequence-list-description (car events))
-                                   0)
-                             list :stable t)))))
+             (set-difference key-sequence-list-description list :stable t)))))
 
 (defun event-apply-modifier (symbol)
   "Return the next key event, with a single modifier applied.
@@ -493,9 +487,13 @@ See `event-apply-modifiers'."
   (event-apply-modifiers (list symbol)))
 
 (defun synthesize-keysym (ignore-prompt)
-  "Read a sequence of keys, and returned the corresponding key symbol.
-The characters must be from the [-_a-zA-Z0-9].  Reading is terminated
- by RET (which is discarded)."
+  "Read a sequence of characters, and return the corresponding keysym.
+The characters must be ?-, or ?_, or have word syntax.  Reading is
+terminated by RET (which is discarded)."
+  ;; This has the disadvantage that only X11 keysyms (and space, backspace
+  ;; and friends, together with the trivial one-character keysyms) are
+  ;; recognised, and then only on a build with X11 support which has had an
+  ;; X11 frame open at some point.
   (let ((continuep t)
 	event char list)
     (while continuep
@@ -514,8 +512,34 @@ The characters must be from the [-_a-zA-Z0-9].  Reading is terminated
 	     (error "Illegal character in keysym: %c" char))
 	    (t
 	     ;; Illegal event.
-	     (error "Event has no character equivalent: %s" event))))
+	     (error 'no-character-typed event))))
     (vector (intern (concat "" (nreverse list))))))
+
+(defun synthesize-unicode-codepoint (ignore-prompt)
+  "Read a sequence of hexadecimal digits and return a one-char keyboard macro.
+
+The character has the Unicode code point corresponding to those hexadecimal
+digits."
+  (symbol-macrolet ((first-prompt "Unicode hex input: u"))
+    (let* ((prompt first-prompt) (integer 0)
+           (extent (make-extent (1- (length first-prompt))
+                                (length first-prompt) prompt))
+	   character digit-char-p)
+      (setf (extent-face extent) 'underline
+	    (extent-property extent 'duplicable) t)
+      (while (not (member (setq character
+				;; Discard non-enter non-hex-digit characters,
+				;; as GTK does.
+				(read-char-exclusive prompt))
+			  '(?\r ?\n)))
+        (when (setq digit-char-p (digit-char-p character 16))
+          (setq integer (logior (lsh integer 4) digit-char-p)
+                prompt (concat prompt (list character)))
+          (if (>= integer #x110000)
+              (error 'args-out-of-range "Not a Unicode code point" integer))
+          (set-extent-endpoints extent (1- (length first-prompt))
+                                (length prompt) prompt)))
+      (vector (list (decode-char 'ucs integer))))))
 
 (define-key function-key-map-parent [?\C-x ?@ ?h] 'event-apply-hyper-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?s] 'event-apply-super-modifier)
@@ -524,6 +548,7 @@ The characters must be from the [-_a-zA-Z0-9].  Reading is terminated
 (define-key function-key-map-parent [?\C-x ?@ ?c] 'event-apply-control-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?a] 'event-apply-alt-modifier)
 (define-key function-key-map-parent [?\C-x ?@ ?k] 'synthesize-keysym)
+(define-key function-key-map-parent [(control U)] 'synthesize-unicode-codepoint)
 
 ;; The autoloads for the compose map, and their bindings in
 ;; function-key-map-parent are used by GTK as well as X11. And Julian

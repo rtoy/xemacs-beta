@@ -284,19 +284,10 @@
 	  (error "file \"%s\" didn't define \"%s\"" (nth 1 fn) name))
       (if (symbolp fn)
 	  (byte-compile-inline-expand (cons fn (cdr form)))
-	(if (compiled-function-p fn)
-	    (progn
-	      (fetch-bytecode fn)
-	      (cons (list 'lambda (compiled-function-arglist fn)
-			  (list 'byte-code
-				(compiled-function-instructions fn)
-				(compiled-function-constants fn)
-				(compiled-function-stack-depth fn)))
-		    (cdr form)))
-	  (if (eq (car-safe fn) 'lambda)
-	      (cons fn (cdr form))
-	    ;; Give up on inlining.
-	    form))))))
+	(if (or (eq (car-safe fn) 'lambda) (compiled-function-p fn))
+	    (byte-compile-unfold-lambda (cons fn (cdr form)))
+	  ;; Give up on inlining.
+	  form)))))
 
 ;;; ((lambda ...) ...)
 ;;;
@@ -305,11 +296,12 @@
   (let ((lambda (car form))
 	(values (cdr form)))
     (if (compiled-function-p lambda)
-	(setq lambda (list 'lambda (compiled-function-arglist lambda)
-			  (list 'byte-code
-				(compiled-function-instructions lambda)
-				(compiled-function-constants lambda)
-				(compiled-function-stack-depth lambda)))))
+	(setq lambda (fetch-bytecode lambda)
+              lambda (list 'lambda (compiled-function-arglist lambda)
+                           (list 'byte-code
+                                 (compiled-function-instructions lambda)
+                                 (compiled-function-constants lambda)
+                                 (compiled-function-stack-depth lambda)))))
     (let ((arglist (nth 1 lambda))
 	  (body (cdr (cdr lambda)))
 	  optionalp restp
@@ -354,7 +346,7 @@
 		(byte-compile-warn
 		 "attempt to open-code %s with too many arguments" name))
 	    form)
-	(setq body (mapcar 'byte-optimize-form body))
+	(setq body (byte-optimize-body body nil))
 	(let ((newform
 	       (if bindings
 		   (cons 'let (cons (nreverse bindings) body))
@@ -363,6 +355,37 @@
 	  newform)))))
 
 
+(defun byte-optimize-lambda (form)
+  (let* ((offset 2) (body (nthcdr offset form)))
+    (if (stringp (car body)) (setq body (nthcdr (incf offset) form)))
+    (if (eq 'interactive (car-safe (car body)))
+	(setq body (nthcdr (incf offset) form)))
+    (if (eq body (setq body (byte-optimize-body body nil)))
+        form
+      (nconc (subseq form 0 offset) body))))
+
+;; Setting this to the byte-optimizer property of condition-case gives an
+;; infinite loop, as of So 6 Mai 2012 05:10:44 IST
+(defun byte-optimize-condition-case (form &optional for-effect)
+  (let ((modified nil)
+        (result nil)
+        (new nil))
+    (setq result
+          (list* (car form) (nth 1 form)
+                 (prog1
+                     (setq new (byte-optimize-form (nth 2 form) for-effect))
+                   (setq modified (or modified (eq new (nth 2 form)))))
+                 (mapcar #'(lambda (handler)
+                             (if (eq (cdr handler)
+                                     (setq new
+                                           (byte-optimize-body (cdr handler)
+                                                               for-effect)))
+                                 handler
+                               (setq modified t)
+                               (cons (car handler) new)))
+                         (cdddr form))))
+    (if modified result form)))
+
 ;;; implementing source-level optimizers
 
 (defun byte-optimize-form-code-walker (form for-effect)
@@ -390,9 +413,19 @@
 	   (and (nth 1 form)
 		(not for-effect)
 		form))
-	  ((or (compiled-function-p fn)
-	       (eq 'lambda (car-safe fn)))
-	   (byte-compile-unfold-lambda form))
+	  ((eq fn 'function) 
+	   (when (cddr form)
+             (byte-compile-warn "malformed function form: %S" form))
+	   (cond
+            (for-effect nil)
+            ((and (eq (car-safe (cadr form)) 'lambda)
+                  (not (eq (cadr form) (setq tmp (byte-optimize-lambda
+                                                  (cadr form))))))
+             (list fn tmp))
+            (t form)))
+	  ((and (eq 'lambda (car-safe fn))
+                (not (eq form (setq form (byte-compile-unfold-lambda form)))))
+           form)
 	  ((memq fn '(let let*))
 	   ;; recursively enter the optimizer for the bindings and body
 	   ;; of a let or let*.  This for depth-firstness: forms that
@@ -431,7 +464,7 @@
 	     (byte-optimize-form (nth 1 form) for-effect)))
 	  ((eq fn 'prog1)
 	   (if (cdr (cdr form))
-	       (cons 'prog1
+	       (cons (if for-effect 'progn 'prog1)
 		     (cons (byte-optimize-form (nth 1 form) for-effect)
 			   (byte-optimize-body (cdr (cdr form)) t)))
 	     (byte-optimize-form `(or ,(nth 1 form) nil) for-effect)))
@@ -490,30 +523,35 @@
 			      (prin1-to-string form))
 	   nil)
 
-	  ((memq fn '(defun defmacro function
-		      condition-case save-window-excursion))
-	   ;; These forms are compiled as constants or by breaking out
-	   ;; all the subexpressions and compiling them separately.
-	   form)
+          ((memq fn '(defun defmacro))
+           (if (eq (setq tmp (cons 'lambda (cddr form)))
+                   (setq tmp (byte-optimize-lambda tmp)))
+               form
+             (nconc (subseq form 0 2) (cdr tmp))))
+
+          ((eq fn 'condition-case)
+           (if (eq (setq tmp (byte-optimize-condition-case form for-effect))
+                   form)
+               form
+             tmp))
 
 	  ((eq fn 'unwind-protect)
-	   ;; the "protected" part of an unwind-protect is compiled (and thus
-	   ;; optimized) as a top-level form, so don't do it here.  But the
+	   ;; the "protected" part of an unwind-protect is compiled (and
+	   ;; thus optimized) as a top-level form, but do it here too for
+	   ;; the sake of lexically-oriented code (labels, and so on).  The
 	   ;; non-protected part has the same for-effect status as the
-	   ;; unwind-protect itself.  (The protected part is always for effect,
-	   ;; but that isn't handled properly yet.)
+	   ;; unwind-protect itself.
 	   (cons fn
 		 (cons (byte-optimize-form (nth 1 form) for-effect)
-		       (cdr (cdr form)))))
+                       (byte-optimize-body (cddr form) t))))
 
 	  ((eq fn 'catch)
-	   ;; the body of a catch is compiled (and thus optimized) as a
-	   ;; top-level form, so don't do it here.  The tag is never
-	   ;; for-effect.  The body should have the same for-effect status
-	   ;; as the catch form itself, but that isn't handled properly yet.
+	   ;; The body of a catch is compiled (and thus optimized) as a
+	   ;; top-level form, but do it here too for the sake of
+	   ;; lexically-oriented code.  The tag is never for-effect.
 	   (cons fn
 		 (cons (byte-optimize-form (nth 1 form) nil)
-		       (cdr (cdr form)))))
+                       (byte-optimize-body (cddr form) for-effect))))
 
 	  ;; If optimization is on, this is the only place that macros are
 	  ;; expanded.  If optimization is off, then macroexpansion happens
@@ -524,8 +562,11 @@
 					    byte-compile-macro-environment))))
 	   (byte-optimize-form form for-effect))
 
+	  ((compiled-function-p fn)
+           (cons fn (mapcar #'byte-optimize-form (cdr form))))
+
 	  ((not (symbolp fn))
-	   (byte-compile-warn "%s is a malformed function" (prin1-to-string fn))
+           (byte-compile-warn "%S is a malformed function" fn)
 	   form)
 
 	  ;; Support compiler macros as in cl.el.
@@ -537,6 +578,12 @@
 		(setq tmp (byte-optimize-side-effect-free-p form))
 		(or byte-compile-delete-errors
 		    (eq tmp 'error-free)
+                    ;; XEmacs; GNU handles the expansion of (pop foo) specially
+                    ;; here. We changed the macro to expand to (prog1 (car-safe
+                    ;; PLACE) (setq PLACE (cdr PLACE))) , which has the same
+                    ;; effect. (This only matters when
+                    ;; byte-compile-delete-errors is nil, which is usually true
+                    ;; for GNU and usually false for XEmacs.)
 		    (progn
 		      (byte-compile-warn "%s called for effect"
 					 (prin1-to-string form))
@@ -587,14 +634,17 @@
   ;; all-for-effect is true.  Returns a new list of forms.
   (let ((rest forms)
 	(result nil)
+        (modified nil)
 	fe new)
     (while rest
       (setq fe (or all-for-effect (cdr rest)))
       (setq new (and (car rest) (byte-optimize-form (car rest) fe)))
       (if (or new (not fe))
-	  (setq result (cons new result)))
+	  (setq result (cons new result)
+                modified (or modified (not (eq new (car rest)))))
+        (setq modified t))
       (setq rest (cdr rest)))
-    (nreverse result)))
+    (if modified (nreverse result) forms)))
 
 
 ;;; some source-level optimizers
@@ -704,7 +754,7 @@
 			    (apply fun (mapcar 'float constants))
 			    (float (apply fun constants)))))
 		(setq form orig)
-	      (setq form (nconc (delq nil form)
+	      (setq form (nconc (delete* nil form)
 				(list (apply fun (nreverse constants)))))))))
     form))
 
@@ -781,7 +831,7 @@
    (cond ((memq 0 form)
 	  (setq form (if (eq (car form) 'logand)
 			 (cons 'progn (cdr form))
-		       (delq 0 (copy-sequence form)))))
+		       (remove* 0 form))))
 	 ((and (eq (car-safe form) 'logior)
 	       (memq -1 form))
 	  (cons 'progn (cdr form)))
@@ -944,23 +994,20 @@
 	 (nth 1 form))
 	((byte-optimize-predicate form))))
 
-(defun byte-optimize-or (form)
+(defun byte-optimize-or (form &optional for-effect)
   ;; Throw away unneeded nils, and simplify if less than 2 args.
   ;; XEmacs; change to be more careful about discarding multiple values. 
-  (let* ((memqueued (memq nil form))
-         (trailing-nil (and (cdr memqueued)
-                            (equal '(nil) (last form))))
-         rest)
-    ;; A trailing nil indicates to discard multiple values, and we need to
-    ;; respect that:
-    (when (and memqueued (cdr memqueued))
-      (setq form (delq nil (copy-sequence form)))
-      (when trailing-nil
-        (setcdr (last form) '(nil))))
-    (setq rest form)
-    ;; If there is a literal non-nil constant in the args to `or', throw
-    ;; away all following forms. We can do this because a literal non-nil
-    ;; constant cannot be multiple.
+  (if (memq nil form)
+      (setq form (remove* nil form
+                          ;; A trailing nil indicates to discard multiple
+                          ;; values, and we need to respect that. No need if
+                          ;; this is for-effect, though, multiple values
+                          ;; will be discarded anyway.
+                          :end (if (not for-effect) (1- (length form))))))
+  ;; If there is a literal non-nil constant in the args to `or', throw
+  ;; away all following forms. We can do this because a literal non-nil
+  ;; constant cannot be multiple.
+  (let ((rest form))
     (while (cdr (setq rest (cdr rest)))
       (if (byte-compile-trueconstp (car rest))
 	  (setq form (copy-sequence form)
@@ -1030,6 +1077,8 @@
 
 (put 'and   'byte-optimizer 'byte-optimize-and)
 (put 'or    'byte-optimizer 'byte-optimize-or)
+(put 'or    'byte-for-effect-optimizer
+     #'(lambda (form) (byte-optimize-or form t)))
 (put 'cond  'byte-optimizer 'byte-optimize-cond)
 (put 'if    'byte-optimizer 'byte-optimize-if)
 (put 'while 'byte-optimizer 'byte-optimize-while)
@@ -1145,7 +1194,27 @@
 	 ;; No bindings
 	 (cons 'progn (cdr (cdr form))))
 	((or (nth 2 form) (nthcdr 3 form))
-	 form)
+	 (if (and (eq 'let (car form)) (> (length (nth 1 form)) 2))
+	     ;; Group constant initialisations together, so we can
+	     ;; just dup in the lap code. Can't group other
+	     ;; initialisations together if they have side-effects,
+	     ;; that would re-order them.
+	     (let ((sort (stable-sort
+			  (copy-list (nth 1 form))
+			  #'< :key #'(lambda (object)
+				       (cond ((atom object)
+					      most-positive-fixnum)
+					     ((null (cadr object))
+					      most-positive-fixnum)
+					     ((byte-compile-trueconstp
+					       (cadr object))
+					      (mod (sxhash (cadr object))
+						   most-positive-fixnum))
+					     (t 0))))))
+	       (if (equal sort (nth 1 form))
+		   form
+		 `(let ,sort ,@(cddr form))))
+	   form))
 	 ;; The body is nil
 	((eq (car form) 'let)
 	 (append '(progn) (mapcar 'car-safe (mapcar 'cdr-safe (nth 1 form)))
@@ -1234,8 +1303,8 @@
 	 hash-table-test
 	 hash-table-type
 	 ;;
-	 int-to-string
-	 length log log10 logand logb logior lognot logxor lsh
+	 integer-length int-to-string
+	 length log log10 logand logb logcount logior lognot logxor lsh
 	 marker-buffer max member memq min mod
 	 next-window nth nthcdr number-to-string numerator
 	 parse-colon-path plist-get previous-window
@@ -1271,7 +1340,7 @@
 	 hash-table-p
 	 identity ignore integerp integer-or-marker-p interactive-p
 	 invocation-directory invocation-name
-	 keymapp list list* listp
+	 list list* listp
 	 make-marker mark mark-marker markerp memory-limit minibuffer-window
 	 ;; mouse-movement-p not in XEmacs
 	 natnump nlistp not null number-or-marker-p numberp
@@ -1459,7 +1528,7 @@
 	       ;; this addr is jumped to
 	       (setcdr rest (cons (cons nil (cdr tmp))
 				  (cdr rest)))
-	       (setq tags (delq tmp tags))
+	       (setq tags (delete* tmp tags))
 	       (setq rest (cdr rest))))
 	(setq rest (cdr rest))))
     (if tags (error "optimizer error: missed tags %s" tags))
@@ -1588,11 +1657,11 @@
 	       (cond ((= tmp 1)
 		      (byte-compile-log-lap
  		       "  %s discard\t-->\t<deleted>" lap0)
-		      (setq lap (delq lap0 (delq lap1 lap))))
+		      (setq lap (delete* lap0 (delete* lap1 lap))))
 		     ((= tmp 0)
 		      (byte-compile-log-lap
 		       "  %s discard\t-->\t<deleted> discard" lap0)
-		      (setq lap (delq lap0 lap)))
+		      (setq lap (delete* lap0 lap)))
 		     ((= tmp -1)
 		      (byte-compile-log-lap
 		       "  %s discard\t-->\tdiscard discard" lap0)
@@ -1605,7 +1674,7 @@
 	      ((and (memq (car lap0) byte-goto-ops)
 		    (eq (cdr lap0) lap1))
 	       (cond ((eq (car lap0) 'byte-goto)
-		      (setq lap (delq lap0 lap))
+		      (setq lap (delete* lap0 lap))
 		      (setq tmp "<deleted>"))
 		     ((memq (car lap0) byte-goto-always-pop-ops)
 		      (setcar lap0 (setq tmp 'byte-discard))
@@ -1662,7 +1731,7 @@
 	       (byte-compile-log-lap "  dup %s discard\t-->\t%s" lap1 lap1)
 	       (setq keep-going t
 		     rest (cdr rest))
-	       (setq lap (delq lap0 (delq lap2 lap))))
+	       (setq lap (delete* lap0 (delete* lap2 lap))))
 	      ;;
 	      ;; not goto-X-if-nil              -->  goto-X-if-non-nil
 	      ;; not goto-X-if-non-nil          -->  goto-X-if-nil
@@ -1682,7 +1751,7 @@
 	       (setcar lap1 (if (eq (car lap1) 'byte-goto-if-nil)
 				'byte-goto-if-not-nil
 				'byte-goto-if-nil))
-	       (setq lap (delq lap0 lap))
+	       (setq lap (delete* lap0 lap))
 	       (setq keep-going t))
 	      ;;
 	      ;; goto-X-if-nil     goto-Y X:  -->  goto-Y-if-non-nil X:
@@ -1699,7 +1768,7 @@
 		 (byte-compile-log-lap "  %s %s %s:\t-->\t%s %s:"
 				       lap0 lap1 lap2
 				       (cons inverse (cdr lap1)) lap2)
-		 (setq lap (delq lap0 lap))
+		 (setq lap (delete* lap0 lap))
 		 (setcar lap1 inverse)
 		 (setq keep-going t)))
 	      ;;
@@ -1714,13 +1783,13 @@
 		      (byte-compile-log-lap "  %s %s\t-->\t<deleted>"
 					    lap0 lap1)
 		      (setq rest (cdr rest)
-			    lap (delq lap0 (delq lap1 lap))))
+			    lap (delete* lap0 (delete* lap1 lap))))
 		     (t
 		      (if (memq (car lap1) byte-goto-always-pop-ops)
 			  (progn
 			    (byte-compile-log-lap "  %s %s\t-->\t%s"
 			     lap0 lap1 (cons 'byte-goto (cdr lap1)))
-			    (setq lap (delq lap0 lap)))
+			    (setq lap (delete* lap0 lap)))
 			(byte-compile-log-lap "  %s %s\t-->\t%s" lap0 lap1
 			 (cons 'byte-goto (cdr lap1))))
 		      (setcar lap1 'byte-goto)))
@@ -1765,7 +1834,7 @@
 	       (while (setq tmp2 (rassq lap0 tmp3))
 		 (setcdr tmp2 lap1)
 		 (setq tmp3 (cdr (memq tmp2 tmp3))))
-	       (setq lap (delq lap0 lap)
+	       (setq lap (delete* lap0 lap)
 		     keep-going t))
 	      ;;
 	      ;; unused-TAG: --> <deleted>
@@ -1774,7 +1843,7 @@
 		    (not (rassq lap0 lap)))
 	       (and (memq byte-optimize-log '(t byte))
 		    (byte-compile-log "  unused tag %d removed" (nth 1 lap0)))
-	       (setq lap (delq lap0 lap)
+	       (setq lap (delete* lap0 lap)
 		     keep-going t))
 	      ;;
 	      ;; goto   ... --> goto   <delete until TAG or end>
@@ -1829,10 +1898,10 @@
 				       byte-save-restriction))
 		    (< 0 (cdr lap1)))
 	       (if (zerop (setcdr lap1 (1- (cdr lap1))))
-		   (delq lap1 rest))
+		   (delete* lap1 rest))
 	       (if (eq (car lap0) 'byte-varbind)
 		   (setcar rest (cons 'byte-discard 0))
-		 (setq lap (delq lap0 lap)))
+		 (setq lap (delete* lap0 lap)))
 	       (byte-compile-log-lap "  %s %s\t-->\t%s %s"
 		 lap0 (cons (car lap1) (1+ (cdr lap1)))
 		 (if (eq (car lap0) 'byte-varbind)
@@ -1919,7 +1988,7 @@
 			  (setcdr tmp (cons (byte-compile-make-tag)
 					    (cdr tmp))))
 		      (setcdr lap1 (car (cdr tmp)))
-		      (setq lap (delq lap0 lap))))
+		      (setq lap (delete* lap0 lap))))
 	       (setq keep-going t))
 	      ;;
 	      ;; X: varref-Y    ...     varset-Y goto-X  -->
@@ -2055,7 +2124,7 @@
 				   (cons 'byte-unbind
 					 (+ (cdr lap0) (cdr lap1))))
 	     (setq keep-going t)
-	     (setq lap (delq lap0 lap))
+	     (setq lap (delete* lap0 lap))
 	     (setcdr lap1 (+ (cdr lap1) (cdr lap0))))
 	    )
       (setq rest (cdr rest)))

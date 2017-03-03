@@ -1319,9 +1319,10 @@ static int composite_char_col_next;
 
 #endif /* MULE */
 
-Lisp_Object QSin_char_byte_conversion;
-Lisp_Object QSin_internal_external_conversion;
+Lisp_Object QSin_char_byte_conversion, QSin_byte_char_conversion;
+Lisp_Object QSin_internal_external_conversion, QSin_external_internal_conversion;
 
+Fixnum Vchar_code_limit;
 
 /************************************************************************/
 /*                          qxestr***() functions                       */
@@ -1330,13 +1331,13 @@ Lisp_Object QSin_internal_external_conversion;
 /* Most are inline functions in lisp.h */
 
 int
-qxesprintf (Ibyte *buffer, const CIbyte *format, ...)
+qxesprintf (Ibyte *buffer, const CIbyte *fermat, ...)
 {
   va_list args;
   int retval;
 
-  va_start (args, format);
-  retval = vsprintf ((Chbyte *) buffer, format, args);
+  va_start (args, fermat);
+  retval = vsprintf ((Chbyte *) buffer, fermat, args);
   va_end (args);
 
   return retval;
@@ -2204,79 +2205,6 @@ eicpyout_malloc_fmt (Eistring *eistr, Bytecount *len_out, Internal_Format fmt,
 
 #ifdef MULE
 
-#ifdef EFFICIENT_INT_128_BIT
-# define STRIDE_TYPE INT_128_BIT
-# define HIGH_BIT_MASK \
-    MAKE_128_BIT_UNSIGNED_CONSTANT (0x80808080808080808080808080808080)
-#elif defined (EFFICIENT_INT_64_BIT)
-# define STRIDE_TYPE INT_64_BIT
-# define HIGH_BIT_MASK MAKE_64_BIT_UNSIGNED_CONSTANT (0x8080808080808080)
-#else
-# define STRIDE_TYPE INT_32_BIT
-# define HIGH_BIT_MASK MAKE_32_BIT_UNSIGNED_CONSTANT (0x80808080)
-#endif
-
-#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
-#define ALIGN_MASK (~ ALIGN_BITS)
-#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
-#define STRIDE sizeof (STRIDE_TYPE)
-
-/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
-   Return pointer to the first non-ASCII byte.  optimized for long
-   stretches of ASCII. */
-inline static const Ibyte *
-skip_ascii (const Ibyte *ptr, const Ibyte *end)
-{
-  const unsigned STRIDE_TYPE *ascii_end;
-
-  /* Need to do in 3 sections -- before alignment start, aligned chunk,
-     after alignment end. */
-  while (!ALIGNED (ptr))
-    {
-      if (ptr == end || !byte_ascii_p (*ptr))
-	return ptr;
-      ptr++;
-    }
-  ascii_end = (const unsigned STRIDE_TYPE *) ptr;
-  /* This loop screams, because we can detect ASCII
-     characters 4 or 8 at a time. */
-  while ((const Ibyte *) ascii_end + STRIDE <= end
-	 && !(*ascii_end & HIGH_BIT_MASK))
-    ascii_end++;
-  ptr = (Ibyte *) ascii_end;
-  while (ptr < end && byte_ascii_p (*ptr))
-    ptr++;
-  return ptr;
-}
-
-/* Skip as many ASCII bytes as possible in the memory block [END, PTR),
-   going downwards.  Return pointer to the location above the first
-   non-ASCII byte.  Optimized for long stretches of ASCII. */
-inline static const Ibyte *
-skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
-{
-  const unsigned STRIDE_TYPE *ascii_end;
-
-  /* Need to do in 3 sections -- before alignment start, aligned chunk,
-     after alignment end. */
-  while (!ALIGNED (ptr))
-    {
-      if (ptr == end || !byte_ascii_p (*(ptr - 1)))
-	return ptr;
-      ptr--;
-    }
-  ascii_end = (const unsigned STRIDE_TYPE *) ptr - 1;
-  /* This loop screams, because we can detect ASCII
-     characters 4 or 8 at a time. */
-  while ((const Ibyte *) ascii_end >= end
-	 && !(*ascii_end & HIGH_BIT_MASK))
-    ascii_end--;
-  ptr = (Ibyte *) (ascii_end + 1);
-  while (ptr > end && byte_ascii_p (*(ptr - 1)))
-    ptr--;
-  return ptr;
-}
-
 /* Function equivalents of bytecount_to_charcount/charcount_to_bytecount.
    These work on strings of all sizes but are more efficient than a simple
    loop on large strings and probably less efficient on sufficiently small
@@ -2312,6 +2240,60 @@ bytecount_to_charcount_fun (const Ibyte *ptr, Bytecount len)
   text_checking_assert (ptr == end);
 
   return count;
+}
+
+/* Return the character count of an lstream or coding buffer of
+   internal-format text, counting partial characters at the beginning of the
+   buffer as whole characters, and *not* counting partial characters at the
+   end of the buffer. The result of this function is subtracted from the
+   character count given by the coding system character tell methods, and we
+   need to treat each buffer in the same way to avoid double-counting. */
+
+Charcount
+buffered_bytecount_to_charcount (const Ibyte *bufptr, Bytecount len)
+{
+  Boolint partial_first = 0;
+  Bytecount impartial;
+
+  if (valid_ibyteptr_p (bufptr))
+    {
+      if (rep_bytes_by_first_byte (*bufptr) > len)
+        {
+          /* This is a partial last character. Return 0, avoid treating it
+             as a partial first character, since that would lead to it being
+             counted twice. */
+          return (Charcount) 0;
+        }
+    }
+  else
+    {
+      const Ibyte *newstart = bufptr, *limit = newstart + len;
+
+      /* Our consumer has the start of a partial character, we have the
+         rest. */
+      while (newstart < limit && !valid_ibyteptr_p (newstart))
+        {
+          newstart++;
+        }
+                  
+      partial_first = 1;
+      bufptr = newstart;
+      len = limit - newstart;
+    }
+
+  if (len && valid_ibyteptr_p (bufptr))
+    {
+      /* There's at least one valid starting char in the string,
+         validate_ibyte_string_backward won't run off the begining. */
+      impartial = validate_ibyte_string_backward (bufptr, len);
+    }
+  else
+    {
+      impartial = 0;
+    }
+
+  return (Charcount) partial_first + bytecount_to_charcount (bufptr,
+                                                             impartial);
 }
 
 Bytecount
@@ -2974,7 +2956,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 
   PROFILE_DECLARE ();
 
-  PROFILE_RECORD_ENTERING_SECTION (QSin_char_byte_conversion);
+  PROFILE_RECORD_ENTERING_SECTION (QSin_byte_char_conversion);
 
   best_above = BUF_Z (buf);
   best_above_byte = BYTE_BUF_Z (buf);
@@ -3391,7 +3373,7 @@ bytebpos_to_charbpos_func (struct buffer *buf, Bytebpos x)
 #endif /* OLD_BYTE_CHAR */
 
 done:
-  PROFILE_RECORD_EXITING_SECTION (QSin_char_byte_conversion);
+  PROFILE_RECORD_EXITING_SECTION (QSin_byte_char_conversion);
 
   return retval;
 }
@@ -4258,7 +4240,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
   PROFILE_DECLARE ();
 
   assert (!inhibit_non_essential_conversion_operations);
-  PROFILE_RECORD_ENTERING_SECTION (QSin_internal_external_conversion);
+  PROFILE_RECORD_ENTERING_SECTION (QSin_external_internal_conversion);
 
   count = begin_gc_forbidden ();
 
@@ -4471,7 +4453,7 @@ dfc_convert_to_internal_format (dfc_conversion_type source_type,
       sink->data.ptr = Dynarr_begin (conversion_in_dynarr);
     }
 
-  PROFILE_RECORD_EXITING_SECTION (QSin_internal_external_conversion);
+  PROFILE_RECORD_EXITING_SECTION (QSin_external_internal_conversion);
 }
 
 /* ----------------------------------------------------------------------- */
@@ -4696,7 +4678,7 @@ non_ascii_valid_ichar_p (Ichar ch)
   int f1, f2, f3;
 
   /* Must have only lowest 21 bits set */
-  if (ch & ~0x1FFFFF)
+  if (ch & ~(CHAR_CODE_LIMIT - 1))
     return 0;
 
   f1 = ichar_field1 (ch);
@@ -4767,20 +4749,6 @@ non_ascii_valid_ichar_p (Ichar ch)
       return ((f2 != 0x20 && f2 != 0x7F && f3 != 0x20 && f3 != 0x7F) ||
 	      XCHARSET_CHARS (charset) == 96);
     }
-}
-
-/* Copy the character pointed to by SRC into DST.  Do not call this
-   directly.  Use the macro itext_copy_ichar() instead.
-   Return the number of bytes copied.  */
-
-Bytecount
-non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst)
-{
-  Bytecount bytes = rep_bytes_by_first_byte (*src);
-  Bytecount i;
-  for (i = bytes; i; i--, dst++, src++)
-    *dst = *src;
-  return bytes;
 }
 
 #endif /* MULE */
@@ -5158,9 +5126,22 @@ vars_of_text (void)
 {
   QSin_char_byte_conversion = build_defer_string ("(in char-byte conversion)");
   staticpro (&QSin_char_byte_conversion);
+  QSin_byte_char_conversion = build_defer_string ("(in byte-char conversion)");
+  staticpro (&QSin_byte_char_conversion);
   QSin_internal_external_conversion =
     build_defer_string ("(in internal-external conversion)");
   staticpro (&QSin_internal_external_conversion);
+  QSin_external_internal_conversion =
+    build_defer_string ("(in external-internal conversion)");
+  staticpro (&QSin_external_internal_conversion);
+
+  DEFVAR_CONST_INT ("char-code-limit", &Vchar_code_limit /*
+Exclusive upper bound on the values return by `char-int'.
+
+Note that not every fixnum with a value below `char-code-limit' has an
+associated character; check with `char-int-p' if necessary.
+*/);
+  Vchar_code_limit = CHAR_CODE_LIMIT;
 
 #ifdef ENABLE_COMPOSITE_CHARS
   /* #### not dumped properly */

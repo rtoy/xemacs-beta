@@ -1,3 +1,34 @@
+2015-06-22  Michael Sperber  <mike@xemacs.org>
+
+	* lwlib-colors.h: 
+	* lwlib-colors.c (xft_convert_color_1): Introduce, and make
+	`xft_convert_color' use it.
+
+2015-01-07  Jerry James  <james@xemacs.org>
+ 
+	* lwlib-Xaw.c (xaw_scrollbar_scroll): Add typecast to fix g++ build,
+	problem reported by Marcus Harnisch.
+
+2015-01-08  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix progress bar crashes.
+	Thanks to Ralf Soergel for diagnosis and a patch.
+
+	* xt-wrappers.h (HAVE_ATHENA_I18N):
+	Define XAW_INTERNATIONALIZATION when needed.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
 2011-05-20  Jerry James  <james@xemacs.org>
 
 	* Makefile.in.in (DESTDIR): New variable for all Makefiles, unused in

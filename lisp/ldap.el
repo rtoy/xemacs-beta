@@ -403,23 +403,16 @@ This table is built from RFC2252 Section 5 and RFC2256 Section 5")
       (error "Invalid country string: %s" str)))
 
 (defun ldap-decode-string (str)
-  (if (fboundp 'decode-coding-string)
-      (decode-coding-string str ldap-coding-system)))
+  (decode-coding-string str ldap-coding-system))
 
 (defun ldap-encode-string (str)
-   (if (fboundp 'encode-coding-string)
-       (encode-coding-string str ldap-coding-system)))
+  (encode-coding-string str ldap-coding-system))
 
 (defun ldap-decode-address (str)
-  (mapconcat 'ldap-decode-string
-	     (split-string str "\\$")
-	     "\n"))
+  (mapconcat 'ldap-decode-string (split-string-by-char str ?$) "\n"))
 
 (defun ldap-encode-address (str)
-  (mapconcat 'ldap-encode-string
-	     (split-string str "\n")
-	     "$"))
-
+  (mapconcat 'ldap-encode-string (split-string-by-char str ?\n) "$"))
 
 ;; LDAP protocol functions
 

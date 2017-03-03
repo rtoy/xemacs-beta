@@ -60,25 +60,25 @@ do {							\
 # define DEBUG_FONTS_LISP1(format, arg)		\
 do {						\
   if (debug_x_fonts)				\
-    debug_out_lisp (format, 1, arg);		\
+    debug_out_lisp (format, arg);		\
 } while (0)
 
 # define DEBUG_FONTS_LISP2(format, arg1, arg2)	\
 do {						\
   if (debug_x_fonts)				\
-    debug_out_lisp (format, 2, arg1, arg2);	\
+    debug_out_lisp (format, arg1, arg2);	\
 } while (0)
 
 # define DEBUG_FONTS_LISP3(format, arg1, arg2, arg3)	\
 do {							\
   if (debug_x_fonts)					\
-    debug_out_lisp (format, 3, arg1, arg2, arg3);	\
+    debug_out_lisp (format, arg1, arg2, arg3);	\
 } while (0)
 
 # define DEBUG_FONTS_LISP4(format, arg1, arg2, arg3, arg4)	\
 do {								\
   if (debug_x_fonts)						\
-    debug_out_lisp (format, 4, arg1, arg2, arg3, arg4);		\
+    debug_out_lisp (format, arg1, arg2, arg3, arg4);		\
 } while (0)
 #else /* not DEBUG_XEMACS */
 # define DEBUG_FONTS1(format, arg)
@@ -128,7 +128,7 @@ XFUN (font_spec_matches_charset) (struct device * USED_IF_XFT (d),
 				  enum font_specifier_matchspec_stages stage)
 {
   Lisp_Object registries = Qnil;
-  long i, registries_len;
+  Elemcount i, registries_len;
   const Ibyte *the_nonreloc;
   Bytecount the_length;
 
@@ -505,7 +505,9 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	FcPattern *p = FcFontRenderPrepare (fcc, fontxft, fontxft);
 	Extbyte *name;
 
-	/* full name, including language coverage and repertoire */
+	/* full name, including language coverage and repertoire
+	   we delete 'charset' here because FcNameUnparse chokes on it */
+	FcPatternDel (p, FC_CHARSET);
 	name = (Extbyte *) FcNameUnparse (p);
 	eicpy_ext (eistr_fullname,
 		   (name ? name : "NOT FOUND"),
@@ -514,7 +516,6 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 
 	/* long name, omitting coverage and repertoire, plus a number
 	   of rarely useful properties */
-	FcPatternDel (p, FC_CHARSET);
 	FcPatternDel (p, FC_LANG);
 #ifdef FC_WIDTH
 	FcPatternDel (p, FC_WIDTH);
@@ -589,7 +590,7 @@ xft_find_charset_font (Lisp_Object font, Lisp_Object charset,
 	  {
 	    /* OK, we fell off the end of the table */
 	    warn_when_safe_lispobj (intern ("xft"), intern ("alert"),
-				    list2 (build_ascstring ("unchecked charset"),
+				    list2 (build_ascstring ("unknown charset in conversion to Xft font"),
 					   charset));
 	    /* default to "en"
 	       #### THIS IS WRONG, WRONG, WRONG!!

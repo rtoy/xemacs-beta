@@ -172,22 +172,22 @@ EXFUN (Fnext_window, 4);
  ****************************************************************************/
 
 struct image_instantiator_methods *
-decode_device_ii_format (Lisp_Object device, Lisp_Object format,
+decode_device_ii_format (Lisp_Object device, Lisp_Object fermat,
 			 Error_Behavior errb)
 {
   int i;
 
-  if (!SYMBOLP (format))
+  if (!SYMBOLP (fermat))
     {
       if (ERRB_EQ (errb, ERROR_ME))
-	CHECK_SYMBOL (format);
+	CHECK_SYMBOL (fermat);
       return 0;
     }
 
   for (i = 0; i < Dynarr_length (the_image_instantiator_format_entry_dynarr);
        i++)
     {
-      if ( EQ (format,
+      if ( EQ (fermat,
 	       Dynarr_at (the_image_instantiator_format_entry_dynarr, i).
 	       symbol) )
 	{
@@ -202,24 +202,24 @@ decode_device_ii_format (Lisp_Object device, Lisp_Object format,
 	}
     }
 
-  maybe_invalid_argument ("Invalid image-instantiator format", format,
+  maybe_invalid_argument ("Invalid image-instantiator format", fermat,
 			  Qimage, errb);
 
   return 0;
 }
 
 struct image_instantiator_methods *
-decode_image_instantiator_format (Lisp_Object format, Error_Behavior errb)
+decode_image_instantiator_format (Lisp_Object fermat, Error_Behavior errb)
 {
-  return decode_device_ii_format (Qnil, format, errb);
+  return decode_device_ii_format (Qnil, fermat, errb);
 }
 
 static int
-valid_image_instantiator_format_p (Lisp_Object format, Lisp_Object locale)
+valid_image_instantiator_format_p (Lisp_Object fermat, Lisp_Object locale)
 {
   int i;
   struct image_instantiator_methods* meths =
-    decode_image_instantiator_format (format, ERROR_ME_NOT);
+    decode_image_instantiator_format (fermat, ERROR_ME_NOT);
   Lisp_Object contype = Qnil;
   /* mess with the locale */
   if (!NILP (locale) && SYMBOLP (locale))
@@ -230,7 +230,7 @@ valid_image_instantiator_format_p (Lisp_Object format, Lisp_Object locale)
       contype = console ? CONSOLE_TYPE (console) : locale;
     }
   /* nothing is valid in all locales */
-  if (EQ (format, Qnothing))
+  if (EQ (fermat, Qnothing))
     return 1;
   /* reject unknown formats */
   else if (NILP (contype) || !meths)
@@ -427,7 +427,7 @@ find_keyword_in_vector_or_given (Lisp_Object vector, Lisp_Object keyword,
 				 Lisp_Object default_)
 {
   Lisp_Object *elt;
-  int instantiator_len;
+  Elemcount instantiator_len;
 
   elt = XVECTOR_DATA (vector);
   instantiator_len = XVECTOR_LENGTH (vector);
@@ -458,7 +458,7 @@ find_instantiator_differences (Lisp_Object new_, Lisp_Object old)
   Lisp_Object alist = Qnil;
   Lisp_Object *elt = XVECTOR_DATA (new_);
   Lisp_Object *old_elt = XVECTOR_DATA (old);
-  int len = XVECTOR_LENGTH (new_);
+  Elemcount len = XVECTOR_LENGTH (new_);
   struct gcpro gcpro1;
 
   /* If the vector length has changed then consider everything
@@ -496,7 +496,7 @@ Use `set-glyph-image' on glyphs to register instantiator changes.  */
        (instantiator, keyword, value))
 {
   Lisp_Object *elt;
-  int len;
+  Elemcount len;
 
   CHECK_VECTOR (instantiator);
   if (!KEYWORDP (keyword))
@@ -618,7 +618,7 @@ Lisp_Object
 tagged_vector_to_alist (Lisp_Object vector)
 {
   Lisp_Object *elt = XVECTOR_DATA (vector);
-  int len = XVECTOR_LENGTH (vector);
+  Elemcount len = XVECTOR_LENGTH (vector);
   Lisp_Object result = Qnil;
 
   assert (len & 1);
@@ -992,11 +992,11 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
 
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
-  write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ", 1,
+  write_fmt_string_lisp (printcharfun, "#<image-instance (%s) ",
 			 Fimage_instance_type (obj));
   if (!NILP (ii->name))
-    write_fmt_string_lisp (printcharfun, "%S ", 1, ii->name);
-  write_fmt_string_lisp (printcharfun, "on %s ", 1, ii->domain);
+    write_fmt_string_lisp (printcharfun, "%S ", ii->name);
+  write_fmt_string_lisp (printcharfun, "on %s ", ii->domain);
   switch (IMAGE_INSTANCE_TYPE (ii))
     {
     case IMAGE_NOTHING:
@@ -1069,11 +1069,11 @@ print_image_instance (Lisp_Object obj, Lisp_Object printcharfun,
       print_internal (IMAGE_INSTANCE_WIDGET_TYPE (ii), printcharfun, 0);
 
       if (GUI_ITEMP (IMAGE_INSTANCE_WIDGET_ITEM (ii)))
-	write_fmt_string_lisp (printcharfun, " %S", 1,
+	write_fmt_string_lisp (printcharfun, " %S",
 			       IMAGE_INSTANCE_WIDGET_TEXT (ii));
 
       if (!NILP (IMAGE_INSTANCE_WIDGET_FACE (ii)))
-	write_fmt_string_lisp (printcharfun, " face=%s", 1,
+	write_fmt_string_lisp (printcharfun, " face=%s",
 			       IMAGE_INSTANCE_WIDGET_FACE (ii));
       /* fallthrough */
 
@@ -1447,7 +1447,7 @@ incompatible_image_types (Lisp_Object instantiator, int given_dest_mask,
      list2
      (emacs_sprintf_string_lisp
       ("No compatible image-instance types given: wanted one of %s, got %s",
-       Qnil, 2, encode_image_instance_type_list (desired_dest_mask),
+       encode_image_instance_type_list (desired_dest_mask),
        encode_image_instance_type_list (given_dest_mask)),
       instantiator));
 }
@@ -2637,7 +2637,8 @@ simple_image_type_normalize (Lisp_Object inst, Lisp_Object console_type,
 static void
 check_valid_xbm_inline (Lisp_Object data)
 {
-  Lisp_Object width, height, bits, args[2];
+  Lisp_Object width, height, bits;
+  EMACS_INT i_width, i_height;
 
   if (!CONSP (data) ||
       !CONSP (XCDR (data)) ||
@@ -2651,22 +2652,15 @@ check_valid_xbm_inline (Lisp_Object data)
 
   CHECK_STRING (bits);
 
-  if (!NATNUMP (width))
+  if (!FIXNUMP (width) || XREALFIXNUM (width) < 0)
     invalid_argument ("Width must be a natural number", width);
 
-  if (!NATNUMP (height))
+  if (!FIXNUMP (height) || XREALFIXNUM (height) < 0)
     invalid_argument ("Height must be a natural number", height);
 
-  args[0] = width;
-  args[1] = height;
-
-  args[0] = Ftimes (countof (args), args);
-  args[1] = make_integer (8);
-
-  args[0] = Fquo (countof (args), args);
-  args[1] = make_integer (string_char_length (bits));
-
-  if (!NILP (Fgtr (countof (args), args)))
+  i_width = XREALFIXNUM (width);
+  i_height = XREALFIXNUM (height);
+  if (i_width * i_height / 8 > string_char_length (bits))
     invalid_argument ("data is too short for width and height",
 			 vector3 (width, height, bits));
 }
@@ -3505,7 +3499,7 @@ image_validate (Lisp_Object instantiator)
   else if (VECTORP (instantiator))
     {
       Lisp_Object *elt = XVECTOR_DATA (instantiator);
-      int instantiator_len = XVECTOR_LENGTH (instantiator);
+      Elemcount instantiator_len = XVECTOR_LENGTH (instantiator);
       struct image_instantiator_methods *meths;
       Lisp_Object already_seen = Qnil;
       struct gcpro gcpro1;
@@ -3643,7 +3637,7 @@ image_copy_vector_instantiator (Lisp_Object instantiator)
   int i;
   struct image_instantiator_methods *meths;
   Lisp_Object *elt;
-  int instantiator_len;
+  Elemcount instantiator_len;
 
   CHECK_VECTOR (instantiator);
 
@@ -3740,8 +3734,8 @@ print_glyph (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<glyph (%s", 1, Fglyph_type (obj));
-  write_fmt_string_lisp (printcharfun, ") %S", 1, glyph->image);
+  write_fmt_string_lisp (printcharfun, "#<glyph (%s", Fglyph_type (obj));
+  write_fmt_string_lisp (printcharfun, ") %S", glyph->image);
   write_fmt_string (printcharfun, "0x%x>", LISP_OBJECT_UID (obj));
 }
 

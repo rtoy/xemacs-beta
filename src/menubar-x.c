@@ -172,7 +172,7 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 		sferror ("Keyword in menu lacks a value", cascade);
 	      val = Fcar (desc);
 	      desc = Fcdr (desc);
-	      if (EQ (key, Q_included))
+	      if (EQ (key, Q_included) || EQ (key, Q_visible))
 		include_p = val, included_spec = 1;
 	      else if (EQ (key, Q_config))
 		config_tag = val;
@@ -516,6 +516,9 @@ pre_activate_callback (Widget widget, LWLIB_ID UNUSED (id),
     }
 }
 
+/* Returns the converted menubar, or NULL if an error is encountered while
+ * converting the Lisp menu specification.
+ */
 static widget_value *
 compute_menubar_data (struct frame *f, Lisp_Object menubar, int deep_p)
 {
@@ -573,7 +576,8 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
     menubar_visible = !NILP (w->menubar_visible_p);
 
   data = compute_menubar_data (f, menubar, deep_p);
-  assert (data && (data->next || data->contents));
+  if (!data || (!data->next && !data->contents))
+    return 0;
 
   if (!FRAME_X_MENUBAR_ID (f))
     FRAME_X_MENUBAR_ID (f) = new_lwlib_id ();
@@ -594,6 +598,8 @@ set_frame_menubar (struct frame *f, int deep_p, int first_time_p)
 	{
 	  free_popup_widget_value_tree (data);
 	  data = compute_menubar_data (f, menubar, 1);
+	  if (!data || (!data->next && !data->contents))
+	    return 0;
 	}
 
 
@@ -1160,7 +1166,7 @@ menu_accelerator_junk_on_error (Lisp_Object errordata,
       warn_when_safe_lispobj
 	(Qerror, Qwarning,
 	 emacs_sprintf_string_lisp
-	 ("%s: %s", Qnil, 2,
+	 ("%s: %s",
 	  build_msg_string ("Error in menu accelerators (setting to nil)"),
 	  errordata));
     }

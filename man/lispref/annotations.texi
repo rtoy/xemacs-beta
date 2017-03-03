@@ -4,7 +4,7 @@
 @c Copyright (C) 1995 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/annotations.info
-@node Annotations, Display, Glyphs, top
+@node Annotations, Display, Glyphs, Top
 @chapter Annotations
 @cindex annotation
 
@@ -28,7 +28,7 @@ extents work.
 				  annotation's lifetime.
 @end menu
 
-@node Annotation Basics
+@node Annotation Basics, Annotation Primitives, Annotations, Annotations
 @section Annotation Basics
 
 @cindex margin
@@ -119,7 +119,7 @@ displayed using any remaining space.  Finally as many
 space to display in.
 
 
-@node Annotation Primitives
+@node Annotation Primitives, Annotation Properties, Annotation Basics, Annotations
 @section Annotation Primitives
 
 @defun make-annotation glyph &optional position layout buffer with-event d-glyph rightp
@@ -150,7 +150,7 @@ This function returns @code{t} if @var{annotation} is an annotation,
 @code{nil} otherwise.
 @end defun
 
-@node Annotation Properties
+@node Annotation Properties, Locating Annotations, Annotation Primitives, Annotations
 @section Annotation Properties
 
 @defun annotation-glyph annotation
@@ -246,7 +246,7 @@ This function removes @var{annotation}'s glyph, making it invisible.
 This function restores @var{annotation}'s glyph, making it visible.
 @end defun
 
-@node Locating Annotations
+@node Locating Annotations, Margin Primitives, Annotation Properties, Annotations
 @section Locating Annotations
 
 @defun annotations-in-region start end buffer
@@ -270,7 +270,7 @@ This function returns a list of all annotations in all buffers in
 existence.
 @end defun
 
-@node Margin Primitives
+@node Margin Primitives, Annotation Hooks, Locating Annotations, Annotations
 @section Margin Primitives
 @cindex margin width
 
@@ -320,7 +320,7 @@ The margin colors are controlled by the faces @code{left-margin} and
 @code{Emacs.left-margin.foreground}; likewise for the right margin.
 
 
-@node Annotation Hooks
+@node Annotation Hooks,  , Margin Primitives, Annotations
 @section Annotation Hooks
 @cindex annotation hooks
 

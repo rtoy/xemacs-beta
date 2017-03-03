@@ -181,26 +181,17 @@ x_has_keysym (KeySym keysym, Lisp_Object hash_table, int with_modifiers)
 
   for (j = 0; j < (upper_lower[0] == upper_lower[1] ? 1 : 2); j++)
     {
-      Extbyte *name;
-      keysym = upper_lower[j];
+      KeySym ks = upper_lower[j];
+      Lisp_Object sym = x_keysym_to_emacs_keysym (ks, 0);
+      Lisp_Object new_value = with_modifiers ? Qt : Qsans_modifiers;
+      Lisp_Object old_value = Fgethash (sym, hash_table, Qnil);
 
-      name = XKeysymToString (keysym);
-      if (name)
-	{
-	  /* X guarantees NAME to be in the Host Portable Character Encoding */
-	  Lisp_Object sym = x_keysym_to_emacs_keysym (keysym, 0);
-	  Lisp_Object new_value = with_modifiers ? Qt : Qsans_modifiers;
-	  Lisp_Object old_value = Fgethash (sym, hash_table, Qnil);
-
-	  if (! EQ (old_value, new_value)
-	      && ! (EQ (old_value, Qsans_modifiers) &&
-		    EQ (new_value, Qt)))
-	    {
-	      maybe_define_x_key_as_self_inserting_character (keysym, sym);
-	      Fputhash (build_extstring (name, Qbinary), new_value,
-			hash_table);
-	      Fputhash (sym, new_value, hash_table);
-	    }
+      if (! EQ (old_value, new_value)
+          && ! (EQ (old_value, Qsans_modifiers) &&
+                EQ (new_value, Qt)))
+        {
+          maybe_define_x_key_as_self_inserting_character (ks, sym);
+          Fputhash (sym, new_value, hash_table);
 	}
     }
 }
@@ -757,6 +748,17 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
        characters are the same as their ASCII codes.  */
     return make_char (keysym);
 
+  if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
+    {
+      /* These keysyms malloc with XKeysymToString(), *every time the
+         function is called.* Avoid leaking, construct the keysym string
+         ourselves. */
+      Ascbyte buf [10];
+      qxesprintf ((Ibyte *) buf, keysym & 0xff0000 ? "U%06X" : "U%04X",
+                  (unsigned int) (keysym & 0xffffff));
+      return KEYSYM (buf);
+    }
+
   switch (keysym)
     {
       /* These would be handled correctly by the default case, but by
@@ -1142,11 +1144,10 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	       easier or more maintainable than storing a correspondence in
 	       Lisp. */
 
-	    if (!NILP(Vx_us_keymap_description) && 
-		VECTORP(Vx_us_keymap_description) && 
-		ev->keycode >= (unsigned)Vx_us_keymap_first_keycode && 
-		ev->keycode 
-		< (unsigned)XVECTOR_LENGTH(Vx_us_keymap_description)) 
+	    if ((Elemcount) ev->keycode >= Vx_us_keymap_first_keycode
+                && VECTORP (Vx_us_keymap_description)
+                && (Elemcount) ev->keycode 
+		< XVECTOR_LENGTH (Vx_us_keymap_description))
 	      {
 		Lisp_Object entr = XVECTOR_DATA(Vx_us_keymap_description)
 		  [ev->keycode - Vx_us_keymap_first_keycode];
@@ -1154,35 +1155,36 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 
 		if (!NILP (entr))
 		  {
-		    if (CHARP(entr)) 
+		    if (CHARP (entr)) 
 		      {
-			alternate = XCHAR(entr);
+			alternate = XCHAR (entr);
 		      }
-		    else if (VECTORP(entr))
+		    else if (VECTORP (entr))
 		      {
 			if (modifiers & XEMACS_MOD_SHIFT
-			    && XVECTOR_LENGTH(Vx_us_keymap_description) > 1)
+			    && XVECTOR_LENGTH (Vx_us_keymap_description) > 1)
 			  {
-			    entr = XVECTOR_DATA(entr)[1];
+			    entr = XVECTOR_DATA (entr)[1];
 			    if (CHARP(entr))
 			      {
-				alternate = XCHAR(entr);
+				alternate = XCHAR (entr);
 			      }
 			  }
-			else if (XVECTOR_LENGTH(Vx_us_keymap_description) 
+			else if (XVECTOR_LENGTH (Vx_us_keymap_description) 
 				 > 0)
 			  {
-			    entr = XVECTOR_DATA(entr)[0];
-			    if (CHARP(entr))
+			    entr = XVECTOR_DATA(entr) [0];
+			    if (CHARP (entr))
 			      {
-				alternate = XCHAR(entr);
+				alternate = XCHAR (entr);
 			      }
 			  }
 		      }
 		    if ('\0' != alternate)
 		      {
-			SET_EVENT_KEY_ALT_KEYCHARS(emacs_event, KEYCHAR_QWERTY,
-						   alternate);
+			SET_EVENT_KEY_ALT_KEYCHARS (emacs_event,
+                                                    KEYCHAR_QWERTY,
+                                                    alternate);
 		      }
 		  }
 	      }
@@ -2385,7 +2387,7 @@ describe_event_window (Window window, Display *display, Lisp_Object pstream)
 		      w->core.widget_class->core_class.class_name);
   f = x_any_window_to_frame (get_device_from_display (display), window);
   if (f)
-    write_fmt_string_lisp (pstream, " \"%s\"", 1, f->name);
+    write_fmt_string_lisp (pstream, " \"%s\"", f->name);
   write_fmt_string (pstream, "\n");
 }
 

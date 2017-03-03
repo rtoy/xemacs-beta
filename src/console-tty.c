@@ -137,7 +137,8 @@ tty_init_console (struct console *con, Lisp_Object props)
     }
 
   /* set_descriptor_non_blocking (tty_con->infd); */
-  tty_con->instream  = make_filedesc_input_stream  (tty_con->infd,  0, -1, 0);
+  tty_con->instream  = make_filedesc_input_stream  (tty_con->infd,  0, -1, 0,
+						    NULL);
   Lstream_set_buffering (XLSTREAM (tty_con->instream), LSTREAM_UNBUFFERED, 0);
   tty_con->instream =
     make_coding_input_stream (XLSTREAM (tty_con->instream),
@@ -145,7 +146,8 @@ tty_init_console (struct console *con, Lisp_Object props)
 			      CODING_DECODE,
 			      LSTREAM_FL_READ_ONE_BYTE_AT_A_TIME);
   Lstream_set_buffering (XLSTREAM (tty_con->instream), LSTREAM_UNBUFFERED, 0);
-  tty_con->outstream = make_filedesc_output_stream (tty_con->outfd, 0, -1, 0);
+  tty_con->outstream = make_filedesc_output_stream (tty_con->outfd, 0, -1, 0,
+						    NULL);
   tty_con->outstream =
     make_coding_output_stream (XLSTREAM (tty_con->outstream),
 			       get_coding_system_for_text_file (Qterminal, 0),

@@ -306,11 +306,9 @@ The return value has the form (NAME . ADDRESS)."
 	(or (lm-header "created")
 	    (let ((date-and-time (lm-header "ORIG-DATE")))
 	      (if date-and-time
-		  (substring date-and-time 0
-			     (string-match " " date-and-time)))))
+		  (subseq date-and-time 0 (position ?\  date-and-time)))))
       (if file
-	  (kill-buffer (current-buffer)))
-      )))
+	  (kill-buffer (current-buffer))))))
 
 (defun lm-last-modified-date (&optional file)
   "Return the modify-date given in file FILE, or current buffer if FILE is nil."
@@ -333,11 +331,9 @@ The return value has the form (NAME . ADDRESS)."
 	  ;; XEmacs change (Infodock change? -sb)
 	  (let ((date-and-time (lm-header "LAST-MOD")))
 	    (if date-and-time
-		(substring date-and-time 0
-			   (string-match " " date-and-time)))))
+		(subseq date-and-time 0 (position ?\  date-and-time)))))
       (if file
-	  (kill-buffer (current-buffer)))
-      )))
+	  (kill-buffer (current-buffer))))))
 
 (defun lm-version (&optional file)
   "Return the version listed in file FILE, or current buffer if FILE is nil.

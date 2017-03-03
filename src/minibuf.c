@@ -34,6 +34,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "frame-impl.h"
 #include "insdel.h"
 #include "redisplay.h"
+#include "text.h"
 #include "window-impl.h"
 #include "elhash.h"
 
@@ -63,6 +64,8 @@ Lisp_Object Qminibuffer_setup_hook, Vminibuffer_setup_hook;
 
 Lisp_Object Qappend_message, Qcurrent_message_label,
             Qclear_message, Qdisplay_message;
+
+Lisp_Object Qxemacs_next_iteration_in_vector;
 
 
 DEFUN ("minibuffer-depth", Fminibuffer_depth, 0, 0, 0, /*
@@ -268,6 +271,22 @@ map_completion_list (maphash_function_t function, Lisp_Object liszt,
 }
 
 static void
+map_completion_trad_obarray (maphash_function_t function, Lisp_Object vector,
+                             void *extra_arg)
+{
+  Lisp_Object symbol = call1 (Qxemacs_next_iteration_in_vector, vector);
+
+  while (!ZEROP (symbol))
+    {
+      if (function (Fsymbol_name (symbol), symbol, extra_arg))
+        {
+          return;
+        }
+      symbol = call2 (Qxemacs_next_iteration_in_vector, vector, symbol);
+    }
+}
+
+static void
 map_completion (maphash_function_t function, Lisp_Object collection,
                 void *extra_arg, Lisp_Object predicate)
 {
@@ -277,7 +296,7 @@ map_completion (maphash_function_t function, Lisp_Object collection,
     }
   else if (VECTORP (collection))
     {
-      map_obarray (collection, function, extra_arg);
+      return map_completion_trad_obarray (function, collection, extra_arg);
     }
   else if (NILP (predicate))
     {
@@ -310,13 +329,15 @@ regexp_ignore_completion_p (const Ibyte *nonreloc,
   return 0;
 }
 
+EXFUN (Ffunction_max_args, 1);
+
 /* Callers should GCPRO, since this may call eval */
 static int
 ignore_completion_p (Lisp_Object completion_string,
                      Lisp_Object pred, Lisp_Object completion,
                      Boolint hash_tablep)
 {
-  Lisp_Object tem;
+  Lisp_Object tem, max_args;
 
   if (regexp_ignore_completion_p (0, completion_string, 0, -1))
     return 1;
@@ -328,7 +349,8 @@ ignore_completion_p (Lisp_Object completion_string,
 
   /* Ignore this element if there is a predicate and the predicate doesn't
      like it. */
-  if (hash_tablep)
+  if (hash_tablep && ((max_args = Ffunction_max_args (pred)),
+                      FIXNUMP (max_args) && XREALFIXNUM (max_args) > 1))
     {
       tem = call2 (pred, completion_string, completion);
     }
@@ -688,13 +710,12 @@ test_completion_mapper (Lisp_Object eltstring, Lisp_Object value, void *arg)
 }
 
 DEFUN ("test-completion", Ftest_completion, 2, 3, 0, /*
-Return non-nil if STRING is a valid completion in COLLECTION.
+Return non-nil if STRING is an exact completion in COLLECTION.
 
-COLLECTION must be a list, a hash table, an obarray, or a function.
+COLLECTION must be a list, a hash table, a vector, or a function.
 
 Each string (or symbol) in COLLECTION is tested to see if it (or its
-name) begins with STRING.  The value is a list of all the strings from
-COLLECTION that match.
+name) begins with STRING, until a valid, exact completion is found.
 
 If COLLECTION is a list, the elements of the list that are not cons
 cells and the cars of the elements of the list that are cons cells
@@ -704,19 +725,19 @@ completions.
 If COLLECTION is a hash-table, all the keys that are strings or symbols
 are the possible completions.
 
-If COLLECTION is an obarray, the names of all symbols in the obarray
-are the possible completions.
+If COLLECTION is a vector, it is treated as a traditional emacs obarray, with
+each element of the vector a symbol comprising the start of a hash table
+bucket, with a linked list chaining bucket entries together.
 
 If COLLECTION is a function, it is called with three arguments: the
 values STRING, PREDICATE and the symbol `lambda'.  Whatever it returns
 is passed back by `test-completion'.
 
-If optional third argument PREDICATE is non-nil, it is used to test
-for possible matches.  The match is a candidate only if PREDICATE
-returns non-nil.  The argument given to PREDICATE is the alist element
-or the symbol from the obarray.  If COLLECTION is a hash table,
-PREDICATE is passed two arguments, the key and the value of the hash
-table entry.
+If optional third argument PREDICATE is non-nil, it is used to test for
+possible matches.  The match is a candidate only if PREDICATE returns non-nil.
+The argument given to PREDICATE is the alist element or the symbol from the
+traditional emacs obarray.  If COLLECTION is a hash table, PREDICATE is passed
+two arguments, the key and the value of the hash table entry.
 */
        (string, collection, predicate))
 {
@@ -755,7 +776,7 @@ table entry.
                                   lookup, 0) ? Qnil : Qt;
 
       /* It would be reasonable to do something similar for the hash
-         tables, except, both symbol and string keys are vaild
+         tables, except, both symbol and string keys are valid
          completions there. So a negative #'gethash for the string
          (with #'equal as the hash table tests) still means you have
          to do the linear search, for any symbols with that string
@@ -843,10 +864,6 @@ echo_area_append (struct frame *f, const Ibyte *nonreloc, Lisp_Object reloc,
 		  Lisp_Object label)
 {
   /* This function can call lisp */
-  Lisp_Object obj;
-  struct gcpro gcpro1;
-  Lisp_Object frame;
-
   /* There is an inlining bug in egcs-20000131 c++ that can be worked
      around as follows:  */
 #if defined (__GNUC__) && defined (__cplusplus)
@@ -865,21 +882,27 @@ echo_area_append (struct frame *f, const Ibyte *nonreloc, Lisp_Object reloc,
   if (length == 0)
     return;
 
-  if (!NILP (Ffboundp (Qappend_message)))
+  if (!UNBOUNDP (XSYMBOL_FUNCTION (Qappend_message)))
     {
-      if (STRINGP (reloc) && offset == 0 && length == XSTRING_LENGTH (reloc))
-	obj = reloc;
-      else
-	{
-	  if (STRINGP (reloc))
-	    nonreloc = XSTRING_DATA (reloc);
-	  obj = make_string (nonreloc + offset, length);
-	}
+      Lisp_Object obj
+        = STRINGP (reloc) ? reloc : make_string (nonreloc + offset, length);
+      Lisp_Object args[] = { Qappend_message, label, obj, wrap_frame (f),
+                             EQ (label, Qprint) ? Qt : Qnil, Q_start, Qzero,
+                             Q_end, Qnil };
+      struct gcpro gcpro1;
 
-      frame = wrap_frame (f);
-      GCPRO1 (obj);
-      call4 (Qappend_message, label, obj, frame,
-	     EQ (label, Qprint) ? Qt : Qnil);
+      if (STRINGP (reloc)
+          && (offset != 0 || length != XSTRING_LENGTH (reloc)))
+        {
+          assert (EQ (args[5], Q_start));
+          args[6] = make_fixnum (string_index_byte_to_char (reloc, offset));
+          assert (EQ (args[7], Q_end));
+          args[8]
+            = make_fixnum (string_index_byte_to_char (reloc, offset + length));
+        }
+      GCPRO1 (args[0]);
+      gcpro1.nvars = countof (args);
+      Ffuncall (countof (args), args);
       UNGCPRO;
     }
   else
@@ -1072,6 +1095,8 @@ syms_of_minibuf (void)
   DEFSYMBOL (Qclear_message);
   DEFSYMBOL (Qdisplay_message);
   DEFSYMBOL (Qcurrent_message_label);
+
+  DEFSYMBOL (Qxemacs_next_iteration_in_vector);
 }
 
 void

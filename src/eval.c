@@ -1565,22 +1565,10 @@ definitions to shadow the loaded ones for use in file byte-compilation.
   REGISTER Lisp_Object expander, sym, def, tem;
   int speccount = specpdl_depth ();
 
-  if (!NILP (environment) &&
-      !EQ (environment, Vbyte_compile_macro_environment))
+  if (!EQ (environment, Vbyte_compile_macro_environment))
     {
-      if (NILP (Vbyte_compile_macro_environment))
-        {
-          specbind (Qbyte_compile_macro_environment, environment);
-        }
-      else
-        {
-          specbind (Qbyte_compile_macro_environment,
-                    nconc2 (Fcopy_list (environment),
-                            Vbyte_compile_macro_environment));
-        }
+      specbind (Qbyte_compile_macro_environment, environment);
     }
-
-  environment = Vbyte_compile_macro_environment;
 
   while (1)
     {
@@ -1588,7 +1576,7 @@ definitions to shadow the loaded ones for use in file byte-compilation.
 	 in case it expands into another macro call.  */
       if (SYMBOLP (form))
         {
-          Lisp_Object hashed = make_integer ((EMACS_INT) (LISP_HASH (form)));
+          Lisp_Object hashed = make_unsigned_integer (LISP_HASH (form));
           Lisp_Object assocked;
 
           if (BIGNUMP (hashed))
@@ -4717,7 +4705,7 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
     }
 
   write_fmt_string (printcharfun,
-                    "#<INTERNAL OBJECT (XEmacs bug?) %d multiple values,"
+                    "#<INTERNAL OBJECT (XEmacs bug?) %ld multiple values,"
                     " data (", count);
 
   for (index = 0; index < count;)
@@ -4726,7 +4714,7 @@ print_multiple_value (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
           (index < first_desired ||
            index >= (first_desired + (allocated_count - 1))))
         {
-          write_fmt_string (printcharfun, "#<discarded-multiple-value %d>",
+          write_fmt_string (printcharfun, "#<discarded-multiple-value %ld>",
                             index);
         }
       else
@@ -5790,7 +5778,6 @@ maybe_get_trapping_problems_backtrace (void)
       GCPRO1 (lstream);
       lstream = make_resizing_buffer_output_stream ();
       Fbacktrace (lstream, Qt);
-      Lstream_flush (XLSTREAM (lstream));
       backtrace = resizing_buffer_to_lisp_string (XLSTREAM (lstream));
       Lstream_delete (XLSTREAM (lstream));
       UNGCPRO;
@@ -5859,7 +5846,6 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	    emacs_sprintf_string_lisp
 	    ("%s: Attempt to throw outside of function:"
 	     "To catch `%s' with value `%s'\n\nBacktrace follows:\n\n%s",
-	     Qnil, 4,
 	     build_msg_cistring (warning_string ? warning_string : "error"),
 	     p->thrown_tag, p->thrown_value, p->backtrace);
 	  warn_when_safe_lispobj (Qerror, current_warning_level (), errstr);
@@ -5874,7 +5860,6 @@ issue_call_trapping_problems_warning (Lisp_Object warning_class,
 	  errstr =
 	    emacs_sprintf_string_lisp
 	    ("%s: (%s %s)\n\nBacktrace follows:\n\n%s",
-	     Qnil, 4,
 	     build_msg_cistring (warning_string ? warning_string : "error"),
 	     p->error_conditions, p->data, p->backtrace);
 
@@ -7288,7 +7273,7 @@ If NFRAMES is more than the number of frames, the value is nil.
   REGISTER int i;
   Lisp_Object tem;
 
-  check_integer_range (nframes, Qzero, make_integer (MOST_POSITIVE_FIXNUM));
+  check_integer_range (nframes, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
 
   /* Find the frame requested.  */
   for (i = XFIXNUM (nframes); backlist && (i-- > 0);)
@@ -7661,6 +7646,10 @@ The value the function returns is not used.
 Alist of macros defined in the file being compiled.
 Each element looks like (MACRONAME . DEFINITION).  It is
 \(MACRONAME . nil) when a macro is redefined as a function.
+
+You should normally access this using the &environment argument to
+#'macrolet, #'defmacro* and friends, and not directly; see the documentation
+of those macros.
 */);
   Vbyte_compile_macro_environment = Qnil;
 

@@ -31,7 +31,7 @@
 
 ;;;###autoload
 (defvar default-korean-keyboard
-  (if (string-match "3" (or (getenv "HANGUL_KEYBOARD_TYPE") ""))
+  (if (find ?3 (getenv "HANGUL_KEYBOARD_TYPE"))
       "3"
     "")
   "*The kind of Korean keyboard for Korean input method.
@@ -60,7 +60,7 @@
   "Swith to/from Korean hanja package."
   (interactive "i")
   (and current-input-method
-       (if (string-match "korean-hanja" current-input-method)
+       (if (search "korean-hanja" current-input-method :test #'equalp)
 	   (activate-input-method (concat "korean-hangul"
 					  default-korean-keyboard))
 	 (activate-input-method (concat "korean-hanja"
@@ -97,11 +97,11 @@
 
 ;; Information for setting and exiting Korean environment.
 (defvar korean-key-bindings
-  `((global [?\S- ] toggle-korean-input-method nil)
-    (global [C-f9] quail-hangul-switch-symbol-ksc nil)
+  `((global [(shift space)] toggle-korean-input-method nil)
+    (global [(control f9)] quail-hangul-switch-symbol-ksc nil)
     (global [f9]  quail-hangul-switch-hanja nil)
-    (,isearch-mode-map [?\S- ] isearch-toggle-korean-input-method nil)
-    (,isearch-mode-map [C-f9] isearch-hangul-switch-symbol-ksc nil)
+    (,isearch-mode-map [(shift space)] isearch-toggle-korean-input-method nil)
+    (,isearch-mode-map [(control f9)] isearch-hangul-switch-symbol-ksc nil)
     (,isearch-mode-map [f9] isearch-hangul-switch-hanja nil)))
 
 ;;;###autoload
