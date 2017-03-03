@@ -1,3 +1,8 @@
+2017-03-03  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* search.c (Fstring_match_p):
+	If START is specified, adjust the returned value accordingly.
+
 2017-02-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* elhash.c:
