@@ -248,54 +248,88 @@ If optional fourth arg NOSUFFIX is non-nil, don't try adding suffixes
  .elc, .el, or elements of `module-extensions' to the specified name FILE.
 Return t if file exists."
   (declare (special load-modules-quietly))
-  (let ((handler (find-file-name-handler filename 'load))
-	(path nil))
-    (if handler
-	(funcall handler 'load filename noerror nomessage nosuffix)
-      ;; First try to load a Lisp file
-      (if (and (> (length filename) 0)
-	       (setq path (locate-file filename load-path
-				       (and (not nosuffix)
-					    '(".elc" ".el" "")))))
-	  ;; now use the internal load to actually load the file.
-	  (load-internal
-	   filename noerror nomessage nosuffix
-	   (let ((elc ; use string= instead of string-match to keep match-data.
-		  (equalp ".elc" (substring path -4))))
-	     (or (and (not elc) coding-system-for-read)	;prefer for source file
-		 ;; find magic-cookie
-		 (let ((codesys
-			(find-coding-system-magic-cookie-in-file path)))
-		   (when codesys
-		     (setq codesys (intern codesys))
-		     (if (find-coding-system codesys) codesys)))
-		 (if elc
-		     ;; if reading a byte-compiled file and we didn't find
-		     ;; a coding-system magic cookie, then use `binary'.
-		     ;; We need to guarantee that we never do autodetection
-		     ;; on byte-compiled files because confusion here would
-		     ;; be a very bad thing.  Pre-existing byte-compiled
-		     ;; files are always in the `binary' coding system.
-		     ;; Also, byte-compiled files always use `lf' to terminate
-		     ;; a line; don't risk confusion here either.
-		     'binary
-		   (or (find-file-coding-system-for-read-from-filename path)
-		       ;; looking up in `file-coding-system-alist'.
-		       ;; otherwise use `buffer-file-coding-system-for-read',
-		       ;; as normal
-		       buffer-file-coding-system-for-read)
-		   ))))
-	;; The file name is invalid, or we want to load a binary module
-	(if (and (> (length filename) 0)
-		 (locate-file filename module-load-path
-			      (and (not nosuffix) module-extensions)))
-	    (if (featurep 'modules)
-		(let ((load-modules-quietly nomessage))
-		  (declare-fboundp (load-module filename)))
-	      (signal 'file-error '("This XEmacs does not support modules")))
-	  (and (null noerror)
-	       (signal 'file-error (list "Cannot open load file" filename))))
-	))))
+  (let (handler path elc old (spaces ""))
+    (cond
+      ;; Maybe there's a handler.
+      ((setq handler (find-file-name-handler filename 'load))
+       (funcall handler 'load filename noerror nomessage nosuffix))
+      ;; Nope, no handler. Try to load a Lisp file.
+      ((setq path
+             (locate-file (setq filename (substitute-in-file-name filename))
+                          load-path (and (not nosuffix) '(".elc" ".el" ""))))
+       (setq elc
+             (not (mismatch
+                   ".elc" path :test (and (file-system-ignore-case-p path)
+                                          #'equalp)
+                   :start2 (max 0 (- (length path) (length ".elc"))))))
+       ;; Maybe the .elc is out of date with regard to the .el file. If so we
+       ;; may need to prefer the .el file, or just to warn.
+       (when (and elc (or load-ignore-out-of-date-elc-files
+                          load-warn-when-source-newer)
+                  (file-newer-than-file-p (subseq path 0 -1) path))
+         (setq old (if load-show-full-path-in-messages
+                       path
+                     (file-name-nondirectory path))
+               nomessage (or nomessage t))
+               ;; Considered binding this within this function, but decided
+               ;; against it, since it's most used for debugging, and
+               ;; encountering an out-of-date-ELC file should happen rarely
+               ;; enough that the infelicity of the double-loading message is
+               ;; outweighed by the improvement in debugging:
+               ;load-always-display-messages nil)
+         (if (and noninteractive load-in-progress)
+             (setq spaces "  "))
+         (when load-ignore-out-of-date-elc-files
+           (setq filename
+                 (if (not (mismatch ".elc" filename
+                                    :start2 (max 0 (- (length filename)
+                                                      (length ".elc")))))
+                     (subseq filename 0 -1)
+                   (concat filename ".elc"))
+                 path (locate-file filename load-path)))
+         (message "%s%s %s... (file %s is out-of-date)" spaces
+                  (if (eq nomessage 'require) "Requiring" "Loading")
+                  (if load-show-full-path-in-messages path filename) old))
+       ;; Now use #'load-internal to actually load the file.
+       (prog1
+           (load-internal
+            filename noerror nomessage nosuffix
+            (or (and (not elc) coding-system-for-read) ;; Prefer for source
+                ;; find magic-cookie
+                (let ((codesys
+                       (find-coding-system-magic-cookie-in-file path)))
+                  (when codesys
+                    (setq codesys (intern codesys))
+                    (if (find-coding-system codesys) codesys)))
+                (if elc
+                    ;; If reading a byte-compiled file and we didn't find a
+                    ;; coding-system magic cookie, then use `binary'.  We need
+                    ;; to guarantee that we never do autodetection on
+                    ;; byte-compiled files because confusion here would be a
+                    ;; very bad thing.  Pre-existing byte-compiled files are
+                    ;; always in the `binary' coding system.  Also,
+                    ;; byte-compiled files always use `lf' to terminate a
+                    ;; line; don't risk confusion here either.
+                    'binary
+                  (or (find-file-coding-system-for-read-from-filename path)
+                      ;; looking up in `file-coding-system-alist'.  otherwise
+                      ;; use `buffer-file-coding-system-for-read', as normal
+                      buffer-file-coding-system-for-read))))
+         (and old
+              (message "%s%s %s... done (file %s is out-of-date)" spaces
+                       (if (eq nomessage 'require) "Requiring" "Loading")
+                       (if load-show-full-path-in-messages path filename)
+                       old))))
+      ;; Maybe there's a module.
+      ((locate-file filename module-load-path
+                    (and (not nosuffix) module-extensions))
+       (let ((load-modules-quietly nomessage))
+         ;; This will just error if we don't have module support, no need to
+         ;; error specially ourselves.
+         (declare-fboundp (load-module filename))))
+      ;; Maybe we can't find the file.
+      (t (and (not noerror)
+              (signal 'file-error (list "Cannot open load file" filename)))))))
 
 (defvar insert-file-contents-access-hook nil
   "A hook to make a file accessible before reading it.

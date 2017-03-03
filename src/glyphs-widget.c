@@ -235,7 +235,7 @@ glyph_instantiator_to_glyph (Lisp_Object sym)
 static void
 substitute_keyword_value (Lisp_Object inst, Lisp_Object key, Lisp_Object val)
 {
-  int i;
+  Elemcount i;
   /* substitute the new glyph */
   for (i = 0; i < XVECTOR_LENGTH (inst); i++)
     {

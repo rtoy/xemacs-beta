@@ -115,8 +115,7 @@ get_local_selection (Lisp_Object selection_symbol, Lisp_Object target_type)
 	       XCAR (target_type) == QMULTIPLE)
 	{
 	  Lisp_Object pairs = XCDR (target_type);
-	  int len = XVECTOR_LENGTH (pairs);
-	  int i;
+	  Elemcount len = XVECTOR_LENGTH (pairs), i;
 	  /* If the target is MULTIPLE, then target_type looks like
 	     (MULTIPLE . [[SELECTION1 TARGET1] [SELECTION2 TARGET2] ... ])
 	     We modify the second element of each pair in the vector and
@@ -465,15 +464,11 @@ Optionally, the window-system DATA-TYPE and the DEVICE may be specified.
 }
 
 Lisp_Object
-get_selection_raw_time(Lisp_Object selection)
+get_selection_raw_time (Lisp_Object selection)
 {
   Lisp_Object local_value = assq_no_quit (selection, Vselection_alist);  
 
-  if (!NILP (local_value))
-    {
-    return XCAR (XCDR (XCDR (local_value)));
-    }
-  return Qnil;
+  return Fnth (make_fixnum (2), local_value);
 }
 
 /* Get the timestamp of the given selection */
@@ -488,14 +483,7 @@ happens.
 */
        (selection))
 {
-  Lisp_Object val = get_selection_raw_time(selection);
-
-  if (!NILP (val))
-    {
-      return word_to_lisp(* (UINT_32_BIT *) XOPAQUE_DATA (val));
-    }
-
-  return Qnil;
+  return get_selection_raw_time (selection);
 }
 
 /* Request the selection value from the owner.  If we are the owner,

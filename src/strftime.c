@@ -296,33 +296,33 @@ size_t strftime (char *string, size_t max, const char *format,
 		 const struct tm *tm);
 
 size_t
-strftime (char *string, size_t max, const char *format, const struct tm *tm)
+strftime (char *string, size_t max, const char *fermat, const struct tm *tm)
 {
   enum padding pad;		/* Type of padding to apply. */
   size_t length = 0;		/* Characters put in STRING so far. */
 
-  for (; *format && length < max; ++format)
+  for (; *fermat && length < max; ++fermat)
     {
-      if (*format != '%')
-	add_char (*format);
+      if (*fermat != '%')
+	add_char (*fermat);
       else
 	{
-	  ++format;
+	  ++fermat;
 	  /* Modifiers: */
-	  if (*format == '-')
+	  if (*fermat == '-')
 	    {
 	      pad = none;
-	      ++format;
+	      ++fermat;
 	    }
-	  else if (*format == '_')
+	  else if (*fermat == '_')
 	    {
 	      pad = blank;
-	      ++format;
+	      ++fermat;
 	    }
 	  else
 	    pad = zero;
 
-	  switch (*format)
+	  switch (*fermat)
 	    {
 	      /* Literal character fields: */
 	    case 0:
@@ -336,7 +336,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
 	      add_char ('\t');
 	      break;
 	    default:
-	      add_char (*format);
+	      add_char (*fermat);
 	      break;
 
 	      /* Time fields: */
@@ -344,7 +344,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
 	    case 'k':
 	      length +=
 		add_num2 (&string[length], tm->tm_hour, max - length,
-			  *format == 'H' ? pad : blank);
+			  *fermat == 'H' ? pad : blank);
 	      break;
 	    case 'I':
 	    case 'l':
@@ -359,7 +359,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
 		  hour12 = tm->tm_hour;
 		length +=
 		  add_num2 (&string[length], hour12, max - length,
-			    *format == 'I' ? pad : blank);
+			    *fermat == 'I' ? pad : blank);
 	      }
 	      break;
 	    case 'M':
@@ -428,7 +428,7 @@ strftime (char *string, size_t max, const char *format, const struct tm *tm)
                       }
                   }
 
-                switch (*format)
+                switch (*fermat)
                   {
                     /*
                       #### FIXME

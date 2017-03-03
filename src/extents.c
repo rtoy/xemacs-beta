@@ -227,6 +227,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "profile.h"
 #include "redisplay.h"
 #include "gutter.h"
+#include "lstream.h"
 
 /* ------------------------------- */
 /*          extent list            */
@@ -334,12 +335,12 @@ typedef int Endpoint_Index;
 
 /* Similar for Bytebpos's and start/end indices. */
 
-#define buffer_or_string_bytexpos_to_startind(obj, ind, start_open)	\
-  memxpos_to_startind (buffer_or_string_bytexpos_to_memxpos (obj, ind),	\
+#define object_bytexpos_to_startind(obj, ind, start_open)	\
+  memxpos_to_startind (object_bytexpos_to_memxpos (obj, ind),	\
 		      start_open)
 
-#define buffer_or_string_bytexpos_to_endind(obj, ind, end_open)		\
-  memxpos_to_endind (buffer_or_string_bytexpos_to_memxpos (obj, ind),	\
+#define object_bytexpos_to_endind(obj, ind, end_open)		\
+  memxpos_to_endind (object_bytexpos_to_memxpos (obj, ind),	\
 		    end_open)
 
 /* ------------------------------- */
@@ -878,7 +879,7 @@ DEFINE_NODUMP_LISP_OBJECT ("extent-info", extent_info,
 			   extent_info_description,
 			   struct extent_info);
 
-static Lisp_Object
+Lisp_Object
 allocate_extent_info (void)
 {
   Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (extent_info);
@@ -947,34 +948,36 @@ extent_ancestor_1 (EXTENT e)
 }
 
 /* Given an extent object (string or buffer or nil), return its extent info.
-   This may be 0 for a string. */
+   This may be NULL for a string. */
 
 static struct extent_info *
-buffer_or_string_extent_info (Lisp_Object object)
+object_extent_info (Lisp_Object object)
 {
   if (STRINGP (object))
     {
-      Lisp_Object plist = XSTRING_PLIST (object);
-      if (!CONSP (plist) || !EXTENT_INFOP (XCAR (plist)))
-	return 0;
-      return XEXTENT_INFO (XCAR (plist));
+      return string_extent_info (object);
     }
   else if (NILP (object))
-    return 0;
+    return NULL;
+  else if (BUFFERP (object))
+    {
+      return XEXTENT_INFO (XBUFFER (object)->extent_info);
+    }
   else
-    return XEXTENT_INFO (XBUFFER (object)->extent_info);
+    {
+      return Lstream_extent_info (XLSTREAM (object));
+    }
 }
 
-/* Given a string or buffer, return its extent list.  This may be
-   0 for a string. */
+/* Given an object, return its extent list.  This may be NULL for a string. */
 
 static Extent_List *
-buffer_or_string_extent_list (Lisp_Object object)
+object_extent_list (Lisp_Object object)
 {
-  struct extent_info *info = buffer_or_string_extent_info (object);
+  struct extent_info *info = object_extent_info (object);
 
   if (!info)
-    return 0;
+    return NULL;
   return info->extents;
 }
 
@@ -982,9 +985,9 @@ buffer_or_string_extent_list (Lisp_Object object)
    create it. */
 
 static struct extent_info *
-buffer_or_string_extent_info_force (Lisp_Object object)
+object_extent_info_force (Lisp_Object object)
 {
-  struct extent_info *info = buffer_or_string_extent_info (object);
+  struct extent_info *info = object_extent_info (object);
 
   if (!info)
     {
@@ -1008,7 +1011,7 @@ buffer_or_string_extent_info_force (Lisp_Object object)
 void
 detach_all_extents (Lisp_Object object)
 {
-  struct extent_info *data = buffer_or_string_extent_info (object);
+  struct extent_info *data = object_extent_info (object);
 
   if (data)
     {
@@ -1056,7 +1059,7 @@ uninit_buffer_extents (struct buffer *b)
    case the only extents that can refer to this buffer are detached
    ones). */
 
-#define extent_extent_list(e) buffer_or_string_extent_list (extent_object (e))
+#define extent_extent_list(e) object_extent_list (extent_object (e))
 
 /* ------------------------------- */
 /*        stack of extents         */
@@ -1071,7 +1074,7 @@ sledgehammer_extent_check (Lisp_Object object)
 {
   int i;
   int endp;
-  Extent_List *el = buffer_or_string_extent_list (object);
+  Extent_List *el = object_extent_list (object);
   struct buffer *buf = 0;
 
   if (!el)
@@ -1101,18 +1104,18 @@ sledgehammer_extent_check (Lisp_Object object)
 #endif
 
 static Stack_Of_Extents *
-buffer_or_string_stack_of_extents (Lisp_Object object)
+object_stack_of_extents (Lisp_Object object)
 {
-  struct extent_info *info = buffer_or_string_extent_info (object);
+  struct extent_info *info = object_extent_info (object);
   if (!info)
     return 0;
   return info->soe;
 }
 
 static Stack_Of_Extents *
-buffer_or_string_stack_of_extents_force (Lisp_Object object)
+object_stack_of_extents_force (Lisp_Object object)
 {
-  struct extent_info *info = buffer_or_string_extent_info_force (object);
+  struct extent_info *info = object_extent_info_force (object);
   if (!info->soe)
     info->soe = allocate_soe ();
   return info->soe;
@@ -1124,7 +1127,7 @@ static void
 soe_dump (Lisp_Object obj)
 {
   int i;
-  Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (obj);
+  Stack_Of_Extents *soe = object_stack_of_extents (obj);
   Extent_List *sel;
   int endp;
 
@@ -1136,7 +1139,7 @@ soe_dump (Lisp_Object obj)
   sel = soe->extents;
   stderr_out ("SOE pos is %ld (memxpos %ld)\n",
 	      soe->pos < 0 ? soe->pos :
-	      buffer_or_string_memxpos_to_bytexpos (obj, soe->pos),
+	      object_memxpos_to_bytexpos (obj, soe->pos),
 	      soe->pos);
   for (endp = 0; endp < 2; endp++)
     {
@@ -1159,7 +1162,7 @@ soe_dump (Lisp_Object obj)
 static void
 soe_insert (Lisp_Object obj, EXTENT extent)
 {
-  Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (obj);
+  Stack_Of_Extents *soe = object_stack_of_extents (obj);
 
 #ifdef DEBUG_XEMACS
   if (debug_soe)
@@ -1193,7 +1196,7 @@ soe_insert (Lisp_Object obj, EXTENT extent)
 static void
 soe_delete (Lisp_Object obj, EXTENT extent)
 {
-  Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (obj);
+  Stack_Of_Extents *soe = object_stack_of_extents (obj);
 
 #ifdef DEBUG_XEMACS
   if (debug_soe)
@@ -1227,10 +1230,10 @@ soe_delete (Lisp_Object obj, EXTENT extent)
 static void
 soe_move (Lisp_Object obj, Memxpos pos)
 {
-  Stack_Of_Extents *soe = buffer_or_string_stack_of_extents_force (obj);
+  Stack_Of_Extents *soe = object_stack_of_extents_force (obj);
   Extent_List *sel = soe->extents;
   int numsoe = extent_list_num_els (sel);
-  Extent_List *bel = buffer_or_string_extent_list (obj);
+  Extent_List *bel = object_extent_list (obj);
   int direction;
   int endp;
 
@@ -1242,8 +1245,8 @@ soe_move (Lisp_Object obj, Memxpos pos)
   if (debug_soe)
     stderr_out ("Moving SOE from %ld (memxpos %ld) to %ld (memxpos %ld)\n",
 		soe->pos < 0 ? soe->pos :
-		buffer_or_string_memxpos_to_bytexpos (obj, soe->pos), soe->pos,
-		buffer_or_string_memxpos_to_bytexpos (obj, pos), pos);
+		object_memxpos_to_bytexpos (obj, soe->pos), soe->pos,
+		object_memxpos_to_bytexpos (obj, pos), pos);
 #endif
   if (soe->pos < pos)
     {
@@ -1356,7 +1359,7 @@ soe_move (Lisp_Object obj, Memxpos pos)
 static void
 soe_invalidate (Lisp_Object obj)
 {
-  Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (obj);
+  Stack_Of_Extents *soe = object_stack_of_extents (obj);
 
   if (soe)
     {
@@ -1405,7 +1408,7 @@ extent_endpoint_byte (EXTENT extent, int endp)
   {
     Memxpos i = endp ? extent_end (extent) : extent_start (extent);
     Lisp_Object obj = extent_object (extent);
-    return buffer_or_string_memxpos_to_bytexpos (obj, i);
+    return object_memxpos_to_bytexpos (obj, i);
   }
 }
 
@@ -1417,6 +1420,8 @@ extent_endpoint_char (EXTENT extent, int endp)
   {
     Memxpos i = endp ? extent_end (extent) : extent_start (extent);
     Lisp_Object obj = extent_object (extent);
+    /* See the comment in the implementation of b_o_s_m_t_c in buffer.h
+       regarding the possibility of OBJ being an lstream. */
     return buffer_or_string_memxpos_to_charxpos (obj, i);
   }
 }
@@ -1473,8 +1478,8 @@ signal_single_extent_changed (EXTENT extent, Lisp_Object property,
 	  if (!in_modeline_generation)
 	    MARK_EXTENTS_CHANGED;
 	  gutter_extent_signal_changed_region_maybe
-	    (object, extent_endpoint_char (extent, 0),
-	     extent_endpoint_char (extent, 1));
+            (object, extent_endpoint_byte (extent, 0),
+	     extent_endpoint_byte (extent, 1));
 	}
       else if (BUFFERP (object))
 	{
@@ -1486,8 +1491,8 @@ signal_single_extent_changed (EXTENT extent, Lisp_Object property,
 	      EQ (property, Qinvisible))
 	    MARK_CLIP_CHANGED;
 	  buffer_extent_signal_changed_region
-	    (b, extent_endpoint_char (extent, 0),
-	     extent_endpoint_char (extent, 1));
+            (b, extent_endpoint_byte (extent, 0),
+	     extent_endpoint_byte (extent, 1));
 	}
     }
 
@@ -1552,11 +1557,13 @@ make_extent_detached (Lisp_Object object)
   EXTENT extent = allocate_extent ();
 
   assert (NILP (object) || STRINGP (object) ||
-	  (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object))));
+	  (BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
+          || LSTREAMP (object));
+
   extent_object (extent) = object;
   /* Now make sure the extent info exists. */
   if (!NILP (object))
-    buffer_or_string_extent_info_force (object);
+    object_extent_info_force (object);
   return extent;
 }
 
@@ -1590,7 +1597,7 @@ real_extent_at_backward (Extent_List *el, int pos, int endp)
 static EXTENT
 extent_first (Lisp_Object obj)
 {
-  Extent_List *el = buffer_or_string_extent_list (obj);
+  Extent_List *el = object_extent_list (obj);
 
   if (!el)
     return 0;
@@ -1601,7 +1608,7 @@ extent_first (Lisp_Object obj)
 static EXTENT
 extent_e_first (Lisp_Object obj)
 {
-  Extent_List *el = buffer_or_string_extent_list (obj);
+  Extent_List *el = object_extent_list (obj);
 
   if (!el)
     return 0;
@@ -1634,7 +1641,7 @@ extent_e_next (EXTENT e)
 static EXTENT
 extent_last (Lisp_Object obj)
 {
-  Extent_List *el = buffer_or_string_extent_list (obj);
+  Extent_List *el = object_extent_list (obj);
 
   if (!el)
     return 0;
@@ -1645,7 +1652,7 @@ extent_last (Lisp_Object obj)
 static EXTENT
 extent_e_last (Lisp_Object obj)
 {
-  Extent_List *el = buffer_or_string_extent_list (obj);
+  Extent_List *el = object_extent_list (obj);
 
   if (!el)
     return 0;
@@ -1696,10 +1703,8 @@ extent_detach (EXTENT extent)
   el = extent_extent_list (extent);
 
   /* call this before messing with the extent. */
-  signal_extent_changed (extent, Qnil,
-			 extent_endpoint_byte (extent, 0),
-			 extent_endpoint_char (extent, 0),
-			 0);
+  signal_extent_changed (extent, Qnil, extent_endpoint_byte (extent, 0),
+			 extent_endpoint_byte (extent, 1), 0);
   extent_list_delete (el, extent);
   soe_delete (extent_object (extent), extent);
   set_extent_start (extent, -1);
@@ -1752,10 +1757,8 @@ extent_in_region_p (EXTENT extent, Bytexpos from, Bytexpos to,
       default: ABORT(); return 0;
       }
 
-  start = buffer_or_string_bytexpos_to_startind (obj, from,
-					       flags & ME_START_OPEN);
-  end = buffer_or_string_bytexpos_to_endind (obj, to,
-					     ! (flags & ME_END_CLOSED));
+  start = object_bytexpos_to_startind (obj, from, flags & ME_START_OPEN);
+  end = object_bytexpos_to_endind (obj, to, !(flags & ME_END_CLOSED));
   exs = memxpos_to_startind (extent_start (extent), start_open);
   exe = memxpos_to_endind   (extent_end   (extent), end_open);
 
@@ -1853,10 +1856,13 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 
 #ifdef ERROR_CHECK_EXTENTS
   assert (from <= to);
-  assert (from >= buffer_or_string_absolute_begin_byte (obj) &&
-	  from <= buffer_or_string_absolute_end_byte (obj) &&
-	  to >= buffer_or_string_absolute_begin_byte (obj) &&
-	  to <= buffer_or_string_absolute_end_byte (obj));
+  assert (LSTREAMP (obj) || /* No functions for examination of extent
+                               position available for lstreams (yet), so don't
+                               do this check for them. */
+          (from >= buffer_or_string_absolute_begin_byte (obj) &&
+           from <= buffer_or_string_absolute_end_byte (obj) &&
+           to >= buffer_or_string_absolute_begin_byte (obj) &&
+           to <= buffer_or_string_absolute_end_byte (obj)));
 #endif
 
   if (after)
@@ -1865,15 +1871,15 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
       assert (!extent_detached_p (after));
     }
 
-  el = buffer_or_string_extent_list (obj);
+  el = object_extent_list (obj);
   if (!el || !extent_list_num_els (el))
     return;
   el = 0;
 
   PROFILE_RECORD_ENTERING_SECTION (QSin_map_extents_internal);
 
-  st = buffer_or_string_bytexpos_to_memxpos (obj, from);
-  en = buffer_or_string_bytexpos_to_memxpos (obj, to);
+  st = object_bytexpos_to_memxpos (obj, from);
+  en = object_bytexpos_to_memxpos (obj, to);
 
   if (flags & ME_MIGHT_MODIFY_TEXT)
     {
@@ -1983,7 +1989,7 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 	range_start_type = 2;
 	range_start_pos = 0;
 #else
-	Stack_Of_Extents *soe = buffer_or_string_stack_of_extents_force (obj);
+	Stack_Of_Extents *soe = object_stack_of_extents_force (obj);
 	int numsoe;
 
 	/* Move the SOE to the closer end of the range.  This dictates
@@ -2000,7 +2006,7 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 		   SOE. */
 		EXTENT e = extent_list_at (soe->extents, 0, 0);
 		range_start_pos =
-		  extent_list_locate (buffer_or_string_extent_list (obj), e, 0,
+		  extent_list_locate (object_extent_list (obj), e, 0,
 				      &foundp);
 		assert (foundp);
 		range_start_type = 2;
@@ -2034,14 +2040,14 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 	  { /* The SOE stage */
 	    if (!do_soe_stage)
 	      continue;
-	    el = buffer_or_string_stack_of_extents_force (obj)->extents;
+	    el = object_stack_of_extents_force (obj)->extents;
 	    /* We will always be looping over start extents here. */
 	    assert (!range_endp);
 	    pos = 0;
 	  }
 	else
 	  { /* The range stage */
-	    el = buffer_or_string_extent_list (obj);
+	    el = object_extent_list (obj);
 	    switch (range_start_type)
 	      {
 	      case 0:
@@ -2062,7 +2068,7 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 	    if (posm)
 	      /* Delete the marker used in the SOE stage. */
 	      extent_list_delete_marker
-		(buffer_or_string_stack_of_extents_force (obj)->extents, posm);
+		(object_stack_of_extents_force (obj)->extents, posm);
 	    posm = extent_list_make_marker (el, pos, range_endp);
 	    /* tell the unwind function about the marker. */
 	    closure.el = el;
@@ -2141,10 +2147,8 @@ map_extents (Bytexpos from, Bytexpos to, map_extents_fun fn,
 
 	    obj2 = extent_object (e);
 	    if (extent_in_region_p (e,
-				    buffer_or_string_memxpos_to_bytexpos (obj2,
-									  st),
-				    buffer_or_string_memxpos_to_bytexpos (obj2,
-									  en),
+				    object_memxpos_to_bytexpos (obj2, st),
+				    object_memxpos_to_bytexpos (obj2, en),
 				    flags))
 	      {
 		if ((*fn)(e, arg))
@@ -2206,7 +2210,7 @@ adjust_extents (Lisp_Object obj, Memxpos from, Memxpos to, int amount)
 #ifdef ERROR_CHECK_EXTENTS
   sledgehammer_extent_check (obj);
 #endif
-  el = buffer_or_string_extent_list (obj);
+  el = object_extent_list (obj);
 
   if (!el || !extent_list_num_els(el))
     return;
@@ -2234,7 +2238,7 @@ adjust_extents (Lisp_Object obj, Memxpos from, Memxpos to, int amount)
 
   /* The index for the buffer's SOE is a memory index and thus
      needs to be adjusted like a marker. */
-  soe = buffer_or_string_stack_of_extents (obj);
+  soe = object_stack_of_extents (obj);
   if (soe && soe->pos >= 0)
     soe->pos = do_marker_adjustment (soe->pos, from, to, amount);
 }
@@ -2280,7 +2284,7 @@ adjust_extents_for_deletion (Lisp_Object object, Bytexpos from,
   Memxpos adjust_to = (Memxpos) (to + gapsize);
   Bytecount amount = - numdel - movegapsize;
   Memxpos oldsoe = 0, newsoe = 0;
-  Stack_Of_Extents *soe = buffer_or_string_stack_of_extents (object);
+  Stack_Of_Extents *soe = object_stack_of_extents (object);
 
 #ifdef ERROR_CHECK_EXTENTS
   sledgehammer_extent_check (object);
@@ -2403,10 +2407,10 @@ static Bytexpos
 extent_find_end_of_run (Lisp_Object obj, Bytexpos pos, int outside_accessible)
 {
   Extent_List *sel;
-  Extent_List *bel = buffer_or_string_extent_list (obj);
+  Extent_List *bel = object_extent_list (obj);
   Bytexpos pos1, pos2;
   int elind1, elind2;
-  Memxpos mempos = buffer_or_string_bytexpos_to_memxpos (obj, pos);
+  Memxpos mempos = object_bytexpos_to_memxpos (obj, pos);
   Bytexpos limit = outside_accessible ?
     buffer_or_string_absolute_end_byte (obj) :
     buffer_or_string_accessible_end_byte (obj);
@@ -2414,14 +2418,14 @@ extent_find_end_of_run (Lisp_Object obj, Bytexpos pos, int outside_accessible)
   if (!bel || !extent_list_num_els (bel))
     return limit;
 
-  sel = buffer_or_string_stack_of_extents_force (obj)->extents;
+  sel = object_stack_of_extents_force (obj)->extents;
   soe_move (obj, mempos);
 
   /* Find the first start position after POS. */
   elind1 = extent_list_locate_from_pos (bel, mempos+1, 0);
   if (elind1 < extent_list_num_els (bel))
-    pos1 = buffer_or_string_memxpos_to_bytexpos
-      (obj, extent_start (extent_list_at (bel, elind1, 0)));
+    pos1 = object_memxpos_to_bytexpos (obj, extent_start (extent_list_at
+                                                          (bel, elind1, 0)));
   else
     pos1 = limit;
 
@@ -2430,8 +2434,8 @@ extent_find_end_of_run (Lisp_Object obj, Bytexpos pos, int outside_accessible)
      equal to POS1, so we just have to look in the SOE. */
   elind2 = extent_list_locate_from_pos (sel, mempos+1, 1);
   if (elind2 < extent_list_num_els (sel))
-    pos2 = buffer_or_string_memxpos_to_bytexpos
-      (obj, extent_end (extent_list_at (sel, elind2, 1)));
+    pos2 = object_memxpos_to_bytexpos (obj, extent_end (extent_list_at
+                                                        (sel, elind2, 1)));
   else
     pos2 = limit;
 
@@ -2443,10 +2447,10 @@ extent_find_beginning_of_run (Lisp_Object obj, Bytexpos pos,
 			      int outside_accessible)
 {
   Extent_List *sel;
-  Extent_List *bel = buffer_or_string_extent_list (obj);
+  Extent_List *bel = object_extent_list (obj);
   Bytexpos pos1, pos2;
   int elind1, elind2;
-  Memxpos mempos = buffer_or_string_bytexpos_to_memxpos (obj, pos);
+  Memxpos mempos = object_bytexpos_to_memxpos (obj, pos);
   Bytexpos limit = outside_accessible ?
     buffer_or_string_absolute_begin_byte (obj) :
     buffer_or_string_accessible_begin_byte (obj);
@@ -2454,14 +2458,14 @@ extent_find_beginning_of_run (Lisp_Object obj, Bytexpos pos,
   if (!bel || !extent_list_num_els(bel))
     return limit;
 
-  sel = buffer_or_string_stack_of_extents_force (obj)->extents;
+  sel = object_stack_of_extents_force (obj)->extents;
   soe_move (obj, mempos);
 
   /* Find the first end position before POS. */
   elind1 = extent_list_locate_from_pos (bel, mempos, 1);
   if (elind1 > 0)
-    pos1 = buffer_or_string_memxpos_to_bytexpos
-      (obj, extent_end (extent_list_at (bel, elind1 - 1, 1)));
+    pos1 = object_memxpos_to_bytexpos (obj, extent_end (extent_list_at
+                                                        (bel, elind1 - 1, 1)));
   else
     pos1 = limit;
 
@@ -2470,8 +2474,8 @@ extent_find_beginning_of_run (Lisp_Object obj, Bytexpos pos,
      equal to POS1, so we just have to look in the SOE. */
   elind2 = extent_list_locate_from_pos (sel, mempos, 0);
   if (elind2 > 0)
-    pos2 = buffer_or_string_memxpos_to_bytexpos
-      (obj, extent_start (extent_list_at (sel, elind2 - 1, 0)));
+    pos2 = object_memxpos_to_bytexpos (obj, extent_start
+                                       (extent_list_at (sel, elind2 - 1, 0)));
   else
     pos2 = limit;
 
@@ -2643,11 +2647,10 @@ extent_fragment_update (struct window *w, struct extent_fragment *ef,
 {
   int i;
   int seen_glyph = NILP (last_glyph) ? 1 : 0;
-  Extent_List *sel =
-    buffer_or_string_stack_of_extents_force (ef->object)->extents;
+  Extent_List *sel = object_stack_of_extents_force (ef->object)->extents;
   EXTENT lhe = 0;
   struct extent dummy_lhe_extent;
-  Memxpos mempos = buffer_or_string_bytexpos_to_memxpos (ef->object, pos);
+  Memxpos mempos = object_bytexpos_to_memxpos (ef->object, pos);
 
 #ifdef ERROR_CHECK_EXTENTS
   assert (pos >= buffer_or_string_accessible_begin_byte (ef->object)
@@ -2877,7 +2880,7 @@ print_extent_1 (Lisp_Object obj, Lisp_Object printcharfun,
     {
       Lisp_Object v = XCAR (XCDR (tail));
       if (NILP (v)) continue;
-      write_fmt_string_lisp (printcharfun, "%S ", 1, XCAR (tail));
+      write_fmt_string_lisp (printcharfun, "%S ", XCAR (tail));
     }
 }
 
@@ -3098,7 +3101,7 @@ decode_extent (Lisp_Object extent_obj, unsigned int flags)
   obj = extent_object (extent);
 
   /* the following condition will fail if we're dealing with a freed extent */
-  assert (NILP (obj) || BUFFERP (obj) || STRINGP (obj));
+  assert (NILP (obj) || BUFFERP (obj) || STRINGP (obj) || LSTREAMP (obj));
 
   if (flags & DE_MUST_BE_ATTACHED)
     flags |= DE_MUST_HAVE_BUFFER;
@@ -3577,9 +3580,9 @@ set_extent_endpoints (EXTENT extent, Bytexpos s, Bytexpos e,
     }
 
   start = s < 0 ? extent_start (extent) :
-    buffer_or_string_bytexpos_to_memxpos (object, s);
+    object_bytexpos_to_memxpos (object, s);
   end = e < 0 ? extent_end (extent) :
-    buffer_or_string_bytexpos_to_memxpos (object, e);
+    object_bytexpos_to_memxpos (object, e);
   set_extent_endpoints_1 (extent, start, end);
 }
 
@@ -3792,7 +3795,7 @@ See documentation on `detach-extent' for a discussion of undo recording.
   get_buffer_or_string_range_byte (buffer_or_string, start, end, &s, &e,
 				   GB_ALLOW_PAST_ACCESSIBLE);
 
-  buffer_or_string_extent_info_force (buffer_or_string);
+  object_extent_info_force (buffer_or_string);
   set_extent_endpoints (ext, s, e, buffer_or_string);
   return extent;
 }
@@ -4472,8 +4475,8 @@ verify_extent_modification (Lisp_Object object, Bytexpos from, Bytexpos to,
      As far as I know, this doesn't currently occur in XEmacs. --ben */
   closed = (from==to);
   closure.object = object;
-  closure.start = buffer_or_string_bytexpos_to_memxpos (object, from);
-  closure.end = buffer_or_string_bytexpos_to_memxpos (object, to);
+  closure.start = object_bytexpos_to_memxpos (object, from);
+  closure.end = object_bytexpos_to_memxpos (object, to);
   closure.iro = inhibit_read_only_value;
 
   map_extents (from, to, verify_extent_mapper, (void *) &closure,
@@ -4501,7 +4504,7 @@ process_extents_for_insertion_mapper (EXTENT extent, void *arg)
 {
   struct process_extents_for_insertion_arg *closure =
     (struct process_extents_for_insertion_arg *) arg;
-  Memxpos indice = buffer_or_string_bytexpos_to_memxpos (closure->object,
+  Memxpos indice = object_bytexpos_to_memxpos (closure->object,
 							 closure->opoint);
 
   /* When this function is called, one end of the newly-inserted text should
@@ -4616,8 +4619,8 @@ process_extents_for_deletion (Lisp_Object object, Bytexpos from,
 {
   struct process_extents_for_deletion_arg closure;
 
-  closure.start = buffer_or_string_bytexpos_to_memxpos (object, from);
-  closure.end = buffer_or_string_bytexpos_to_memxpos (object, to);
+  closure.start = object_bytexpos_to_memxpos (object, from);
+  closure.end = object_bytexpos_to_memxpos (object, to);
   closure.destroy_included_extents = destroy_them;
 
   map_extents (from, to, process_extents_for_deletion_mapper,
@@ -4632,7 +4635,7 @@ process_extents_for_deletion (Lisp_Object object, Bytexpos from,
 struct report_extent_modification_closure
 {
   Lisp_Object buffer;
-  Charxpos start, end;
+  Bytexpos start, end;
   int afterp;
   int speccount;
 };
@@ -4658,8 +4661,12 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
     return 0;
 
   exobj = wrap_extent (extent);
-  startobj = make_fixnum (closure->start);
-  endobj = make_fixnum (closure->end);
+  startobj
+    = make_fixnum (buffer_or_string_bytexpos_to_charxpos
+                   (extent_object (extent), closure->start));
+  endobj
+    = make_fixnum (buffer_or_string_bytexpos_to_charxpos
+                   (extent_object (extent), closure->end));
 
   /* Now that we are sure to call elisp, set up an unwind-protect so
      inside_change_hook gets restored in case we throw.  Also record
@@ -4704,7 +4711,7 @@ report_extent_modification_mapper (EXTENT extent, void *arg)
 }
 
 void
-report_extent_modification (Lisp_Object buffer, Charbpos start, Charbpos end,
+report_extent_modification (Lisp_Object buffer, Bytexpos start, Bytexpos end,
 			    int afterp)
 {
   struct report_extent_modification_closure closure;
@@ -4715,10 +4722,8 @@ report_extent_modification (Lisp_Object buffer, Charbpos start, Charbpos end,
   closure.afterp = afterp;
   closure.speccount = -1;
 
-  map_extents (charbpos_to_bytebpos (XBUFFER (buffer), start),
-	       charbpos_to_bytebpos (XBUFFER (buffer), end),
-	       report_extent_modification_mapper, (void *)&closure,
-	       buffer, NULL, ME_MIGHT_CALL_ELISP);
+  map_extents (start, end, report_extent_modification_mapper,
+               (void *)&closure, buffer, NULL, ME_MIGHT_CALL_ELISP);
 }
 
 
@@ -5738,7 +5743,7 @@ or faces specified by the `mouse-face' property.
 /* copy/paste hooks */
 
 static int
-run_extent_copy_paste_internal (EXTENT e, Charxpos from, Charxpos to,
+run_extent_copy_paste_internal (EXTENT e, Bytexpos from, Bytexpos to,
 				Lisp_Object object,
 				Lisp_Object prop)
 {
@@ -5750,13 +5755,18 @@ run_extent_copy_paste_internal (EXTENT e, Charxpos from, Charxpos to,
   if (!NILP (copy_fn))
     {
       Lisp_Object flag;
+      Lisp_Object froml
+        = make_fixnum (buffer_or_string_bytexpos_to_charxpos (object, from));
+      Lisp_Object tol
+        = make_fixnum (buffer_or_string_bytexpos_to_charxpos (object, to));
       struct gcpro gcpro1, gcpro2, gcpro3;
+
       GCPRO3 (extent, copy_fn, object);
       if (BUFFERP (object))
-	flag = call3_in_buffer (XBUFFER (object), copy_fn, extent,
-				make_fixnum (from), make_fixnum (to));
+	flag = call3_in_buffer (XBUFFER (object), copy_fn, extent, froml, tol);
       else
-	flag = call3 (copy_fn, extent, make_fixnum (from), make_fixnum (to));
+	flag = call3 (copy_fn, extent, froml, tol);
+
       UNGCPRO;
       if (NILP (flag) || !EXTENT_LIVE_P (XEXTENT (extent)))
 	return 0;
@@ -5767,12 +5777,9 @@ run_extent_copy_paste_internal (EXTENT e, Charxpos from, Charxpos to,
 static int
 run_extent_copy_function (EXTENT e, Bytexpos from, Bytexpos to)
 {
-  Lisp_Object object = extent_object (e);
   /* This function can GC */
-  return run_extent_copy_paste_internal
-    (e, buffer_or_string_bytexpos_to_charxpos (object, from),
-     buffer_or_string_bytexpos_to_charxpos (object, to), object,
-     Qcopy_function);
+  return run_extent_copy_paste_internal (e, from, to, extent_object (e),
+                                         Qcopy_function);
 }
 
 static int
@@ -5780,18 +5787,8 @@ run_extent_paste_function (EXTENT e, Bytexpos from, Bytexpos to,
 			   Lisp_Object object)
 {
   /* This function can GC */
-  return run_extent_copy_paste_internal
-    (e, buffer_or_string_bytexpos_to_charxpos (object, from),
-     buffer_or_string_bytexpos_to_charxpos (object, to), object,
-     Qpaste_function);
-}
-
-static int
-run_extent_paste_function_char (EXTENT e, Charxpos from, Charxpos to,
-				Lisp_Object object)
-{
-  /* This function can GC */
-  return run_extent_copy_paste_internal (e, from, to, object, Qpaste_function);
+  return run_extent_copy_paste_internal (e, from, to, object,
+                                         Qpaste_function);
 }
 
 static Lisp_Object
@@ -6040,9 +6037,9 @@ splice_in_string_extents_mapper (EXTENT extent, void *arg)
     return 0;
 
   if (!inside_undo &&
-      !run_extent_paste_function (extent, new_start, new_end,
-				  closure->buffer))
+      !run_extent_paste_function (extent, new_start, new_end, closure->buffer))
     return 0;
+
   copy_extent (extent, new_start, new_end, closure->buffer);
 
   return 0;
@@ -6073,6 +6070,7 @@ splice_in_string_extents_the_hard_way_mapper (EXTENT extent, void *arg)
 			closure->pos);
   Charxpos new_end = (base_start + extent_endpoint_char (extent, 1) -
 		      closure->pos);
+  Bytexpos new_start_byte, new_end_byte;
 
   if (new_start < base_start)
     new_start = base_start;
@@ -6084,14 +6082,15 @@ splice_in_string_extents_the_hard_way_mapper (EXTENT extent, void *arg)
   if (!extent_duplicable_p (extent))
     return 0;
 
+  new_start_byte = charbpos_to_bytebpos (XBUFFER (closure->buffer), new_start);
+  new_end_byte = charbpos_to_bytebpos (XBUFFER (closure->buffer), new_end);
+
   if (!inside_undo &&
-      !run_extent_paste_function_char (extent, new_start, new_end,
-				       closure->buffer))
+      !run_extent_paste_function (extent, new_start_byte, new_end_byte,
+                                  closure->buffer))
     return 0;
-  copy_extent (extent,
-	       charbpos_to_bytebpos (XBUFFER (closure->buffer), new_start),
-	       charbpos_to_bytebpos (XBUFFER (closure->buffer), new_end),
-	       closure->buffer);
+
+  copy_extent (extent, new_start_byte, new_end_byte, closure->buffer);
 
   return 0;
 }
@@ -6155,7 +6154,7 @@ struct copy_string_extents_arg
   Bytecount new_pos;
   Bytecount old_pos;
   Bytecount length;
-  Lisp_Object new_string;
+  Lisp_Object new_object;
 };
 
 struct copy_string_extents_1_arg
@@ -6183,17 +6182,17 @@ copy_string_extents_mapper (EXTENT extent, void *arg)
   new_start = old_start + closure->new_pos - closure->old_pos;
   new_end   = old_end   + closure->new_pos - closure->old_pos;
 
-  copy_extent (extent, new_start, new_end, closure->new_string);
+  copy_extent (extent, new_start, new_end, closure->new_object);
   return 0;
 }
 
-/* The string NEW_STRING was partially constructed from OLD_STRING.
-   In particular, the section of length LEN starting at NEW_POS in
-   NEW_STRING came from the section of the same length starting at
-   OLD_POS in OLD_STRING.  Copy the extents as appropriate. */
+/* The string or lstream NEW_OBJECT was partially constructed from OLD_STRING.
+   In particular, the section of length LEN starting at NEW_POS in NEW_OBJECT
+   came from the section of the same length starting at OLD_POS in OLD_STRING.
+   Copy the extents as appropriate. */
 
 void
-copy_string_extents (Lisp_Object new_string, Lisp_Object old_string,
+copy_string_extents (Lisp_Object new_object, Lisp_Object old_string,
 		     Bytecount new_pos, Bytecount old_pos,
 		     Bytecount length)
 {
@@ -6202,9 +6201,9 @@ copy_string_extents (Lisp_Object new_string, Lisp_Object old_string,
 
   closure.new_pos = new_pos;
   closure.old_pos = old_pos;
-  closure.new_string = new_string;
+  closure.new_object = new_object;
   closure.length = length;
-  GCPRO2 (new_string, old_string);
+  GCPRO2 (new_object, old_string);
   map_extents (old_pos, old_pos + length,
 	       copy_string_extents_mapper,
 	       (void *) &closure, old_string, 0,
@@ -6213,6 +6212,235 @@ copy_string_extents (Lisp_Object new_string, Lisp_Object old_string,
 	       /* we are calling E-Lisp (the extent's copy function)
 		  so anything might happen */
 	       ME_MIGHT_CALL_ELISP);
+  UNGCPRO;
+}
+
+struct stretch_string_extents_arg
+{
+  Bytecount old_pos;
+  Bytecount new_pos;
+  Bytecount old_length;
+  Bytecount new_length;
+  Lisp_Object new_object;
+};
+
+static int
+stretch_string_extents_buffer_mapper (EXTENT extent, void *arg)
+{
+  /* This function can GC */
+  struct stretch_string_extents_arg *closure =
+    (struct stretch_string_extents_arg *) arg;
+  Bytecount old_start = extent_endpoint_byte (extent, 0);
+  Bytecount old_end = extent_endpoint_byte (extent, 1);
+
+  /* If the old extent started before the beginning of the old chunk of
+     string, or it started at the beginning of the old chunk of string and the
+     extent's start was not open, we want the new start to be at
+     closure->OPOINT.
+
+     Conceptually, any text inserted with a format string (which is the main
+     practical application of this code) is inserted at the start of the
+     relevant format sequence. The advantage of having it at the start rather
+     than at the end is that the start-open property is nil by default, so
+     extent information over the control sequence in the format string carries
+     over to the output text in the expected way. */
+  Boolint stretchp = old_start < closure->old_pos
+    || (old_start == closure->old_pos && !extent_start_open_p (extent));
+  Bytexpos new_start, new_end;
+  Bytecount delta;
+  struct buffer *buffer;
+
+  old_start = max (closure->old_pos, old_start);
+  if (old_start >= old_end)
+    {
+      return 0;
+    }
+  old_end = min (closure->old_pos + closure->old_length, old_end);
+
+  buffer = XBUFFER (closure->new_object);
+  delta = (closure->old_pos + closure->old_length) - old_end;
+
+  new_end = closure->new_pos + closure->new_length;
+  if (delta)
+    {
+      /* Get the number of characters the end of this extent was from the end
+         of the origin string, then decrement the bytebpos by that number of
+         characters to arrive at the correct character offset from the new
+         end.  */
+      Charcount from_section_end
+        = string_offset_byte_to_char_len (extent_object (extent),
+                                          old_end, delta);
+      do
+        {
+          DEC_BYTEBPOS (buffer, new_end);          
+        }
+      while (--from_section_end && new_end >= closure->new_pos);
+
+      if (from_section_end)
+        {
+          return 0; /* We would decrement past the beginning of the new
+                       stretch. */
+        }
+    }
+
+  if (stretchp)
+    {
+      new_start = closure->new_pos;
+    }
+  else
+    {
+      /* Get the character length of the relevant positions in the original
+         string, and, starting at new_end, decrease the bytebpos by that
+         number of characters to get new_start. This will usually be cheap,
+         the relevant strings are from format converter sequences, a matter of
+         < 10 octets.  */
+      Charcount from_extent_end
+        = string_offset_byte_to_char_len (extent_object (extent),
+                                          old_start, old_end - old_start);
+      new_start = new_end;
+      do
+        {
+          DEC_BYTEBPOS (buffer, new_start);
+        }
+      while (--from_extent_end && new_start >= closure->new_pos);
+    }
+
+  if (new_start >= new_end)
+    {
+      return 0;
+    }
+
+  if (!extent_duplicable_p (extent))
+    return 0;
+
+  if (!inside_undo &&
+      !run_extent_paste_function (extent, new_start, new_end,
+                                  closure->new_object))
+    return 0;
+
+  copy_extent (extent, new_start, new_end, closure->new_object);
+  return 0;
+}
+
+/* This function is used for strings and lstream NEW_OBJECTs. */
+static int
+stretch_string_extents_mapper (EXTENT extent, void *arg)
+{
+  /* This function can GC */
+  struct stretch_string_extents_arg *closure =
+    (struct stretch_string_extents_arg *) arg;
+  Bytecount old_start = extent_endpoint_byte (extent, 0);
+  Bytecount old_end = extent_endpoint_byte (extent, 1);
+  /* See above for this reasoning. */
+  Boolint stretchp = old_start < closure->old_pos
+    || (old_start == closure->old_pos && !extent_start_open_p (extent));
+  Bytecount new_start, new_end;
+  Bytecount delta;
+  const Ibyte *data, *limit, *cursor;
+
+  old_start = max (closure->old_pos, old_start);
+  if (old_start >= old_end)
+    {
+      return 0;
+    }
+  old_end = min (closure->old_pos + closure->old_length, old_end);
+
+  data = STRINGP (closure->new_object) ?
+    XSTRING_DATA (closure->new_object)
+    : resizing_buffer_stream_ptr (XLSTREAM (closure->new_object));
+
+  delta = (closure->old_pos + closure->old_length) - old_end;
+  limit = data + closure->new_pos;
+  new_end = closure->new_pos + closure->new_length;
+  cursor = data + new_end;
+
+  if (delta)
+    {
+      /* Get the character distance from the end of this extent to the end of
+         the origin string subsection, then decrement the bytebpos by that
+         number of characters to arrive at the correct character offset from
+         the new end. We can't simply subtract the byte length, that might put
+         us in the middle of a character, and we wouldn't even know if it was
+         a relevant character. */
+      Charcount from_section_end
+        = string_offset_byte_to_char_len (extent_object (extent), old_end,
+                                          delta);
+      do
+        {
+          DEC_IBYTEPTR (cursor);
+        }
+      while (--from_section_end && cursor >= limit);
+      if (from_section_end)
+        {
+          return 0; /* We would decrement past the beginning of the new
+                       stretch. */
+        }
+      new_end = cursor - data;
+    }
+
+  if (stretchp)
+    {
+      new_start = closure->new_pos;
+    }
+  else
+    {
+      /* Get the character length between the relevant positions in the
+         original string, and, starting at new_end, decrease the bytebpos by
+         that number of characters to get new_start. This will usually be
+         cheap, the relevant strings are from format converter sequences, a
+         matter of < 10 octets.  */
+      Charcount from_extent_end
+        = string_offset_byte_to_char_len (extent_object (extent),
+                                          old_start, old_end - old_start);
+      do
+        {
+          DEC_IBYTEPTR (cursor);
+        }
+      while (--from_extent_end && cursor >= limit);
+
+      new_start = cursor - data;
+    }
+
+  if (new_start >= new_end)
+    {
+      return 0;
+    }
+
+  copy_extent (extent, new_start, new_end, closure->new_object);
+  return 0;
+}
+
+/* The string, lstream, or buffer NEW_OBJECT was partially constructed from
+   OLD_STRING. In particular, the section of length NEW_LENGTH starting at
+   NEW_POS in NEW_OBJECT came from the section of length OLD_LENGTH starting
+   at OLD_POS in OLD_STRING. Copy the extents as appropriate, in particular,
+   copy any extents that extended beyond or to the end of the old section into
+   the new section. */
+void
+stretch_string_extents (Lisp_Object new_object, Lisp_Object old_string,
+                        Bytecount new_pos, Bytecount old_pos,
+                        Bytecount old_length, Bytecount new_length)
+{
+  struct gcpro gcpro1, gcpro2;
+  struct stretch_string_extents_arg closure;
+
+  closure.new_pos = new_pos;
+  closure.old_pos = old_pos;
+  closure.new_length = new_length;
+  closure.old_length = old_length;
+  closure.new_object = new_object;
+
+  GCPRO2 (new_object, old_string);
+
+  map_extents (old_pos, old_pos + old_length,
+               BUFFERP (new_object) ? stretch_string_extents_buffer_mapper
+               : stretch_string_extents_mapper,
+               (void *) &closure, old_string, 0,
+               /* ignore extents that just abut the region */
+               ME_END_CLOSED | ME_ALL_EXTENTS_OPEN |
+               /* we are calling E-Lisp (the extent's copy function)
+                  so anything might happen */
+               ME_MIGHT_CALL_ELISP);
   UNGCPRO;
 }
 

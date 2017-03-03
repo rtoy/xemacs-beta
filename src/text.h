@@ -118,9 +118,12 @@ enum converr
 
 #ifndef MULE
 
-#define rep_bytes_by_first_byte(fb) 1
-#define byte_ascii_p(byte) 1
+#define rep_bytes_by_first_byte(fb) ((void) (fb), 1)
+#define byte_ascii_p(byte) ((void) (byte), 1)
 #define MAX_ICHAR_LEN 1
+/* Exclusive upper bound on character codes. */
+#define CHAR_CODE_LIMIT 0x100 
+#define ichar_ascii_p(c) ((void) (c), 1)
 
 #else /* MULE */
 
@@ -212,11 +215,11 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 
 #define ichar_ascii_p(c) (!ichar_multibyte_p (c))
 
-/* Maximum number of bytes per Emacs character when represented as text, in
- any format.
- */
-
+/* Maximum number of bytes per Ichar when represented as text. */
 #define MAX_ICHAR_LEN 4
+
+/* Exclusive upper bound on char codes. */
+#define CHAR_CODE_LIMIT 0x200000 
 
 #endif /* not MULE */
 
@@ -239,7 +242,7 @@ valid_ichar_p (Ichar ch)
 
 /* This works when CH is negative, and correctly returns non-zero only when CH
    is in the range [0, 255], inclusive. */
-#define valid_ichar_p(ch) (! (ch & ~0xFF))
+#define valid_ichar_p(ch) (! (ch & ~(CHAR_CODE_LIMIT - 1)))
 
 #endif /* not MULE */
 
@@ -642,8 +645,8 @@ do {							\
   ASSERT_ASCTEXT_ASCII_LEN (aiaz2, strlen (aiaz2));	\
 } while (0)
 #else
-#define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)
-#define ASSERT_ASCTEXT_ASCII(ptr)
+#define ASSERT_ASCTEXT_ASCII_LEN(ptr, len) DO_NOTHING
+#define ASSERT_ASCTEXT_ASCII(ptr) DO_NOTHING
 #endif
 
 /* -------------------------------------------------------------- */
@@ -831,12 +834,98 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
     }
 }
 
+#ifdef EFFICIENT_INT_128_BIT
+# define STRIDE_TYPE INT_128_BIT
+# define HIGH_BIT_MASK \
+    MAKE_128_BIT_UNSIGNED_CONSTANT (0x80808080808080808080808080808080)
+#elif defined (EFFICIENT_INT_64_BIT)
+# define STRIDE_TYPE INT_64_BIT
+# define HIGH_BIT_MASK MAKE_64_BIT_UNSIGNED_CONSTANT (0x8080808080808080)
+#else
+# define STRIDE_TYPE INT_32_BIT
+# define HIGH_BIT_MASK MAKE_32_BIT_UNSIGNED_CONSTANT (0x80808080)
+#endif
+
+#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
+#define ALIGN_MASK (~ ALIGN_BITS)
+#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
+#define STRIDE sizeof (STRIDE_TYPE)
+
+/* Skip as many ASCII bytes as possible in the memory block [PTR, END).
+   Return pointer to the first non-ASCII byte.  optimized for long
+   stretches of ASCII. */
+DECLARE_INLINE_HEADER (
+const Ibyte *
+skip_ascii (const Ibyte *ptr, const Ibyte *end)
+)
+{
+  const unsigned STRIDE_TYPE *ascii_end;
+
+  /* Need to do in 3 sections -- before alignment start, aligned chunk,
+     after alignment end. */
+  while (!ALIGNED (ptr))
+    {
+      if (ptr == end || !byte_ascii_p (*ptr))
+	return ptr;
+      ptr++;
+    }
+  ascii_end = (const unsigned STRIDE_TYPE *) ptr;
+  /* This loop screams, because we can detect ASCII
+     characters 4 or 8 at a time. */
+  while ((const Ibyte *) ascii_end + STRIDE <= end
+	 && !(*ascii_end & HIGH_BIT_MASK))
+    ascii_end++;
+  ptr = (Ibyte *) ascii_end;
+  while (ptr < end && byte_ascii_p (*ptr))
+    ptr++;
+  return ptr;
+}
+
+/* Skip as many ASCII bytes as possible in the memory block [END, PTR),
+   going downwards.  Return pointer to the location above the first
+   non-ASCII byte.  Optimized for long stretches of ASCII. */
+DECLARE_INLINE_HEADER (
+const Ibyte *
+skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
+)
+{
+  const unsigned STRIDE_TYPE *ascii_end;
+
+  /* Need to do in 3 sections -- before alignment start, aligned chunk,
+     after alignment end. */
+  while (!ALIGNED (ptr))
+    {
+      if (ptr == end || !byte_ascii_p (*(ptr - 1)))
+	return ptr;
+      ptr--;
+    }
+  ascii_end = (const unsigned STRIDE_TYPE *) ptr - 1;
+  /* This loop screams, because we can detect ASCII
+     characters 4 or 8 at a time. */
+  while ((const Ibyte *) ascii_end >= end
+	 && !(*ascii_end & HIGH_BIT_MASK))
+    ascii_end--;
+  ptr = (Ibyte *) (ascii_end + 1);
+  while (ptr > end && byte_ascii_p (*(ptr - 1)))
+    ptr--;
+  return ptr;
+}
+
+/* Return the character count of an lstream or coding buffer of internal
+   format text, counting partial characters at the beginning of the buffer
+   as whole characters, and *not* counting partial characters at the end of
+   the buffer. */
+Charcount buffered_bytecount_to_charcount (const Ibyte *, Bytecount len);
+
 #else
 
 #define bytecount_to_charcount(ptr, len) ((Charcount) (len))
 #define bytecount_to_charcount_fmt(ptr, len, fmt) ((Charcount) (len))
 #define charcount_to_bytecount(ptr, len) ((Bytecount) (len))
 #define charcount_to_bytecount_fmt(ptr, len, fmt) ((Bytecount) (len))
+#define skip_ascii(ptr, end) end
+#define skip_ascii_down(ptr, end) end
+#define buffered_bytecount_to_charcount(ptr, len) (len)
 
 #endif /* MULE */
 
@@ -899,20 +988,17 @@ itext_n_addr (const Ibyte *ptr, Charcount offset)
 } while (0)
 
 /* -------------------------------------------------------------------- */
-/*      Retrieving or changing the character pointed to by a itext    */
+/*      Retrieving the character pointed to by a itext    */
 /* -------------------------------------------------------------------- */
 
 #define simple_itext_ichar(ptr)		((Ichar) (ptr)[0])
 #define simple_set_itext_ichar(ptr, x) \
 	((ptr)[0] = (Ibyte) (x), (Bytecount) 1)
-#define simple_itext_copy_ichar(src, dst) \
-	((dst)[0] = *(src), (Bytecount) 1)
 
 #ifdef MULE
 
 MODULE_API Ichar non_ascii_itext_ichar (const Ibyte *ptr);
 MODULE_API Bytecount non_ascii_set_itext_ichar (Ibyte *ptr, Ichar c);
-MODULE_API Bytecount non_ascii_itext_copy_ichar (const Ibyte *src, Ibyte *dst);
 
 /* Retrieve the character pointed to by PTR as an Ichar. */
 
@@ -1060,20 +1146,6 @@ set_itext_ichar_fmt (Ibyte *ptr, Ichar x, Internal_Format fmt,
     }
 }
 
-/* Retrieve the character pointed to by SRC and store it as
-   internally-formatted text in DST.
-*/
-
-DECLARE_INLINE_HEADER (
-Bytecount
-itext_copy_ichar (const Ibyte *src, Ibyte *dst)
-)
-{
-  return byte_ascii_p (*src) ?
-    simple_itext_copy_ichar (src, dst) :
-    non_ascii_itext_copy_ichar (src, dst);
-}
-
 #else /* not MULE */
 
 # define itext_ichar(ptr) simple_itext_ichar (ptr)
@@ -1082,9 +1154,89 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
 # define itext_ichar_raw_fmt(ptr, fmt) itext_ichar (ptr)
 # define set_itext_ichar(ptr, x) simple_set_itext_ichar (ptr, x)
 # define set_itext_ichar_fmt(ptr, x, fmt, obj) set_itext_ichar (ptr, x)
-# define itext_copy_ichar(src, dst) simple_itext_copy_ichar (src, dst)
 
 #endif /* not MULE */
+
+/* Retrieve the character pointed to by SRC and store it as
+   internally-formatted text in DST. */
+DECLARE_INLINE_HEADER (
+Bytecount
+itext_copy_ichar (const Ibyte *src, Ibyte *dst)
+)
+{
+  Bytecount len = itext_ichar_len (src);
+  switch (len)
+    {
+#if MAX_ICHAR_LEN > 4
+#error "unimplemented"
+#endif
+    case 4:
+      *dst++ = *src++;
+    case 3:
+      *dst++ = *src++;
+    case 2:
+      *dst++ = *src++;
+    case 1:
+      *dst++ = *src++;
+    }
+  return len;
+}
+
+/* Return non-zero if the CH represents the same character as that character
+   stored at STR. Equivalent to (ch == itext_ichar (str)), but simplifies to
+   less work at runtime for constant ASCII CH. */
+DECLARE_INLINE_HEADER (
+Boolint
+itext_ichar_eql (const Ibyte *str, Ichar ch)
+)
+{
+  if (ichar_ascii_p (ch))
+    /* This is fine, since ASCII characters are not part of the subsequent
+       octets of non-ASCII characters. */
+    return simple_itext_ichar (str) == ch; 
+#ifdef MULE
+  return non_ascii_itext_ichar (str) == ch;
+#endif
+}
+
+/* Return a number between 1 and MAX_ICHAR_LEN, inclusive, reflecting how many
+   octets are needed to represent CH. Most useful for constant ASCII CH. */
+DECLARE_INLINE_HEADER (
+Bytecount
+ichar_len (Ichar ch)
+)
+{
+  if (ichar_ascii_p (ch))
+    {
+      return 1;
+    }
+#ifdef MULE
+  else
+    {
+      Ibyte chbuf[MAX_ICHAR_LEN];
+      return non_ascii_set_itext_ichar (chbuf, ch);
+    }
+#endif
+}
+
+DECLARE_INLINE_HEADER (
+Bytecount
+ichar_len_fmt (Ichar c, Internal_Format fmt)
+)
+{
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return ichar_len (c);
+    case FORMAT_16_BIT_FIXED:
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return 1;
+    }
+}
 
 /* Retrieve the character at offset N (in characters) from PTR, as an
    Ichar.
@@ -1092,7 +1244,6 @@ itext_copy_ichar (const Ibyte *src, Ibyte *dst)
      
 #define itext_ichar_n(ptr, offset) \
   itext_ichar (itext_n_addr (ptr, offset))
-
 
 /************************************************************************/
 /*									*/

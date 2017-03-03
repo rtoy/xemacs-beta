@@ -1,6 +1,0 @@
-@c Synced up with: Texinfo 4.13 of September 18 2008.
-@c Synced by: Ben Wing, 2-17-10.
-@set UPDATED 18 September 2008
-@set UPDATED-MONTH September 2008
-@set EDITION 4.13
-@set VERSION 4.13

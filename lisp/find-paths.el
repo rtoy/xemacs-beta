@@ -45,9 +45,10 @@
   "File bases that name Emacs Lisp files.")
 
 (defvar paths-no-lisp-directory-regexp
-  (concat "\\(" paths-version-control-filename-regexp "\\)"
-	  "\\|"
-	  "\\(" paths-lisp-filename-regexp "\\)")
+  (concatenate 'string
+               "\\(" paths-version-control-filename-regexp "\\)"
+               "\\|"
+               "\\(" paths-lisp-filename-regexp "\\)")
   "File bases that may not be directories containing Lisp code.")
 
 (defun paths-find-recursive-path (directories &optional max-depth exclude-regexp)
@@ -111,13 +112,15 @@ from the search."
   "Convert list of path components COMPONENTS into a path.
 If EXPAND-DIRECTORY is non-NIL, use it as a directory to feed
 to EXPAND-FILE-NAME."
-  (let* ((reverse-components (reverse components))
-	 (last-component (car reverse-components))
-	 (first-components (reverse (cdr reverse-components)))
-	 (path
-	  (apply #'concat
-		 (append (mapcar #'file-name-as-directory first-components)
-			 (list last-component)))))
+  (let ((path
+	 (mapconcat
+	  #'identity 
+	  (reduce #'cons components :key #'file-name-as-directory
+		  :from-end t :end (1- (length components))
+                  ;; The last component is a file name, do not transform it
+                  ;; with #'file-name-as-directory.
+		  :initial-value (last components))
+	  "")))
     (if expand-directory
 	(expand-file-name path expand-directory)
       path)))
@@ -129,10 +132,7 @@ SUFFIX is the subdirectory from there.
 BASE is the base to look for."
   (file-name-as-directory
    (expand-file-name
-    (concat
-     (file-name-as-directory root)
-     suffix
-     base))))
+    (concatenate 'string (file-name-as-directory root) suffix base))))
 
 
 (defun paths-for-each-emacs-directory (func
@@ -336,7 +336,7 @@ DEFAULT is the preferred value."
 
 (defun construct-emacs-version-name ()
   "Construct a string from the raw XEmacs version number."
-  (concat emacs-program-name "-" emacs-program-version))
+  (concatenate 'string emacs-program-name "-" emacs-program-version))
 
 (defun paths-directories-which-exist (directories)
   "Return the directories among DIRECTORIES.

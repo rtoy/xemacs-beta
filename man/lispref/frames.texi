@@ -58,7 +58,7 @@ This predicate returns @code{t} if @var{object} is a frame, and
 
   @xref{Display}, for related information.
 
-@node Creating Frames
+@node Creating Frames, Frame Properties, Frames, Frames
 @section Creating Frames
 
 To create a new frame, call the function @code{make-frame}.
@@ -85,7 +85,7 @@ Properties}, for documentation of individual properties you can specify
 when creating an X window frame.
 @end deffn
 
-@node Frame Properties
+@node Frame Properties, Frame Titles, Creating Frames, Frames
 @section Frame Properties
 
 A frame has many properties that control its appearance and behavior.
@@ -104,7 +104,7 @@ width and @code{buffer-predicate} properties really do something.
 * Frame Name::		The name of a frame (as opposed to its title).
 @end menu
 
-@node Property Access
+@node Property Access, Initial Properties, Frame Properties, Frame Properties
 @subsection Access to Frame Properties
 
 These functions let you read and change the properties of a frame.
@@ -130,7 +130,7 @@ This function sets the property @var{property} of frame @var{frame} to the
 value @var{value}.
 @end defun
 
-@node Initial Properties
+@node Initial Properties, X Frame Properties, Property Access, Frame Properties
 @subsection Initial Frame Properties
 
 You can specify the properties for the initial startup frame by setting
@@ -183,7 +183,7 @@ exception is @samp{-geometry}, which adds the specified position to
 @code{initial-frame-plist} instead.  @xref{Command Arguments,,, xemacs,
 The XEmacs User's Manual}.
 
-@node X Frame Properties
+@node X Frame Properties, Size and Position, Initial Properties, Frame Properties
 @subsection X Window Frame Properties
 
 Just what properties a frame has depends on what display mechanism it
@@ -322,7 +322,7 @@ implemented.)
 Whether the frame has a modeline.
 @end table
 
-@node Size and Position
+@node Size and Position, Frame Name, X Frame Properties, Frame Properties
 @subsection Frame Size And Position
 @cindex size of frame
 @cindex frame size
@@ -423,7 +423,7 @@ Here is an example:
 @end defun
 @end ignore
 
-@node Frame Name
+@node Frame Name,  , Size and Position, Frame Properties
 @subsection The Name of a Frame (As Opposed to Its Title)
 @cindex frame name
 
@@ -445,7 +445,7 @@ This can be overridden by arguments to @code{make-frame}.  This
 must be a string.
 @end defvar
 
-@node Frame Titles
+@node Frame Titles, Deleting Frames, Frame Properties, Frames
 @section Frame Titles
 
 Every frame has a title; most window managers display the frame title at
@@ -490,7 +490,7 @@ one plane deep).
 @xref{Glyphs}.
 @end defun
 
-@node Deleting Frames
+@node Deleting Frames, Finding All Frames, Frame Titles, Frames
 @section Deleting Frames
 @cindex deletion of frames
 
@@ -523,7 +523,7 @@ When XEmacs gets one of these commands, it generates a
 calls the function @code{delete-frame}.  @xref{Misc Events}.
 @end ignore
 
-@node Finding All Frames
+@node Finding All Frames, Frames and Windows, Deleting Frames, Frames
 @section Finding All Frames
 
 @defun frame-list
@@ -630,7 +630,7 @@ direction.
   See also @code{next-window} and @code{previous-window}, in @ref{Cyclic
 Window Ordering}.
 
-@node Frames and Windows
+@node Frames and Windows, Minibuffers and Frames, Finding All Frames, Frames
 @section Frames and Windows
 
   Each window is part of one and only one frame; you can get the frame
@@ -702,7 +702,7 @@ makes that window selected within its frame.  @xref{Selecting Windows}.
 Another function that (usually) returns one of the windows in a frame is
 @code{minibuffer-window}.  @xref{Minibuffer Misc}.
 
-@node Minibuffers and Frames
+@node Minibuffers and Frames, Input Focus, Frames and Windows, Frames
 @section Minibuffers and Frames
 
 Normally, each frame has its own minibuffer window at the bottom, which
@@ -727,7 +727,7 @@ This variable specifies the frame to use for the minibuffer window, by
 default.
 @end defvar
 
-@node Input Focus
+@node Input Focus, Visibility of Frames, Minibuffers and Frames, Frames
 @section Input Focus
 @cindex input focus
 @cindex selected frame
@@ -844,7 +844,7 @@ change it.
 @end defun
 @end ignore
 
-@node Visibility of Frames
+@node Visibility of Frames, Raising and Lowering, Input Focus, Frames
 @section Visibility of Frames
 @cindex visible frame
 @cindex invisible frame
@@ -909,7 +909,7 @@ does provide events that you can use to keep track of such changes.
 @xref{Misc Events}.
 @end ignore
 
-@node Raising and Lowering
+@node Raising and Lowering, Frame Configurations, Visibility of Frames, Frames
 @section Raising and Lowering Frames
 
 The X Window System uses a desktop metaphor.  Part of this metaphor is
@@ -978,7 +978,7 @@ This hook function implements the @code{auto-lower-frame} variable; it is
 for use as the value of @code{deselect-frame-hook}.
 @end defun
 
-@node Frame Configurations
+@node Frame Configurations, Frame Hooks, Raising and Lowering, Frames
 @section Frame Configurations
 @cindex frame configuration
 
@@ -1004,7 +1004,7 @@ Ordinarily, this function deletes all existing frames not listed in
 non-@code{nil}, the unwanted frames are iconified instead.
 @end defun
 
-@node Frame Hooks
+@node Frame Hooks,  , Frame Configurations, Frames
 @section Hooks for Customizing Frame Behavior
 @cindex frame hooks
 

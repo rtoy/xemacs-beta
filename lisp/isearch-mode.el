@@ -1068,7 +1068,11 @@ backwards."
 	   (not isearch-fixed-case)
 	   search-caps-disable-folding)
       (setq isearch-case-fold-search
-	    (no-upper-case-p isearch-string isearch-regexp)))
+            (if isearch-regexp
+                (no-case-regexp-p isearch-string)
+              (save-match-data
+                (let (case-fold-search)
+                  (not (string-match "[[:upper:]]" isearch-string)))))))
   (setq isearch-mode (if case-fold-search
                          (if isearch-case-fold-search
                              " Isearch"  ;As God Intended Mode
@@ -1220,38 +1224,37 @@ Obsolete."
 ;;===========================================================
 ;; Search Ring
 
-(defun isearch-ring-adjust1 (advance)
-  ;; Helper for isearch-ring-adjust
-  (let* ((ring (if isearch-regexp regexp-search-ring search-ring))
-	 (length (length ring))
-	 (yank-pointer-name (if isearch-regexp
-				'regexp-search-ring-yank-pointer
-			      'search-ring-yank-pointer))
-	 (yank-pointer (eval yank-pointer-name)))
-    (if (zerop length)
-	()
-      (set yank-pointer-name
-	   (setq yank-pointer
-		 (mod (+ (or yank-pointer 0)
-			 ;; XEmacs change
-			 (if advance -1 (if yank-pointer 1 0)))
-		      length)))
-      (setq isearch-string (nth yank-pointer ring)
-	    isearch-message (mapconcat 'isearch-text-char-description
-				       isearch-string "")))))
-
 (defun isearch-ring-adjust (advance)
   ;; Helper for isearch-ring-advance and isearch-ring-retreat
 ;  (if (cdr isearch-cmds)  ;; is there more than one thing on stack?
 ;      (isearch-pop-state))
-  (isearch-ring-adjust1 advance)
-  (if search-ring-update
-      (progn
-	(isearch-search)
-	(isearch-update))
-    (isearch-edit-string)
-    )
-  (isearch-push-state))
+  (labels
+      ((isearch-ring-adjust1 (advance)
+         ;; Helper for isearch-ring-adjust
+         (let* ((ring (if isearch-regexp regexp-search-ring search-ring))
+                (length (length ring))
+                (yank-pointer-name (if isearch-regexp
+                                       'regexp-search-ring-yank-pointer
+                                     'search-ring-yank-pointer))
+                (yank-pointer (symbol-value yank-pointer-name)))
+           (if (zerop length)
+               ()
+             (set yank-pointer-name
+                  (setq yank-pointer
+                        (mod (+ (or yank-pointer 0)
+                                ;; XEmacs change
+                                (if advance -1 (if yank-pointer 1 0)))
+                             length)))
+             (setq isearch-string (nth yank-pointer ring)
+                   isearch-message (mapconcat 'isearch-text-char-description
+                                              isearch-string ""))))))
+    (isearch-ring-adjust1 advance)
+    (if search-ring-update
+        (progn
+          (isearch-search)
+          (isearch-update))
+      (isearch-edit-string))
+    (isearch-push-state)))
 
 (defun isearch-ring-advance ()
   "Advance to the next search string in the ring."
@@ -1580,62 +1583,93 @@ If there is no completion possible, say so and continue searching."
 	 ;; FSF does similar magic in `isearch-other-meta-char', which
 	 ;; is horribly complex.  I *hope* what we do works in all
 	 ;; cases.
-	 (setq this-command (key-binding (this-command-keys))))
+	 (setq this-command
+               (condition-case nil
+                   (key-binding (this-command-keys))
+                 (wrong-type-argument
+                  ;; #'key-binding didn't like one of the events --> it's
+                  ;; probably a misc-user object, repeat what
+                  ;; #'dispatch-event does for this case.
+                  (let ((this-command-keys (this-command-keys))
+                        event-function)
+                    (when (and (> (length this-command-keys) 0)
+                               (misc-user-event-p (aref this-command-keys 0)))
+                      (setq event-function
+                            (event-function (aref this-command-keys 0)))
+                      (case event-function
+                        (call-interactively
+                         (event-object (aref this-command-keys 0)))
+                        (eval
+                         `(lambda nil (interactive)
+                           ,(event-object (aref this-command-keys 0))))
+                        (otherwise
+                         ;; Scrollbar command or the like.
+                         (and (symbolp event-function) event-function)))))))))
 	(t
-	 (isearch-maybe-frob-keyboard-macros)
-	 (if (and this-command
-		  (symbolp this-command)
-		  (get this-command 'isearch-command))
-	     nil ; then continue.
-	   (isearch-done)))))
-
-(defun isearch-maybe-frob-keyboard-macros ()
-  ;;
-  ;; If the command about to be executed is `self-insert-command' then change
-  ;; the command to `isearch-printing-char' instead, meaning add the last-
-  ;; typed character to the search string.
-  ;;
-  ;; If `this-command' is a string or a vector (that is, a keyboard macro)
-  ;; and it contains only one command, which is bound to self-insert-command,
-  ;; then do the same thing as for self-inserting commands: arrange for that
-  ;; character to be added to the search string.  If we didn't do this, then
-  ;; typing a compose sequence (a la x-compose.el) would terminate the search
-  ;; and insert the character, instead of searching for that character.
-  ;;
-  ;; We should continue doing this, since it's pretty much the behavior one
-  ;; would expect, but it will stop being so necessary once key-translation-
-  ;; map exists and is used by x-compose.el and things like it, since the
-  ;; translation will have been done before we see the keys.
-  ;;
-  (cond ((eq this-command 'self-insert-command)
-	 (setq this-command 'isearch-printing-char))
-	((and (or (stringp this-command) (vectorp this-command))
-	      (eq (key-binding this-command) 'self-insert-command))
-	 (setq last-command-event (character-to-event (aref this-command 0))
-	       last-command-char (and (stringp this-command)
-				      (aref this-command 0))
-	       this-command 'isearch-printing-char))
-	((and (null this-command)
-              (eq 'key-press (event-type last-command-event))
-              (current-local-map)
-              (let* ((this-command-keys (this-command-keys))
-                     (this-command-keys (or (lookup-key function-key-map
-                                                        this-command-keys)
-                                            this-command-keys))
-                     (lookup-key (lookup-key global-map this-command-keys)))
-                (and (eq 'self-insert-command lookup-key)
-                     ;; The feature here that a modification of
-                     ;; last-command-event is respected is undocumented, and
-                     ;; only applies when this-command is nil. The design
-                     ;; isn't reat, and I welcome suggestions for a better
-                     ;; one.
-                     (setq last-command-event
-                           (find-if 'key-press-event-p this-command-keys
-                                    :from-end t)
-                           last-command-char
-                           (event-to-character last-command-event)
-                           this-command 'isearch-printing-char)))))))
-                           
+         (labels
+             ((isearch-maybe-frob-keyboard-macros ()
+                ;; If the command about to be executed is
+                ;; `self-insert-command' then change the command to
+                ;; `isearch-printing-char' instead, meaning add the last-
+                ;; typed character to the search string.
+                ;;
+                ;; If `this-command' is a string or a vector (that is, a
+                ;; keyboard macro) and it contains only one command, which is
+                ;; bound to self-insert-command, then do the same thing as for
+                ;; self-inserting commands: arrange for that character to be
+                ;; added to the search string.  If we didn't do this, then
+                ;; typing a compose sequence (a la x-compose.el) would
+                ;; terminate the search and insert the character, instead of
+                ;; searching for that character.
+                ;;
+                ;; We should continue doing this, since it's pretty much the
+                ;; behavior one would expect, but it will stop being so
+                ;; necessary once key-translation- map exists and is used by
+                ;; x-compose.el and things like it, since the translation will
+                ;; have been done before we see the keys.
+                ;;
+                (cond ((eq this-command 'self-insert-command)
+                       (setq this-command 'isearch-printing-char))
+                      ((and (or (stringp this-command) (vectorp this-command))
+                            (eq (key-binding this-command)
+                                'self-insert-command))
+                       (setq last-command-event
+                             (character-to-event (aref this-command 0))
+                             last-command-char (and (stringp this-command)
+                                                    (aref this-command 0))
+                             this-command 'isearch-printing-char))
+                      ((and (null this-command)
+                            (eq 'key-press (event-type last-command-event))
+                            (current-local-map)
+                            (let* ((this-command-keys (this-command-keys))
+                                   (this-command-keys (or (lookup-key
+                                                           function-key-map
+                                                           this-command-keys)
+                                                          this-command-keys))
+                                   (lookup-key (lookup-key global-map
+                                                           this-command-keys)))
+                              (and (eq 'self-insert-command lookup-key)
+                                   ;; The feature here that a modification
+                                   ;; of last-command-event is respected is
+                                   ;; undocumented, and only applies when
+                                   ;; this-command is nil. The design isn't
+                                   ;; great, and I welcome suggestions for a
+                                   ;; better one.
+                                   (setq last-command-event
+                                         (find-if 'key-press-event-p
+                                                  this-command-keys
+                                                  :from-end t)
+                                         last-command-char
+                                         (event-to-character
+                                          last-command-event)
+                                         this-command
+                                         'isearch-printing-char))))))))
+           (isearch-maybe-frob-keyboard-macros)
+           (if (and this-command
+                    (symbolp this-command)
+                    (get this-command 'isearch-command))
+               nil ; then continue.
+             (isearch-done))))))
 
 ;;;========================================================
 ;;; Highlighting
@@ -1645,24 +1679,25 @@ If there is no completion possible, say so and continue searching."
 ;; this face is initialized by faces.el since isearch is preloaded.
 ;(make-face 'isearch)
 
-(defun isearch-make-extent (begin end)
-  (let ((x (make-extent begin end (current-buffer))))
-    ;; make the isearch extent always take precedence over any mouse-
-    ;; highlighted extents we may be passing through, since isearch, being
-    ;; modal, is more interesting (there's nothing they could do with a
-    ;; mouse-highlighted extent while in the midst of a search anyway).
-    (set-extent-priority x (+ mouse-highlight-priority 2))
-    (set-extent-face x 'isearch)
-    (setq isearch-extent x)))
-
 (defun isearch-highlight (begin end)
-  (if (null search-highlight)
-      nil
-    ;; make sure isearch-extent is in the current buffer
-    (or (and (extentp isearch-extent)
-	     (extent-live-p isearch-extent))
-	(isearch-make-extent begin end))
-    (set-extent-endpoints isearch-extent begin end (current-buffer))))
+  (labels
+      ((isearch-make-extent (begin end)
+         (let ((x (make-extent begin end (current-buffer))))
+           ;; make the isearch extent always take precedence over any mouse-
+           ;; highlighted extents we may be passing through, since isearch,
+           ;; being modal, is more interesting (there's nothing they could do
+           ;; with a mouse-highlighted extent while in the midst of a search
+           ;; anyway).
+           (set-extent-priority x (+ mouse-highlight-priority 2))
+           (set-extent-face x 'isearch)
+           (setq isearch-extent x))))
+    (if (null search-highlight)
+        nil
+      ;; make sure isearch-extent is in the current buffer
+      (or (and (extentp isearch-extent)
+               (extent-live-p isearch-extent))
+          (isearch-make-extent begin end))
+      (set-extent-endpoints isearch-extent begin end (current-buffer)))))
 
 ;; This used to have a TOTALLY flag that also deleted the extent.  I
 ;; don't think this is necessary any longer, as isearch-highlight can
@@ -1825,15 +1860,6 @@ Before that, if search-invisible is `open', unhide the extents with an
 			 t))
 		     isearch-unhidden-extents)))))
 
-(defun isearch-no-upper-case-p (string)
-  "Return t if there are no upper case chars in string.
-But upper case chars preceded by \\ do not count since they
-have special meaning in a regexp."
-  ;; this incorrectly returns t for "\\\\A"
-  (let ((case-fold-search nil))
-    (not (string-match "\\(^\\|[^\\]\\)[A-Z]" string))))
-(make-obsolete 'isearch-no-upper-case-p 'no-upper-case-p)
-
 ;; Portability functions to support various Emacs versions.
 
 (defun isearch-char-to-string (c)
@@ -1845,20 +1871,6 @@ have special meaning in a regexp."
 ;  (isearch-char-to-string c))
 
 (define-function 'isearch-text-char-description 'text-char-description)
-
-;; Used by etags.el and info.el
-(defmacro with-caps-disable-folding (string &rest body) "\
-Eval BODY with `case-fold-search' let to nil if STRING contains
-uppercase letters and `search-caps-disable-folding' is t."
-  `(let ((case-fold-search
-          (if (and case-fold-search search-caps-disable-folding)
-              (isearch-no-upper-case-p ,string)
-            case-fold-search)))
-     ,@body))
-(make-obsolete 'with-caps-disable-folding 'with-search-caps-disable-folding)
-(put 'with-caps-disable-folding 'lisp-indent-function 1)
-(put 'with-caps-disable-folding 'edebug-form-spec '(form body))
-
 
 ;;;========================================================
 ;;; Advanced highlighting

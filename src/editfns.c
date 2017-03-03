@@ -974,6 +974,46 @@ lisp_to_time (Lisp_Object specified_time, time_t *result)
   if (NILP (specified_time))
     return time (result) != -1;
 
+  if (INTEGERP (specified_time))
+    {
+#ifdef HAVE_BIGNUM
+      if (BIGNUMP (specified_time))
+        {
+          if (sizeof (time_t) == sizeof (int))
+            {
+              check_integer_range (specified_time, make_integer (INT_MIN),
+                                   make_integer (INT_MAX));
+              *result = bignum_to_int (XBIGNUM_DATA (specified_time));
+            }
+          else if (sizeof (time_t) == sizeof (long))
+            {
+              check_integer_range (specified_time, make_integer (LONG_MIN),
+                                   make_integer (LONG_MAX));
+              *result = bignum_to_long (XBIGNUM_DATA (specified_time));
+            }
+          else if (sizeof (time_t) == sizeof (long long))
+            {
+              check_integer_range (specified_time, make_integer (LLONG_MIN),
+                                   make_integer (LLONG_MAX));
+              *result = bignum_to_llong (XBIGNUM_DATA (specified_time));
+            }
+          else
+            {
+              /* Unimplemented. Would be nice to have this error at compile
+                 time. */
+              signal_error (Qunimplemented,
+                            "time_t size not supported by XEmacs",
+                            make_fixnum (sizeof (time_t)));
+            }
+
+          return 1;
+        }
+#endif
+      *result = XFIXNUM (specified_time);
+      
+      return *result == XREALFIXNUM (specified_time);
+    }
+
   CHECK_CONS (specified_time);
   high = XCAR (specified_time);
   low  = XCDR (specified_time);
@@ -985,24 +1025,18 @@ lisp_to_time (Lisp_Object specified_time, time_t *result)
   return *result >> 16 == XFIXNUM (high);
 }
 
-Lisp_Object time_to_lisp (time_t the_time);
-Lisp_Object
-time_to_lisp (time_t the_time)
-{
-  unsigned int item = (unsigned int) the_time;
-  return Fcons (make_fixnum (item >> 16), make_fixnum (item & 0xffff));
-}
-
 size_t emacs_strftime (Extbyte *string, size_t max, const Extbyte *format,
 		       const struct tm *tm);
 static long difftm (const struct tm *a, const struct tm *b);
 
 
-DEFUN ("format-time-string", Fformat_time_string, 1, 2, 0, /*
+DEFUN ("format-time-string", Fformat_time_string, 1, 3, 0, /*
 Use FORMAT-STRING to format the time TIME.
 TIME is specified as (HIGH LOW . IGNORED) or (HIGH . LOW), as from
 `current-time' and `file-attributes'.  If TIME is not specified it
 defaults to the current time.
+The third, optional, argument UNIVERSAL, if non-nil, means describe TIME
+as Universal Time; nil means describe TIME in the local time zone.
 FORMAT-STRING may contain %-sequences to substitute parts of the time.
 %a is replaced by the abbreviated name of the day of week.
 %A is replaced by the full name of the day of week.
@@ -1047,7 +1081,7 @@ FORMAT-STRING may contain %-sequences to substitute parts of the time.
 
 The number of options reflects the `strftime' function.
 */
-       (format_string, time_))
+       (format_string, time_, universal))
 {
   time_t value;
   Bytecount size;
@@ -1064,9 +1098,19 @@ The number of options reflects the `strftime' function.
     {
       Extbyte *buf = alloca_extbytes (size);
       Extbyte *formext;
+      struct tm *tmp, tm;
+
+      tmp = NILP (universal) ? localtime (&value) : gmtime (&value);
+
+      if (!tmp)
+	{
+	  signal_error (Qunimplemented,
+			"Decoding time failed, year probably too big",
+			time_);
+	}
+
       /* make a copy of the static buffer returned by localtime() */
-      struct tm tm = *localtime (&value); 
-      
+      tm = *tmp;
       *buf = 1;
 
       /* !!#### this use of external here is not totally safe, and
@@ -1106,6 +1150,13 @@ ZONE is an integer indicating the number of seconds east of Greenwich.
 
   decoded_time = localtime (&time_spec);
 
+  if (!decoded_time)
+    {
+      signal_error (Qunimplemented,
+		    "Decoding time failed, year probably too big",
+		    specified_time);
+    }
+
   /* Make a copy, in case gmtime modifies the struct.  */
   save_tm = *decoded_time;
   decoded_time = gmtime (&time_spec);
@@ -1131,7 +1182,7 @@ static void set_time_zone_rule (Extbyte *tzstring);
 Lisp_Object
 make_time (time_t tiempo)
 {
-  return list2 (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
+  return Fcons (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
 		make_fixnum (tiempo & 0xFFFF));
 }
 
@@ -1166,7 +1217,7 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
   CHECK_FIXNUM (*args); tm.tm_hour = XFIXNUM (*args++);	/* hour */
   CHECK_FIXNUM (*args); tm.tm_mday = XFIXNUM (*args++);	/* day */
   CHECK_FIXNUM (*args); tm.tm_mon  = XFIXNUM (*args++) - 1;	/* month */
-  CHECK_FIXNUM (*args); tm.tm_year = XFIXNUM (*args++) - 1900;/* year */
+  CHECK_FIXNUM (*args); tm.tm_year = XFIXNUM (*args++) - 1900;	/* year */
 
   tm.tm_isdst = -1;
 
@@ -1188,7 +1239,13 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
       else if (FIXNUMP (zone))
 	{
 	  int abszone = abs (XFIXNUM (zone));
-	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", "-" + (XFIXNUM (zone) < 0),
+	  /* We specify the time zone in offset notation (see `man
+	     tzset' for details).  The offset indicates the value one
+	     must add to local time to arrive at UTC.  Thus, we sign
+	     the offset with a `-' if the time zone is east of GMT; we
+	     sign the offset with a `+' if the time zone is GMT (then
+	     the offset is 0) or if the time zone is west of GMT. */
+	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", (XFIXNUM (zone) < 0) ? "+" : "-",
 		   abszone / (60*60), (abszone/60) % 60, abszone % 60);
 	  tzstring = tzbuf;
 	}
@@ -1304,6 +1361,13 @@ the data it can't find.
       Lisp_Object tem;
 
       t = localtime (&value);
+      if (t == NULL)
+	{
+	  signal_error (Qunimplemented,
+			"localtime() failed, year value probably too big",
+			specified_time);
+	}
+
       offset = difftm (t, &gmt);
       s = 0;
 #ifdef HAVE_TM_ZONE
@@ -2156,87 +2220,6 @@ arguments: (&rest BODY)
 }
 
 
-DEFUN ("format", Fformat, 1, MANY, 0, /*
-Format a string out of a control-string and arguments.
-The first argument is a control string.
-The other arguments are substituted into it to make the result, a string.
-It may contain %-sequences meaning to substitute the next argument.
-%s means print all objects as-is, using `princ'.
-%S means print all objects as s-expressions, using `prin1'.
-%d or %i means print as an integer in decimal (%o octal, %x lowercase hex,
-  %X uppercase hex, %b binary).
-%c means print as a single character.
-%f means print as a floating-point number in fixed notation (e.g. 785.200).
-%e or %E means print as a floating-point number in scientific notation
-  (e.g. 7.85200e+03).
-%g or %G means print as a floating-point number in "pretty format";
-  depending on the number, either %f or %e/%E format will be used, and
-  trailing zeroes are removed from the fractional part.
-The argument used for all but %s and %S must be a number.  It will be
-  converted to an integer or a floating-point number as necessary.
-
-%$ means reposition to read a specific numbered argument; for example,
-  %3$s would apply the `%s' to the third argument after the control string,
-  and the next format directive would use the fourth argument, the
-  following one the fifth argument, etc. (There must be a positive integer
-  between the % and the $).
-Zero or more of the flag characters `-', `+', ` ', `0', and `#' may be
-  specified between the optional repositioning spec and the conversion
-  character; see below.
-An optional minimum field width may be specified after any flag characters
-  and before the conversion character; it specifies the minimum number of
-  characters that the converted argument will take up.  Padding will be
-  added on the left (or on the right, if the `-' flag is specified), as
-  necessary.  Padding is done with spaces, or with zeroes if the `0' flag
-  is specified.
-If the field width is specified as `*', the field width is assumed to have
-  been specified as an argument.  Any repositioning specification that
-  would normally specify the argument to be converted will now specify
-  where to find this field width argument, not where to find the argument
-  to be converted.  If there is no repositioning specification, the normal
-  next argument is used.  The argument to be converted will be the next
-  argument after the field width argument unless the precision is also
-  specified as `*' (see below).
-
-An optional period character and precision may be specified after any
-  minimum field width.  It specifies the minimum number of digits to
-  appear in %d, %i, %o, %x, and %X conversions (the number is padded
-  on the left with zeroes as necessary); the number of digits printed
-  after the decimal point for %f, %e, and %E conversions; the number
-  of significant digits printed in %g and %G conversions; and the
-  maximum number of non-padding characters printed in %s and %S
-  conversions.  The default precision for floating-point conversions
-  is six.
-If the precision is specified as `*', the precision is assumed to have been
-  specified as an argument.  The argument used will be the next argument
-  after the field width argument, if any.  If the field width was not
-  specified as an argument, any repositioning specification that would
-  normally specify the argument to be converted will now specify where to
-  find the precision argument.  If there is no repositioning specification,
-  the normal next argument is used.
-
-The ` ' and `+' flags mean prefix non-negative numbers with a space or
-  plus sign, respectively.
-The `#' flag means print numbers in an alternate, more verbose format:
-  octal numbers begin with zero; hex numbers begin with a 0x or 0X;
-  a decimal point is printed in %f, %e, and %E conversions even if no
-  numbers are printed after it; and trailing zeroes are not omitted in
-   %g and %G conversions.
-
-Use %% to put a single % into the output.
-
-arguments: (CONTROL-STRING &rest ARGS)
-*/
-       (int nargs, Lisp_Object *args))
-{
-  /* It should not be necessary to GCPRO ARGS, because
-     the caller in the interpreter should take care of that.  */
-
-  CHECK_STRING (args[0]);
-  return emacs_vsprintf_string_lisp (0, args[0], nargs - 1, args + 1);
-}
-
-
 DEFUN ("char-equal", Fchar_equal, 2, 3, 0, /*
 Return t if two characters match, optionally ignoring case.
 Both arguments must be characters (i.e. NOT integers).
@@ -2433,7 +2416,6 @@ syms_of_editfns (void)
   DEFSUBR (Fcurrent_time_zone);
   DEFSUBR (Fset_time_zone_rule);
   DEFSUBR (Fsystem_name);
-  DEFSUBR (Fformat);
 
   DEFSUBR (Finsert_buffer_substring);
   DEFSUBR (Fcompare_buffer_substrings);

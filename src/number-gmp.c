@@ -1,5 +1,5 @@
-/* Numeric types for XEmacs using the GNU MP library.
-   Copyright (C) 2004 Jerry James.
+/* Numeric types for XEmacs using the GMP or MPIR library.
+   Copyright (C) 2004,2013 Jerry James.
 
 This file is part of XEmacs.
 
@@ -27,8 +27,98 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 static mp_exp_t float_print_min, float_print_max;
 gmp_randstate_t random_state;
 
+#define GMP_GET_AND_SHIFT_LIMB(bn, n)                           \
+  (((unsigned long long) (mpz_getlimbn (bn, n) & GMP_NUMB_MASK) \
+    << (GMP_LIMB_BITS * n)))
+
+/* Return the lower-order ((SIZEOF_LONG_LONG * BITS_PER CHAR) - 1) bits of
+   bignum B as a signed long long, with the sign reflecting B's sign rather
+   than the corresponding bit within the bignum's value. */
+long long
+bignum_to_llong (const bignum b)
+{
+  unsigned long long sign_mask
+    = bignum_sign (b) < 0 ? ((signed long long) -1) : LLONG_MAX;
+  return
+    (
+#if (GMP_NUMB_BITS * 9) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+#error "Unimplemented" /* But easy to implement! */
+#endif
+#if (GMP_NUMB_BITS * 8) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 7) |
+#endif
+#if (GMP_NUMB_BITS * 7) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 6) |    
+#endif
+#if (GMP_NUMB_BITS * 6) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 5) |    
+#endif
+#if (GMP_NUMB_BITS * 5) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 4) |    
+#endif
+#if (GMP_NUMB_BITS * 4) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 3) |    
+#endif
+#if (GMP_NUMB_BITS * 3) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 2) |
+#endif
+#if (GMP_NUMB_BITS * 2) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+     GMP_GET_AND_SHIFT_LIMB (b, 1) |
+#endif
+     GMP_GET_AND_SHIFT_LIMB (b, 0)) & sign_mask;
+}
+
+/* Return the lower-order (SIZEOF_LONG_LONG * BITS_PER CHAR) bits of bignum B
+   as an unsigned long long. */
+unsigned long long
+bignum_to_ullong (const bignum b)
+{
+  return 
+#if (GMP_NUMB_BITS * 9) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+#error "Unimplemented"
+#endif
+#if (GMP_NUMB_BITS * 8) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 7) |
+#endif
+#if (GMP_NUMB_BITS * 7) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 6) |    
+#endif
+#if (GMP_NUMB_BITS * 6) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 5) |    
+#endif
+#if (GMP_NUMB_BITS * 5) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 4) |    
+#endif
+#if (GMP_NUMB_BITS * 4) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 3) |    
+#endif
+#if (GMP_NUMB_BITS * 3) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 2) |
+#endif
+#if (GMP_NUMB_BITS * 2) <= (SIZEOF_LONG_LONG * BITS_PER_CHAR)
+    GMP_GET_AND_SHIFT_LIMB (b, 1) |
+#endif
+    GMP_GET_AND_SHIFT_LIMB (b, 0);
+}
+
+void
+bignum_set_llong (bignum b, long long l)
+{
+  if (l < 0LL)
+    {
+      /* This even works for LLONG_MIN.  Try it! */
+      l = -l;
+      mpz_import (b, 1U, 1, sizeof (l), 0, 0U, &l);
+      mpz_neg (b, b);
+    }
+  else
+    {
+      mpz_import (b, 1U, 1, sizeof (l), 0, 0U, &l);
+    }
+}
+
 CIbyte *
-bigfloat_to_string(mpf_t f, int base)
+bigfloat_to_string (mpf_t f, int base)
 {
   mp_exp_t expt;
   CIbyte *str = mpf_get_str (NULL, &expt, base, 0, f);
@@ -94,18 +184,20 @@ bigfloat_to_string(mpf_t f, int base)
 
 /* We need the next two functions since GNU MP insists on giving us an extra
    parameter. */
-static void *gmp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
+static void *
+gmp_realloc (void *ptr, size_t UNUSED (old_size), size_t new_size)
 {
   return xrealloc (ptr, new_size);
 }
 
-static void gmp_free (void *ptr, size_t UNUSED (size))
+static void
+gmp_free (void *ptr, size_t UNUSED (size))
 {
   xfree (ptr);
 }
 
 void
-init_number_gmp ()
+init_number_gmp (void)
 {
   mp_set_memory_functions ((void *(*) (size_t)) xmalloc, gmp_realloc,
 			   gmp_free);

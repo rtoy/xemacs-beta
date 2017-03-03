@@ -202,6 +202,70 @@ ELT must be a string.  Upper-case and lower-case letters are treated as equal."
            (the (and list (satisfies (lambda (list) (every 'stringp list))))
                 list)
            :test 'equalp))
+
+(defun concat (&rest args)
+  "Concatenate all the arguments and make the result a string.
+The result is a string whose elements are the elements of all the arguments.
+Each argument may be a string or a list or vector of characters.
+
+As of XEmacs 21.0, this function does NOT accept individual integers
+as arguments.  Old code that relies on, for example, (concat \"foo\" 50)
+returning \"foo50\" will fail.  To fix such code, either apply
+`int-to-string' to the integer argument, or use `format'."
+  (apply #'concatenate 'string args))
+
+(defun vconcat (&rest args)
+  "Concatenate all the arguments and make the result a vector.
+The result is a vector whose elements are the elements of all the arguments.
+Each argument may be a list, vector, bit vector, or string."
+  (apply #'concatenate 'vector args))
+
+(defun bvconcat (&rest args)
+  "Concatenate all the arguments and make the result a bit vector.
+The result is a bit vector whose elements are the elements of all the
+arguments.  Each argument may be a list, vector, bit vector, or string."
+  (apply #'concatenate 'bit-vector args))
+
+;; XEmacs; move these non-basic predicates that can be easily implemented in
+;; Lisp from data.c.
+
+(defun char-int-p (object)
+  "Return t if OBJECT is an integer that can be converted into a character.
+See `char-int'."
+  (and (fixnump object) (int-to-char object) t))
+
+(defun char-or-char-int-p (object)
+  "Return t if OBJECT is a character or a fixnum that can be converted to one."
+  (or (and (fixnump object) (int-to-char object) t) (characterp object)))
+
+(defun char-or-string-p (object)
+  "Return t if OBJECT is a character (or a char-int) or a string.
+It is semi-hateful that we allow a char-int here, as it goes against
+the name of this function, but it makes the most sense considering the
+other steps we take to maintain compatibility with the old character/integer
+confoundedness in older versions of E-Lisp."
+  (or (stringp object) (and (fixnump object) (int-to-char object) t)
+      (characterp object)))
+
+(defun integer-or-marker-p (object)
+  "Return t if OBJECT is an integer or a marker (editor pointer)."
+  (or (integerp object) (markerp object)))
+
+(defun integer-or-char-p (object)
+  "Return t if OBJECT is an integer or a character."
+  (or (integerp object) (characterp object)))
+
+(defun integer-char-or-marker-p (object)
+  "Return t if OBJECT is an integer, character or a marker (editor pointer)."
+  (or (integerp object) (markerp object) (characterp object)))
+
+(defun number-or-marker-p (object)
+  "Return t if OBJECT is a number or a marker."
+  (or (numberp object) (markerp object)))
+
+(defun number-char-or-marker-p (object)
+  "Return t if OBJECT is a number, character or a marker."
+  (or (numberp object) (characterp object) (markerp object)))
 
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el
@@ -560,14 +624,9 @@ See also `with-temp-file' and `with-output-to-string'."
 
 (defmacro with-output-to-string (&rest body)
   "Execute BODY, return the text it sent to `standard-output', as a string."
-  `(let ((standard-output
-	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
-     (let ((standard-output standard-output))
-       ,@body)
-     (with-current-buffer standard-output
-       (prog1
-	   (buffer-string)
-	 (kill-buffer nil)))))
+  `(get-output-stream-string 
+    (let ((standard-output (make-string-output-stream)))
+      (prog1 standard-output ,@body))))
 
 (defmacro with-local-quit (&rest body)
   "Execute BODY with `inhibit-quit' temporarily bound to nil."
@@ -975,9 +1034,9 @@ See also `equalp'."
   "Return INTEGER converted to a bit vector.
 Optional argument MINLENGTH gives a minimum length for the returned vector.
 If MINLENGTH is not given, zero high-order bits will be ignored."
-  (check-argument-type #'integerp integer)
+  (check-type integer integer)
   (setq minlength (or minlength 0))
-  (check-nonnegative-number minlength)
+  (check-type minlength natnum)
   (read (format (format "#*%%0%db" minlength) integer)))
 
 ;; XEmacs addition.
@@ -1030,97 +1089,70 @@ TYPE should be `list' or `vector'."
       (replace (the string string) obj :start1 idx)
     (prog1 string (aset string idx obj))))
 
-;; From FSF 21.1; ELLIPSES is XEmacs addition.
-
-(defun truncate-string-to-width (str end-column &optional start-column padding
-				 ellipses)
+;; XEmacs; this is in mule-util in GNU. See tests/automated/mule-tests.el for
+;; the tests that Colin Walters includes in that file.
+(defun truncate-string-to-width (str end-column
+				     &optional start-column padding ellipsis)
   "Truncate string STR to end at column END-COLUMN.
-The optional 3rd arg START-COLUMN, if non-nil, specifies
-the starting column; that means to return the characters occupying
-columns START-COLUMN ... END-COLUMN of STR.
+The optional 3rd arg START-COLUMN, if non-nil, specifies the starting
+column; that means to return the characters occupying columns
+START-COLUMN ... END-COLUMN of STR.  Both END-COLUMN and START-COLUMN
+are specified in terms of character display width in the current
+buffer; see also `char-width'.
 
-The optional 4th arg PADDING, if non-nil, specifies a padding character
-to add at the end of the result if STR doesn't reach column END-COLUMN,
-or if END-COLUMN comes in the middle of a character in STR.
-PADDING is also added at the beginning of the result
-if column START-COLUMN appears in the middle of a character in STR.
+The optional 4th arg PADDING, if non-nil, specifies a padding
+character (which should have a display width of 1) to add at the end
+of the result if STR doesn't reach column END-COLUMN, or if END-COLUMN
+comes in the middle of a character in STR.  PADDING is also added at
+the beginning of the result if column START-COLUMN appears in the
+middle of a character in STR.
 
 If PADDING is nil, no padding is added in these cases, so
 the resulting string may be narrower than END-COLUMN.
 
-BUG: Currently assumes that the padding character is of width one.  You
-will get weird results if not.
-
-If ELLIPSES is non-nil, add ellipses (specified by ELLIPSES if a string,
-else `...') if STR extends past END-COLUMN.  The ellipses will be added in
-such a way that the total string occupies no more than END-COLUMN columns
--- i.e. if the string goes past END-COLUMN, it will be truncated somewhere
-short of END-COLUMN so that, with the ellipses added (and padding, if the
-proper place to truncate the string would be in the middle of a character),
-the string occupies exactly END-COLUMN columns."
+If ELLIPSIS is non-nil, it should be a string which will replace the
+end of STR (including any padding) if it extends beyond END-COLUMN,
+unless the display width of STR is equal to or less than the display
+width of ELLIPSIS.  If it is non-nil and not a string, then ELLIPSIS
+defaults to \"...\"."
   (or start-column
       (setq start-column 0))
-  (let ((len (length str))
+  (when (and ellipsis (not (stringp ellipsis)))
+    (setq ellipsis "..."))
+  (let ((str-len (length str))
+	(str-width (string-width str))
+	(ellipsis-width (if ellipsis (string-width ellipsis) 0))
 	(idx 0)
 	(column 0)
 	(head-padding "") (tail-padding "")
 	ch last-column last-idx from-idx)
-
-    ;; find the index of START-COLUMN; bail out if end of string reached.
-    (condition-case nil
-	(while (< column start-column)
-	  (setq ch (aref str idx)
-		column (+ column (char-width ch))
-		idx (1+ idx)))
-      (args-out-of-range (setq idx len)))
+    (while (and (< column start-column) (< idx str-len))
+      (setq ch (aref str idx)
+            column (+ column (char-width ch))
+            idx (1+ idx)))
     (if (< column start-column)
-	;; if string ends before START-COLUMN, return either a blank string
-	;; or a string entirely padded.
-	(if padding (make-string (- end-column start-column) padding) "")
-      (if (and padding (> column start-column))
-	  (setq head-padding (make-string (- column start-column) padding)))
+	(if padding (make-string end-column padding) "")
+      (when (and padding (> column start-column))
+	(setq head-padding (make-string (- column start-column) padding)))
       (setq from-idx idx)
-      ;; If END-COLUMN is before START-COLUMN, then bail out.
-      (if (< end-column column)
-	  (setq idx from-idx ellipses "")
-
-	;; handle ELLIPSES
-	(cond ((null ellipses) (setq ellipses ""))
-	      ((if (<= (string-width str) end-column)
-		   ;; string fits, no ellipses
-		   (setq ellipses "")))
-	      (t
-	       ;; else, insert default value and ...
-	       (or (stringp ellipses) (setq ellipses "..."))
-	       ;; ... take away the width of the ellipses from the
-	       ;; destination.  do all computations with new, shorter
-	       ;; width.  the padding computed will get us exactly up to
-	       ;; the shorted width, which is right -- it just gets added
-	       ;; to the right of the ellipses.
-	       (setq end-column (- end-column (string-width ellipses)))))
-
-	;; find the index of END-COLUMN; bail out if end of string reached.
-	(condition-case nil
-	    (while (< column end-column)
-	      (setq last-column column
-		    last-idx idx
-		    ch (aref str idx)
-		    column (+ column (char-width ch))
-		    idx (1+ idx)))
-	  (args-out-of-range (setq idx len)))
-	;; if we went too far (stopped in middle of character), back up.
-	(if (> column end-column)
-	    (setq column last-column idx last-idx))
-	;; compute remaining padding
-	(if (and padding (< column end-column))
-	    (setq tail-padding (make-string (- end-column column) padding))))
-      ;; get substring ...
-      (setq str (substring str from-idx idx))
-      ;; and construct result
-      (if padding
-	  (concat head-padding str tail-padding ellipses)
-	(concat str ellipses)))))
-
+      (when (>= end-column column)
+	(if (and (< end-column str-width)
+		 (> str-width ellipsis-width))
+	    (setq end-column (- end-column ellipsis-width))
+	  (setq ellipsis ""))
+        (while (and (< column end-column) (< idx str-len))
+          (setq last-column column
+                last-idx idx
+                ch (aref str idx)
+                column (+ column (char-width ch))
+                idx (1+ idx)))
+	(when (> column end-column)
+	  (setq column last-column
+		idx last-idx))
+	(when (and padding (< column end-column))
+	  (setq tail-padding (make-string (- end-column column) padding))))
+      (concat head-padding (substring str from-idx idx)
+	      tail-padding ellipsis))))
 
 ;; alist/plist functions
 (defun plist-to-alist (plist)

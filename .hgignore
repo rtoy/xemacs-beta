@@ -25,6 +25,7 @@ info/.*\.info(-[0-9]+)?$
 ^lwlib/(GNUmakefile|Makefile(\.in)?)$
 ^lwlib/liblw\.a$
 ^lwlib/config\.h$
+^man/Makefile$
 ^modules/auto-autoloads\.el$
 ^modules/ldap/(GNUmakefile|Makefile(\.in)?)$
 ^modules/ldap/eldap\.ell$

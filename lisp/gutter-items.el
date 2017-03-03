@@ -187,9 +187,10 @@ If this is 0, then the full buffer name will be shown."
     ;; that the current buffer is at the front of the buffers list.
     ;; for example, select an item and then do M-C-l
     ;; (switch-to-other-buffer).  Things get way confused.
-    (if (> (length (windows-of-buffer buffer)) 0)
-	(select-window (car (windows-of-buffer buffer)))
-      (switch-to-buffer buffer))))
+    (let ((window (get-buffer-window buffer)))
+      (if window
+          (select-window window)
+        (switch-to-buffer buffer)))))
 
 (defun select-buffers-tab-buffers-by-mode (buffer-to-select buf1)
   "For use as a value of `buffers-tab-selection-function'.
@@ -198,14 +199,12 @@ This selects buffers by major mode `buffers-tab-grouping-regexp'."
 	(mode2 (symbol-name (symbol-value-in-buffer 'major-mode 
 						    buffer-to-select)))
 	(modenm1 (symbol-value-in-buffer 'mode-name buf1))
-	(modenm2 (symbol-value-in-buffer 'mode-name buffer-to-select)))
+	(modenm2 (symbol-value-in-buffer 'mode-name buffer-to-select))
+        position)
     (cond ((or (eq mode1 mode2)
 	       (eq modenm1 modenm2)
-	       (and (string-match "^[^-]+-" mode1)
-		    (string-match
-		     (concat "^" (regexp-quote 
-				  (substring mode1 0 (match-end 0))))
-		     mode2))
+	       (and (> (or (setq position (position ?- mode1)) -1) 0)
+                    (eql (1+ position) (mismatch mode1 mode2)))
 	       (and buffers-tab-grouping-regexp
 		    (find-if #'(lambda (x)
 				 (or
@@ -220,30 +219,17 @@ This selects buffers by major mode `buffers-tab-grouping-regexp'."
 (defun format-buffers-tab-line (buffer)
   "For use as a value of `buffers-tab-format-buffer-line-function'.
 This just returns the buffer's name, optionally truncated."
-  (let ((len (specifier-instance buffers-tab-default-buffer-line-length)))
-    (if (and (> len 0)
-	     (> (length (buffer-name buffer)) len))
-	(if (string-match ".*<.>$" (buffer-name buffer))
-	    (concat (substring (buffer-name buffer) 
-			       0 (- len 6)) "..."
-			       (substring (buffer-name buffer) -3))
-	  (concat (substring (buffer-name buffer)
-			     0 (- len 3)) "..."))
-      (buffer-name buffer))))
-
-(defsubst build-buffers-tab-internal (buffers)
-  (let ((selected t))
-    (mapcar
-     #'(lambda (buffer)
-	 (prog1
-	     (vector 
-	      (funcall buffers-tab-format-buffer-line-function
-		       buffer)
-	      (list buffers-tab-switch-to-buffer-function
-		    (buffer-name buffer))
-	      :selected selected)
-	   (when selected (setq selected nil))))
-     buffers)))
+  (let* ((len (specifier-instance buffers-tab-default-buffer-line-length))
+         (buffer-name (buffer-name buffer))
+         (length (length buffer-name)))
+    (if (> length len 0) 
+	(if (and (eql ?< (aref buffer-name (- length 3)))
+                 (eql ?> (aref buffer-name (- length 1))))
+            ; (string-match ".*<.>$" (buffer-name buffer))
+	    (concat (subseq buffer-name 0 (- len 6)) "..."
+                    (subseq buffer-name (- length 3)))
+	  (concat (subseq buffer-name 0 (- len 3)) "..."))
+      buffer-name)))
 
 ;;; #### SJT would like this function to have a sort function list. I
 ;;; don't see how this could work given that sorting is not
@@ -264,41 +250,52 @@ redefining the function `format-buffers-menu-line'."
     ;; context buffer before they get run.
     (let* ((buffers (delete-if 
 		     buffers-tab-omit-function (buffer-list frame)))
-	   (first-buf (car buffers)))
+	   (first-buf (car buffers)) tail)
       ;; maybe force the selected window
       (when (and force-selection
 		 (not in-deletion)
 		 (not (eq first-buf (window-buffer (selected-window frame)))))
 	(setq buffers (cons (window-buffer (selected-window frame))
-			    (delq first-buf buffers))))
+			    (delete* first-buf buffers))))
       ;; if we're in deletion ignore the current buffer
       (when in-deletion 
-	(setq buffers (delq (current-buffer) buffers))
+	(setq buffers (delete* (current-buffer) buffers))
 	(setq first-buf (car buffers)))
       ;; filter buffers
       (when buffers-tab-filter-functions
 	(setq buffers
-	      (delete-if 
-	       #'null 
-	       (mapcar #'(lambda (buf)
-			   (let ((tmp-buf buf))
-			     (mapc #'(lambda (fun)
-				       (unless (funcall fun buf first-buf)
-					 (setq tmp-buf nil)))
-				   buffers-tab-filter-functions)
-			     tmp-buf))
-		       buffers))))
+              (mapcan
+               #'(lambda (buffer)
+                   (and (every #'(lambda (function)
+                                   (funcall function buffer first-buf))
+                               buffers-tab-filter-functions)
+                        (list buffer)))
+               buffers)))
       ;; maybe shorten list of buffers
-      (and (integerp buffers-tab-max-size)
-	   (> buffers-tab-max-size 1)
-	   (> (length buffers) buffers-tab-max-size)
-	   (setcdr (nthcdr (1- buffers-tab-max-size) buffers) nil))
+      (let ((n (1- 
+                ;; Error on non-number, non-nil buffers-tab-max-size
+                (or buffers-tab-max-size most-positive-fixnum))))
+        (and (> n 0)
+             (setf tail (nthcdr n buffers)) ;; Length greater than (1+ n)?
+             (setf (cdr tail) nil)))
       ;; sort buffers in group (default is most-recently-selected)
       (when buffers-tab-sort-function
 	(setq buffers (funcall buffers-tab-sort-function buffers)))
-      ;; convert list of buffers to list of structures used by tab widget
-      (setq buffers (build-buffers-tab-internal buffers))
-      buffers)))
+      (labels
+          ((build-buffers-tab-internal (buffers)
+             "Convert BUFFERS to a list of structures used by the tab widget."
+             (let ((selected t))
+               (mapcar
+                #'(lambda (buffer)
+                    (prog1
+                        `[,(funcall buffers-tab-format-buffer-line-function
+                                    buffer)
+                          (,buffers-tab-switch-to-buffer-function ,buffer)
+                          :selected ,selected]
+                      (when selected (setq selected nil))))
+                buffers))))
+        (declare (inline build-buffers-tab-internal))
+	(build-buffers-tab-internal buffers)))))
 
 (defun add-tab-to-gutter ()
   "Put a tab control in the gutter area to hold the most recent buffers."
@@ -543,7 +540,7 @@ you should just use (progress nil)."
 
 (defun append-progress-feedback (label message &optional value frame)
   (or frame (setq frame (selected-frame)))
-  ;; Add a new entry to the message-stack, or modify an existing one
+  ;; Add a new entry to the progress-stack, or modify an existing one
   (let* ((top (car progress-stack))
 	 (tmsg (cdr top)))
     (if (eq label (car top))
@@ -568,7 +565,7 @@ you should just use (progress nil)."
 	  progress-feedback-use-echo-area)
       (display-message label (concat message "aborted.") frame)
     (or frame (setq frame (selected-frame)))
-    ;; Add a new entry to the message-stack, or modify an existing one
+    ;; Add a new entry to the progress-stack, or modify an existing one
     (let* ((top (car progress-stack))
 	   (inhibit-read-only t))
       (if (eq label (car top))

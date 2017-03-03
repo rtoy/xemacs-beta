@@ -85,6 +85,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "file-coding.h"
 #include "frame-impl.h"
 #include "insdel.h"
+#include "line-number.h"
 #include "lstream.h"
 #include "process.h"            /* for kill_buffer_processes */
 #ifdef REGION_CACHE_NEEDS_WORK
@@ -307,7 +308,7 @@ print_buffer (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
   else if (!BUFFER_LIVE_P (b))
     write_ascstring (printcharfun, "#<killed buffer>");
   else if (escapeflag)
-    write_fmt_string_lisp (printcharfun, "#<buffer %S>", 1, b->name);
+    write_fmt_string_lisp (printcharfun, "#<buffer %S>", b->name);
   else
     print_internal (b->name, printcharfun, 0);
 }
@@ -636,7 +637,8 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   init_buffer_markers (b);
   init_buffer_syntax_cache (b);
 
-  b->generated_modeline_string = Fmake_string (make_fixnum (84), make_fixnum (' '));
+  b->generated_modeline_string = Fmake_string (make_fixnum (84),
+                                               make_char (' '));
   b->modeline_extent_table = make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK,
                                                    Qeq);
 
@@ -1745,7 +1747,28 @@ the normal hook `change-major-mode-hook'.
 
   return Qnil;
 }
+
+/* It was a shame to have the line number cache around and not used from
+   Lisp, so move this here from simple.el. */
 
+DEFUN ("line-number", Fline_number, 0, 3, 0, /*
+Return the line number of POSITION within BUFFER.
+
+POSITION defaults to point. If RESPECT-NARROWING is non-nil, then the narrowed
+line number is returned; otherwise, the absolute line number is returned.  The
+returned line can always be given to `goto-line' to get back to the current
+line.
+*/
+       (position, respect_narrowing, buffer_))
+{
+  struct buffer *buf = decode_buffer (buffer_, 0);
+  Charbpos pos = (NILP (position) ? BUF_PT (buf) :
+		  get_buffer_pos_char (buf, position, GB_COERCE_RANGE));
+
+  return make_fixnum (buffer_line_number (buf, pos, 1,
+                                          !NILP (respect_narrowing)) + 1);
+}
+
 #ifdef MEMORY_USAGE_STATS
 
 struct buffer_stats
@@ -1951,6 +1974,7 @@ syms_of_buffer (void)
   DEFSUBR (Fbarf_if_buffer_read_only);
   DEFSUBR (Fbury_buffer);
   DEFSUBR (Fkill_all_local_variables);
+  DEFSUBR (Fline_number);
 #if defined (DEBUG_XEMACS) && defined (MULE)
   DEFSUBR (Fbuffer_char_byte_converion_info);
   DEFSUBR (Fstring_char_byte_converion_info);
@@ -2502,7 +2526,7 @@ Automatically becomes buffer-local when set in any fashion.
 */ );
 
   DEFVAR_BUFFER_LOCAL ("case-fold-search", case_fold_search /*
-*Non-nil if searches should ignore case.
+*If non-nil, searches and matches should ignore case.
 Automatically becomes buffer-local when set in any fashion.
 */ );
 

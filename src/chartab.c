@@ -436,7 +436,7 @@ char_table_default_for_type (enum char_table_type type)
       break;
 
     case CHAR_TABLE_TYPE_SYNTAX:
-      return make_integer (Sinherit);
+      return make_fixnum (Sinherit);
       break;
     }
   ABORT();
@@ -461,8 +461,11 @@ print_table_entry (struct chartab_range *range, Lisp_Object UNUSED (table),
   a->first = 0;
   lisprange = encode_char_table_range (range);
   GCPRO1 (lisprange);
-  write_fmt_string_lisp (a->printcharfun, "%s %S", 2, lisprange, val);
+  print_internal (lisprange, a->printcharfun, 1);
   UNGCPRO;
+  write_ascstring (a->printcharfun, " ");
+  print_internal (val, a->printcharfun, 1);  
+
   return 0;
 }
 
@@ -471,6 +474,7 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
 		  int UNUSED (escapeflag))
 {
   Lisp_Char_Table *ct = XCHAR_TABLE (obj);
+  Lisp_Object typname = XSYMBOL_NAME (char_table_type_to_symbol (ct->type));
   struct chartab_range range;
   struct ptemap arg;
 
@@ -478,20 +482,19 @@ print_char_table (Lisp_Object obj, Lisp_Object printcharfun,
   arg.printcharfun = printcharfun;
   arg.first = 1;
 
-  write_fmt_string_lisp (printcharfun,
-			 "#s(char-table :type %s", 1,
-			 char_table_type_to_symbol (ct->type));
+  write_ascstring (printcharfun, "#s(char-table :type ");
+  /* write_lisp_string() is fine, we know it's not an uninterned symbol. */
+  write_lisp_string (printcharfun, typname, 0, XSTRING_LENGTH (typname));
+			 
   if (!(EQ (ct->default_, char_table_default_for_type (ct->type))))
     {
-      write_fmt_string_lisp (printcharfun, " :default %S", 1, ct->default_);
+      write_ascstring (printcharfun, " :default ");
+      print_internal (ct->default_, printcharfun, 1);
     }
 
   write_ascstring (printcharfun, " :data (");
   map_char_table (obj, &range, print_table_entry, &arg);
   write_ascstring (printcharfun, "))");
-
-  /* #### need to print and read the default; but that will allow the
-     default to be modified, which we don't (yet) support -- but FSF does */
 }
 
 static int
@@ -1042,7 +1045,7 @@ updating_mirror_get_range_char_table (struct chartab_range *range,
 				      Lisp_Object multi)
 {
   if (range->type == CHARTAB_RANGE_CHAR)
-    return get_char_table_1 (range->ch, table);
+    return get_char_table_mirrors_ok (range->ch, table);
   else
     return get_range_char_table_1 (range, table, multi);
 }

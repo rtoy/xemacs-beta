@@ -21,6 +21,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #ifndef INCLUDED_extents_h_
 #define INCLUDED_extents_h_
 
+#include "lstream.h"
+#include "buffer.h"
+
 DECLARE_LISP_OBJECT (extent, struct extent);
 #define XEXTENT(x) XRECORD (x, extent, struct extent)
 #define wrap_extent(p) wrap_record (p, extent)
@@ -98,6 +101,7 @@ void flush_cached_extent_info (Lisp_Object extent_info);
 void set_extent_glyph (EXTENT extent, Lisp_Object glyph, int endp,
 		       glyph_layout layout);
 
+Lisp_Object allocate_extent_info (void);
 
 /* flags for map_extents() and friends */
 #define ME_END_CLOSED (1 << 0)
@@ -132,6 +136,8 @@ EXFUN (Fextent_at, 5);
 EXFUN (Fextent_property, 3);
 EXFUN (Fput_text_property, 5);
 
+EXFUN (Fextent_detached_p, 1);
+EXFUN (Fdelete_extent, 1);
 EXFUN (Fdetach_extent, 1);
 EXFUN (Fextent_end_position, 1);
 EXFUN (Fextent_object, 1);
@@ -179,18 +185,44 @@ void process_extents_for_insertion (Lisp_Object object,
 				    Bytexpos opoint, Bytecount length);
 void process_extents_for_deletion (Lisp_Object object, Bytexpos from,
 				   Bytexpos to, int destroy_them);
-/* Note the following function is in Charbpos's */
-void report_extent_modification (Lisp_Object buffer, Charbpos start,
-				 Charbpos end, int afterp);
+void report_extent_modification (Lisp_Object buffer, Bytexpos start,
+				 Bytexpos end, int afterp);
 void add_string_extents (Lisp_Object string, struct buffer *buf,
 			 Bytexpos opoint, Bytecount length);
 void splice_in_string_extents (Lisp_Object string, struct buffer *buf,
 			       Bytexpos opoint, Bytecount length,
 			       Bytecount pos);
-void copy_string_extents (Lisp_Object new_string,
+void copy_string_extents (Lisp_Object new_object,
 			  Lisp_Object old_string,
 			  Bytecount new_pos, Bytecount old_pos,
 			  Bytecount length);
+void stretch_string_extents (Lisp_Object new_object, Lisp_Object old_string,
+                             Bytecount new_pos, Bytecount old_pos,
+                             Bytecount old_length, Bytecount new_length);
+
+/* Return a bytecount appropriate for use when creating an extent with
+   STREAM's current position as its end-position or its start-position.  Most
+   appropriate for use with stretch_string_extents(). */
+DECLARE_INLINE_HEADER (
+Bytexpos
+stream_extent_position (Lisp_Object stream)
+)
+{
+  if (LRECORDP (stream))
+    {
+      switch ((enum lrecord_type) (XRECORD_LHEADER (stream)->type))
+        {
+        case lrecord_type_lstream:
+          return Lstream_byte_count (XLSTREAM (stream));
+        case lrecord_type_buffer:
+          return BYTE_BUF_PT (XBUFFER (stream));
+        case lrecord_type_marker:
+          return byte_marker_position (stream);
+        }
+    }
+  return -1;
+}
+
 void detach_all_extents (Lisp_Object object);
 Lisp_Object extent_at (Bytexpos position, Lisp_Object object,
 		       Lisp_Object property, EXTENT before,

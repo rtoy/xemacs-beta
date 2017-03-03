@@ -419,7 +419,7 @@ Optional argument BUFFER defaults to the current buffer.
 
 static Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
-		struct buffer *buf, int UNUSED (posix))
+		struct buffer *buf, int posix)
 {
   Bytecount val;
   Charcount s;
@@ -450,7 +450,7 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
   bufp = compile_pattern (regexp, &search_regs,
 			  (!NILP (buf->case_fold_search)
 			   ? XCASE_TABLE_DOWNCASE (buf->case_table) : Qnil),
-			  string, buf, 0, ERROR_ME);
+			  string, buf, posix, ERROR_ME);
   QUIT;
   {
     Bytecount bis = string_index_char_to_byte (string, s);
@@ -887,9 +887,9 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
      a range table. */
   unsigned char fastmap[0400];
   int negate = 0;
-  REGISTER int i;
   Charbpos limit;
   struct syntax_cache *scache;
+  Bitbyte class_bits = 0;
   
   if (NILP (lim))
     limit = forwardp ? BUF_ZV (buf) : BUF_BEGV (buf);
@@ -957,6 +957,46 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 				  Vskip_chars_range_table);
 	      INC_IBYTEPTR (p);
 	    }
+          else if ('[' == c && p != pend && *p == ':')
+            {
+              Ibyte *colonp;
+              int ch = 0;
+              re_wctype_t cc;
+
+              INC_IBYTEPTR (p);
+
+              if (p == pend)
+                {
+                  fastmap ['['] = fastmap[':'] = 1;
+                  break;
+                }
+
+              colonp = (Ibyte *) memchr (p, ':', pend - p);
+              if (NULL == colonp || (colonp + 1) == pend || colonp[1] != ']')
+                {
+                  fastmap ['['] = fastmap[':'] = 1;
+                  continue;
+                }
+
+              cc = re_wctype (p, colonp - p);
+              if (cc == RECC_ERROR)
+                {
+                  invalid_argument ("Invalid character class",
+                                    make_string (p, colonp - p));
+                }
+
+              for (ch = 0; ch < countof (fastmap); ++ch)
+                {
+                  if (re_iswctype (ch, cc, buf))
+                    {
+                      fastmap[ch] = 1;
+                    }
+                }
+
+              compile_char_class (cc, Vskip_chars_range_table, &class_bits);
+
+              p = colonp + 2;
+            }
 	  else
 	    {
 	      if (c < 0400)
@@ -971,14 +1011,6 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
   /* #### Not in FSF 21.1 */
   if (syntaxp && fastmap['-'] != 0)
     fastmap[' '] = 1;
-
-  /* If ^ was the first character, complement the fastmap.
-     We don't complement the range table, however; we just use negate
-     in the comparisons below. */
-
-  if (negate)
-    for (i = 0; i < (int) (sizeof (fastmap)); i++)
-      fastmap[i] ^= 1;
 
   {
     Charbpos start_point = BUF_PT (buf);
@@ -996,7 +1028,8 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 	      while (fastmap[(unsigned char)
 			     syntax_code_spec
 			     [(int) SYNTAX_FROM_CACHE
-			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]])
+			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]]
+                     != negate)
 		{
 		  pos++;
 		  INC_BYTEBPOS (buf, pos_byte);
@@ -1013,10 +1046,11 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 		pos--;
 		DEC_BYTEBPOS (buf, pos_byte);
 		UPDATE_SYNTAX_CACHE_BACKWARD (scache, pos);
-		if (!fastmap[(unsigned char)
-			     syntax_code_spec
-			     [(int) SYNTAX_FROM_CACHE
-			      (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]])
+		if (fastmap[(unsigned char)
+                            syntax_code_spec
+                            [(int) SYNTAX_FROM_CACHE
+                             (scache, BYTE_BUF_FETCH_CHAR (buf, pos_byte))]]
+                    == negate)
 		  {
 		    pos++;
 		    pos_byte = savepos;
@@ -1027,16 +1061,30 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
       }
     else
       {
+        struct buffer *lispbuf = buf;
+
+#define CLASS_BIT_CHECK(c)                                              \
+        (class_bits && ((class_bits & BIT_ALPHA && ISALPHA (c))         \
+                        || (class_bits & BIT_SPACE && ISSPACE (c))      \
+                        || (class_bits & BIT_PUNCT && ISPUNCT (c))      \
+                        || (class_bits & BIT_WORD && ISWORD (c))        \
+                        || (NILP (buf->case_fold_search) ?              \
+                            ((class_bits & BIT_UPPER && ISUPPER (c))    \
+                             || (class_bits & BIT_LOWER && ISLOWER (c))) \
+                            : (class_bits & (BIT_UPPER | BIT_LOWER)     \
+                               && !NOCASEP (buf, c)))))
 	if (forwardp)
 	  {
 	    while (pos < limit)
 	      {
 		Ichar ch = BYTE_BUF_FETCH_CHAR (buf, pos_byte);
-		if ((ch < 0400) ? fastmap[ch] :
-		    (NILP (Fget_range_table (make_fixnum (ch),
-					     Vskip_chars_range_table,
-					     Qnil))
-		     == negate))
+
+                if ((ch < countof (fastmap) ? fastmap[ch]
+                     : (CLASS_BIT_CHECK (ch) ||
+                        (EQ (Qt, Fget_range_table (make_fixnum (ch),
+                                                   Vskip_chars_range_table,
+                                                   Qnil)))))
+                    != negate)
 		  {
 		    pos++;
 		    INC_BYTEBPOS (buf, pos_byte);
@@ -1054,11 +1102,12 @@ skip_chars (struct buffer *buf, int forwardp, int syntaxp,
 
 		DEC_BYTEBPOS (buf, prev_pos_byte);
 		ch = BYTE_BUF_FETCH_CHAR (buf, prev_pos_byte);
-		if ((ch < 0400) ? fastmap[ch] :
-		    (NILP (Fget_range_table (make_fixnum (ch),
-					     Vskip_chars_range_table,
-					     Qnil))
-		     == negate))
+                if ((ch < countof (fastmap) ? fastmap[ch]
+                     : (CLASS_BIT_CHECK (ch) ||
+                        (EQ (Qt, Fget_range_table (make_fixnum (ch),
+                                                   Vskip_chars_range_table,
+                                                   Qnil)))))
+                    != negate)
 		  {
 		    pos--;
 		    pos_byte = prev_pos_byte;
@@ -2836,51 +2885,94 @@ rare.)
 	      if (c == '\\' && strpos < stlen - 1)
 		{
 		  c = string_ichar (replacement, ++strpos);
-		  if (c == '&')
+		  switch (c)
 		    {
+		    case '&':
 		      literal_end = strpos - 1;
 		      substart = search_regs.start[0];
 		      subend = search_regs.end[0];
+		      break;
+		    case '\\':
+		      /* So we get just one backslash. */
+		      literal_end = strpos;
+		      break;
+		    case '1': case '2': case '3': case '4': case '5':
+		    case '6': case '7': case '8': case '9':
+		      {
+			const Ibyte *charpos
+                          = string_char_addr (replacement, strpos);
+			Ibyte *regend = NULL;
+                        Bytecount limit = min (XSTRING_LENGTH (replacement)
+                                               - (charpos -
+                                                  XSTRING_DATA (replacement)),
+                                                /* most-positive-fixnum on 32
+                                                   bit is ten decimal digits,
+                                                   nine will keep us in fixnum
+                                                   territory. */
+                                               9);
+			Lisp_Object regno;
+			Fixnum regnoing;
+
+                        /* Parse the longest backreference we can, but don't
+                           produce a bignum, that can't correspond to a
+                           backreference and would needlessly complicate code
+                           further down.  */
+                        regno = parse_integer (charpos, &regend, limit, 10, 1,
+                                               /* Don't accept non-ASCII
+                                                  decimal digits. See the
+                                                  reasoning in regex.c. */
+                                               Vdigit_fixnum_ascii);
+
+			if (FIXNUMP (regno) &&
+                            ((regnoing = XREALFIXNUM (regno), regnoing > -1)))
+                          {
+                            /* Progressively divide down the backreference
+                               until we find one that corresponds to an
+                               existing register. */
+                            while (regnoing > 10 &&
+                                   !(regnoing <= search_regs.num_regs))
+                              {
+                                DEC_IBYTEPTR (regend);
+                                regnoing /= 10;
+                              }
+
+                            if (regnoing <= search_regs.num_regs)
+                              {
+                                literal_end = strpos - 1;
+                                strpos = string_index_byte_to_char
+                                  (replacement,
+                                   regend - XSTRING_DATA (replacement)) - 1;
+                                substart = search_regs.start[regnoing];
+                                subend = search_regs.end[regnoing];
+                              }
+                          }
+			break;
+		      }
+		    case 'U': case 'u': case 'L': case 'l': case 'E':
+		      {
+			/* Keep track of all case changes requested, but don't
+			   make them now.  Do them later so we override
+			   everything else. */
+			if (!ul_pos_dynarr)
+			  {
+			    ul_pos_dynarr = Dynarr_new (int);
+			    ul_action_dynarr = Dynarr_new (int);
+			    record_unwind_protect
+			      (free_created_dynarrs,
+			       noseeum_cons
+			       (make_opaque_ptr (ul_pos_dynarr),
+				make_opaque_ptr (ul_action_dynarr)));
+			  }
+			literal_end = strpos - 1;
+			Dynarr_add (ul_pos_dynarr,
+				    (!NILP (accum)
+				     ? string_char_length (accum)
+				     : 0) + (literal_end - literal_start));
+			Dynarr_add (ul_action_dynarr, c);
+		      }
 		    }
-		  /* #### This logic is totally broken,
-		     since we can have backrefs like "\99", right? */
-		  else if (c >= '1' && c <= '9' &&
-			   c <= search_regs.num_regs + '0')
-		    {
-		      if (search_regs.start[c - '0'] >= 0)
-			{
-			  literal_end = strpos - 1;
-			  substart = search_regs.start[c - '0'];
-			  subend = search_regs.end[c - '0'];
-			}
-		    }
-		  else if (c == 'U' || c == 'u' || c == 'L' || c == 'l' ||
-			   c == 'E')
-		    {
-		      /* Keep track of all case changes requested, but don't
-			 make them now.  Do them later so we override
-			 everything else. */
-		      if (!ul_pos_dynarr)
-			{
-			  ul_pos_dynarr = Dynarr_new (int);
-			  ul_action_dynarr = Dynarr_new (int);
-			  record_unwind_protect
-			    (free_created_dynarrs,
-			     noseeum_cons
-			     (make_opaque_ptr (ul_pos_dynarr),
-			      make_opaque_ptr (ul_action_dynarr)));
-			}
-		      literal_end = strpos - 1;
-		      Dynarr_add (ul_pos_dynarr,
-				  (!NILP (accum)
-				  ? string_char_length (accum)
-				  : 0) + (literal_end - literal_start));
-		      Dynarr_add (ul_action_dynarr, c);
-		    }
-		  else if (c == '\\')
-		    /* So we get just one backslash. */
-		    literal_end = strpos;
 		}
+
 	      if (literal_end >= 0)
 		{
 		  Lisp_Object literal_text = Qnil;
@@ -2997,42 +3089,98 @@ rare.)
 		 handles this correctly.
 	      */
 	      c = string_ichar (replacement, ++strpos);
-	      if (c == '&')
-		Finsert_buffer_substring
-                  (buffer,
-                   make_fixnum (search_regs.start[0] + offset),
-                   make_fixnum (search_regs.end[0] + offset));
-	      /* #### This logic is totally broken,
-		 since we can have backrefs like "\99", right? */
-	      else if (c >= '1' && c <= '9' &&
-		       c <= search_regs.num_regs + '0')
-		{
-		  if (search_regs.start[c - '0'] >= 1)
-		    Finsert_buffer_substring
-                      (buffer,
-                       make_fixnum (search_regs.start[c - '0'] + offset),
-                       make_fixnum (search_regs.end[c - '0'] + offset));
-		}
-	      else if (c == 'U' || c == 'u' || c == 'L' || c == 'l' ||
-		       c == 'E')
-		{
-		  /* Keep track of all case changes requested, but don't
-		     make them now.  Do them later so we override
-		     everything else. */
-		  if (!ul_pos_dynarr)
-		    {
-		      ul_pos_dynarr = Dynarr_new (int);
-		      ul_action_dynarr = Dynarr_new (int);
-		      record_unwind_protect
-			(free_created_dynarrs,
-			 Fcons (make_opaque_ptr (ul_pos_dynarr),
-				make_opaque_ptr (ul_action_dynarr)));
-		    }
-		  Dynarr_add (ul_pos_dynarr, BUF_PT (buf));
-		  Dynarr_add (ul_action_dynarr, c);
-		}
-	      else
-		buffer_insert_emacs_char (buf, c);
+              switch (c)
+                {
+                case '&':
+                  Finsert_buffer_substring
+                    (buffer,
+                     make_fixnum (search_regs.start[0] + offset),
+                     make_fixnum (search_regs.end[0] + offset));
+                  break;
+                case '1': case '2': case '3': case '4': case '5':
+                case '6': case '7': case '8': case '9':
+                  {
+                    const Ibyte *charpos
+                      = string_char_addr (replacement, strpos);
+                    Ibyte *regend = NULL;
+                    Bytecount limit = min (XSTRING_LENGTH (replacement)
+                                           - (charpos -
+                                              XSTRING_DATA (replacement)),
+                                           /* most-positive-fixnum on 32
+                                              bit is ten decimal digits,
+                                              nine will keep us in fixnum
+                                              territory. */
+                                           9);
+                    Lisp_Object regno;
+                    Fixnum regnoing;
+
+                    /* Parse the longest backreference we can, but don't
+                       produce a bignum, that can't correspond to a
+                       backreference and would needlessly complicate code
+                       further down.  */
+                    regno
+                      = parse_integer (charpos, &regend, limit, 10, 1,
+                                       /* Don't accept non-ASCII decimal
+                                          digits. See the reasoning in
+                                          regex.c. */
+                                       Vdigit_fixnum_ascii);
+
+                    if (FIXNUMP (regno) &&
+                        ((regnoing = XREALFIXNUM (regno), regnoing > -1)))
+                      {
+                        /* Progressively divide down the backreference until
+                           we find one that corresponds to an existing
+                           register. */
+                        while (regnoing > 10 &&
+                               !(regnoing <= search_regs.num_regs))
+                          {
+                            DEC_IBYTEPTR (regend);
+                            regnoing /= 10;
+                          }
+
+                        if (regnoing <= search_regs.num_regs
+                            && search_regs.start[regnoing] >= 1)
+                          {
+                            Finsert_buffer_substring
+                              (buffer,
+                               make_fixnum (search_regs.start[regnoing]
+                                            + offset),
+                               make_fixnum (search_regs.end[regnoing]
+                                            + offset));
+                          }
+                        else
+                          {
+                            goto otherwise;
+                          }
+                      }
+                    else
+                      {
+                        goto otherwise;
+                      }
+                    break;
+                  }
+                case 'U': case 'u': case 'L': case 'l': case 'E':
+                  {
+                    /* Keep track of all case changes requested, but don't
+                       make them now.  Do them later so we override
+                       everything else. */
+                    if (!ul_pos_dynarr)
+                      {
+                        ul_pos_dynarr = Dynarr_new (int);
+                        ul_action_dynarr = Dynarr_new (int);
+                        record_unwind_protect
+                          (free_created_dynarrs,
+                           Fcons (make_opaque_ptr (ul_pos_dynarr),
+                                  make_opaque_ptr (ul_action_dynarr)));
+                      }
+                    Dynarr_add (ul_pos_dynarr, BUF_PT (buf));
+                    Dynarr_add (ul_action_dynarr, c);
+                    break;
+                  }
+                default:
+                otherwise:
+                  buffer_insert_emacs_char (buf, c);
+                }
 	    }
 	  else
 	    buffer_insert_emacs_char (buf, c);

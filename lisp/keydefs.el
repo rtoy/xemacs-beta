@@ -1,6 +1,6 @@
 ;;; keydefs.el --- Define standard keybindings.
 
-;; Copyright (C) 1992-4, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1992-4, 1997, 2012 Free Software Foundation, Inc.
 ;; Copyright (C) 2000, 2001, 2002 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
@@ -161,6 +161,8 @@ Keymap for characters following C-c.")
 ;; somewhat broken and f1 keys can't work, and backspace is redefined to
 ;; do backspace.
 (define-key global-map '(meta ??) 'help-command)
+
+(setq help-event-list '(help f1 (meta ??)))
 
 ;; FSFmacs indent.el
 
@@ -444,7 +446,7 @@ Keymap for characters following C-c.")
 ; meta-shift-V, that is.
 (define-key global-map '(meta V) 'scroll-other-window-down)
 
-(define-key global-map "\C-l" 'recenter)
+(define-key global-map "\C-l" 'recenter-top-bottom)
 (define-key global-map "\M-r" 'move-to-window-line)
 
 ;; FSFmacs window.el
@@ -677,11 +679,10 @@ Keymap for characters following C-c.")
 (define-key global-map 'deletechar	'delete-char)
 
 ;; Bind the mouse wheel by default. 
-(dolist (keyspec '([(mouse-4)] [(shift mouse-4)] [(control mouse-4)]
-                   [(mouse-5)] [(shift mouse-5)] [(control mouse-5)]))
-  (define-key global-map keyspec
-    #'(lambda (event)
-        (interactive "e")
-        (mwheel-install)
-        (declare-fboundp (mwheel-scroll event)))))
+(dolist (keyspec '([(button4up)] [(shift button4up)] [(control button4up)]
+                   [(button5up)] [(shift button5up)] [(control button5up)]
+                   [(button6up)] [(shift button6up)] [(control button6up)]
+                   [(button7up)] [(shift button7up)] [(control button7up)]))
+  (define-key global-map keyspec #'mouse-wheel-scroll))
+
 ;;; keydefs.el ends here

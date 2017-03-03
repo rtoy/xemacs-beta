@@ -72,6 +72,7 @@ struct event_stream
 /* Flags for create_io_streams_cb() FLAGS parameter */
 #define STREAM_PTY_FLUSHING		0x0001
 #define STREAM_NETWORK_CONNECTION	0x0002
+#define STREAM_USE_TLS			0x0004
 
 extern struct event_stream *event_stream;
 
@@ -888,6 +889,23 @@ set_event_type (struct Lisp_Event *event, emacs_event_type t)
     x = wrong_type_argument (Qevent_live_p, (x));       \
 } while (0)
 
+DECLARE_INLINE_HEADER (
+Boolint
+event_mouse_wheel_p (Lisp_Object event)
+)
+{
+  switch (XEVENT_TYPE (event))
+    {
+    case button_press_event:
+    case button_release_event:
+      {
+        int button = XEVENT_BUTTON_BUTTON (event);
+        return button >= 4 && button <= 7;
+      }
+    default:
+      return 0;
+    }
+}
 
 EXFUN (Fcharacter_to_event, 4);
 EXFUN (Fdeallocate_event, 1);
@@ -1148,11 +1166,13 @@ struct command_builder
      translation loop).  If this is nil, then the next-read event is
      the first that can begin a function key sequence. */
   Lisp_Object first_mungeable_event[2];
-  Ibyte *echo_buf;
-
-  Bytecount echo_buf_length;          /* size of echo_buf */
-  Bytecount echo_buf_index;           /* index into echo_buf
+  Lisp_Object echo_buf;
+  Bytecount echo_buf_fill_pointer;    /* Fill pointer for echo_buf.
                                        * -1 before doing echoing for new cmd */
+  Bytecount echo_buf_end;             /* End of the text to be shown in
+                                         echo_buf. Can be after the fill
+                                         pointer, but usually identical to
+                                         it */
   /* Self-insert-command is magic in that it doesn't always push an undo-
      boundary: up to 20 consecutive self-inserts can happen before an undo-
      boundary is pushed.  This variable is that counter.

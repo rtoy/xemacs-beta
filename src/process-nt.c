@@ -1324,7 +1324,8 @@ nt_canonicalize_host_name (Lisp_Object host)
 static void
 nt_open_network_stream (Lisp_Object name, Lisp_Object host,
 			Lisp_Object service,
-			Lisp_Object protocol, void **vinfd, void **voutfd)
+			Lisp_Object protocol, void **vinfd, void **voutfd,
+			Boolint tls)
 {
   struct sockaddr_in address;
   SOCKET s;

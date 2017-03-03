@@ -328,6 +328,26 @@ before and after, depending on the surrounding characters."
     (delete-indentation))
   (forward-char 1)
   (newline-and-indent))
+
+(defun check-parens ()			; lame name?
+  "Check for unbalanced parentheses in the current buffer.
+More accurately, check the narrowed part of the buffer for unbalanced
+expressions (\"sexps\") in general.  This is done according to the
+current syntax table and will find unbalanced brackets or quotes as
+appropriate.  (See Info node `(emacs)Parentheses'.)  If imbalance is
+found, an error is signaled and point is left at the first unbalanced
+character."
+  (interactive)
+  (condition-case data
+      ;; Buffer can't have more than (point-max) sexps.
+      (scan-sexps (point-min) (point-max))
+    (scan-error (goto-char (nth 2 data))
+		;; Could print (nth 1 data), which is either
+		;; "Containing expression ends prematurely" or
+		;; "Unbalanced parentheses", but those may not be so
+		;; accurate/helpful, e.g. quotes may actually be
+		;; mismatched.
+  		(error "Unmatched bracket or quote"))))
 
 (defun lisp-complete-symbol ()
   "Perform completion on Lisp symbol preceding point.

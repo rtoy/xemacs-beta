@@ -672,7 +672,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
        does not override resources defined elsewhere */
     const Extbyte *data_dir;
     Extbyte *path;
-    const Extbyte *format;
+    const Extbyte *fermat;
     XrmDatabase db = XtDatabase (dpy); /* #### XtScreenDatabase(dpy) ? */
     Extbyte *locale = xstrdup (XrmLocaleOfDatabase (db));
     Extbyte *locale_end;
@@ -682,13 +682,13 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
       {
 	LISP_PATHNAME_CONVERT_OUT (Vx_app_defaults_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + strlen (locale) + 7);
-	format = "%s%s/Emacs";
+	fermat = "%s%s/Emacs";
       }
     else if (STRINGP (Vdata_directory) && XSTRING_LENGTH (Vdata_directory) > 0)
       {
 	LISP_PATHNAME_CONVERT_OUT (Vdata_directory, data_dir);
 	path = alloca_extbytes (strlen (data_dir) + 13 + strlen (locale) + 7);
-	format = "%sapp-defaults/%s/Emacs";
+	fermat = "%sapp-defaults/%s/Emacs";
       }
     else
       {
@@ -701,14 +701,14 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
      * app-defaults file found.
      */
 
-    sprintf (path, format, data_dir, locale);
+    sprintf (path, fermat, data_dir, locale);
     if (!access (path, R_OK))
       XrmCombineFileDatabase (path, &db, False);
 
     if ((locale_end = strchr (locale, '.')))
       {
 	*locale_end = '\0';
-	sprintf (path, format, data_dir, locale);
+	sprintf (path, fermat, data_dir, locale);
 
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -717,7 +717,7 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
     if ((locale_end = strchr (locale, '_')))
       {
 	*locale_end = '\0';
-	sprintf (path, format, data_dir, locale);
+	sprintf (path, fermat, data_dir, locale);
 
 	if (!access (path, R_OK))
 	  XrmCombineFileDatabase (path, &db, False);
@@ -1202,6 +1202,11 @@ int
 x_IO_error_handler (Display *disp)
 {
   /* This function can GC */
+  /* I'd like to just check for errno == 0 here and return, but that's
+     too risky.  Returning from an X error handler gives X the chance to
+     abort you.
+     A "goto back_to_toplevel" could be used, but on second thought I
+     decided it was a good idea to get the warning for now. */
   Lisp_Object dev;
   struct device *d = get_device_from_display_1 (disp);
 
@@ -1211,7 +1216,9 @@ x_IO_error_handler (Display *disp)
   assert (d != NULL);
   dev = wrap_device (d);
 
-  if (NILP (find_nonminibuffer_frame_not_on_device (dev)))
+  /* The test against 0 is a hack for Mac OS X 10.9 and 10.10, which
+     invoke this handler on successful deletion of a window. */
+  if (errno != 0 && NILP (find_nonminibuffer_frame_not_on_device (dev)))
     {
       int depth = begin_dont_check_for_quit ();
       /* We're going down. */
@@ -1246,8 +1253,10 @@ x_IO_error_handler (Display *disp)
 
   /* According to X specs, we should not return from this function, or
      Xlib might just decide to exit().  So we mark the offending
-     console for deletion and throw to top level.  */
-  if (d)
+     console for deletion and throw to top level.
+     The test against 0 is a hack for Mac OS X 10.9 and 10.10, which
+     invoke this handler on successful deletion of a window. */
+  if (errno != 0 && d)
     {
       enqueue_magic_eval_event (io_error_delete_device, dev);
       DEVICE_X_BEING_DELETED (d) = 1;
@@ -1830,60 +1839,6 @@ DEVICE must be an X11 display device.  See `x-keysym-on-keyboard-p'.
 
   return DEVICE_X_DATA (d)->x_keysym_map_hash_table;
 }
-
-DEFUN ("x-keysym-on-keyboard-sans-modifiers-p", Fx_keysym_on_keyboard_sans_modifiers_p,
-       1, 2, 0, /*
-Return true if KEYSYM names a key on the keyboard of DEVICE.
-More precisely, return true if pressing a physical key
-on the keyboard of DEVICE without any modifier keys generates KEYSYM.
-Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
-/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-The keysym name can be provided in two forms:
-- if keysym is a string, it must be the name as known to X windows.
-- if keysym is a symbol, it must be the name as known to XEmacs.
-The two names differ in capitalization and underscoring.
-*/
-       (keysym, device))
-{
-  struct device *d = decode_device (device);
-  if (!DEVICE_X_P (d))
-    gui_error ("Not an X device", device);
-
-  return (EQ (Qsans_modifiers,
-	      Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)) ?
-	  Qt : Qnil);
-}
-
-
-DEFUN ("x-keysym-on-keyboard-p", Fx_keysym_on_keyboard_p, 1, 2, 0, /*
-Return true if KEYSYM names a key on the keyboard of DEVICE.
-More precisely, return true if some keystroke (possibly including modifiers)
-on the keyboard of DEVICE keys generates KEYSYM.
-Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
-/usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-The keysym name can be provided in two forms:
-- if keysym is a string, it must be the name as known to X windows.
-- if keysym is a symbol, it must be the name as known to XEmacs.
-The two names differ in capitalization and underscoring.
-
-This function is not entirely trustworthy, in that Xlib compose processing
-can produce keysyms that XEmacs will not have seen when it examined the
-keysyms available on startup.  So pressing `dead-diaeresis' and then 'a' may
-pass `adiaeresis' to XEmacs, or (in some implementations) even `U00E4',
-where `(x-keysym-on-keyboard-p 'adiaeresis)' and `(x-keysym-on-keyboard-p
-'U00E4)' would both have returned nil.  Subsequent to XEmacs seeing a keysym
-it was previously unaware of, the predicate will take note of it, though.
-*/
-       (keysym, device))
-{
-  struct device *d = decode_device (device);
-  if (!DEVICE_X_P (d))
-    gui_error ("Not an X device", device);
-
-  return (NILP (Fgethash (keysym, DEVICE_X_KEYSYM_MAP_HASH_TABLE (d), Qnil)) ?
-	  Qnil : Qt);
-}
-
 
 /************************************************************************/
 /*                          grabs and ungrabs                           */
@@ -2105,8 +2060,6 @@ syms_of_device_x (void)
   DEFSUBR (Fx_server_version);
   DEFSUBR (Fx_valid_keysym_name_p);
   DEFSUBR (Fx_keysym_hash_table);
-  DEFSUBR (Fx_keysym_on_keyboard_p);
-  DEFSUBR (Fx_keysym_on_keyboard_sans_modifiers_p);
 
   DEFSUBR (Fx_grab_pointer);
   DEFSUBR (Fx_ungrab_pointer);

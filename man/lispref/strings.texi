@@ -33,7 +33,7 @@ Lisp programs use strings more often than individual characters.
 * Char Tables::               Mapping from characters to Lisp objects.
 @end menu
 
-@node String Basics
+@node String Basics, Predicates for Strings, Strings and Characters, Strings and Characters
 @section String and Character Basics
 
   Strings in XEmacs Lisp are arrays that contain an ordered sequence of
@@ -100,7 +100,7 @@ Extents}.
 copy them into buffers.  @xref{Character Type}, and @ref{String Type},
 for information about the syntax of characters and strings.
 
-@node Predicates for Strings
+@node Predicates for Strings, Creating Strings, String Basics, Strings and Characters
 @section The Predicates for Strings
 
 For more information about general sequence and array predicates,
@@ -120,7 +120,7 @@ is an integer that can be represented as a character.  This is because
 of compatibility with previous XEmacs and should not be depended on.
 @end defun
 
-@node Creating Strings
+@node Creating Strings, Predicates for Characters, Predicates for Strings, Strings and Characters
 @section Creating Strings
 
   The following functions create strings, either from scratch, or by
@@ -275,7 +275,7 @@ The function @code{split-string}, in @ref{Regexp Search}, generates a
 list of strings by splitting a string on occurrences of a regular
 expression.
 
-@node Predicates for Characters
+@node Predicates for Characters, Character Codes, Creating Strings, Strings and Characters
 @section The Predicates for Characters
 
 @defun characterp object
@@ -297,7 +297,23 @@ using @code{char-int}.
 This function returns @code{t} if @var{object} is an integer or character.
 @end defun
 
-@node Character Codes
+@defun digit-char-p character &optional (radix 10) radix-table
+This function returns non-nil if @var{character} represents a digit in base
+@var{radix}. The non-nil value returned is the integer value associated with
+@var{character}. @var{radix} defaults to @code{10}.
+
+@var{radix-table}, if non-nil, specifies a character table mapping from
+characters to their digit values. See the function @code{parse-integer} in
+@ref{String Conversion}.
+@end defun
+
+@defun digit-char weight &optional (radix 10) radix-table
+This function is the inverse of @code{digit-char-p}. Given an integer
+@var{weight}, it returns a character representing @var{weight} when read with
+base @var{radix}. If no such character exists, it returns @code{nil}. 
+@end defun
+
+@node Character Codes, Text Comparison, Predicates for Characters, Strings and Characters
 @section Character Codes
 
 @defun char-int character
@@ -330,6 +346,17 @@ determine whether this is the case.  If the integer cannot be converted,
 @code{nil} is returned.
 @end defun
 
+@defvar char-code-limit
+This is a constant integer describing an exclusive upper bound on the
+results return by @code{char-int} and that set of integers (fixnums) for
+which @code{int-char} will give non-nil. Without @sc{mule}
+(internationalization) support this will be @code{#x100}, as described
+under @code{char-int}, but with @sc{mule} support the range of values is
+much bigger, at least 21 bits' worth.  If an integer is less than
+@var{char-code-limit}, it may still not have an associated character, it
+is still necessary to check with the next function, @code{char-int-p}.
+@end defvar
+
 @defun char-int-p object
 This function returns @code{t} if @var{object} is an integer that can be
 converted into a character.
@@ -341,7 +368,7 @@ integer that can be converted into one.
 @end defun
 
 @need 2000
-@node Text Comparison
+@node Text Comparison, String Conversion, Character Codes, Strings and Characters
 @section Comparison of Characters and Strings
 @cindex string equality
 
@@ -463,7 +490,7 @@ a way to compare text in buffers.  The function @code{string-match},
 which matches a regular expression against a string, can be used
 for a kind of string comparison; see @ref{Regexp Search}.
 
-@node String Conversion
+@node String Conversion, Modifying Strings, Text Comparison, Strings and Characters
 @section Conversion of Characters and Strings
 @cindex conversion of strings
 
@@ -547,6 +574,40 @@ negative.
 See also the function @code{format} in @ref{Formatting Strings}.
 @end defun
 
+@defun parse-integer string &key (start 0) end (radix 10) junk-allowed radix-table)
+@cindex parse-integer
+This function returns the fixnum or bignum value represented by @var{string}
+in base @var{radix}. If @var{start} or @var{end} are specified, they describe
+a subsequence of @var{string} to examine. @xref{Sequence Basics, Sequence
+Basics, Sequences, cl}.  It skips whitespace at the beginning and end of the
+digits seen. Leading @code{?+} and @code{?-} are accepted and have the usual
+meaning; there is no provision for recognition of a leading @code{#x} or
+@code{#o} to indicate a non-default @var{radix}, and there is no special
+provision for a trailing @code{.}.
+
+If @var{junk-allowed} is non-nil, @code{parse-integer} allows non-digit,
+non-whitespace characters before or after the number to be parsed.  Otherwise,
+it errors when presented with anything other than an optional series of
+whitespace characters, followed by a non-optional series of digit characters,
+followed by an optional series of whitespace characters.
+
+@code{parse-integer} returns two values, the second of which can be accessed
+by, e.g. @xref{Multiple values, multiple-value-bind, ,}.  If
+@var{junk-allowed} is nil, the second value is always the length of that
+subsequence of @var{string} specified.  Otherwise, it is the index of the
+first non-digit trailing character encountered.
+
+Normally, the digit values for each character encountered are those returned
+by @code{digit-char-p}. Specifying @var{radix-table} allows this to be
+overridden; if it is specified, it is a character table (@pxref{Char Tables})
+mapping from characters to fixnum digit values.  If a given character has both
+a digit value and a whitespace value, the digit value overrides. However, if a
+@code{?-} both has a digit value and is the first character examined, its
+digit value is ignored, it is treated as indicating the number is negative.
+A work-around is to prepend a character having digit value zero to positive
+integers and to double the leading @code{?-} for negative integers.
+@end defun
+
 @defun string-to-number string &optional base
 @cindex string to number
 This function returns the numeric value represented by @var{string},
@@ -577,7 +638,7 @@ other than ten, only integers can be read.
 @code{string-to-int} is an obsolete alias for this function.
 @end defun
 
-@node Modifying Strings
+@node Modifying Strings, String Properties, String Conversion, Strings and Characters
 @section Modifying Strings
 @cindex strings, modifying
 
@@ -594,7 +655,7 @@ string.
 This function returns the tick counter for @samp{string}.
 @end defun
 
-@node String Properties
+@node String Properties, Formatting Strings, Modifying Strings, Strings and Characters
 @section String Properties
 @cindex string properties
 @cindex properties of strings
@@ -602,14 +663,17 @@ This function returns the tick counter for @samp{string}.
 Just as with symbols, extents, faces, and glyphs, you can attach
 additional information to strings in the form of @dfn{string
 properties}.  These differ from text properties, which are logically
-attached to particular characters in the string.
+attached to particular characters in the string, and from properties
+on extents in the string, which are attached to ranges of characters
+in the string.  In particular, a text or extent property that covers
+the whole string is not the same as a string property.
 
 To attach a property to a string, use @code{put}.  To retrieve a property
 from a string, use @code{get}.  You can also use @code{remprop} to remove
 a property from a string and @code{object-plist} to retrieve a list of
-all the properties in a string.
+all the properties of a string.
 
-@node Formatting Strings
+@node Formatting Strings, Character Case, String Properties, Strings and Characters
 @section Formatting Strings
 @cindex formatting strings
 @cindex strings, formatting them
@@ -624,11 +688,24 @@ fact, the functions @code{message} and @code{error} provide the same
 formatting feature described here; they differ from @code{format} only
 in how they use the result of formatting.
 
-@defun format string &rest objects
+@defun format control-string &rest objects
   This function returns a new string that is made by copying
-@var{string} and then replacing any format specification
-in the copy with encodings of the corresponding @var{objects}.  The
-arguments @var{objects} are the computed values to be formatted.
+those parts of @var{control-string} that are not format specifications
+literally, and replacing any format specifications seen in the original
+with encodings of the corresponding @var{objects}, in order. The arguments
+@var{objects} are the computed values to be formatted.
+@end defun
+
+@defun format-into stream control-string &rest objects
+  This function accepts @var{control-string} and @var{objects} in the
+same way as @code{format}. It takes an additional argument @var{stream},
+a valid output stream, @pxref{Output Functions}.  It writes the output
+string into that stream and returns @var{stream}. See the function
+@code{make-string-output-stream} for one way of buffering output to be
+accessed later.  This function is analagous to Common Lisp's
+@code{format}, but note that supplying a @var{stream} of @code{nil}
+means the text will be printed to the minibuffer rather than into a
+string that is returned.
 @end defun
 
 @cindex @samp{%} in format
@@ -653,6 +730,17 @@ uses the first such value, the second format specification uses the
 second such value, and so on.  Any extra format specifications (those
 for which there are no corresponding values) cause unpredictable
 behavior.  Any extra values to be formatted are ignored.
+
+  Any extents in @var{string} or in @var{objects} are carried over into
+the output string, as with @code{concat} @pxref{Creating Strings}.  If
+the format specification makes the output string longer than
+@var{string}, the new characters are inserted before the @samp{%} of
+each format specification, and whether extent info applies to them
+depends on the @code{start-open} and @code{end-open} properties of those
+extents that abut the spec. @pxref{Extent Endpoints}. If you are not
+curious about extent endpoints and their implications, but still would
+like to use extents in format sequences, have your extents apply either
+to the entirety of a @samp{%}-sequence, or not at all.
 
   Certain format specifications require values of particular types.
 However, no error is signaled if the value actually supplied fails to
@@ -680,28 +768,28 @@ If there is no corresponding object, the empty string is used.
 
 @item %o
 @cindex integer to octal
-Replace the specification with the base-eight representation of an
-integer.
+Replace the specification with the base-eight representation of a
+signed rational, that is, an integer or a ratio.
 
 @item %d
 @itemx %i
-Replace the specification with the base-ten representation of an
-integer.
+Replace the specification with the base-ten representation of a
+signed rational.
 
 @item %x
 @cindex integer to hexadecimal
-Replace the specification with the base-sixteen representation of an
-integer, using lowercase letters.
+Replace the specification with the base-sixteen representation of a
+signed rational, using lowercase letters.
 
 @item %X
 @cindex integer to hexadecimal
-Replace the specification with the base-sixteen representation of an
-integer, using uppercase letters.
+Replace the specification with the base-sixteen representation of a
+signed rational, using uppercase letters.
 
 @item %b
 @cindex integer to binary
-Replace the specification with the base-two representation of an
-integer.
+Replace the specification with the base-two representation of a
+signed rational.
 
 @item %c
 Replace the specification with the character which is the value given.
@@ -724,6 +812,12 @@ zeroes are removed from the fractional part.
 A single @samp{%} is placed in the string.  This format specification is
 unusual in that it does not use a value.  For example, @code{(format "%%
 %d" 30)} returns @code{"% 30"}.
+
+@item %u
+This is syntactic sugar for @samp{%ud}, and means to replace the
+specification with the base-ten representation of an unsigned
+rational. the See below for the documentation of @samp{u}, the unsigned
+modifier.
 @end table
 
   Any other format character results in an @samp{Invalid format
@@ -819,11 +913,12 @@ width for the object.  If the printed representation of the object
 contains fewer characters than this, then it is padded.  The padding is
 normally on the left, but will be on the right if the @samp{-} flag
 character is given.  The padding character is normally a space, but if
-the @samp{0} flag character is given, zeros are used for padding.
+the @samp{0} flag character is given, zeroes are used for padding.  See
+also the @samp{!} flag character to specify an arbitrary character.
 
 @example
-(format "%06d is padded on the left with zeros" 123)
-     @result{} "000123 is padded on the left with zeros"
+(format "%06d is padded on the left with zeroes" 123)
+     @result{} "000123 is padded on the left with zeroes"
 
 (format "%-6d is padded on the right" 123)
      @result{} "123    is padded on the right"
@@ -889,9 +984,67 @@ format: octal numbers begin with zero; hex numbers begin with a
 @samp{%e}, and @samp{%E} conversions even if no numbers are printed
 after it; and trailing zeroes are not omitted in @samp{%g} and @samp{%G}
 conversions.
+
+@item
+The @samp{&} flag is analogous to the @samp{#} flag for rationals
+(integers and ratios).  Instead of the C-like syntax described for
+@samp{#}, however, it means to print numbers preceded by @samp{#x} (when
+the @samp{x} conversion character is specified), by @samp{#o}, or by
+@samp{#b}, when the @samp{o} or @samp{b} conversion characters are
+specified.  This is the usual Common Lisp syntax for rationals in the
+corresponding base.
+
+@item
+The @samp{!} flag takes a single character immediately following it, and
+specifies that character be used instead of space for padding.
+
+@item
+The @samp{~} flag means that any sign character should be placed before
+the radix specifier with @samp{#} or @samp{&}, and is the default when
+@samp{&} is also specified.
+
 @end itemize
 
-@node Character Case
+@cindex format length
+@cindex truncating numbers to a given bit width.
+
+An optional length modifier may be specified after any minimum field
+width or precision.  The length modifiers available are @samp{hh},
+@samp{h}, @samp{l} (ell), @samp{ll} \(ell-ell).  These mean that a
+following integer conversion character will print an integer truncated
+to eight, sixteen, thirty-two, or sixty-four bits, respectively.  Note
+that this contrasts with ANSI C, where the bit length depends on the
+machine choices for the bit width of the various fixed-width integer
+types.
+
+@cindex unsigned integers
+An optional unsigned modifier, the character @samp{u}, may be specified
+after any length modifier and before a rational conversion character.
+This specifies that the following rational conversion is to treat its
+argument as unsigned.  With no length modifier specified, or for a
+ratio, this simply means that @code{format} will error if the
+corresponding argument is negative.  If a length modifier is specified,
+@code{format} will print a positive integer reflecting the twos'
+complement representation of the argument in the given number of bits.
+If there is no following rational conversion character, @samp{u} on its
+own is treated as equivalent to @samp{ud}, and so the argument will be
+printed in decimal.
+
+@smallexample
+@group (format "%hux" -1)
+    @result{} "ffff"
+@end group
+
+@group (format "%hhu" -1)
+    @result{} "255"
+@end group
+
+@group (format "%lux" (- (expt 2 30)))
+    @result{} "c0000000" ;; most-negative-fixnum on a 32 bit machine.
+@end group
+@end smallexample
+
+@node Character Case, Case Tables, Formatting Strings, Strings and Characters
 @section Character Case
 @cindex upper case
 @cindex lower case
@@ -990,7 +1143,7 @@ use, and defaults to the current buffer.
 @end example
 @end defun
 
-@node Case Tables
+@node Case Tables, Char Tables, Character Case, Strings and Characters
 @section The Case Table
 
   You can customize case conversion by installing a special @dfn{case
@@ -1097,7 +1250,7 @@ buffer's case table.
 You can load the library @file{iso-syntax} to set up the standard syntax
 table and define a case table for the 8-bit ISO Latin 1 character set.
 
-@node Char Tables
+@node Char Tables,  , Case Tables, Strings and Characters
 @section The Char Table
 
 A char table is a table that maps characters (or ranges of characters)
@@ -1146,7 +1299,7 @@ This function returns non-@code{nil} if @var{object} is a char table.
 * Working With Char Tables::    Creating and working with char tables.
 @end menu
 
-@node Char Table Types
+@node Char Table Types, Working With Char Tables, Char Tables, Char Tables
 @subsection Char Table Types
 
 Each char table type is used for a different purpose and allows different
@@ -1187,7 +1340,7 @@ This function returns a list of the recognized char table types.
 This function returns @code{t} if @var{type} if a recognized char table type.
 @end defun
 
-@node Working With Char Tables
+@node Working With Char Tables,  , Char Table Types, Char Tables
 @subsection Working With Char Tables
 
 @defun make-char-table type

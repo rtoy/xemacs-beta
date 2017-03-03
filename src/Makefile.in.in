@@ -192,7 +192,7 @@ gpm_objs=gpmevent.o
 #endif
 
 #if defined(HAVE_LDAP) && !defined(HAVE_SHLIB)
-ldap_objs=$(BLDMODULES)/ldap/eldap.o
+ldap_objs=eldap.o
 #endif
 
 #ifdef MULE
@@ -200,14 +200,14 @@ mule_objs=mule-ccl.o mule-charset.o mule-coding.o
 #endif
 
 #if defined(HAVE_CANNA) && !defined(HAVE_SHLIB)
-mule_canna_objs=$(BLDMODULES)/canna/canna_api.o
+mule_canna_objs=canna_api.o
 #endif
 
 #ifdef HAVE_WNN
 mule_wnn_objs=mule-wnnfns.o
 #endif
 
-#ifdef WITH_GMP
+#if defined(WITH_GMP) || defined(WITH_MPIR)
 number_objs=number-gmp.o number.o
 #endif
 #ifdef WITH_MP
@@ -215,7 +215,7 @@ number_objs=number-mp.o number.o
 #endif
 
 #if defined(HAVE_POSTGRESQL) && !defined(HAVE_SHLIB)
-postgresql_objs=$(BLDMODULES)/postgresql/postgresql.o
+postgresql_objs=postgresql.o
 #endif
 
 #ifdef HAVE_WIN32_PROCESSES
@@ -296,8 +296,8 @@ objs=\
  rangetab.o realpath.o redisplay.o redisplay-output.o regex.o\
  search.o select.o sequence.o $(sheap_objs) $(shlib_objs) signal.o sound.o\
  specifier.o strftime.o $(sunpro_objs) symbols.o syntax.o sysdep.o\
- text.o $(tooltalk_objs) $(tty_objs) undo.o unicode.o $(x_objs) $(x_gui_objs)\
- widget.o window.o $(win32_objs)
+ text.o tls.o $(tooltalk_objs) $(tty_objs) undo.o unicode.o \
+ $(x_objs) $(x_gui_objs) widget.o window.o $(win32_objs)
 
 obj_rtl = $(objs:.o=.c.rtl)
 

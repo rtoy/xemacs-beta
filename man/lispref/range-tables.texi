@@ -3,7 +3,7 @@
 @c Copyright (C) 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/range-tables.info
-@node Range Tables, Databases, Hash Tables, top
+@node Range Tables, Databases, Hash Tables, Top
 @chapter Range Tables
 @cindex Range Tables
 
@@ -34,7 +34,7 @@ Return non-@code{nil} if @var{object} is a range table.
 * Working With Range Tables::    Range table functions.
 @end menu
 
-@node Introduction to Range Tables
+@node Introduction to Range Tables, Working With Range Tables, Range Tables, Range Tables
 @section Introduction to Range Tables
 
 @defun make-range-table &optional type
@@ -74,7 +74,7 @@ for the same ranges as @var{range-table}.  The values will not
 themselves be copied.
 @end defun
 
-@node Working With Range Tables
+@node Working With Range Tables,  , Introduction to Range Tables, Range Tables
 @section Working With Range Tables
 
 @defun get-range-table pos range-table &optional default

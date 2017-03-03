@@ -107,6 +107,30 @@ define([USAGE_ERROR],
 echo " " $1
 echo "  Use \`$progname --help' to show usage.") >&2 && exit 1])dnl
 dnl
+dnl CPP_to_sh(CPP_SYMBOL, SH_VAR, DEFAULT_VALUE)
+define([CPP_to_sh],
+[[#]ifndef [$1]
+[#]define [$1]ifelse([$3],,, [ "$3"])
+[#]endif
+configure___ [$2]=[$1]
+])dnl CPP_to_sh
+dnl
+dnl CPP_boolean_to_sh(CPP_SYMBOL, SH_VAR)
+define([CPP_boolean_to_sh],
+[[#]ifdef [$1]
+configure___ [$2]=yes
+[#]else
+configure___ [$2]=no
+[#]endif
+])dnl CPP_boolean_to_sh
+dnl
+define(COLON_TO_SPACE_WARN,
+  [case "$[$1]" in *:* [)] dnl
+case "$opsys" in *cygwin* [)]
+  echo "  WARNING: Paths containing spaces will be misinterpreted." ;;
+esac
+[$1]="`echo '' $[$1] | sed -e 's/^ //' -e 's/:/ /g'`";; esac])dnl
+dnl
 dnl PRINT_VAR(var var ...)  prints values of shell variables
 define([PRINT_VAR],[for var in patsubst([$1],[[
 ]+],[ ]); do eval "echo \"$var = '\$$var'\""; done])dnl
@@ -234,12 +258,23 @@ fi
 dnl
 dnl The construct foo=`echo $w1 $w2 $w3` fails on some systems if $w1 = -e or -n
 dnl So we use the following instead.
+dnl #### Other macros save the computed value in the 2nd arg, but
+dnl #### XE_SPACE returns the value in the first arg.
 dnl XE_SPACE(var, words)
 define([XE_SPACE],[
 T=""
 for W in $2; do if test -z "$T"; then T="$W"; else T="$T $W"; fi; done
 $1="$T"
 ])dnl XE_SPACE
+dnl XE_EXPAND_VARIABLE(original,expanded)
+define([XE_EXPAND_VARIABLE],
+[$2=[$]$1
+while true; do
+  case "[$]$2" in
+    *\[$]* ) eval "$2=[$]$2" ;;
+    *) break ;;
+  esac
+done])dnl XE_EXPAND_VARIABLE
 dnl Autoconf 2.59 and 2.60 have slightly different versions of m4_cdr that
 dnl return different values for an empty list.  XE_CDR is a copy of the 2.60
 dnl version which will be used with both versions.
@@ -885,7 +920,11 @@ XE_MERGED_ARG([ldap],
 	AS_HELP_STRING([--with-ldap],[Support the LDAP protocol.]),
 	[], [])
 XE_MERGED_ARG([postgresql],
-	AS_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.]),
+	AS_HELP_STRING([--with-postgresql],[Support the PostgreSQL RDBMS.
+                        Optional argument should be the basename of the
+                        subdirectory containing `libpq-fe.h'.  The first
+                        subdirectory found on the -I path will be used.
+                        Currently autodetect must be used --with-modules.]),
 	[], [])
 dnl
 XE_HELP_SUBSECTION([Mail options])
@@ -917,6 +956,9 @@ XE_MERGED_ARG([dnet],
 XE_MERGED_ARG([ipv6-cname],
 	AS_HELP_STRING([--with-ipv6-cname],[Try IPv6 information first when canonicalizing host names.  This option has no effect unless system supports getaddrinfo(3) and getnameinfo(3).]),
 	[], [with_ipv6_cname="no"])
+XE_MERGED_ARG([tls],
+	AS_HELP_STRING([--with-tls=TYPE],[Support TLS connections.  TYPE must be one of "nss", "gnutls", and "openssl".  If TYPE is omitted or "yes", support is determined automatically.]),
+	[], [])
 dnl
 XE_HELP_SUBSECTION([Memory allocation options])
 XE_MERGED_ARG([rel-alloc],
@@ -964,8 +1006,9 @@ XE_MERGED_ARG([modules],
 XE_KEYWORD_ARG([bignum],
 	AS_HELP_STRING([--with-bignum=TYPE],[Compile in support for bignums, ratios, or bigfloats
                         using library support.  TYPE must be one of "gmp"
-                        (for GNU MP), "mp" (for BSD MP), or "no" (disabled).]),
-	[], [with_bignum="no"],[no,gmp,mp])
+                        (for GNU MP), "mpir" (for MPIR), "mp" (for BSD MP),
+                        or "no" (disabled).]),
+	[], [with_bignum="no"],[no,gmp,mpir,mp])
 dnl
 XE_HELP_SUBSECTION([Platform Specific options])
 XE_MERGED_ARG([workshop],
@@ -1082,15 +1125,6 @@ then
 else
   AC_DEFINE(EXEC_PREFIX_USER_DEFINED)
 fi
-
-define([XE_EXPAND_VARIABLE],
-[$2=[$]$1
-while true; do
-  case "[$]$2" in
-    *\[$]* ) eval "$2=[$]$2" ;;
-    *) break ;;
-  esac
-done])dnl XE_EXPAND_VARIABLE
 
 XE_EXPAND_VARIABLE(prefix,prefix_expanded)
 XE_EXPAND_VARIABLE(datadir,datadir_expanded)
@@ -1305,6 +1339,7 @@ case "$ac_cv_build" in
   hppa-*-*         ) machine=hp800 ;;
   arm*             ) machine=arm ;;
   i[[3-9]]86-*-*   ) machine=intel386 ;;
+  x86_64-*-*       ) machine=x86_64 ;;
 esac
 
 dnl Straightforward OS determination
@@ -1390,6 +1425,14 @@ case "$ac_cv_build" in
     test "$opsys $CC" = "sol2 /usr/ucb/cc" && CC=""
   ;;
 
+  dnl 64-bit machines where we do not care about the manufacturer
+  x86_64-*-* )
+    case "$ac_cv_build" in
+      *-cygwin* )	opsys=cygwin64 ;;
+      dnl Otherwise, we fall through to the generic opsys code at the bottom.
+    esac
+  ;;    
+
   dnl Intel 386 machines where we do not care about the manufacturer
   i[[3-9]]86-*-* )
     case "$ac_cv_build" in
@@ -1447,6 +1490,7 @@ if test "$with_newgc" = "yes"; then
     case "$opsys" in
       darwin )  case "$machine" in
 		  intel386 ) check_vdb_posix=yes ;;
+		  x86_64 ) check_vdb_posix=yes ;;
 		  * ) AC_DEFINE(VDB_MACH)  have_vdb_mach=yes ;;
 		esac ;;
       cygwin* ) AC_DEFINE(VDB_WIN32) have_vdb_win32=yes ;;
@@ -1700,23 +1744,6 @@ dnl It is not important that this name contain the PID; you cannot run
 dnl two configures in the same directory and have anything work
 dnl anyway.
 tempcname="conftest.c"
-
-dnl CPP_to_sh(CPP_SYMBOL, SH_VAR, DEFAULT_VALUE)
-define([CPP_to_sh],
-[[#]ifndef [$1]
-[#]define [$1]ifelse([$3],,, [ "$3"])
-[#]endif
-configure___ [$2]=[$1]
-])dnl CPP_to_sh
-
-dnl CPP_boolean_to_sh(CPP_SYMBOL, SH_VAR)
-define([CPP_boolean_to_sh],
-[[#]ifdef [$1]
-configure___ [$2]=yes
-[#]else
-configure___ [$2]=no
-[#]endif
-])dnl CPP_boolean_to_sh
 
 cat > $tempcname < confdefs.h
 cat >> $tempcname <<EOF
@@ -2585,6 +2612,27 @@ AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_YACC
 
+dnl We need a recent version of makeinfo
+AC_MSG_CHECKING([for makeinfo >= 4.12])
+MAKEINFO=
+for prog in `which -a makeinfo`; do
+  mi_verstr=[`$prog --version | sed -n '1s/^.* \([0-9][0-9]*\.[0-9][0-9]*\)$/\1/p'`]
+  mi_major=`echo $mi_verstr | cut -d. -f1`
+  mi_minor=`echo $mi_verstr | cut -d. -f2`
+  if test "$mi_major" -gt 4 || ( test "$mi_major" -eq 4 && test "$mi_minor" -gt 11 );
+  then
+    MAKEINFO=$prog
+    break
+  fi
+done
+if test -z $MAKEINFO; then
+  AC_MSG_RESULT([no])
+  AC_MSG_WARN([Found Makeinfo $mi_verstr.  4.12 or later required.])
+else
+  AC_MSG_RESULT([yes])
+fi
+AC_CONFIG_FILES([man/Makefile])
+
 dnl checks for header files
 AC_CHECK_HEADERS(dnl
   a.out.h dnl
@@ -2721,6 +2769,11 @@ AC_CHECK_SIZEOF(double)
 dnl check for long file names
 AC_SYS_LONG_FILE_NAMES
 
+dnl check for large file support
+AC_SYS_LARGEFILE
+AC_FUNC_FSEEKO
+AC_CHECK_SIZEOF(off_t)
+
 dnl -lm is required for floating point support, among other things
 AC_CHECK_FUNC(sin, ,AC_CHECK_LIB(m, sin))
 
@@ -2789,8 +2842,9 @@ fi
 dnl Disable ASLR on systems where it breaks pdump.
 AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
 case `uname -s`:`uname -r` in
-	dnl Mac OS X 10.7 Lion
-    Darwin:11.*)
+	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion, 10.9 Mavericks,
+	dnl 10.10 Yosemite, 10.11 El Capitan, 10.12 Sierra
+    Darwin:1[[123456]].*)
 	AC_MSG_RESULT(yes)
 	XE_APPEND([-Wl,-no_pie], LDFLAGS) 
 	;;
@@ -3186,6 +3240,17 @@ this to xemacs-beta@xemacs.org.  As a workaround, revert to XEmacs 21.5.29.])
     xft_config_ok=`$xft_config_prog --cflags 2>/dev/null`
     if test "$?" = 0 ; then
 	xft_cflags=`$xft_config_prog --cflags`
+        dnl #### I tried to create XE_REMOVE_DUPS(original,cleaned),
+        dnl but it didn't work.
+        cleaned_xft_cflags=""
+        for xft_cflag in $xft_cflags; do
+          case $xft_cleaned_cflags in
+          *${xft_cflag}* ) ;;
+          * ) xft_cleaned_cflags="$xft_cleaned_cflags $xft_cflag" ;;
+          esac
+        done
+        xft_cflags=$xft_cleaned_cflags
+        unset xft_cflag xft_cleaned_cflags
 	xft_libs=`$xft_config_prog --libs`
 	c_switch_site="$c_switch_site $xft_cflags"
 	ld_switch_site="$ld_switch_site $xft_libs"
@@ -3613,10 +3678,14 @@ if test "$with_ldap" = "yes"; then
   save_LIBS="$LIBS" LIBS="$LIBS $ldap_libs"
   AC_CHECK_FUNCS(ldap_set_option ldap_get_lderrno ldap_result2error ldap_parse_result)
   LIBS="$save_LIBS"
-  XE_APPEND(modules/ldap, MAKE_SUBDIR)
-  need_modules_common=yes
   if test "$with_modules" = "yes"; then
+    XE_APPEND(modules/ldap, MAKE_SUBDIR)
     XE_APPEND(modules/ldap, INSTALL_ARCH_DEP_SUBDIR)
+  else
+    mkdir src
+    for fil in eldap.c eldap.h; do
+      ${LN_S} "$srcdir/modules/ldap/$fil" "src/$fil"
+    done
   fi
 fi
 AC_SUBST(ldap_libs)
@@ -3633,11 +3702,26 @@ if test "$with_postgresql" != "no"; then
   AC_MSG_CHECKING([for PostgreSQL])
   AC_MSG_RESULT()
 
-dnl Look for these standard header file locations, known to be used on Linux
-  for header_dir in "" "pgsql/" "postgresql/"; do
-    AC_CHECK_HEADER(${header_dir}libpq-fe.h,
-                    libpq_fe_h_file=${header_dir}libpq-fe.h; break)
+  case "$with_postgresql" in
+  "" | "yes" | "no" | "true" | "false" | "auto")
+    pg_header_dir="" ;;
+  *)
+    pg_header_dir="$with_postgresql" ;;
+  esac
+
+  dnl Look in standard header file locations.
+  dnl These are known to be used on Linux or MacPorts.
+  dnl Assume that the most recent version available is the most likely to be
+  dnl found in an unversioned directory.
+  libpq_fe_h_file=""
+  for header_dir in $pg_header_dir "" "pgsql" "postgresql" "postgresql94" "postgresql-9.4" "postgresql/9.4" "postgresql84" "postgresql-8.4" "postgresql/8.4"; do
+    AC_CHECK_HEADER(${header_dir}/libpq-fe.h,
+                    libpq_fe_h_file=${header_dir}/libpq-fe.h; break)
   done
+
+  if test -n "$pg_header_dir" -a "$header_dir" != "$pg_header_dir"; then
+    AC_WARN([--with-postgresql="$pg_header_dir" specified but not found; using "$libpq_fe_h_file"])
+  fi
 
   pq_libs=
   extra_libs=
@@ -3664,10 +3748,14 @@ dnl Look for these standard header file locations, known to be used on Linux
                  AC_DEFINE(HAVE_POSTGRESQLV7)], [:], $extra_libs)
     AC_DEFINE_UNQUOTED(LIBPQ_FE_H_FILE, "$libpq_fe_h_file")
     XE_PREPEND([$pq_libs], postgresql_libs)
-    XE_APPEND(modules/postgresql, MAKE_SUBDIR)
-    need_modules_common=yes
     if test "$with_modules" = "yes"; then
+      XE_APPEND(modules/postgresql, MAKE_SUBDIR)
       XE_APPEND(modules/postgresql, INSTALL_ARCH_DEP_SUBDIR)
+    else
+      mkdir src
+      for fil in postgresql.c postgresql.h; do
+        ${LN_S} "$srcdir/modules/postgresql/$fil" "src/$fil"
+      done
     fi
   elif test "$with_postgresql" = "yes"; then
     XE_DIE("Required PostgreSQL support cannot be provided.  Check --with-site-prefixes.")
@@ -4014,6 +4102,35 @@ if test "$with_x11" = "yes" -a "$detect_athena" = "yes" ; then
   dnl Do we actually have a usable Athena widget set? Please?
   if test -n "$athena_lib" -a -n "$athena_h_path"; then
     have_xaw=yes
+    have_athena_i18n=unset
+    dnl   X.org at some point added .international to SimplePart, protected
+    dnl by #ifdef XAW_INTERNATIONALIZATION in Xaw3d (only?).  Unfortunately,
+    dnl the distributed headers for Xaw3d don't set this to correspond to
+    dnl the distributed library.  (pkg-config does, if present.)
+    if test "$athena_variant" = "Xaw3d"; then
+      save_libs_x=$libs_x
+      XE_PREPEND(-lXaw3d, libs_x)
+      dnl The test below was provided by Ralf Soergel.
+      AC_MSG_CHECKING([for "international" resource in Xaw3d SimpleWidget])
+      AC_RUN_IFELSE(
+      [AC_LANG_PROGRAM(
+       [#include <stdlib.h>
+        #include <string.h>
+        #undef XAW_INTERNATIONALIZATION
+        #include <$athena_h_path/Simple.h>
+       ],
+       [[int i = simpleWidgetClass->core_class.num_resources;
+         while (i-- > 0)
+           if (!strcmp(simpleWidgetClass->core_class.resources[i].resource_name,
+                       "international"))
+             exit(0);
+         exit(253);
+       ]])],
+      [have_athena_i18n=yes],
+      [have_athena_i18n=no])
+      libs_x=$save_libs_x
+      AC_MSG_RESULT([$have_athena_i18n])
+    fi
   else
     have_xaw=no
   fi
@@ -4146,9 +4263,11 @@ case "$all_widgets" in
     AC_DEFINE(LWLIB_USES_ATHENA)
     AC_DEFINE(NEED_ATHENA)
     need_athena="yes"
-
     if test "$athena_3d" = "yes"; then
       AC_DEFINE(HAVE_ATHENA_3D)
+      if test "$have_athena_i18n" = "yes"; then
+        AC_DEFINE(HAVE_ATHENA_I18N)
+      fi
     fi
   ;;
 esac
@@ -4340,10 +4459,12 @@ if test "$with_mule" = "yes" ; then
   if test "$have_canna" = "yes"; then
     AC_DEFINE(HAVE_CANNA)
     test -n "$canna_wchar_aware" && AC_DEFINE(CANNA_NEW_WCHAR_AWARE)
-    XE_APPEND(modules/canna, MAKE_SUBDIR)
-    need_modules_common=yes
     if test "$with_modules" = "yes"; then
+      XE_APPEND(modules/canna, MAKE_SUBDIR)
       XE_APPEND(modules/canna, INSTALL_ARCH_DEP_SUBDIR)
+    else
+      mkdir src
+      ${LN_S} "$srcdir/modules/canna/canna_api.c" "src/canna_api.c"
     fi
     XE_PREPEND(-lcanna -lRKC, canna_libs)
   elif test "$with_canna" != "no"; then
@@ -5249,6 +5370,16 @@ if test "$with_bignum" = "gmp"; then
   else
     XE_DIE("Required GMP numeric support cannot be provided.")
   fi
+elif test "$with_bignum" = "mpir"; then
+  AC_CHECK_HEADER(mpir.h, [
+    AC_CHECK_LIB(mpir, __gmpz_init, have_mpz_init=yes)])
+  if test "$have_mpz_init" = "yes"; then
+    AC_DEFINE(WITH_NUMBER_TYPES)
+    AC_DEFINE(WITH_MPIR)
+    XE_PREPEND(-lmpir, LIBS)
+  else
+    XE_DIE("Required MPIR numeric support cannot be provided.")
+  fi
 elif test "$with_bignum" = "mp"; then
   for library in "" "-lcrypto"; do
     AC_CHECK_HEADER(mp.h, [
@@ -5272,8 +5403,110 @@ elif test "$with_bignum" = "mp"; then
   else
     XE_DIE("Required MP numeric support cannot be provided.")
   fi
+  AC_CHECK_FUNC(mp_set_memory_functions,
+    [AC_DEFINE(HAVE_MP_SET_MEMORY_FUNCTIONS)],
+    [AC_CHECK_FUNC(__gmp_set_memory_functions,
+      [AC_DEFINE(HAVE_MP_SET_MEMORY_FUNCTIONS)])])
   AC_DEFINE(WITH_NUMBER_TYPES)
   AC_DEFINE(WITH_MP)
+fi
+
+dnl TLS support
+if test "$with_tls" = "gnutls"; then
+  AC_CHECK_HEADER([gnutls/gnutls.h],
+    [AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls],
+      [XE_DIE("Required gnutls support cannot be provided.")])],
+    [XE_DIE("Required gnutls support cannot be provided.")])
+elif test "$with_tls" = "nss"; then
+  AC_CHECK_HEADER([nss.h],
+    [AC_CHECK_LIB(nss3, NSS_InitContext, [with_tls=nss],
+      [XE_DIE("Required NSS support cannot be provided.")])],
+    [XE_DIE("Required NSS support cannot be provided.")])
+elif test "$with_tls" = "openssl"; then
+  AC_CHECK_HEADER([openssl/ssl.h],
+    [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl],
+      [AC_CHECK_LIB(ssl, OPENSSL_init_crypto, [with_tls=openssl],
+        [XE_DIE("Required openssl support cannot be provided.")])])],
+    [XE_DIE("Required openssl support cannot be provided.")])
+fi
+dnl Autodetection
+dnl Must be requested explicitly with --with-tls.
+dnl To default to autodetection, change the next three tests to
+dnl if test "$with_tls" != "no".
+if test "$with_tls" = "yes"; then
+  AC_CHECK_HEADER([gnutls/gnutls.h],
+    [AC_CHECK_LIB(gnutls, gnutls_global_init, [with_tls=gnutls])])
+fi
+if test "$with_tls" = "yes"; then
+  AC_CHECK_HEADER([nss.h],
+    [AC_CHECK_LIB(nss3, NSS_InitContext, [with_tls=nss])])
+fi
+if test "$with_tls" = "yes"; then
+  AC_CHECK_HEADER([openssl/ssl.h],
+    [AC_CHECK_LIB(ssl, SSL_library_init, [with_tls=openssl], [with_tls=no])])
+fi
+if test "$with_tls" != "no"; then
+  if test "$with_tls" = "gnutls"; then
+    AC_DEFINE(HAVE_GNUTLS)
+    gnutls_cflags=`pkg-config --cflags gnutls`
+    if test "$?" = 0; then
+      XE_PREPEND("$gnutls_cflags", CPPFLAGS)
+    fi
+    gnutls_libs=`pkg-config --libs gnutls`
+    if test "$?" = 0; then
+      XE_APPEND("$gnutls_libs", LIBS)
+    fi
+    AC_CHECK_FUNC(gnutls_certificate_verification_status_print,
+	[AC_DEFINE(HAVE_GNUTLS_CERTIFICATE_VERIFICATION_STATUS_PRINT)])
+    AC_CHECK_FUNC(gnutls_certificate_verify_peers3,
+	[AC_DEFINE(HAVE_GNUTLS_CERTIFICATE_VERIFY_PEERS3)])
+  elif test "$with_tls" = "nss"; then
+    AC_DEFINE(HAVE_NSS)
+    nss_cflags=`pkg-config --cflags nss`
+    if test "$?" = 0; then
+      XE_PREPEND("$nss_cflags", CPPFLAGS)
+    fi
+    nss_libs=`pkg-config --libs nss`
+    if test "$?" = 0; then
+      XE_APPEND("$nss_libs", LIBS)
+    fi
+  elif test "$with_tls" = "openssl"; then
+    AC_DEFINE(HAVE_OPENSSL)
+    openssl_cflags=`pkg-config --cflags openssl`
+    if test "$?" = 0; then
+      XE_PREPEND("$openssl_cflags", CPPFLAGS)
+    fi
+    openssl_libs=`pkg-config --libs openssl`
+    if test "$?" = 0; then
+      XE_APPEND("$openssl_libs", LIBS)
+    fi
+    dnl Check whether X509_check_host can be linked in.
+    AC_CHECK_FUNC(X509_check_host,
+        AC_COMPILE_IFELSE(
+            dnl It can; check that its declaration is compatible with five
+            dnl arguments. An early version of the function took only four.
+            [AC_LANG_PROGRAM([#include <openssl/x509v3.h>],
+                 [return X509_check_host ((void *) 0,
+                                          (const char *) 0, 0, 0, 
+                                          (void *) 0); ])],
+            dnl Now check that it is *not* compatible with just one argument,
+            dnl as would be the case if no declaration was in the header, and
+            dnl the header was old, compared to the DLL. This sort of version
+            dnl sanity-checking is particularly necessary with OpenSSL. E.g. on
+            dnl OS X there has always been an installed system version of it,
+            dnl but pkg-config, above, will pick up the MacPorts version.
+            [ AC_MSG_CHECKING(that X509_check_host is declared)
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <openssl/x509v3.h>],
+                                               [return X509_check_host (-1);])],
+                                AC_MSG_RESULT(no),
+                                [AC_MSG_RESULT(yes)
+                                 AC_DEFINE(HAVE_X509_CHECK_HOST)])]))
+  else
+    with_tls=no
+  fi
+fi
+if test "$with_tls" != "no"; then
+  AC_DEFINE(WITH_TLS)
 fi
 
 dnl Unfortunately, just because we can link doesn't mean we can run.
@@ -5359,7 +5592,7 @@ for dir in src/s src/m; do
 done
 
 dnl Also make modules/common link if needed for the module Makefiles.
-if test "$need_modules_common" = "yes"; then
+if test "$with_modules" = "yes"; then
   for dir in modules/common; do
     if test ! -d "$dir" ; then
       echo Making symbolic link to "$srcdir/$dir"
@@ -5528,7 +5761,8 @@ AC_SUBST(ld_libs_all)
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
-RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)'"
+AC_SUBST(MAKEINFO)
+RECURSIVE_MAKE_ARGS="\$(MFLAGS) CC='\$(CC)' CFLAGS='\$(CFLAGS)' LDFLAGS='\$(LDFLAGS)' CPPFLAGS='\$(CPPFLAGS)' MAKEINFO='\$(MAKEINFO)'"
 AC_SUBST(RECURSIVE_MAKE_ARGS)
 
 AC_SUBST(native_sound_lib,$with_native_sound_lib)
@@ -5607,17 +5841,6 @@ dnl -------------------------------
 dnl #### We should tag this as the _build_ environment.
 dnl Before doing that, though, must check if tools care about line 1.
 
-(
-dnl /etc/osversion is on SONY NEWS-OS
-if test -f /etc/osversion; then dnl SONY NEWS-OS
-  echo "osversion: `cat /etc/osversion`"
-else
-  echo "uname -a: `uname -a`"
-fi
-echo ""
-echo "$progname $ac_configure_args"
-) > Installation
-
 if test ! -z ${emacs_beta_version} ; then
   if test -z "${emacs_is_beta}" ; then
 	xemacs_betaname=".${emacs_beta_version}"
@@ -5628,8 +5851,20 @@ else
   xemacs_betaname=""
 fi
 
+echo ""
+: > Installation
+
 dnl Start stdout redirection to '| tee -a Installation'
 (
+dnl /etc/osversion is on SONY NEWS-OS
+if test -f /etc/osversion; then dnl SONY NEWS-OS
+  echo "osversion: `cat /etc/osversion`"
+else
+  echo "uname -a: `uname -a`"
+fi
+echo ""
+echo "$progname $ac_configure_args"
+
 echo "
 
 XEmacs ${emacs_major_version}.${emacs_minor_version}${xemacs_betaname} \"$xemacs_codename\" $xemacs_extra_name configured for \`$ac_cv_build'."
@@ -5664,7 +5899,7 @@ echo "  Compiler version:                  $compiler_version"
 if test -n "$gcc_compiler_specs"; then
   echo "    - GCC specs file:                $gcc_compiler_specs"
 fi
-echo "    - Compiler command:              $XEMACS_CC $XE_CFLAGS"
+echo "    - Compiler command:              $XEMACS_CC $c_switch_all"
 if test "$CC" != "$XEMACS_CC"; then
   echo "  Compiler version for lib-src:      (detection code unimplemented)"
   echo "    - Compiler command for lib-src:  $CC $CFLAGS"
@@ -5679,6 +5914,55 @@ case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;
 esac
+echo "
+Package Search (a 'root' contains '{xemacs,mule,site}-packages'):"
+
+if test -n "$with_early_packages"; then
+  COLON_TO_SPACE_WARN(with_early_packages)
+  echo "  User package roots:    $with_early_packages"
+else
+  echo "  User package roots:    ~/.xemacs"
+fi
+
+dnl Unlike the others, with_late_packages gets a non-null default.
+XE_EXPAND_VARIABLE(with_late_packages,with_late_packages_expanded)
+COLON_TO_SPACE_WARN(with_late_packages_expanded)
+echo "  System package roots:  $with_late_packages_expanded"
+for path in $with_late_packages_expanded; do
+  if test ! -d $path; then
+    echo "    WARNING: $path was specified, but doesn't exist."
+    echo "    WARNING: XEmacs functionality will be noticably limited until"
+    echo "    WARNING: some packages are installed."
+  elif test ! -d "$path/xemacs-packages" \
+         -a ! -d "$path/mule-packages" \
+         -a ! -d "$path/site-packages"; then
+    echo "    WARNING: No packages found in $path."
+    echo "    WARNING: XEmacs functionality will be noticably limited until"
+    echo "    WARNING: some packages are installed."
+  fi
+done
+dnl #### Shouldn't need this.
+if test -z "$with_late_packages"; then
+  echo "    XEmacs BUG: with_late_packages is unset.  Please report this!"
+fi
+
+if test -n "$with_last_packages"; then
+  COLON_TO_SPACE_WARN(with_last_packages)
+  echo "  Legacy package roots:  $with_last_packages"
+  for path in $with_last_packages; do
+    if test ! -d $path; then
+      echo "    WARNING: $path was specified, but doesn't exist."
+      echo "    WARNING: If you don't need this setting, it is recommended"
+      echo "    WARNING: that you not use it."
+    elif test ! -d "$path/xemacs-packages" \
+           -a ! -d "$path/mule-packages" \
+           -a ! -d "$path/site-packages"; then
+      echo "    WARNING: No packages found in $path."
+      echo "    WARNING: If you don't need this setting, it is recommended"
+      echo "    WARNING: that you not use it."
+    fi
+  done
+fi
 
 echo "
 Window System:"
@@ -5824,7 +6108,7 @@ test "$with_ldap" = yes && echo "  Compiling in support for LDAP."
 if test "$with_postgresql" = yes; then
   echo "  Compiling in support for PostgreSQL."
   echo "    - Using PostgreSQL header file:  $libpq_fe_h_file"
-  test "$with_postgresqlv7" = yes && echo "    - Using PostgreSQL V7 bindings."
+  test "$with_postgresqlv7" = yes && echo "    - Using PostgreSQL V7+ bindings."
 fi
 
 echo "
@@ -5848,14 +6132,21 @@ test "$with_hesiod" = yes && echo "  Compiling in support for Hesiod POP server 
 test -n "$with_mail_locking" && echo "  Compiling in support for \"$with_mail_locking\" mail spool file locking method."
 
 echo "
-Other Features:"
+Network:"
 test "$with_ipv6_cname" = no && echo "  Inhibiting IPv6 canonicalization at startup."
 test "$with_tooltalk" = yes && echo "  Compiling in support for ToolTalk."
 test "$with_workshop" = yes && echo "  Compiling in support for Sun WorkShop."
 test "$with_socks" = yes && echo "  Compiling in support for SOCKS."
 test "$with_dnet" = yes && echo "  Compiling in support for DNET."
+test "$with_tls" = nss && echo "  Compiling in support for TLS with NSS."
+test "$with_tls" = gnutls && echo "  Compiling in support for TLS with gnutls."
+test "$with_tls" = openssl && echo "  Compiling in support for TLS with OpenSSL."
+
+echo "
+Other Features:"
 test "$with_modules" = "yes" && echo "  Compiling in support for dynamic shared object modules."
 test "$with_bignum" = "gmp" && echo "  Compiling in support for more number types using the GNU MP library."
+test "$with_bignum" = "mpir" && echo "  Compiling in support for more number types using the MPIR library."
 test "$with_bignum" = "mp" && echo "  Compiling in support for more number types using the BSD MP library."
 if test "$with_union_type" = yes ; then
   echo "  Using the union type for Lisp_Objects."

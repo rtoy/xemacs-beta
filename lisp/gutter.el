@@ -91,7 +91,7 @@ This is a convenience function for hiding and showing gutter elements."
 				      (if visible-p
 					  (if (memq prop spec) spec
 					    (cons prop spec))
-					(delq prop spec))
+					(delete* prop spec))
 				    (if visible-p (list prop))))
    (list prop visible-p)
    'force nil locale tag-set)

@@ -107,7 +107,7 @@ installation roots."
 
    ;; searching for a package directory
    (and
-    (string-match "win32" system-configuration)
+    (search "win32" system-configuration)
     (paths-file-readable-directory-p (paths-construct-path (list directory
 								 "xemacs-packages"))))))
 

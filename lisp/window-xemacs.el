@@ -1,6 +1,6 @@
 ;;; window-xemacs.el --- XEmacs window commands aside from those written in C.
 
-;; Copyright (C) 1985, 1989, 1993-94, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1989, 1993-94, 1997, 2012 Free Software Foundation, Inc.
 ;; Copyright (C) 1995, 1996 Ben Wing.
 
 ;; Maintainer: XEmacs Development Team
@@ -21,7 +21,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with XEmacs.  If not, see <http://www.gnu.org/licenses/>.
 
-;;; Synched up with: Not synched.
+;;; Synched up with: Not synched except for partial sync of
+;;; recenter-top-bottom
 
 ;;; Commentary:
 
@@ -48,6 +49,61 @@ If WINDOW is nil, the selected window is used."
   (center-to-window-line (if (consp n) nil n) window)
   (when (null n)
     (redraw-frame (window-frame window) t)))
+
+(defvar recenter-last-op nil
+  "Indicates the last recenter operation performed.
+Possible values: `top', `middle', `bottom', integer or float numbers.")
+
+;; Merged from FSF 23.2 with use of scroll-margin for top and bottom
+;; destinations removed. We don't support scroll-margin.
+(defcustom recenter-positions '(middle top bottom)
+  "Cycling order for `recenter-top-bottom'.
+A list of elements with possible values `top', `middle', `bottom',
+integer or float numbers that define the cycling order for
+the command `recenter-top-bottom'.
+
+Top and bottom destinations are the window top and bottom.  Middle
+redraws the frame and centers point vertically within the window.
+Integer number moves current line to the specified absolute
+window-line.  Float number between 0.0 and 1.0 means the percentage of
+the screen space from the top.  The default cycling order is middle ->
+top -> bottom."
+  :type '(repeat (choice
+		  (const :tag "Top" top)
+		  (const :tag "Middle" middle)
+		  (const :tag "Bottom" bottom)
+		  (integer :tag "Line number")
+		  (float :tag "Percentage")))
+  :version "23.2"
+  :group 'windows)
+
+(defun recenter-top-bottom (&optional arg)
+  "Move current buffer line to the specified window line.
+With no prefix argument, successive calls place point according
+to the cycling order defined by `recenter-positions'.
+
+A prefix argument is handled like `recenter':
+ With numeric prefix ARG, move current line to window-line ARG.
+ With plain `C-u', move current line to window center."
+  (interactive "P")
+  (cond
+   (arg (recenter arg))			; Always respect ARG.
+   (t
+    (setq recenter-last-op
+	  (if (eq this-command last-command)
+	      (car (or (cdr (member recenter-last-op recenter-positions))
+		       recenter-positions))
+	    (car recenter-positions)))
+    (cond ((eq recenter-last-op 'middle)
+	   (recenter))
+	  ((eq recenter-last-op 'top)
+	   (recenter 0))
+	  ((eq recenter-last-op 'bottom)
+	   (recenter -1))
+	  ((integerp recenter-last-op)
+	   (recenter recenter-last-op))
+	  ((floatp recenter-last-op)
+	   (recenter (round (* recenter-last-op (window-height)))))))))
 
 (defun backward-other-window (count &optional which-frames which-devices)
   "Select the COUNT'th different window on this frame, going backwards.
@@ -299,8 +355,8 @@ This alist maps the originally captured windows to the windows that correspond
 to them in the restored configuration.  It does not include entries for
 windows that have not changed identity.
 Does not restore the value of point in current buffer."
-  (let ((window-config (gensym 'window-config))
-	(mapping (gensym 'mapping)))
+  (let ((window-config (gensym "window-config"))
+	(mapping (gensym "mapping")))
     `(let ((,window-config (current-window-configuration))
 	   (,mapping))
       (unwind-protect
@@ -756,18 +812,11 @@ If there is only one window, it is split regardless of this value."
   :type 'integer
   :group 'windows)
 
-;; Deiconify the frame containing the window WINDOW, then return WINDOW.
-
-(defun display-buffer-1 (window)
-  (if (frame-iconified-p (window-frame window))
-      (make-frame-visible (window-frame window)))
-  window)
-
 ;; Can you believe that all of this crap was formerly in C?
 ;; Praise Jesus that it's not there any more.
 
 (defun display-buffer (buffer &optional not-this-window-p override-frame
-			      shrink-to-fit)
+                       shrink-to-fit)
   "Make BUFFER appear in some window on the current frame, but don't select it.
 BUFFER can be a buffer or a buffer name.
 If BUFFER is shown already in some window in the current frame,
@@ -797,271 +846,275 @@ buffer in the currently selected window.
 Returns the window displaying BUFFER."
   (interactive "BDisplay buffer:\nP")
 
-  (let ((wconfig (current-window-configuration))
-	(result
-	 ;; We just simulate a `return' in C.  This function is way ugly
-	 ;; and does `returns' all over the place and there's no sense
-	 ;; in trying to rewrite it to be more Lispy.
-	 (catch 'done
-	   (let (window old-frame target-frame explicit-frame shrink-it)
-	     (setq old-frame (or (last-nonminibuf-frame) (selected-frame)))
-	     (setq buffer (get-buffer buffer))
-	     (check-argument-type 'bufferp buffer)
+  (let ((wconfig (current-window-configuration)))
+    (prog1
+        ;; We just simulate a `return' in C.  This function is way
+        ;; ugly and does `returns' all over the place and there's
+        ;; no sense in trying to rewrite it to be more Lispy.
+        (block nil
+          (labels
+              ((display-buffer-1 (window)
+                 ;; Deiconify the frame containing the window WINDOW, then
+                 ;; return WINDOW.
+                 (if (frame-iconified-p (window-frame window))
+                     (make-frame-visible (window-frame window)))
+                 window))
+            (let (window old-frame target-frame explicit-frame shrink-it)
+              (setq old-frame (or (last-nonminibuf-frame) (selected-frame)))
+              (setq buffer (get-buffer buffer))
+              (check-argument-type 'bufferp buffer)
 
-	     (setq explicit-frame
-		   (if pre-display-buffer-function
-		       (funcall pre-display-buffer-function buffer
-				not-this-window-p
-				override-frame
-				shrink-to-fit)))
+              (setq explicit-frame
+                    (if pre-display-buffer-function
+                        (funcall pre-display-buffer-function buffer
+                                 not-this-window-p
+                                 override-frame
+                                 shrink-to-fit)))
 
-	     ;; Give the user the ability to completely reimplement
-	     ;; this function via the `display-buffer-function'.
-	     (if display-buffer-function
-		 (throw 'done
-			(funcall display-buffer-function buffer
-				 not-this-window-p
-				 override-frame
-				 shrink-to-fit)))
+              ;; Give the user the ability to completely reimplement
+              ;; this function via the `display-buffer-function'.
+              (if display-buffer-function
+                  (return (funcall display-buffer-function buffer
+                                   not-this-window-p
+                                   override-frame
+                                   shrink-to-fit)))
 
-	     ;; If the buffer has a dedicated frame, that takes
-	     ;; precedence over the current frame, and over what the
-	     ;; pre-display-buffer-function did.
-	     (let ((dedi (buffer-dedicated-frame buffer)))
-	       (if (frame-live-p dedi) (setq explicit-frame dedi)))
+              ;; If the buffer has a dedicated frame, that takes
+              ;; precedence over the current frame, and over what the
+              ;; pre-display-buffer-function did.
+              (let ((dedi (buffer-dedicated-frame buffer)))
+                (if (frame-live-p dedi) (setq explicit-frame dedi)))
 
-	     ;; if override-frame is supplied, that takes precedence over
-	     ;; everything.  This is gonna look bad if the
-	     ;; pre-display-buffer-function raised some other frame
-	     ;; already.
-	     (if override-frame
-		 (progn
-		   (check-argument-type 'frame-live-p override-frame)
-		   (setq explicit-frame override-frame)))
+              ;; if override-frame is supplied, that takes precedence over
+              ;; everything.  This is gonna look bad if the
+              ;; pre-display-buffer-function raised some other frame already.
+              (if override-frame
+                  (progn
+                    (check-argument-type 'frame-live-p override-frame)
+                    (setq explicit-frame override-frame)))
 
-	     (setq target-frame
-		   (or explicit-frame
-		       (last-nonminibuf-frame)
-		       (selected-frame)))
+              (setq target-frame
+                    (or explicit-frame
+                        (last-nonminibuf-frame)
+                        (selected-frame)))
 
-	     ;; If we have switched frames, then set not-this-window-p
-	     ;; to false.  Switching frames means that selected-window
-	     ;; is no longer the same as it was on entry -- it's the
-	     ;; selected-window of target_frame instead of old_frame,
-	     ;; so it's a fine candidate for display.
-	     (if (not (eq old-frame target-frame))
-		 (setq not-this-window-p nil))
+              ;; If we have switched frames, then set not-this-window-p to
+              ;; false.  Switching frames means that selected-window is no
+              ;; longer the same as it was on entry -- it's the
+              ;; selected-window of target_frame instead of old_frame, so
+              ;; it's a fine candidate for display.
+              (if (not (eq old-frame target-frame))
+                  (setq not-this-window-p nil))
 
-	     ;; if it's in the selected window, and that's ok, then we're done.
-	     (if (and (not not-this-window-p)
-		      (eq buffer (window-buffer (selected-window))))
-		 (throw 'done (display-buffer-1 (selected-window))))
+              ;; if it's in the selected window, and that's ok, then we're
+              ;; done.
+              (if (and (not not-this-window-p)
+                   (eq buffer (window-buffer (selected-window))))
+                  (return (display-buffer-1 (selected-window))))
 
-	     ;; See if the user has specified this buffer should appear
-	     ;; in the selected window.
+              ;; See if the user has specified this buffer should
+              ;; appear in the selected window.
 
-	     (if not-this-window-p
-		 nil
+              (if not-this-window-p
+                  nil
+                (if (or (member (buffer-name buffer) same-window-buffer-names)
+                        (assoc (buffer-name buffer) same-window-buffer-names))
+                    (progn
+                      (switch-to-buffer buffer)
+                      (return (display-buffer-1 (selected-window)))))
 
-	       (if (or (member (buffer-name buffer) same-window-buffer-names)
-		       (assoc (buffer-name buffer) same-window-buffer-names))
-		   (progn
-		     (switch-to-buffer buffer)
-		     (throw 'done (display-buffer-1 (selected-window)))))
+                (let ((tem same-window-regexps))
+                  (while tem
+                    (let ((car (car tem)))
+                      (if (or
+                           (and (stringp car)
+                                (string-match car (buffer-name buffer)))
+                           (and (consp car) (stringp (car car))
+                                (string-match (car car) (buffer-name buffer))))
+                          (progn
+                            (switch-to-buffer buffer)
+                            (return (display-buffer-1 (selected-window))))))
+                    (setq tem (cdr tem)))))
 
-	       (let ((tem same-window-regexps))
-		 (while tem
-		   (let ((car (car tem)))
-		     (if (or
-			  (and (stringp car)
-			       (string-match car (buffer-name buffer)))
-			  (and (consp car) (stringp (car car))
-			       (string-match (car car) (buffer-name buffer))))
-			 (progn
-			   (switch-to-buffer buffer)
-			   (throw 'done (display-buffer-1
-					 (selected-window))))))
-		   (setq tem (cdr tem)))))
+              ;; If pop-up-frames, look for a window showing BUFFER
+              ;; on any visible or iconified frame.  Otherwise search
+              ;; only the current frame.
+              (if (and (not explicit-frame)
+                   (or pop-up-frames (not (last-nonminibuf-frame))))
+                  (setq target-frame 0))
 
-	     ;; If pop-up-frames, look for a window showing BUFFER on
-	     ;; any visible or iconified frame.  Otherwise search only
-	     ;; the current frame.
-	     (if (and (not explicit-frame)
-		      (or pop-up-frames (not (last-nonminibuf-frame))))
-		 (setq target-frame 0))
+              ;; Otherwise, find some window that it's already in,
+              ;; and return that, unless that window is the selected
+              ;; window and that isn't ok.  What a contorted mess!
+              (setq window (or (if (not explicit-frame)
+                                   ;; search the selected frame
+                                   ;; first if the user didn't
+                                   ;; specify an explicit frame.
+                                   (get-buffer-window buffer nil))
+                               (get-buffer-window buffer target-frame)))
+              (if (and window
+                   (or (not not-this-window-p)
+                       (not (eq window (selected-window)))))
+                  (return (display-buffer-1 window)))
+              ;; Certain buffer names get special handling.
+              (if special-display-function
+                  (progn
+                    (if (member (buffer-name buffer)
+                                special-display-buffer-names)
+                        (return (funcall special-display-function buffer)))
 
-	     ;; Otherwise, find some window that it's already in, and
-	     ;; return that, unless that window is the selected window
-	     ;; and that isn't ok.  What a contorted mess!
-	     (setq window (or (if (not explicit-frame)
-				  ;; search the selected frame
-				  ;; first if the user didn't
-				  ;; specify an explicit frame.
-				  (get-buffer-window buffer nil))
-			      (get-buffer-window buffer target-frame)))
-	     (if (and window
-		      (or (not not-this-window-p)
-			  (not (eq window (selected-window)))))
-		 (throw 'done (display-buffer-1 window)))
+                    (let ((tem (assoc (buffer-name buffer)
+                                      special-display-buffer-names)))
+                      (if tem
+                          (return (funcall special-display-function
+                                           buffer (cdr tem)))))
 
-	     ;; Certain buffer names get special handling.
-	     (if special-display-function
-		 (progn
-		   (if (member (buffer-name buffer)
-			       special-display-buffer-names)
-		       (throw 'done (funcall special-display-function buffer)))
+                    (let ((tem special-display-regexps))
+                      (while tem
+                        (let ((car (car tem)))
+                          (if (and (stringp car)
+                                   (string-match car (buffer-name buffer)))
+                              (return
+                               (funcall special-display-function buffer)))
+                          (if (and (consp car)
+                                   (stringp (car car))
+                                   (string-match (car car)
+                                                 (buffer-name buffer)))
+                              (return (funcall special-display-function buffer
+                                               (cdr car)))))
+                        (setq tem (cdr tem))))))
 
-		   (let ((tem (assoc (buffer-name buffer)
-				     special-display-buffer-names)))
-		     (if tem
-			 (throw 'done (funcall special-display-function
-					       buffer (cdr tem)))))
+              ;; If there are no frames open that have more than a minibuffer,
+              ;; we need to create a new frame.
+              (if (or pop-up-frames
+                   (null (last-nonminibuf-frame)))
+                  (progn
+                    (setq window (frame-selected-window
+                                  (funcall pop-up-frame-function)))
+                    (set-window-buffer window buffer)
+                    (return (display-buffer-1 window))))
 
-		   (let ((tem special-display-regexps))
-		     (while tem
-		       (let ((car (car tem)))
-			 (if (and (stringp car)
-				  (string-match car (buffer-name buffer)))
-			     (throw 'done
-				    (funcall special-display-function buffer)))
-			 (if (and (consp car)
-				  (stringp (car car))
-				  (string-match (car car)
-						(buffer-name buffer)))
-			     (throw 'done (funcall
-					   special-display-function buffer
-					   (cdr car)))))
-		       (setq tem (cdr tem))))))
+              ;; Otherwise, make it be in some window, splitting if
+              ;; appropriate/possible.  Do not split a window if we
+              ;; are displaying the buffer in a different frame than
+              ;; that which was current when we were called.  (It is
+              ;; already in a different window by virtue of being in
+              ;; another frame.)
+              (if (or (and pop-up-windows (eq target-frame old-frame))
+                   (eq 'only (frame-property (selected-frame) 'minibuffer))
+                   ;; If the current frame is a special display frame,
+                   ;; don't try to reuse its windows.
+                   (window-dedicated-p
+                    (frame-root-window (selected-frame))))
+                  (progn
+                    (if (eq 'only (frame-property (selected-frame)
+                                                  'minibuffer))
+                        (setq target-frame (last-nonminibuf-frame)))
 
-	     ;; If there are no frames open that have more than a minibuffer,
-	     ;; we need to create a new frame.
-	     (if (or pop-up-frames
-		     (null (last-nonminibuf-frame)))
-		 (progn
-		   (setq window (frame-selected-window
-				 (funcall pop-up-frame-function)))
-		   (set-window-buffer window buffer)
-		   (throw 'done (display-buffer-1 window))))
+                    ;; Don't try to create a window if would get an error with
+                    ;; height.
+                    (if (< split-height-threshold (* 2 window-min-height))
+                        (setq split-height-threshold (* 2 window-min-height)))
 
-	     ;; Otherwise, make it be in some window, splitting if
-	     ;; appropriate/possible.  Do not split a window if we are
-	     ;; displaying the buffer in a different frame than that which
-	     ;; was current when we were called.  (It is already in a
-	     ;; different window by virtue of being in another frame.)
-	     (if (or (and pop-up-windows (eq target-frame old-frame))
-		     (eq 'only (frame-property (selected-frame) 'minibuffer))
-		     ;; If the current frame is a special display frame,
-		     ;; don't try to reuse its windows.
-		     (window-dedicated-p (frame-root-window (selected-frame))))
-		 (progn
-		   (if (eq 'only (frame-property (selected-frame) 'minibuffer))
-		       (setq target-frame (last-nonminibuf-frame)))
+                    ;; Same with width.
+                    (if (< split-width-threshold (* 2 window-min-width))
+                        (setq split-width-threshold (* 2 window-min-width)))
 
-		   ;; Don't try to create a window if would get an error with
-		   ;; height.
-		   (if (< split-height-threshold (* 2 window-min-height))
-		       (setq split-height-threshold (* 2 window-min-height)))
+                    ;; If the frame we would try to split cannot be split,
+                    ;; try other frames.
+                    (if (frame-property (if (null target-frame)
+                                            (selected-frame)
+                                          (last-nonminibuf-frame))
+                                        'unsplittable)
+                        (setq window
+                              ;; Try visible frames first.
+                              (or (get-largest-window 'visible)
+                                  ;; If that didn't work, try iconified frames.
+                                  (get-largest-window 0)
+                                  (get-largest-window t)))
+                      (setq window (get-largest-window target-frame)))
 
-		   ;; Same with width.
-		   (if (< split-width-threshold (* 2 window-min-width))
-		       (setq split-width-threshold (* 2 window-min-width)))
+                    ;; If we got a tall enough full-width window that
+                    ;; can be split, split it.
+                    (if (and window
+                             (not (frame-property (window-frame window)
+                                                  'unsplittable))
+                             (>= (window-height window) split-height-threshold)
+                             (or (>= (window-width window)
+                                     split-width-threshold)
+                                 (and (window-leftmost-p window)
+                                      (window-rightmost-p window))))
+                        (setq window (split-window window))
+                      (let (upper other)
+                        (setq window (get-lru-window target-frame))
+                        ;; If the LRU window is selected, and big enough,
+                        ;; and can be split, split it.
+                        (if (and window
+                                 (not (frame-property (window-frame window)
+                                                      'unsplittable))
+                                 (or (eq window (selected-window))
+                                     (not (window-parent window)))
+                                 (>= (window-height window)
+                                     (* 2 window-min-height)))
+                            (setq window (split-window window)))
+                        ;; If get-lru-window returned nil, try other
+                        ;; approaches.  Try visible frames first.
+                        (or window
+                            (setq window (or (get-largest-window 'visible)
+                                             ;; If that didn't work, try
+                                             ;; iconified frames.
+                                             (get-largest-window 0)
+                                             ;; Try invisible frames.
+                                             (get-largest-window t)
+                                             ;; As a last resort, make
+                                             ;; a new frame.
+                                             (frame-selected-window
+                                              (funcall
+                                               pop-up-frame-function)))))
+                        ;; If window appears above or below another,
+                        ;; even out their heights.
+                        (if (window-previous-child window)
+                            (setq other (window-previous-child window)
+                                  upper other))
+                        (if (window-next-child window)
+                            (setq other (window-next-child window)
+                                  upper window))
+                        ;; Check that OTHER and WINDOW are vertically arrayed.
+                        (if (and other
+                                 (not (= (nth 1 (window-pixel-edges other))
+                                         (nth 1 (window-pixel-edges window))))
+                                 (> (window-pixel-height other)
+                                    (window-pixel-height window)))
+                            (enlarge-window (- (/ (+ (window-height other)
+                                                     (window-height window))
+                                                  2)
+                                               (window-height upper))
+                                            nil upper))
+                        ;; Klaus Berndl <klaus.berndl@sdm.de>: Only in
+                        ;; this situation we shrink-to-fit but we can do
+                        ;; this first after we have displayed buffer in
+                        ;; window (s.b. (set-window-buffer window buffer))
+                        (setq shrink-it shrink-to-fit))))
 
-		   ;; If the frame we would try to split cannot be split,
-		   ;; try other frames.
-		   (if (frame-property (if (null target-frame)
-					   (selected-frame)
-					 (last-nonminibuf-frame))
-				       'unsplittable)
-		       (setq window
-			     ;; Try visible frames first.
-			     (or (get-largest-window 'visible)
-				 ;; If that didn't work, try iconified frames.
-				 (get-largest-window 0)
-				 (get-largest-window t)))
-		     (setq window (get-largest-window target-frame)))
+                (setq window (get-lru-window target-frame)))
 
-		   ;; If we got a tall enough full-width window that
-		   ;; can be split, split it.
-		   (if (and window
-			    (not (frame-property (window-frame window)
-						 'unsplittable))
-			    (>= (window-height window) split-height-threshold)
-			    (or (>= (window-width window)
-				    split-width-threshold)
-				(and (window-leftmost-p window)
-				     (window-rightmost-p window))))
-		       (setq window (split-window window))
-		     (let (upper other)
-		       (setq window (get-lru-window target-frame))
-		       ;; If the LRU window is selected, and big enough,
-		       ;; and can be split, split it.
-		       (if (and window
-				(not (frame-property (window-frame window)
-						     'unsplittable))
-				(or (eq window (selected-window))
-				    (not (window-parent window)))
-				(>= (window-height window)
-				    (* 2 window-min-height)))
-			   (setq window (split-window window)))
-		       ;; If get-lru-window returned nil, try other approaches.
-		       ;; Try visible frames first.
-		       (or window
-			   (setq window (or (get-largest-window 'visible)
-					    ;; If that didn't work, try
-					    ;; iconified frames.
-					    (get-largest-window 0)
-					    ;; Try invisible frames.
-					    (get-largest-window t)
-					    ;; As a last resort, make
-					    ;; a new frame.
-					    (frame-selected-window
-					     (funcall
-					      pop-up-frame-function)))))
-		       ;; If window appears above or below another,
-		       ;; even out their heights.
-		       (if (window-previous-child window)
-			   (setq other (window-previous-child window)
-				 upper other))
-		       (if (window-next-child window)
-			   (setq other (window-next-child window)
-				 upper window))
-		       ;; Check that OTHER and WINDOW are vertically arrayed.
-		       (if (and other
-				(not (= (nth 1 (window-pixel-edges other))
-					(nth 1 (window-pixel-edges window))))
-				(> (window-pixel-height other)
-				   (window-pixel-height window)))
-			   (enlarge-window (- (/ (+ (window-height other)
-						    (window-height window))
-						 2)
-					      (window-height upper))
-					   nil upper))
-                       ;; Klaus Berndl <klaus.berndl@sdm.de>: Only in
-                       ;; this situation we shrink-to-fit but we can do
-                       ;; this first after we have displayed buffer in
-                       ;; window (s.b. (set-window-buffer window buffer))
-                       (setq shrink-it shrink-to-fit))))
+              ;; Bring the window's previous buffer to the top of the
+              ;; MRU chain.
+              (if (window-buffer window)
+                  (save-excursion
+                    (save-selected-window
+                      (select-window window)
+                      (record-buffer (window-buffer window)))))
 
-	       (setq window (get-lru-window target-frame)))
+              (set-window-buffer window buffer)
 
-	     ;; Bring the window's previous buffer to the top of the MRU chain.
-	     (if (window-buffer window)
-		 (save-excursion
-		   (save-selected-window
-		     (select-window window)
-		     (record-buffer (window-buffer window)))))
-
-	     (set-window-buffer window buffer)
-
-             ;; Now window's previous buffer has been brought to the top
-             ;; of the MRU chain and window displays buffer - now we can
-             ;; shrink-to-fit if necessary
-             (if shrink-it
-                 (shrink-window-if-larger-than-buffer window))
-
-	     (display-buffer-1 window)))))
-    (or (equal wconfig (current-window-configuration))
-	(push-window-configuration wconfig))
-    result))
+              ;; Now window's previous buffer has been brought to the
+              ;; top of the MRU chain and window displays buffer -
+              ;; now we can shrink-to-fit if necessary
+              (if shrink-it
+                  (shrink-window-if-larger-than-buffer window))
+              (display-buffer-1 window)))) ;; End of prog1's 1th form.
+      (or (equal wconfig (current-window-configuration))
+          (push-window-configuration wconfig)))))
 
 ;;; window-xemacs.el ends here

@@ -755,13 +755,20 @@ x_font_instance_truename (Lisp_Font_Instance *f, Error_Behavior errb)
   if (NILP (FONT_INSTANCE_TRUENAME (f)) && FONT_INSTANCE_X_XFTFONT (f))
     {
       /* The font is already open, we just unparse. */
-      FcChar8 *res = FcNameUnparse (FONT_INSTANCE_X_XFTFONT (f)->pattern);
-      if (! FONT_INSTANCE_X_XFTFONT (f)->pattern)
+      FcPattern* pattern = FONT_INSTANCE_X_XFTFONT (f)->pattern;
+      FcChar8 *res;
+      if (!pattern)
 	{
 	  maybe_signal_error (Qgui_error,
 			      "Xft font present but lacks pattern",
 			      wrap_font_instance(f), Qfont, errb);
 	}
+      {
+	FcPattern* temp = FcPatternDuplicate (pattern);
+	FcPatternDel (temp, FC_CHARSET);  /* FcNameUnparse may choke */
+	res = FcNameUnparse (temp);
+	FcPatternDestroy (temp);
+      }
       if (res)
 	{
 	  FONT_INSTANCE_TRUENAME (f) = 
@@ -832,7 +839,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
 			    ALLOCA, (name_str, name_len),
 			    Qx_atom_name_encoding);
 
-      name = (name_str ? intern_istring (name_str) : Qnil);
+      name = (name_str ? intern ((const CIbyte *) name_str) : Qnil);
       if (name_str &&
 	  (atom == XA_FONT ||
 	   atom == DEVICE_XATOM_FOUNDRY (d) ||

@@ -239,8 +239,8 @@ bytecode_negate (Lisp_Object obj)
 
   if (FIXNUMP    (obj)) return make_integer (- XFIXNUM (obj));
   if (FLOATP  (obj)) return make_float (- XFLOAT_DATA (obj));
-  if (CHARP   (obj)) return make_integer (- ((int) XCHAR (obj)));
-  if (MARKERP (obj)) return make_integer (- ((int) marker_position (obj)));
+  if (CHARP   (obj)) return make_integer (- ((EMACS_INT) XCHAR (obj)));
+  if (MARKERP (obj)) return make_integer (- marker_position (obj));
 #ifdef HAVE_BIGNUM
   if (BIGNUMP (obj)) BIGNUM_ARITH_RETURN (obj, neg);
 #endif
@@ -287,25 +287,32 @@ int
 bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 {
 #ifdef WITH_NUMBER_TYPES
-  switch (promote_args (&obj1, &obj2))
+  switch (promote_args_lazy (&obj1, &obj2))
     {
-    case FIXNUM_T:
+    case LAZY_FIXNUM_T:
       {
 	EMACS_INT ival1 = XREALFIXNUM (obj1), ival2 = XREALFIXNUM (obj2);
 	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
       }
 #ifdef HAVE_BIGNUM
-    case BIGNUM_T:
+    case LAZY_BIGNUM_T:
       return bignum_cmp (XBIGNUM_DATA (obj1), XBIGNUM_DATA (obj2));
 #endif
 #ifdef HAVE_RATIO
-    case RATIO_T:
+    case LAZY_RATIO_T:
       return ratio_cmp (XRATIO_DATA (obj1), XRATIO_DATA (obj2));
 #endif
 #ifdef HAVE_BIGFLOAT
-    case BIGFLOAT_T:
+    case LAZY_BIGFLOAT_T:
       return bigfloat_cmp (XBIGFLOAT_DATA (obj1), XBIGFLOAT_DATA (obj2));
 #endif
+    case LAZY_MARKER_T:
+      {
+	Bytebpos ival1 = byte_marker_position (obj1);
+	Bytebpos ival2 = byte_marker_position (obj2);
+	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
+      }
+
     default: /* FLOAT_T */
       {
 	double dval1 = XFLOAT_DATA (obj1), dval2 = XFLOAT_DATA (obj2);
@@ -320,7 +327,19 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 
     if      (FIXNUMP    (obj1)) ival1 = XFIXNUM  (obj1);
     else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
-    else if (MARKERP (obj1)) ival1 = marker_position (obj1);
+    else if (MARKERP (obj1))
+      {
+	/* Handle markers specially, since #'marker-position can be O(N): */
+	if (MARKERP (obj2)
+	    && (XMARKER (obj1)->buffer == XMARKER (obj2)->buffer))
+	  {
+	    Bytebpos ival1 = byte_marker_position (obj1);
+	    Bytebpos ival2 = byte_marker_position (obj2);
+	    return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
+	  }
+
+	ival1 = marker_position (obj1);
+      }
     else goto arithcompare_float;
 
     if      (FIXNUMP    (obj2)) ival2 = XFIXNUM  (obj2);
@@ -365,9 +384,29 @@ static Lisp_Object
 bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 {
 #ifdef WITH_NUMBER_TYPES
-  switch (promote_args (&obj1, &obj2))
+  switch (promote_args_lazy (&obj1, &obj2))
     {
-    case FIXNUM_T:
+    case LAZY_MARKER_T:
+      {
+	switch (opcode)
+	  {
+	  case Bmax:
+	    return make_fixnum (marker_position
+				((byte_marker_position (obj1)
+				  < byte_marker_position (obj2)) ?
+				 obj2 : obj1));
+	  case Bmin:
+	    return make_fixnum (marker_position
+				((byte_marker_position (obj1)
+				  > byte_marker_position (obj2)) ?
+				 obj2 : obj1));
+	  default:
+	    obj1 = make_fixnum (marker_position (obj1));
+	    obj2 = make_fixnum (marker_position (obj2));
+	    /* FALLTHROUGH */
+	  }
+      }
+    case LAZY_FIXNUM_T:
       {
 	EMACS_INT ival1 = XREALFIXNUM (obj1), ival2 = XREALFIXNUM (obj2);
 	switch (opcode)
@@ -395,7 +434,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	return make_integer (ival1);
       }
 #ifdef HAVE_BIGNUM
-    case BIGNUM_T:
+    case LAZY_BIGNUM_T:
       switch (opcode)
 	{
 	case Bplus:
@@ -426,7 +465,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
 #endif
 #ifdef HAVE_RATIO
-    case RATIO_T:
+    case LAZY_RATIO_T:
       switch (opcode)
 	{
 	case Bplus:
@@ -453,7 +492,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
       return make_ratio_rt (scratch_ratio);
 #endif
 #ifdef HAVE_BIGFLOAT
-    case BIGFLOAT_T:
+    case LAZY_BIGFLOAT_T:
       bigfloat_set_prec (scratch_bigfloat, max (XBIGFLOAT_GET_PREC (obj1),
 						XBIGFLOAT_GET_PREC (obj2)));
       switch (opcode)
@@ -711,7 +750,7 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 
 
 /* See comment before the big switch in execute_optimized_program(). */
-#define GCPRO_STACK  (gcpro1.nvars = stack_ptr - stack_beg)
+#define ADJUST_STACK_GCPRO  (gcpro1.nvars = stack_ptr - stack_beg)
 
 
 /* The actual interpreter for byte code.
@@ -758,23 +797,16 @@ execute_optimized_program (const Opbyte *program,
      after exit from the (byte-compiled) test!
 
      Now the idea is to dynamically adjust the array of GCPROed objects to
-     include only the "active" region of the stack.
+     include only the "active" region of the stack, including the arguments of
+     any function we call. We use the "GCPRO1 the array base and set the nvars
+     member" method.
 
-     We use the "GCPRO1 the array base and set the nvars member" method.  It
-     would be slightly inefficient but correct to use GCPRO1_ARRAY here.  It
-     would just redundantly set nvars.
-     #### Maybe it would be clearer to use GCPRO1_ARRAY and do GCPRO_STACK
-     after the switch?
-
-     GCPRO_STACK is something of a misnomer, because it suggests that a
-     struct gcpro is initialized each time.  This is false; only the nvars
-     member of a single struct gcpro is being adjusted.  This works because
-     each time a new object is assigned to a stack location, the old object
-     loses its reference and is effectively UNGCPROed, and the new object is
-     automatically GCPROed as long as nvars is correct.  Only when we
-     return from the interpreter do we need to finalize the struct gcpro
-     itself, and that's done at case Breturn.
-  */
+     ADJUST_STACK_GCPRO updates the nvars member of gcpro1 to reflect the
+     active stack.  This works because each time a new object is assigned to a
+     stack location, the old object loses its reference and is effectively
+     UNGCPROed, and the new object is automatically GCPROed as long as nvars
+     is correct.  Only when we return from the interpreter do we need to
+     finalize the struct gcpro itself, and that's done at case Breturn. */
 
   /* See comment above explaining the `[1]' */
   GCPRO1 (stack_ptr[1]);
@@ -787,7 +819,7 @@ execute_optimized_program (const Opbyte *program,
       remember_operation (opcode);
 #endif
 
-      GCPRO_STACK;		/* Get nvars right before maybe signaling. */
+      ADJUST_STACK_GCPRO;       /* Get nvars right before maybe signaling. */
       /* #### NOTE: This code should probably never get triggered, since we
 	 now catch the problems earlier, farther down, before we ever set
 	 a bad value for STACK_PTR. */
@@ -813,8 +845,6 @@ execute_optimized_program (const Opbyte *program,
 	    PUSH (constants_data[opcode - Bconstant]);
 	  else
 	    {
-	      /* We're not sure what these do, so better safe than sorry. */
-	      /* GCPRO_STACK; */
 	      stack_ptr = execute_rare_opcode (stack_ptr,
 #ifdef ERROR_CHECK_BYTE_CODE
 					       stack_beg,
@@ -838,8 +868,6 @@ execute_optimized_program (const Opbyte *program,
 	  Lisp_Object symbol = constants_data[n];
 	  Lisp_Object value = XSYMBOL (symbol)->value;
 	  if (SYMBOL_VALUE_MAGIC_P (value))
-	    /* I GCPRO_STACKed Fsymbol_value elsewhere, but I dunno why. */
-	    /* GCPRO_STACK; */
 	    value = Fsymbol_value (symbol);
 	  PUSH (value);
 	  break;
@@ -862,8 +890,6 @@ execute_optimized_program (const Opbyte *program,
 	  if (!SYMBOL_VALUE_MAGIC_P (old_value) || UNBOUNDP (old_value))
 	    symbol_ptr->value = new_value;
 	  else {
-	    /* Fset may call magic handlers */
-	    /* GCPRO_STACK; */
 	    Fset (symbol, new_value);
 	  }
 	    
@@ -900,8 +926,6 @@ execute_optimized_program (const Opbyte *program,
 	    }
 	  else
 	    {
-	      /* does an Fset, may call magic handlers */
-	      /* GCPRO_STACK; */
 	      specbind_magic (symbol, new_value);
 	    }
 	  break;
@@ -917,9 +941,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bcall+7:
 	  n = (opcode <  Bcall+6 ? opcode - Bcall :
 	       opcode == Bcall+6 ? READ_UINT_1 : READ_UINT_2);
-	  /* #### Shouldn't this be just before the Ffuncall?
-	     Neither Fget nor Fput can GC. */
-	  /* GCPRO_STACK; */
 	  DISCARD (n);
 #ifdef BYTE_CODE_METER
 	  if (byte_metering_on && SYMBOLP (TOP))
@@ -1052,8 +1073,6 @@ execute_optimized_program (const Opbyte *program,
 
 	case Bcar:
           {
-            /* Fcar can GC via wrong_type_argument. */
-            /* GCPRO_STACK; */
             Lisp_Object arg = TOP;
             TOP_LVALUE = CONSP (arg) ? XCAR (arg) : Fcar (arg);
             break;
@@ -1061,8 +1080,6 @@ execute_optimized_program (const Opbyte *program,
 
 	case Bcdr:
           {
-            /* Fcdr can GC via wrong_type_argument. */
-            /* GCPRO_STACK; */
             Lisp_Object arg = TOP;
             TOP_LVALUE = CONSP (arg) ? XCDR (arg) : Fcdr (arg);
             break;
@@ -1077,8 +1094,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bnth:
 	  {
 	    Lisp_Object arg = POP;
-	    /* Fcar and Fnthcdr can GC via wrong_type_argument. */
-	    /* GCPRO_STACK; */
 	    TOP_LVALUE = Fcar (Fnthcdr (TOP, arg));
 	    break;
 	  }
@@ -1169,10 +1184,8 @@ execute_optimized_program (const Opbyte *program,
 	  n = READ_UINT_1;
 	do_concat:
 	  DISCARD (n - 1);
-	  /* Apparently `concat' can GC; Fconcat GCPROs its arguments. */
-	  /* GCPRO_STACK; */
           TOP_LVALUE = TOP; /* Ignore multiple values. */
-	  TOP_LVALUE = Fconcat (n, TOP_ADDRESS);
+	  TOP_LVALUE = concatenate (n, TOP_ADDRESS, Qstring, 0);
 	  break;
 
 
@@ -1189,8 +1202,6 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bsymbol_value:
-	  /* Why does this need GCPRO_STACK?  If not, remove others, too. */
-	  /* GCPRO_STACK; */
 	  TOP_LVALUE = Fsymbol_value (TOP);
 	  break;
 
@@ -1268,8 +1279,6 @@ execute_optimized_program (const Opbyte *program,
 
 	case Bnconc:
 	  DISCARD (1);
-	  /* nconc2 GCPROs before calling this. */
-	  /* GCPRO_STACK; */
           TOP_LVALUE = TOP; /* Ignore multiple values. */
 	  TOP_LVALUE = bytecode_nconc2 (TOP_ADDRESS);
 	  break;
@@ -1317,8 +1326,6 @@ execute_optimized_program (const Opbyte *program,
 	  break;
 
 	case Binsert:
-	  /* Says it can GC. */
-	  /* GCPRO_STACK; */
           TOP_LVALUE = TOP; /* Ignore multiple values. */
 	  TOP_LVALUE = Finsert (1, TOP_ADDRESS);
 	  break;
@@ -1326,8 +1333,6 @@ execute_optimized_program (const Opbyte *program,
 	case BinsertN:
 	  n = READ_UINT_1;
 	  DISCARD (n - 1);
-	  /* See Binsert. */
-	  /* GCPRO_STACK; */
           TOP_LVALUE = TOP; /* Ignore multiple values. */
 	  TOP_LVALUE = Finsert (n, TOP_ADDRESS);
 	  break;
@@ -1349,8 +1354,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bset:
 	  {
 	    Lisp_Object arg = POP;
-	    /* Fset may call magic handlers */
-	    /* GCPRO_STACK; */
 	    TOP_LVALUE = Fset (TOP, arg);
 	    break;
 	  }
@@ -1358,8 +1361,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bequal:
 	  {
 	    Lisp_Object arg = POP;
-	    /* Can QUIT, so can GC, right? */
-	    /* GCPRO_STACK; */
 	    TOP_LVALUE = Fequal (TOP, arg);
 	    break;
 	  }
@@ -1381,8 +1382,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bmember:
 	  {
 	    Lisp_Object arg = POP;
-	    /* Can QUIT, so can GC, right? */
-	    /* GCPRO_STACK; */
 	    TOP_LVALUE = Fmember (TOP, arg);
 	    break;
 	  }
@@ -1400,9 +1399,6 @@ execute_optimized_program (const Opbyte *program,
 	  }
 
 	case Bset_buffer:
-	  /* #### WAG: set-buffer may cause Fset's of buffer locals
-	     Didn't prevent crash. :-( */
-	  /* GCPRO_STACK; */
 	  TOP_LVALUE = Fset_buffer (TOP);
 	  break;
 
@@ -1417,8 +1413,6 @@ execute_optimized_program (const Opbyte *program,
 	case Bskip_chars_forward:
 	  {
 	    Lisp_Object arg = POP;
-	    /* Can QUIT, so can GC, right? */
-	    /* GCPRO_STACK; */
 	    TOP_LVALUE = Fskip_chars_forward (TOP, arg, Qnil);
 	    break;
 	  }
@@ -1810,7 +1804,7 @@ check_opcode (Opcode opcode)
 static void
 check_constants_index (int idx, Lisp_Object constants)
 {
-  if (idx < 0 || idx >= XVECTOR_LENGTH (constants))
+  if (idx < 0 || (Elemcount) idx >= XVECTOR_LENGTH (constants))
     signal_ferror
       (Qinvalid_byte_code,
        "reference %d to constants array out of range 0, %ld",
@@ -2272,7 +2266,7 @@ print_compiled_function (Lisp_Object obj, Lisp_Object printcharfun,
     {
       Lisp_Object ann = compiled_function_annotation (f);
       if (!NILP (ann))
-	write_fmt_string_lisp (printcharfun, "(from %S) ", 1, ann);
+	write_fmt_string_lisp (printcharfun, "(from %S) ", ann);
     }
 #endif /* COMPILED_FUNCTION_ANNOTATION_HACK */
   /* COMPILED_ARGLIST = 0 */

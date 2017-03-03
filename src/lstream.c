@@ -27,7 +27,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "buffer.h"
 #include "insdel.h"
+#define EXPOSE_FIXED_BUFFER_INTERNALS 1
 #include "lstream.h"
+#include "tls.h"
+#include "extents.h"
+#include "frame.h"
 
 #include "sysfile.h"
 
@@ -48,6 +52,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define DEFAULT_BLOCK_BUFFERING_SIZE 512
 #define MAX_READ_SIZE 512
 
+Lisp_Object Q_element_type;
+
 static Lisp_Object
 mark_lstream (Lisp_Object obj)
 {
@@ -61,9 +67,8 @@ print_lstream (Lisp_Object obj, Lisp_Object printcharfun,
 {
   Lstream *lstr = XLSTREAM (obj);
 
-  write_fmt_string (printcharfun,
-		    "#<INTERNAL OBJECT (XEmacs bug?) (%s lstream) 0x%x>",
-		    lstr->imp->name, LISP_OBJECT_UID (obj));
+  write_fmt_string (printcharfun, "#<stream :type %s :uid 0x%x>",
+                    lstr->imp->name, LISP_OBJECT_UID (obj));
 }
 
 static void
@@ -601,6 +606,35 @@ Lstream_write (Lstream *lstr, const void *data, Bytecount size)
 }
 
 int
+Lstream_write_with_extents (Lstream *lstr, Lisp_Object string,
+                            Bytecount position, Bytecount len)
+{
+  if (lstr->imp->write_with_extents)
+    {
+      if (Lstream_flush (lstr) < 0)
+        {
+          return -1;
+        }
+
+      lstr->byte_count += len;
+      return lstr->imp->write_with_extents (lstr, string, position, len);
+    }
+
+  return Lstream_write (lstr, XSTRING_DATA (string) + position, len);
+}
+
+struct extent_info *
+Lstream_extent_info (Lstream *lstr)
+{
+  if (lstr->imp->extent_info)
+    {
+      return (lstr->imp->extent_info)(lstr);
+    }
+
+  return NULL;
+}
+
+int
 Lstream_was_blocked_p (Lstream *lstr)
 {
   return lstr->imp->was_blocked_p ? lstr->imp->was_blocked_p (lstr) : 0;
@@ -721,8 +755,15 @@ Lstream_read_1 (Lstream *lstr, void *data, Bytecount size,
       Bytecount newoff = validate_ibyte_string_backward (p, off);
       if (newoff < off)
 	{
+          Charcount before = lstr->unget_character_count;
 	  Lstream_unread (lstr, p + newoff, off - newoff);
 	  off = newoff;
+
+          /* Since it's Lstream_read rather than our consumers unreading the
+             incomplete character (conceptually, not affecting the number of
+             characters ever Lstream_read() from the stream),
+             unget_character_count shouldn't include it. */
+          lstr->unget_character_count = before;
 	}
     }
 
@@ -735,6 +776,68 @@ Lstream_read (Lstream *lstr, void *data, Bytecount size)
   return Lstream_read_1 (lstr, data, size, 0);
 }
 
+int
+Lstream_errno (Lstream *lstr)
+{
+  return (lstr->imp->error) ? (lstr->imp->error) (lstr) : 0;
+}
+
+Charcount
+Lstream_character_tell (Lstream *lstr)
+{
+  Charcount ctell = lstr->imp->character_tell ?
+    lstr->imp->character_tell (lstr) : -1;
+
+  if (ctell >= 0)
+    {
+      /* Our implementation's character tell code doesn't know about the
+         unget buffer, update its figure to reflect it. */
+      ctell += lstr->unget_character_count;
+
+      if (lstr->unget_buffer_ind > 0)
+        {
+          /* The character count should not include those characters
+             currently *in* the unget buffer, subtract that count.  */
+          Ibyte *ungot, *ungot_ptr;
+          Bytecount ii = lstr->unget_buffer_ind;
+
+          ungot_ptr = ungot
+            = alloca_ibytes (lstr->unget_buffer_ind);
+
+          /* Internal format data, but in reverse order. There's not
+             actually a need to alloca here, we could work out the character
+             count directly from the reversed bytes, but the alloca approach
+             is more robust to changes in our internal format, and the unget
+             buffer is not going to blow the stack. */
+          while (ii > 0)
+            {
+              *ungot_ptr++ = lstr->unget_buffer[--ii];
+            }
+
+          /* The character length of this text is included in
+             unget_character_count; if the bytes are still in the unget
+             buffer, then our consumers haven't seen them, and so the
+             character tell figure shouldn't reflect them. Subtract it from
+             the total.  */
+          ctell
+            -= buffered_bytecount_to_charcount (ungot, ungot_ptr - ungot);
+        }
+
+      if (lstr->in_buffer_ind < lstr->in_buffer_current)
+        {
+          ctell
+            -= buffered_bytecount_to_charcount ((const Ibyte *)
+                                                (lstr->in_buffer
+                                                 + lstr->in_buffer_ind),
+                                                lstr->in_buffer_current
+                                                - lstr->in_buffer_ind);
+        }
+
+      text_checking_assert (ctell >= 0);
+    }
+
+  return ctell;
+}
 
 /* Push back SIZE bytes of DATA onto the input queue.  The next call
    to Lstream_read() with the same size will read the same bytes back.
@@ -755,7 +858,12 @@ Lstream_unread (Lstream *lstr, const void *data, Bytecount size)
   /* Bytes have to go on in reverse order -- they are reversed
      again when read back. */
   while (size--)
-    lstr->unget_buffer[lstr->unget_buffer_ind++] = p[size];
+    {
+      lstr->unget_buffer[lstr->unget_buffer_ind++] = p[size];
+      /* If we see a valid first byte, that is the last octet in a
+         character, so increase the count of ungot characters. */
+      lstr->unget_character_count += valid_ibyteptr_p (p + size);
+    }
 }
 
 /* Rewind the stream to the beginning. */
@@ -768,6 +876,7 @@ Lstream_rewind (Lstream *lstr)
   if (Lstream_flush (lstr) < 0)
     return -1;
   lstr->byte_count = 0;
+  lstr->unget_character_count = 0;
   return (lstr->imp->rewinder) (lstr);
 }
 
@@ -915,6 +1024,25 @@ Lstream_fungetc (Lstream *lstr, int c)
   Lstream_unread (lstr, &ch, 1);
 }
 
+/* Detect an active TLS session */
+
+int
+Lstream_tls_p (Lstream *lstr)
+{
+  return (lstr->imp->tls_p) ? (lstr->imp->tls_p) (lstr) : 0;
+}
+
+/* STARTTLS negotiation */
+
+int
+Lstream_tls_negotiate (Lstream *instr, Lstream *outstr, const Extbyte *host,
+		       Lisp_Object keylist)
+{
+  return (instr->imp->tls_negotiater)
+    ? (instr->imp->tls_negotiater) (instr, outstr, host, keylist)
+    : 0;
+}
+
 
 /************************ some stream implementations *********************/
 
@@ -1042,6 +1170,7 @@ stdio_closer (Lstream *stream)
 
 struct filedesc_stream
 {
+  tls_state_t *tls_state;
   int fd;
   int pty_max_bytes;
   Ibyte eof_char;
@@ -1049,6 +1178,7 @@ struct filedesc_stream
   int current_pos;
   int end_pos;
   int chars_sans_newline;
+  int saved_errno;
   unsigned int closing :1;
   unsigned int allow_quit :1;
   unsigned int blocked_ok :1;
@@ -1066,18 +1196,20 @@ DEFINE_LSTREAM_IMPLEMENTATION ("filedesc", filedesc);
    ignored when writing); -1 for unlimited. */
 static Lisp_Object
 make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
-			const char *mode)
+			tls_state_t *state, const char *mode)
 {
   Lstream *lstr = Lstream_new (lstream_filedesc, mode);
   struct filedesc_stream *fstr = FILEDESC_STREAM_DATA (lstr);
-  fstr->fd = filedesc;
+  fstr->tls_state = state;
+  fstr->fd = state ? tls_get_fd (state) : filedesc;
   fstr->closing      = !!(flags & LSTR_CLOSING);
   fstr->allow_quit   = !!(flags & LSTR_ALLOW_QUIT);
   fstr->blocked_ok   = !!(flags & LSTR_BLOCKED_OK);
   fstr->pty_flushing = !!(flags & LSTR_PTY_FLUSHING);
   fstr->blocking_error_p = 0;
   fstr->chars_sans_newline = 0;
-  fstr->starting_pos = lseek (filedesc, offset, SEEK_CUR);
+  fstr->saved_errno = 0;
+  fstr->starting_pos = lseek (fstr->fd, offset, SEEK_CUR);
   fstr->current_pos = max (fstr->starting_pos, 0);
   if (count < 0)
     fstr->end_pos = -1;
@@ -1107,15 +1239,17 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
  */
 
 Lisp_Object
-make_filedesc_input_stream (int filedesc, int offset, int count, int flags)
+make_filedesc_input_stream (int filedesc, int offset, int count, int flags,
+			    tls_state_t *state)
 {
-  return make_filedesc_stream_1 (filedesc, offset, count, flags, "r");
+  return make_filedesc_stream_1 (filedesc, offset, count, flags, state, "r");
 }
 
 Lisp_Object
-make_filedesc_output_stream (int filedesc, int offset, int count, int flags)
+make_filedesc_output_stream (int filedesc, int offset, int count, int flags,
+			     tls_state_t *state)
 {
-  return make_filedesc_stream_1 (filedesc, offset, count, flags, "w");
+  return make_filedesc_stream_1 (filedesc, offset, count, flags, state, "w");
 }
 
 static Bytecount
@@ -1123,17 +1257,23 @@ filedesc_reader (Lstream *stream, unsigned char *data, Bytecount size)
 {
   Bytecount nread;
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  str->saved_errno = 0;
   if (str->end_pos >= 0)
     size = min (size, (Bytecount) (str->end_pos - str->current_pos));
-  nread = str->allow_quit ?
-    read_allowing_quit (str->fd, data, size) :
-    retry_read (str->fd, data, size);
+  nread = str->tls_state
+    ? tls_read (str->tls_state, data, size, str->allow_quit)
+    : (str->allow_quit ?
+       read_allowing_quit (str->fd, data, size) :
+       retry_read (str->fd, data, size));
   if (nread > 0)
     str->current_pos += nread;
   if (nread == 0)
     return 0; /* LSTREAM_EOF; */
   if (nread < 0)
-    return LSTREAM_ERROR;
+    {
+      str->saved_errno = errno;
+      return LSTREAM_ERROR;
+    }
   return nread;
 }
 
@@ -1158,6 +1298,8 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   Bytecount retval;
   int need_newline = 0;
+
+  str->saved_errno = 0;
 
   /* This function would be simple if it were not for the blasted
      PTY max-bytes stuff.  Why the hell can't they just have written
@@ -1185,9 +1327,11 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 
   /**** start of non-PTY-crap ****/
   if (size > 0)
-    retval = str->allow_quit ?
-      write_allowing_quit (str->fd, data, size) :
-      retry_write (str->fd, data, size);
+    retval = str->tls_state
+      ? tls_write (str->tls_state, data, size, str->allow_quit)
+      : (str->allow_quit ?
+	 write_allowing_quit (str->fd, data, size) :
+	 retry_write (str->fd, data, size));
   else
     retval = 0;
   if (retval < 0 && errno_would_block_p (errno) && str->blocked_ok)
@@ -1197,7 +1341,10 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
     }
   str->blocking_error_p = 0;
   if (retval < 0)
-    return LSTREAM_ERROR;
+    {
+      str->saved_errno = errno;
+      return LSTREAM_ERROR;
+    }
   /**** end non-PTY-crap ****/
 
   if (str->pty_flushing)
@@ -1229,7 +1376,10 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 		      return 0;
 		    }
 		  else
-		    return LSTREAM_ERROR;
+		    {
+		      str->saved_errno = errno;
+		      return LSTREAM_ERROR;
+		    }
 		}
 	      else
 		return retval;
@@ -1265,7 +1415,10 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
 		  return 0;
 		}
 	      else
-		return LSTREAM_ERROR;
+		{
+		  str->saved_errno = errno;
+		  return LSTREAM_ERROR;
+		}
 	    }
 	  else
 	    return retval;
@@ -1273,6 +1426,13 @@ filedesc_writer (Lstream *stream, const unsigned char *data,
     }
 
   return retval;
+}
+
+static int
+filedesc_error (Lstream *stream)
+{
+  struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  return str->saved_errno;
 }
 
 static int
@@ -1310,7 +1470,9 @@ static int
 filedesc_closer (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
-  if (str->closing)
+  if (str->tls_state)
+    return tls_close (str->tls_state);
+  else if (str->closing)
     return retry_close (str->fd);
   else
     return 0;
@@ -1338,6 +1500,32 @@ filedesc_stream_fd (Lstream *stream)
 {
   struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
   return str->fd;
+}
+
+static int
+filedesc_tls_p (Lstream *stream)
+{
+  struct filedesc_stream *str = FILEDESC_STREAM_DATA (stream);
+  return str->tls_state != NULL;
+}
+
+static int
+filedesc_tls_negotiater (Lstream *instream, Lstream *outstream,
+			 const Extbyte *host, Lisp_Object keylist)
+{
+  struct filedesc_stream *in_str, *out_str;
+
+  if (!LSTREAM_TYPE_P (outstream, filedesc))
+    invalid_argument ("STARTTLS applies to file descriptor streams only",
+		      wrap_lstream (outstream));
+
+  in_str = FILEDESC_STREAM_DATA (instream);
+  out_str = FILEDESC_STREAM_DATA (outstream);
+  in_str->tls_state = out_str->tls_state =
+    tls_negotiate (out_str->fd, host, keylist);
+  if (out_str->tls_state != NULL)
+    in_str->fd = out_str->fd = tls_get_fd (out_str->tls_state);
+  return out_str->tls_state != NULL;
 }
 
 /*********** read from a Lisp string ***********/
@@ -1434,16 +1622,8 @@ lisp_string_marker (Lisp_Object stream)
 
 /*********** a fixed buffer ***********/
 
-#define FIXED_BUFFER_STREAM_DATA(stream) \
-  LSTREAM_TYPE_DATA (stream, fixed_buffer)
-
-struct fixed_buffer_stream
-{
-  const unsigned char *inbuf;
-  unsigned char *outbuf;
-  Bytecount size;
-  Bytecount offset;
-};
+/* Much of the implementation of this is in lstream.h, since we need to
+   stack-allocate a fixed_buffer_lstream. */
 
 DEFINE_LSTREAM_IMPLEMENTATION ("fixed-buffer", fixed_buffer);
 
@@ -1452,7 +1632,7 @@ make_fixed_buffer_input_stream (const void *buf, Bytecount size)
 {
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "r");
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
-  str->inbuf = (const unsigned char *) buf;
+  str->inbuf = (const Ibyte *) buf;
   str->size = size;
   return wrap_lstream (lstr);
 }
@@ -1462,7 +1642,7 @@ make_fixed_buffer_output_stream (void *buf, Bytecount size)
 {
   Lstream *lstr = Lstream_new (lstream_fixed_buffer, "w");
   struct fixed_buffer_stream *str = FIXED_BUFFER_STREAM_DATA (lstr);
-  str->outbuf = (unsigned char *) buf;
+  str->outbuf = (Ibyte *) buf;
   str->size = size;
   return wrap_lstream (lstr);
 }
@@ -1503,14 +1683,14 @@ fixed_buffer_rewinder (Lstream *stream)
   return 0;
 }
 
-const unsigned char *
+const Ibyte *
 fixed_buffer_input_stream_ptr (Lstream *stream)
 {
   assert (stream->imp == lstream_fixed_buffer);
   return FIXED_BUFFER_STREAM_DATA (stream)->inbuf;
 }
 
-unsigned char *
+Ibyte *
 fixed_buffer_output_stream_ptr (Lstream *stream)
 {
   assert (stream->imp == lstream_fixed_buffer);
@@ -1524,18 +1704,29 @@ fixed_buffer_output_stream_ptr (Lstream *stream)
 
 struct resizing_buffer_stream
 {
-  unsigned char *buf;
+  Ibyte *buf;
   Bytecount allocked;
-  int max_stored;
-  int stored;
+  Bytecount stored;
+  Lisp_Object extent_info;
 };
 
-DEFINE_LSTREAM_IMPLEMENTATION ("resizing-buffer", resizing_buffer);
+static const struct memory_description resizing_buffer_lstream_description[] = {
+  { XD_LISP_OBJECT, offsetof (struct resizing_buffer_stream, extent_info) },
+  { XD_END }
+};
+
+DEFINE_LSTREAM_IMPLEMENTATION_WITH_DATA ("resizing-buffer", resizing_buffer);
 
 Lisp_Object
 make_resizing_buffer_output_stream (void)
 {
-  return wrap_lstream (Lstream_new (lstream_resizing_buffer, "w"));
+  Lstream *stream = Lstream_new (lstream_resizing_buffer, "w");
+
+  Lstream_set_buffering (stream, LSTREAM_UNBUFFERED, 0);
+  RESIZING_BUFFER_STREAM_DATA (stream)->extent_info
+    = allocate_extent_info ();
+
+  return wrap_lstream (stream);
 }
 
 static Bytecount
@@ -1543,17 +1734,34 @@ resizing_buffer_writer (Lstream *stream, const unsigned char *data,
 			Bytecount size)
 {
   struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
-  DO_REALLOC (str->buf, str->allocked, str->stored + size, unsigned char);
+  /* #### should implement this with mc_alloc() and its realloc. */
+  DO_REALLOC (str->buf, str->allocked, str->stored + size, Ibyte);  
   memcpy (str->buf + str->stored, data, size);
   str->stored += size;
-  str->max_stored = max (str->max_stored, str->stored);
   return size;
+}
+
+static Bytecount
+resizing_buffer_write_with_extents (Lstream *stream, Lisp_Object string,
+                                    Bytexpos position, Bytecount len)
+{
+  struct resizing_buffer_stream *str = RESIZING_BUFFER_STREAM_DATA (stream);
+  Bytecount start = str->stored;
+
+  DO_REALLOC (str->buf, str->allocked, str->stored + len, Ibyte);
+
+  memcpy (str->buf + str->stored, XSTRING_DATA (string) + position, len);
+  copy_string_extents (wrap_lstream (stream), string, start, position, len);
+
+  str->stored += len;
+  return len;
 }
 
 static int
 resizing_buffer_rewinder (Lstream *stream)
 {
   RESIZING_BUFFER_STREAM_DATA (stream)->stored = 0;
+  detach_all_extents (wrap_lstream (stream));
   return 0;
 }
 
@@ -1569,7 +1777,21 @@ resizing_buffer_closer (Lstream *stream)
   return 0;
 }
 
-unsigned char *
+static Lisp_Object
+resizing_buffer_marker (Lisp_Object stream)
+{
+  struct resizing_buffer_stream *str
+    = RESIZING_BUFFER_STREAM_DATA (XLSTREAM (stream));
+  return str->extent_info;
+}
+
+static struct extent_info *
+resizing_buffer_extent_info (Lstream *stream)
+{
+  return XEXTENT_INFO (RESIZING_BUFFER_STREAM_DATA (stream)->extent_info);
+}
+
+const Ibyte *
 resizing_buffer_stream_ptr (Lstream *stream)
 {
   return RESIZING_BUFFER_STREAM_DATA (stream)->buf;
@@ -1578,10 +1800,66 @@ resizing_buffer_stream_ptr (Lstream *stream)
 Lisp_Object
 resizing_buffer_to_lisp_string (Lstream *stream)
 {
-  return make_string (resizing_buffer_stream_ptr (stream),
-		     Lstream_byte_count (stream));
+  Lisp_Object result;
+
+  Lstream_flush (stream);
+  result = make_string (RESIZING_BUFFER_STREAM_DATA (stream)->buf,
+                        Lstream_byte_count (stream));
+  copy_string_extents (result, wrap_lstream (stream), 0, 0,
+                       Lstream_byte_count (stream));
+  return result;
 }
 
+DEFUN ("make-string-output-stream", Fmake_string_output_stream, 0, MANY, 0, /*
+Return an output stream for use with `print', and `write-sequence'.
+
+This output stream stores the characters written to it, for later access using
+`get-output-stream-string'.  Any extent information is preserved.
+
+Keyword argument ELEMENT-TYPE, if supplied, must be the symbol `character'.
+
+arguments: (&key (ELEMENT-TYPE character))
+*/
+        (int nargs, Lisp_Object *args))
+{
+  PARSE_KEYWORDS (Fmake_string_output_stream, nargs, args, 1, (element_type),
+                  (element_type = Qcharacter));
+
+  if (!EQ (element_type, Qcharacter))
+    {
+      signal_error (Qunimplemented, "More complex character types",
+                    element_type);
+    }
+
+  return make_resizing_buffer_output_stream ();
+}
+
+DEFUN ("get-output-stream-string", Fget_output_stream_string, 1, 1, 0, /*
+Given STREAM, a string-output stream, return its contents as a string.
+
+Rewind STREAM, such that future calls to `get-output-stream-string' no longer
+provide the same data.
+*/
+       (stream))
+{
+  Lisp_Object result;
+
+  CHECK_LSTREAM (stream);
+
+  if (!LSTREAM_TYPE_P (XLSTREAM (stream), resizing_buffer))
+    {
+      wtaerror ("Not a stream created with `make-string-output-stream",
+                stream);
+    }
+
+  result = resizing_buffer_to_lisp_string (XLSTREAM (stream));
+
+  Lstream_rewind (XLSTREAM (stream));
+
+  return result;
+}
+
+
 /*********** write to an unsigned-char dynarr ***********/
 
 /* Note: If you have a dynarr whose type is not unsigned_char_dynarr
@@ -1791,6 +2069,27 @@ lisp_buffer_writer (Lstream *stream, const Ibyte *data,
   return size;
 }
 
+static Bytecount
+lisp_buffer_write_with_extents (Lstream *stream, Lisp_Object string,
+                                Bytexpos position, Bytecount len)
+{
+  struct lisp_buffer_stream *str = LISP_BUFFER_STREAM_DATA (stream);
+  struct buffer *buf = XBUFFER (str->buffer);
+  Charbpos pos;
+
+  if (!BUFFER_LIVE_P (buf))
+    return 0; /* Fut. */
+
+  pos = marker_position (str->start);
+  pos += buffer_insert_string_1 (buf, pos, NULL, string, position, len,
+                                 string_offset_byte_to_char_len (string,
+                                                                 position,
+                                                                 len),
+                                 0);
+  set_marker_position (str->start, pos);
+  return len;
+}
+
 static int
 lisp_buffer_rewinder (Lstream *stream)
 {
@@ -1827,7 +2126,28 @@ lisp_buffer_stream_startpos (Lstream *stream)
 {
   return marker_position (LISP_BUFFER_STREAM_DATA (stream)->start);
 }
+
+DEFUN ("clear-output", Fclear_output, 0, 1, 0, /*
+Discard any buffered output data in OUTPUT-STREAM.
 
+OUTPUT-STREAM defaults to standard-output.
+*/
+       (output_stream))
+{
+  if (LSTREAMP (output_stream))
+    {
+      Lstream_rewind (XLSTREAM (output_stream));
+    }
+  else if (!(BUFFERP (output_stream) || MARKERP (output_stream) ||
+             FRAMEP (output_stream) || NILP (output_stream) ||
+             EQ (output_stream, Qt) ||
+             !NILP (Ffunctionp (output_stream))))
+    {
+      dead_wrong_type_argument (Qstreamp, output_stream);
+    }
+
+  return Qnil;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -1837,6 +2157,14 @@ void
 syms_of_lstream (void)
 {
   INIT_LISP_OBJECT (lstream);
+
+  DEFKEYWORD (Q_element_type);
+  DEFSYMBOL (Qstreamp);
+
+  DEFSUBR (Fmake_string_output_stream);
+  DEFSUBR (Fget_output_stream_string);
+
+  DEFSUBR (Fclear_output);
 }
 
 void
@@ -1857,10 +2185,13 @@ lstream_type_create (void)
 
   LSTREAM_HAS_METHOD (filedesc, reader);
   LSTREAM_HAS_METHOD (filedesc, writer);
+  LSTREAM_HAS_METHOD (filedesc, error);
   LSTREAM_HAS_METHOD (filedesc, was_blocked_p);
   LSTREAM_HAS_METHOD (filedesc, rewinder);
   LSTREAM_HAS_METHOD (filedesc, seekable_p);
   LSTREAM_HAS_METHOD (filedesc, closer);
+  LSTREAM_HAS_METHOD (filedesc, tls_p);
+  LSTREAM_HAS_METHOD (filedesc, tls_negotiater);
 
   LSTREAM_HAS_METHOD (lisp_string, reader);
   LSTREAM_HAS_METHOD (lisp_string, rewinder);
@@ -1871,6 +2202,9 @@ lstream_type_create (void)
   LSTREAM_HAS_METHOD (fixed_buffer, rewinder);
 
   LSTREAM_HAS_METHOD (resizing_buffer, writer);
+  LSTREAM_HAS_METHOD (resizing_buffer, write_with_extents);
+  LSTREAM_HAS_METHOD (resizing_buffer, extent_info);
+  LSTREAM_HAS_METHOD (resizing_buffer, marker);
   LSTREAM_HAS_METHOD (resizing_buffer, rewinder);
   LSTREAM_HAS_METHOD (resizing_buffer, closer);
 
@@ -1880,6 +2214,7 @@ lstream_type_create (void)
 
   LSTREAM_HAS_METHOD (lisp_buffer, reader);
   LSTREAM_HAS_METHOD (lisp_buffer, writer);
+  LSTREAM_HAS_METHOD (lisp_buffer, write_with_extents);
   LSTREAM_HAS_METHOD (lisp_buffer, rewinder);
   LSTREAM_HAS_METHOD (lisp_buffer, marker);
 }

@@ -259,6 +259,12 @@ struct prop_block
       int width;
       Lisp_Object glyph;
     } p_glyph;
+    
+    struct
+    {
+      Lisp_Object preprompt;
+      Lisp_Object prompt;
+    } p_minibuf_prompt;
 
   } data;
 };
@@ -1571,9 +1577,9 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 	  && CONSP (XCDR (entry))
 	  && STRINGP (XCAR (XCDR (entry))))
 	{
-	  Lisp_Object format = XCAR (XCDR (entry));
-	  Bytebpos len = XSTRING_LENGTH (format);
-	  Ibyte *src = XSTRING_DATA (format), *end = src + len;
+	  Lisp_Object fermat = XCAR (XCDR (entry));
+	  Bytebpos len = XSTRING_LENGTH (fermat);
+	  Ibyte *src = XSTRING_DATA (fermat), *end = src + len;
 	  Ibyte *result = alloca_ibytes (len);
 	  Ibyte *dst = result;
 
@@ -1590,7 +1596,8 @@ add_disp_table_entry_runes_1 (pos_data *data, Lisp_Object entry)
 		  switch (c)
 		    {
 		      /*case 'x':
-		      dst += long_to_string_base ((char *)dst, data->ch, 16);
+		      dst += fixnum_to_string ((char *)dst, len - dst - result,
+                                               c, 16, Qnil);
 		      break;*/
 		    case '%':
 		      dst += set_itext_ichar (dst, '%');
@@ -1692,30 +1699,77 @@ add_propagation_runes (prop_block_dynarr **prop, pos_data *data)
 	  {
 	    face_index old_findex = data->findex;
 	    Bytebpos byte_old_charpos = data->byte_charpos;
+            Boolint stop_after = NILP (pb->data.p_minibuf_prompt.preprompt);
+            Lisp_Object str = stop_after ? pb->data.p_minibuf_prompt.prompt
+              : pb->data.p_minibuf_prompt.preprompt;
+            struct window *w = XWINDOW (data->window);
 
-	    data->findex = DEFAULT_INDEX;
 	    data->byte_charpos = 0;
 	    data->cursor_type = NO_CURSOR;
 
-	    while (pb->data.p_string.len > 0)
-	      {
-		data->ch = itext_ichar (pb->data.p_string.str);
-		add_failed = add_ichar_rune (data);
+            /* This doesn't handle begin-glyphs and end-glyphs and so on. It
+               may be reasonable not to, given that we're a "propagation
+               glyph", but it's not intuitively clear either way. It is
+               clear that it should handle the face and the display
+               table. */
 
-		if (add_failed)
-		  {
-		    data->findex = old_findex;
-		    data->byte_charpos = byte_old_charpos;
-		    goto oops_no_more_space;
+            while (STRINGP (str))
+              {
+                Ibyte *pstart = XSTRING_DATA (str), *pp = pstart,
+                  *pend = pstart + XSTRING_LENGTH (str);
+                struct extent_fragment *ef
+                  = extent_fragment_new (str, XFRAME (w->frame));
+
+                while (pp < pend)
+                  {
+                    Lisp_Object face_dt, window_dt, entry = Qnil;
+                    face_index new_findex
+                      = data->findex = extent_fragment_update (w, ef,
+                                                               pp - pstart,
+                                                               Qnil);
+                    
+                    data->ch = itext_ichar (pp);
+                    get_display_tables (w, new_findex, &face_dt, &window_dt);
+
+                    if (!NILP (face_dt) || !NILP (window_dt))
+                      {
+                        entry = display_table_entry (data->ch, face_dt,
+                                                     window_dt);
+                      }
+
+                    /* If there is a display table entry for it, hand it off
+                       to add_disp_table_entry_runes and let it worry about
+                       it. */
+                    if (!NILP (entry) && !EQ (entry, make_char (data->ch)))
+                      {
+                        add_failed = add_disp_table_entry_runes (data, entry);
+                      }
+                    else
+                      {
+                        add_failed = add_ichar_rune (data);
+                      }
+
+                    if (add_failed)
+                      {
+                        data->findex = old_findex;
+                        data->byte_charpos = byte_old_charpos;
+                        extent_fragment_delete (ef);
+                        goto oops_no_more_space;
+                      }
+
+                    INC_IBYTEPTR (pp);
 		  }
-		else
-		  {
-		    /* Complicated equivalent of ptr++, len-- */
-		    Ibyte *oldpos = pb->data.p_string.str;
-		    INC_IBYTEPTR (pb->data.p_string.str);
-		    pb->data.p_string.len -= pb->data.p_string.str - oldpos;
-		  }
-	      }
+
+                extent_fragment_delete (ef);
+
+                if (stop_after)
+                  {
+                    break;
+                  }
+
+                str = pb->data.p_minibuf_prompt.prompt;
+                stop_after = 1;
+              }
 
 	    data->findex = old_findex;
 	    /* ##### FIXME FIXME FIXME -- Upon successful return from
@@ -5523,13 +5577,11 @@ Info on reentrancy crashes, with backtraces given:
       && start_pos == BUF_BEGV (b))
     {
       struct prop_block pb;
-      Lisp_Object string;
       prop = Dynarr_new (prop_block);
 
-      string = concat2 (Vminibuf_preprompt, Vminibuf_prompt);
       pb.type = PROP_MINIBUF_PROMPT;
-      pb.data.p_string.str = XSTRING_DATA (string);
-      pb.data.p_string.len = XSTRING_LENGTH (string);
+      pb.data.p_minibuf_prompt.preprompt = Vminibuf_preprompt;
+      pb.data.p_minibuf_prompt.prompt = Vminibuf_prompt;
       Dynarr_add (prop, pb);
     }
   else
@@ -7252,7 +7304,7 @@ eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
    line-number-mode is on.  The first line in the buffer is counted as
    1.  If narrowing is in effect, the lines are counted from the
    beginning of the visible portion of the buffer.  */
-static Ascbyte *
+static Ibyte *
 window_line_number (struct window *w, int type)
 {
   struct device *d = XDEVICE (XFRAME (w->frame)->device);
@@ -7269,12 +7321,13 @@ window_line_number (struct window *w, int type)
      : marker_position (w->pointm[type]));
   EMACS_INT line;
 
-  line = buffer_line_number (b, pos, 1);
+  line = buffer_line_number (b, pos, 1, 1);
 
   {
-    static Ascbyte window_line_number_buf[DECIMAL_PRINT_SIZE (long)];
+    static Ibyte window_line_number_buf[DECIMAL_PRINT_SIZE (Fixnum)];
 
-    long_to_string (window_line_number_buf, line + 1);
+    fixnum_to_string (window_line_number_buf, sizeof (window_line_number_buf),
+                      line + 1, 10, Qnil);
 
     return window_line_number_buf;
   }
@@ -7321,13 +7374,11 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 		    ? BUF_PT (b)
 		    : marker_position (w->pointm[type]);
 	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
-	Ascbyte buf[DECIMAL_PRINT_SIZE (long)];
+	Ibyte buf[DECIMAL_PRINT_SIZE (long)];
 
-	long_to_string (buf, col);
-
-	Dynarr_add_many (mode_spec_ibyte_string,
-			 (const Ibyte *) buf, strlen (buf));
-
+	Dynarr_add_many (mode_spec_ibyte_string, buf,
+                         fixnum_to_string (buf, sizeof (buf), col, 10,
+                                           Vfixnum_to_majuscule_ascii));
 	goto decode_mode_spec_done;
       }
       /* print the file coding system */
@@ -7346,7 +7397,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 
       /* print the current line number */
     case 'l':
-      str = window_line_number (w, type);
+      str = (const Ascbyte *) window_line_number (w, type);
       break;
 
       /* print value of mode-name (obsolete) */
@@ -7359,12 +7410,20 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 #ifdef HAVE_TTY
       {
 	struct frame *f = XFRAME (w->frame);
-	if (FRAME_TTY_P (f) && f->order_count > 1 && f->order_count <= 99999999)
+	if (FRAME_TTY_P (f) && f->order_count > 1
+            && f->order_count <= 99999999)
 	  {
 	    /* Naughty, naughty */
-	    Ascbyte *writable_str = alloca_array (Ascbyte, 10);
-	    sprintf (writable_str, "-%d", f->order_count);
-	    str = writable_str;
+	    Ibyte writable_str[DECIMAL_PRINT_SIZE (f->order_count)];
+
+            Dynarr_add_many (mode_spec_ibyte_string, writable_str,
+                             fixnum_to_string (writable_str,
+                                               sizeof (writable_str),
+                                               /* Put a minus before the
+                                                  number. */
+                                               -(f->order_count), 10,
+                                               Vfixnum_to_majuscule_ascii));
+            goto decode_mode_spec_done;
 	  }
       }
 #endif /* HAVE_TTY */
@@ -7380,10 +7439,8 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print %, * or hyphen, if buffer is read-only, modified or neither */
     case '*':
       str = (!NILP (b->read_only)
-	     ? "%"
-	     : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
-		? "*"
-		: "-"));
+	     ? "%" : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+                      ? "*" : "-"));
       break;
 
       /* print * or hyphen -- XEmacs change to allow a buffer to be
@@ -8236,12 +8293,15 @@ start_with_line_at_pixpos (struct window *w, Charbpos point, int pixpos)
       if (pixheight < 0)
 	{
 	  w->line_cache_validation_override--;
-	  if (-pixheight > point_line_height)
-	    /* We can't make the target line cover pixpos, so put it
-	       above pixpos.  That way it will at least be visible. */
-	    return prev_pos;
-	  else
-	    return cur_pos;
+          /* I see no reason why cur_pos can't be before BEGV
+             here, so check for it. It's not clear to me whether
+             prev_pos could be before BEGV, so check that as well. */
+          if (-pixheight > point_line_height)
+            /* We can't make the target line cover pixpos, so put it
+               above pixpos.  That way it will at least be visible. */
+            return (prev_pos <= BUF_BEGV (b)) ? BUF_BEGV (b) : prev_pos;
+          else
+            return (cur_pos <= BUF_BEGV (b)) ? BUF_BEGV (b) : cur_pos;
 	}
 
       cur_elt--;

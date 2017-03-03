@@ -3,7 +3,7 @@
 @c Copyright (C) 1995, 1996 Ben Wing.
 @c See the file lispref.texi for copying conditions.
 @setfilename ../../info/toolbar.info
-@node Toolbar, Gutter, Dialog Boxes, top
+@node Toolbar, Gutter, Dialog Boxes, Top
 @chapter Toolbar
 @cindex toolbar
 
@@ -16,7 +16,7 @@
 * Other Toolbar Variables::	Controlling the size of toolbars.
 @end menu
 
-@node Toolbar Intro
+@node Toolbar Intro, Creating Toolbar, Toolbar, Toolbar
 @section Toolbar Intro
 
 A @dfn{toolbar} is a bar of icons displayed along one edge of a frame.
@@ -59,7 +59,7 @@ from the default just sets the position-specific specifiers, and if
 the user sets the default toolbar to the same position, it will just
 not be visible.
 
-@node Creating Toolbar
+@node Creating Toolbar, Toolbar Descriptor Format, Toolbar Intro, Toolbar
 @section Creating Toolbar
 
 @defun make-toolbar-specifier spec-list
@@ -84,7 +84,7 @@ The default toolbar is created in @file{toolbar-items.el}.  An example
 which modifies an existing toolbar (by adding a button) is presented in
 the specifier section @xref{Simple Specifier Usage}.
 
-@node Toolbar Descriptor Format
+@node Toolbar Descriptor Format, Specifying the Toolbar, Creating Toolbar, Toolbar
 @section Toolbar Descriptor Format
 
 The contents of a toolbar are specified using a @dfn{toolbar descriptor}.
@@ -197,7 +197,7 @@ whole, use @code{check-valid-instantiator} with a specifier type of
 @code{toolbar}.
 @end defun
 
-@node Specifying the Toolbar
+@node Specifying the Toolbar, Other Toolbar Variables, Toolbar Descriptor Format, Toolbar
 @section Specifying the Toolbar
 
 In order to specify the contents of a toolbar, set one of the specifier
@@ -280,7 +280,7 @@ variables described above, and their valid instantiators are
 toolbar descriptors (@pxref{Toolbar Descriptor Format}).
 @end defun
 
-@node Other Toolbar Variables
+@node Other Toolbar Variables,  , Specifying the Toolbar, Toolbar
 @section Other Toolbar Variables
 
 The variables to control the toolbar thickness, visibility status, and

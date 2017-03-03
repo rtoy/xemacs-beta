@@ -443,6 +443,7 @@ typedef struct
 
 #endif /* not NMCBEDRAGBEGIN */
 
+#if W32API_INSTALLED_VER < W32API_VER(3,14)
 typedef struct tagNMDATETIMEFORMATA
 {
   NMHDR nmhdr;
@@ -460,6 +461,7 @@ typedef struct tagNMDATETIMEFORMATW
   LPCWSTR pszDisplay;
   WCHAR szDisplay[64];
 } NMDATETIMEFORMATW, FAR * LPNMDATETIMEFORMATW;
+#endif
 
 #if W32API_INSTALLED_VER < W32API_VER(2,2)
 
@@ -555,6 +557,7 @@ typedef struct tagNMTTDISPINFOW
 #define OIC_WINLOGO         32517
 #endif
 
+#if W32API_INSTALLED_VER < W32API_VER(3,14)
 /* More Cygwin stupidity: Current w32api's winuser.h has IME message
    constants and they conflict with imm.h. (NOTE: Currently fixed, but
    I'm sure the problems were present post 1.0.) */
@@ -570,6 +573,7 @@ typedef struct tagNMTTDISPINFOW
 #undef WM_IME_CHAR
 #undef WM_IME_KEYDOWN
 #undef WM_IME_KEYUP
+#endif
 
 #include <imm.h>
 
@@ -584,6 +588,10 @@ typedef struct _SHQUERYRBINFO
 
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEW;
 typedef LPCDLGTEMPLATE LPCDLGTEMPLATEA;
+
+#if W32API_VER(3,14) <= W32API_INSTALLED_VER
+typedef LPCVOID PCVOID;
+#endif
 
 #else /* !CYGWIN_HEADERS */
 

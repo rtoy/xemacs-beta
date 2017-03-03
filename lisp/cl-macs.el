@@ -46,7 +46,7 @@
 ;;; Code:
 
 (defmacro cl-pop2 (place)
-  (list 'prog1 (list 'car (list 'cdr place))
+  (list 'prog1 (list 'car-safe (list 'cdr-safe place))
 	(list 'setq place (list 'cdr (list 'cdr place)))))
 (put 'cl-pop2 'edebug-form-spec 'edebug-sexps)
 
@@ -229,8 +229,12 @@ and BODY is implicitly surrounded by (block NAME ...).
    macro expansion time, reflects all the arguments supplied to the macro,
    as if it had been declared with a single &rest argument.
 
-   &environment specifies local semantics for various macros for use within
-   the expansion of BODY.  See the ENVIRONMENT argument to `macroexpand'.
+   &environment allows access to the macro environment at the time of
+   expansion; it is most relevant when it's necessary to force macro expansion
+   of the body of a form at the time of macro expansion of its top level.
+   &environment is followed by variable name, and this variable will be bound
+   to the value of the macro environment within BODY. See the ENVIRONMENT
+   argument to `macroexpand'.
 
 -- The macro arg list syntax allows for \"destructuring\" -- see also
    `destructuring-bind', which destructures exactly like `defmacro*', and
@@ -299,9 +303,9 @@ ARGLIST allows full Common Lisp conventions."
 	   ;; Clean the list
 	   (let ((p (last arg))) (if (cdr p) (setcdr p (list '&rest (cdr p)))))
 	   (if (setq junk (cadr (memq '&cl-defs arg)))
-	       (setq arg (delq '&cl-defs (delq junk arg))))
+	       (setq arg (delete* '&cl-defs (delete* junk arg))))
 	   (if (memq '&cl-quote arg)
-	       (setq arg (delq '&cl-quote arg)))
+	       (setq arg (delete* '&cl-quote arg)))
 	   (mapcar 'cl-upcase-arg arg)))
 	(t arg)))                         ; Maybe we are in initializer
 
@@ -346,13 +350,13 @@ block."
     (setq args (if (listp args) (copy-list args) (list '&rest args)))
     (let ((p (last args))) (if (cdr p) (setcdr p (list '&rest (cdr p)))))
     (if (setq bind-defs (cadr (memq '&cl-defs args)))
-	(setq args (delq '&cl-defs (delq bind-defs args))
+	(setq args (delete* '&cl-defs (delete* bind-defs args))
 	      bind-defs (cadr bind-defs)))
     (if (setq bind-enquote (memq '&cl-quote args))
-	(setq args (delq '&cl-quote args)))
+	(setq args (delete* '&cl-quote args)))
     (if (memq '&whole args) (error "&whole not currently implemented"))
     (let* ((p (memq '&environment args)) (v (cadr p)))
-      (if p (setq args (nconc (delq (car p) (delq v args))
+      (if p (setq args (nconc (delete* (car p) (delete* v args))
                               `(&aux (,v byte-compile-macro-environment))))))
     (while (and args (symbolp (car args))
 		(not (memq (car args) '(nil &rest &body &key &aux)))
@@ -715,6 +719,8 @@ not inside other functions called from BODY."
     ;; as such it can eliminate it if that's appropriate:
     (put (cdar cl-active-block-names) 'cl-block-name name)
     `(catch ',(cdar cl-active-block-names)
+      ;; Can't use &environment, since #'block is used in
+      ;; #'cl-transform-lambda.
       ,(cl-macroexpand-all body byte-compile-macro-environment))))
 
 ;;;###autoload
@@ -1693,7 +1699,7 @@ a `let' form, except that the list of symbols can be computed at run-time."
 	      '(cl-progv-after))))
 
 ;;;###autoload
-(defmacro* macrolet ((&rest macros) &body form)
+(defmacro* macrolet ((&rest macros) &body form &environment env)
   "Make temporary macro definitions.
 This is like `flet', but for macros instead of functions."
   (cl-macroexpand-all (cons 'progn form)
@@ -1704,10 +1710,10 @@ This is like `flet', but for macros instead of functions."
                          collect
                          (list* name 'lambda (cdr (cl-transform-lambda details
                                                                        name))))
-                       byte-compile-macro-environment)))
+                       env)))
 
 ;;;###autoload
-(defmacro* symbol-macrolet ((&rest symbol-macros) &body form)
+(defmacro* symbol-macrolet ((&rest symbol-macros) &body form &environment env)
   "Make temporary symbol macro definitions.
 Elements in SYMBOL-MACROS look like (NAME EXPANSION).
 Within the body FORMs, a reference to NAME is replaced with its EXPANSION,
@@ -1717,11 +1723,11 @@ and (setq NAME ...) acts like (setf EXPANSION ...)."
 			       for (name expansion) in symbol-macros
 			       do (check-type name symbol)
 			       collect (list (eq-hash name) expansion))
-			     byte-compile-macro-environment)))
+			     env)))
 
 (defvar cl-closure-vars nil)
 ;;;###autoload
-(defmacro lexical-let (bindings &rest body)
+(defmacro* lexical-let (bindings &rest body &environment env)
   "Like `let', but lexically scoped.
 The main visible difference is that lambdas inside BODY will create
 lexical closures as in Common Lisp."
@@ -1743,7 +1749,7 @@ lexical closures as in Common Lisp."
 				    t))
 			  vars)
 		  (list '(defun . cl-defun-expander))
-		  byte-compile-macro-environment))))
+		  env))))
     (if (not (get (car (last cl-closure-vars)) 'used))
 	(list 'let (mapcar #'(lambda (x) (list (caddr x) (cadr x))) vars)
 	      (sublis (mapcar #'(lambda (x)
@@ -1863,39 +1869,40 @@ Returns the first of the multiple values given by FORM."
 		    byte-compile-bound-variables))))
 
 	((eq (car-safe spec) 'inline)
-	 (while (setq spec (cdr spec))
-	   (let ((assq (cdr (assq (car spec) byte-compile-macro-environment))))
-	     (if (and (consp assq) (eq (nth 1 (nth 1 assq)) 'cl-labels-args)
-		      (atom (setq assq (nth 2 (nth 2 assq)))))
-		 ;; It's a label, and we're using the labels
-		 ;; implementation in bytecomp.el. Tell the compiler
-		 ;; to inline it, don't mark the symbol to be inlined
-		 ;; globally.
-		 (setf (getf (aref (compiled-function-constants assq) 0)
-                             'byte-optimizer)
-                       'byte-compile-inline-expand)
-	       (or (memq (get (car spec) 'byte-optimizer)
-			 '(nil byte-compile-inline-expand))
-		   (error
-		    "%s already has a byte-optimizer, can't make it inline"
-		    (car spec)))
-	       (put (car spec) 'byte-optimizer 'byte-compile-inline-expand)))))
+         (while (setq spec (cdr spec))
+           (let* ((assq (cdr (assq (car spec)
+                                   byte-compile-macro-environment)))
+                  (symbol (if (and (consp assq)
+                                   (eq (nth 1 (nth 1 assq))
+                                       'byte-compile-labels-args))
+                              ;; It's a label, and we're using the labels
+                              ;; implementation in bytecomp.el. Tell the
+                              ;; compiler to inline it, don't mark the
+                              ;; symbol to be inlined globally.
+                              (nth 1 (nth 1 (nth 3 assq)))
+                            (car spec))))
+             (or (memq (get symbol 'byte-optimizer)
+                       '(nil byte-compile-inline-expand))
+                 (error
+                  "%s already has a byte-optimizer, can't make it inline"
+                  symbol))
+             (put symbol 'byte-optimizer 'byte-compile-inline-expand))))
 	((eq (car-safe spec) 'notinline)
 	 (while (setq spec (cdr spec))
-	   (let ((assq (cdr (assq (car spec) byte-compile-macro-environment))))
-	     (if (and (consp assq) (eq (nth 1 (nth 1 assq)) 'cl-labels-args)
-		      (atom (setq assq (nth 2 (nth 2 assq)))))
-		 ;; It's a label, and we're using the labels
-		 ;; implementation in bytecomp.el. Tell the compiler
-		 ;; not to inline it.
-                 (if (eq 'byte-compile-inline-expand
-                         (getf (aref (compiled-function-constants assq) 0)
-                               'byte-optimizer))
-                     (remf (aref (compiled-function-constants assq) 0)
-                           'byte-optimizer))
-	       (if (eq (get (car spec) 'byte-optimizer)
-		       'byte-compile-inline-expand)
-		   (put (car spec) 'byte-optimizer nil))))))
+           (let* ((assq (cdr (assq (car spec)
+                                   byte-compile-macro-environment)))
+                  (symbol (if (and (consp assq)
+                                   (eq (nth 1 (nth 1 assq))
+                                       'byte-compile-labels-args))
+                              ;; It's a label, and we're using the labels
+                              ;; implementation in bytecomp.el. Tell the
+                              ;; compiler not to inline it, don't mark the
+                              ;; symbol to be notinline globally.
+                              (nth 1 (nth 1 (nth 3 assq)))
+                            (car spec))))
+             (if (eq (get symbol 'byte-optimizer)
+                     'byte-compile-inline-expand)
+                 (put symbol 'byte-optimizer nil)))))
 	((eq (car-safe spec) 'optimize)
 	 (let ((speed (assq (nth 1 (assq 'speed (cdr spec)))
 			    '((0 . nil) (1 . t) (2 . t) (3 . t))))
@@ -1916,7 +1923,7 @@ Returns the first of the multiple values given by FORM."
 	   (if (consp (car spec))
 	       (if (eq (cadar spec) 0)
 		   (setq byte-compile-warnings
-			 (delq (caar spec) byte-compile-warnings))
+			 (delete* (caar spec) byte-compile-warnings))
 		 (setq byte-compile-warnings
 		       (adjoin (caar spec) byte-compile-warnings)))))))
   nil)
@@ -2456,14 +2463,14 @@ before assigning any PLACEs to the corresponding values."
 ;;;###autoload
 (defun cl-do-pop (place)
   (if (cl-simple-expr-p place)
-      (list 'prog1 (list 'car place) (list 'setf place (list 'cdr place)))
+      (list 'prog1 (list 'car-safe place) (list 'setf place (list 'cdr place)))
     (let* ((method (cl-setf-do-modify place t))
 	   (temp (gensym "--pop--")))
       (list 'let*
 	    (append (car method)
 		    (list (list temp (nth 2 method))))
 	    (list 'prog1
-		  (list 'car temp)
+		  (list 'car-safe temp)
 		  (cl-setf-do-store (nth 1 method) (list 'cdr temp)))))))
 
 ;;;###autoload
@@ -2806,7 +2813,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 				     (caar include-descs) include))
 			  old-descs)
 		    (pop include-descs)))
-	  (setq descs (append old-descs (delq (assq 'cl-tag-slot descs) descs))
+	  (setq descs (append old-descs (delete* (assq 'cl-tag-slot descs) descs))
 		type (car inc-type)
 		named (assq 'cl-tag-slot descs))
 	  (if (cadr inc-type) (setq tag name named t))
@@ -2822,7 +2829,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 		(error "Illegal :type specifier: %s" type))
 	    (if named (setq tag name)))
 	(setq type 'vector named 'true)))
-    (or named (setq descs (delq (assq 'cl-tag-slot descs) descs)))
+    (or named (setq descs (delete* (assq 'cl-tag-slot descs) descs)))
     (push (list 'defvar tag-symbol) forms)
     (setq pred-form (and named
 			 (let ((pos (- (length descs)
@@ -2896,8 +2903,8 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 		(push (cons copier t) side-eff)))
     (if constructor
 	(push (list constructor
-		       (cons '&key (delq nil (copy-sequence slots))))
-		 constrs))
+                    (cons '&key (remove* nil slots)))
+              constrs))
     (while constrs
       (let* ((name (caar constrs))
 	     (args (cadr (pop constrs)))
@@ -2988,7 +2995,7 @@ The type name can then be used in `typecase', `check-type', etc."
 	   (cl-make-type-test val (apply (get (car type) 'cl-deftype-handler)
 					 (cdr type))))
 	  ((memq (car-safe type) '(integer float real number))
-	   (delq t (list 'and (cl-make-type-test val (car type))
+	   (delete* t (list 'and (cl-make-type-test val (car type))
 			 (if (memq (cadr type) '(* nil)) t
 			   (if (consp (cadr type)) (list '> val (caadr type))
 			     (list '>= val (cadr type))))
@@ -3027,8 +3034,10 @@ STRING is an optional description of the desired type."
 	       (condition-case nil
 		   `(while (not ,test)
 		     ,(macroexpand `(setf ,place ,signal-error)))
+                 ;; Common Lisp requires that PLACE be setfable, but this is
+                 ;; never a restriction that this package has enforced.
 		 (error
-		  `(if ,test (progn ,signal-error nil))))))
+		  `(if (not ,test) (progn ,signal-error nil))))))
 	 (if (eq temp place) `(progn ,body nil)
 	   `(let ((,temp ,place)) ,body nil)))))
 
@@ -3086,7 +3095,7 @@ and then returning foo."
   (list 'eval-when '(compile load eval)
 	(cl-transform-function-property
 	 func 'cl-compiler-macro
-	 (cons (if (memq '&whole args) (delq '&whole args)
+	 (cons (if (memq '&whole args) (delete* '&whole args)
 		 (cons '--cl-whole-arg-- args)) body))
 	(list 'or (list 'get (list 'quote func) '(quote byte-compile))
 	      (list 'put (list 'quote func) '(quote byte-compile)
@@ -3196,7 +3205,7 @@ surrounded by (block NAME ...)."
     ((most-positive-fixnum-on-32-bit-machines () (1- (lsh 1 30)))
      (most-negative-fixnum-on-32-bit-machines ()
        (lognot (most-positive-fixnum-on-32-bit-machines))))
-  (defun cl-non-fixnum-number-p (object)
+  (defun cl-non-immediate-number-p (object)
     "Return t if OBJECT is a number not guaranteed to be immediate."
     (and (numberp object)
 	 (or (not (fixnump object))
@@ -3211,15 +3220,66 @@ surrounded by (block NAME ...)."
 (define-compiler-macro eql (&whole form a b)
   (cond ((eq (cl-const-expr-p a) t)
 	 (let ((val (cl-const-expr-val a)))
-	   (if (cl-non-fixnum-number-p val)
+	   (if (cl-non-immediate-number-p val)
 	       (list 'equal a b)
 	     (list 'eq a b))))
 	((eq (cl-const-expr-p b) t)
 	 (let ((val (cl-const-expr-val b)))
-	   (if (cl-non-fixnum-number-p val)
+	   (if (cl-non-immediate-number-p val)
 	       (list 'equal a b)
 	     (list 'eq a b))))
 	(t form)))
+
+(defun cl-equal-equivalent-to-eq-p (object)
+  (or (symbolp object) (characterp object)
+      (and (fixnump object) (not (cl-non-immediate-number-p object)))))
+
+(defun cl-car-or-pi (object)
+  (if (consp object) (car object) pi))
+
+(defun cl-cdr-or-pi (object)
+  (if (consp object) (cdr object) pi))
+
+(define-compiler-macro equal (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi)))
+    (cons 'eq (cdr form)))
+   (t form)))
+
+(define-compiler-macro member (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (every #'cl-equal-equivalent-to-eq-p
+               (cl-const-expr-val (pop args) '(1.0))))
+    (cons 'memq (cdr form)))
+   (t form)))
+
+(define-compiler-macro assoc (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (not (find-if-not #'cl-equal-equivalent-to-eq-p
+                          (cl-const-expr-val (pop args) '((1.0 . nil)))
+                          :key #'cl-car-or-pi)))
+    (cons 'assq (cdr form)))
+   (t form)))
+
+(define-compiler-macro rassoc (&whole form &rest args)
+  (cond
+   ((not (eql (length form) 3))
+    form)
+   ((or (cl-equal-equivalent-to-eq-p (cl-const-expr-val (pop args) pi))
+        (not (find-if-not #'cl-equal-equivalent-to-eq-p
+                            (cl-const-expr-val (pop args) '((nil . 1.0)))
+                            :key #'cl-cdr-or-pi)))
+    (cons 'rassq (cdr form)))
+   (t form)))
 
 (macrolet
     ((define-star-compiler-macros (&rest macros)
@@ -3249,12 +3309,12 @@ surrounded by (block NAME ...)."
                                  `(,',equal-function ,item ,list))
                                 ((and (eq test 'eql)
                                       (not (eq not-constant item-val)))
-                                 (if (cl-non-fixnum-number-p item-val)
+                                 (if (cl-non-immediate-number-p item-val)
                                      `(,',equal-function ,item ,list)
                                    `(,',eq-function ,item ,list)))
                                 ((and (eq test 'eql) (not (eq not-constant
                                                               list-val)))
-                                 (if (some 'cl-non-fixnum-number-p list-val)
+                                 (if (some 'cl-non-immediate-number-p list-val)
                                      `(,',equal-function ,item ,list)
                                    ;; This compiler macro used to limit
                                    ;; calls to ,,eq-function to lists where
@@ -3306,7 +3366,7 @@ surrounded by (block NAME ...)."
           ((not-constant '#:not-constant))
         (let ((cl-const-expr-val (cl-const-expr-val (nth 1 form) not-constant)))
           (if (and (cdr form) (not (eq not-constant cl-const-expr-val))
-                   (not (cl-non-fixnum-number-p cl-const-expr-val)))
+                   (not (cl-non-immediate-number-p cl-const-expr-val)))
               (cons 'delete* (cdr form))
             `(delete* ,@(cdr form) :test #'eq))))
     form))
@@ -3329,7 +3389,7 @@ surrounded by (block NAME ...)."
           ((not-constant '#:not-constant))
         (let ((cl-const-expr-val (cl-const-expr-val (nth 1 form) not-constant)))
           (if (and (cdr form) (not (eq not-constant cl-const-expr-val))
-                   (not (cl-non-fixnum-number-p cl-const-expr-val)))
+                   (not (cl-non-immediate-number-p cl-const-expr-val)))
               (cons 'remove* (cdr form))
             `(remove* ,@(cdr form) :test #'eq))))
     form))
@@ -3459,28 +3519,87 @@ non-standard :if and :if-not keywords at compile time."
 
 (define-compiler-macro apply-partially (&whole form &rest args)
   "Generate a #'make-byte-code call for #'apply-partially, if appropriate."
-  (if (< (length args) 1)
-      form
-    (if (cl-const-exprs-p args)
-        `#'(lambda (&rest args) (apply ,@args args))
-      (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
-             (compiled (byte-compile-sexp
-                        `#'(lambda (&rest args) (apply ,@placeholders args)))))
-        (assert (equal (intersection
-                        (mapcar 'quote-maybe (compiled-function-constants
-                                              compiled))
-                        placeholders :test 'equal :stable t)
-                       placeholders)
-                t "This macro requires that the relative order is the same\
-in the constants vector and in the arguments")
+  (when (< (length args) 1)
+    (return-from apply-partially form))
+  (let* ((values (cdr args)) (count (length values))
+         (placeholders (mapcar #'quote-maybe (mapcar #'gensym values)))
+         (sublis (pairlis placeholders values))
+         restp lambda arglist bindings compiled)
+    (when (and (eq 'function (car-safe (nth 0 args)))
+               (eq 'lambda (car-safe (nth 1 (nth 0 args)))))
+      (setq lambda (nth 1 (nth 0 args))
+            arglist (nth 1 lambda))
+      (when (> count (function-max-args lambda))
+        (byte-compile-warn
+         "attempt to apply-partially %S with too many arguments" lambda)
+        (return-from apply-partially form))
+      (while (and arglist placeholders)
+	(cond ((eq (car arglist) '&optional)
+	       (if restp
+                   (error 'syntax-error
+                          "&optional found after &rest in %S" lambda))
+	       (if (null (cdr arglist))
+		   (error 'syntax-error "nothing after &optional in %S"
+                          lambda)))
+	      ((eq (car arglist) '&rest)
+	       (if (null (cdr arglist))
+		   (error 'syntax-error "nothing after &rest in %S" lambda))
+	       (if (cdr (cdr arglist))
+		   (error 'syntax-error "multiple vars after &rest in %S"
+                          lambda))
+	       (setq restp t))
+	      (restp
+	       (setq bindings (cons (list (car arglist)
+					  (and placeholders
+                                               (cons 'list placeholders)))
+				    bindings)
+		     placeholders nil))
+	      (t
+	       (setq bindings (cons (list (car arglist) (car placeholders))
+				    bindings)
+		     placeholders (cdr placeholders))))
+	(setq arglist (cdr arglist)))
+      (when (cl-const-exprs-p values)
+        ;; Values are constant, no need to construct the compiled function
+        ;; at runtime.
+        (return-from apply-partially
+          (byte-compile-lambda
+           `(lambda ,arglist (let ,(sublis sublis (nreverse bindings)
+                                           :test #'equal)
+                               ,@(cddr lambda))))))
+      (setq compiled (byte-compile-lambda
+                      `(lambda ,arglist (let ,(nreverse bindings)
+                                          ,@(cddr lambda)))))
+      (return-from apply-partially
         `(make-byte-code
           ',(compiled-function-arglist compiled)
           ,(compiled-function-instructions compiled)
-          (vector ,@(sublis (pairlis placeholders args)
+          (vector ,@(sublis sublis
                             (mapcar 'quote-maybe
                                     (compiled-function-constants compiled))
                             :test 'equal))
-          ,(compiled-function-stack-depth compiled))))))
+          ,(compiled-function-stack-depth compiled))))
+    (if (cl-const-exprs-p args)
+        `#'(lambda (&rest args) (apply ,@args args))
+        (let* ((placeholders (mapcar 'quote-maybe (mapcar 'gensym args)))
+               (compiled (byte-compile-sexp
+                          `#'(lambda (&rest args)
+                               (apply ,@placeholders args)))))
+          (assert (equal (intersection
+                          (mapcar 'quote-maybe (compiled-function-constants
+                                                compiled))
+                          placeholders :test 'equal :stable t)
+                         placeholders)
+                  t "This macro requires that the relative order is the same\
+in the constants vector and in the arguments")
+          `(make-byte-code
+            ',(compiled-function-arglist compiled)
+            ,(compiled-function-instructions compiled)
+            (vector ,@(sublis (pairlis placeholders args)
+                              (mapcar 'quote-maybe
+                                      (compiled-function-constants compiled))
+                              :test 'equal))
+            ,(compiled-function-stack-depth compiled))))))
 
 (define-compiler-macro delete-dups (list)
   `(delete-duplicates (the list ,list) :test #'equal :from-end t))
@@ -3519,7 +3638,7 @@ in the constants vector and in the arguments")
 		(cl-seq begin))
 	  (while cl-seq
 	    (setq cl-seq (setcdr cl-seq
-				 (delq (car cl-seq) (cdr cl-seq)))))
+				 (delete* (car cl-seq) (cdr cl-seq)))))
 	  begin))
        ((or (plists-equal cl-keys '(:test 'equal) t)
 	    (plists-equal cl-keys '(:test #'equal) t))
@@ -3603,8 +3722,7 @@ the byte optimizer in those cases."
 	   ;; zero-length.
 	   (cond
 	    ((member x '("" #* []))
-	     ;; No need to protect against multiple evaluation here:
-	     `(and (member ,original-y '("" #* [])) t))
+	     `(and (member ,(find x (cdr form) :test-not #'eq) '("" #* [])) t))
 	    (t form)))
 	  ((unordered-check (and (numberp x) (not (cl-const-expr-p y))))
 	   `(,@let-form
@@ -3794,6 +3912,35 @@ the byte optimizer in those cases."
       (list* 'intersection (pop cl-keys) (pop cl-keys) :stable t cl-keys)
     form))
 
+(define-compiler-macro princ (&whole form object &optional stream)
+  "When passing `princ' a string, call `write-sequence' instead.
+
+This avoids the resource- and time-intensive initialization of the printer,
+and functions equivalently. Such code will not run on 21.4, but 21.4 will
+not normally encounter it, and the error message will be clear enough (that
+`write-sequence' has a void function definition) in the odd event that it
+does."
+  (cond ((not (<= 2 (length form) 3))
+	 form)
+	((or (stringp object)
+	     (member (car-safe object)
+		     '(buffer-string buffer-substring concat format gettext
+		       key-description make-string mapconcat
+		       substitute-command-keys substring-no-properties
+		       symbol-name text-char-description string)))
+	 (cons 'write-sequence (cdr form)))
+	((member (car-safe object) '(substring subseq))
+	 `(write-sequence ,(nth 1 object) ,stream :start ,(nth 2 object)
+	                  ,@(if (nth 3 object) `((:end ,(nth 3 object))))))
+	(t form)))
+
+;; No point doing this, if terpri is a loop hotspot the Lisp programmer is
+;; doing something wrong. We win relatively by having one symbol plus a
+;; funcall instruction in the compiled function rather than a symbol, a
+;; funcall instruction, a character, and two not instructions.
+;(define-compiler-macro terpri (&whole form &optional stream)
+;  `(not (not (write-char ?\n ,@(cdr form)))))
+
 (map nil
      #'(lambda (function)
          ;; There are byte codes for the two-argument versions of these
@@ -3887,7 +4034,7 @@ interpreted code, `load-time-value' is equivalent to `progn'."
   (list 'progn form))
 
 ;;;###autoload
-(defmacro labels (bindings &rest body)
+(defmacro* labels (bindings &rest body &environment env)
   "Make temporary function bindings.
 
 This is like `flet', except the bindings are lexical instead of dynamic.
@@ -3907,8 +4054,7 @@ arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
   ;; XEmacs; the byte-compiler has a much better implementation of `labels'
   ;; in `byte-compile-initial-macro-environment' that is used in compiled
   ;; code.
-  (let ((vars nil) (sets nil)
-        (byte-compile-macro-environment byte-compile-macro-environment))
+  (let ((vars nil) (sets nil))
     (while bindings
       (let ((var (gensym)))
 	(push var vars)
@@ -3918,9 +4064,8 @@ arguments: (((FUNCTION ARGLIST &body BODY) &rest FUNCTIONS) &body FORM)
 	(push (list (car (pop bindings)) 'lambda '(&rest cl-labels-args)
 		       (list 'list* '(quote funcall) (list 'quote var)
 			     'cl-labels-args))
-		 byte-compile-macro-environment)))
-    (cl-macroexpand-all (list* 'lexical-let vars (cons (cons 'setq sets) body))
-			byte-compile-macro-environment)))
+              env)))
+    (cl-macroexpand-all `(lexical-let ,vars (setq ,@sets) ,@body) env)))
 
 ;;;###autoload
 (defmacro flet (functions &rest form)

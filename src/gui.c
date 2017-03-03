@@ -144,7 +144,6 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
   }
   FROB (suffix)
   FROB (active)
-  FROB (included)
   FROB (config)
   FROB (filter)
   FROB (style)
@@ -154,6 +153,14 @@ gui_item_add_keyval_pair (Lisp_Object gui_item,
   FROB (callback_ex)
   FROB (value)
 #undef FROB
+  else if (EQ (key, Q_included) || EQ (key, Q_visible))
+    {
+      if (!EQ (pgui_item->included, val))
+	{
+	  retval = 1;
+	  pgui_item->included = val;
+	}
+    }
   else if (EQ (key, Q_key_sequence)) ;   /* ignored for FSF compatibility */
   else if (EQ (key, Q_label)) ;   /* ignored for 21.0 implement in 21.2  */
   else if (EQ (key, Q_accelerator))
@@ -210,7 +217,8 @@ static Lisp_Object
 make_gui_item_from_keywords_internal (Lisp_Object item,
 				      Error_Behavior errb)
 {
-  int length, plist_p, start;
+  Elemcount length, start;
+  Boolint plist_p;
   Lisp_Object *contents;
   Lisp_Object gui_item = allocate_gui_item ();
   Lisp_Gui_Item *pgui_item = XGUI_ITEM (gui_item);
@@ -273,7 +281,7 @@ make_gui_item_from_keywords_internal (Lisp_Object item,
 Lisp_Object
 widget_gui_parse_item_keywords (Lisp_Object item)
 {
-  int i, length;
+  Elemcount i, length;
   Lisp_Object *contents;
   Lisp_Object gui_item = allocate_gui_item ();
   Lisp_Object desc = find_keyword_in_vector (item, Q_descriptor);

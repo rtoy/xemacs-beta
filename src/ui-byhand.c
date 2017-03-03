@@ -385,8 +385,7 @@ Set the vector of points on CURVE to VECTOR.
        (curve, vector))
 {
   gfloat *c_vector = NULL;
-  int vec_length = 0;
-  int i;
+  Elemcount vec_length = 0, i;
 
   CHECK_GTK_OBJECT (curve);
   CHECK_VECTOR (vector);

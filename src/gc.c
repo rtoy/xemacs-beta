@@ -1865,7 +1865,7 @@ show_gc_cursor_and_message (void)
 	      args[0] = (STRINGP (Vgc_message) ? Vgc_message :
 			 build_msg_string (gc_default_message));
 	      args[1] = build_ascstring ("...");
-	      whole_msg = Fconcat (2, args);
+	      whole_msg = concatenate (2, args, Qstring, 0);
 	      echo_area_message (f, (Ibyte *) 0, whole_msg, 0, -1,
 				 Qgarbage_collecting);
 	    }
@@ -1893,7 +1893,7 @@ remove_gc_cursor_and_message (void)
 		  args[0] = (STRINGP (Vgc_message) ? Vgc_message :
 			     build_msg_string (gc_default_message));
 		  args[1] = build_msg_string ("... done");
-		  whole_msg = Fconcat (2, args);
+		  whole_msg = concatenate (2, args, Qstring, 0);
 		  echo_area_message (selected_frame (), (Ibyte *) 0,
 				     whole_msg, 0, -1,
 				     Qgarbage_collecting);

@@ -1,7 +1,7 @@
 ;;; fontconfig.el --- New font model, NG
 
 ;; Copyright (c) 2003 Eric Knauel and Matthias Neubauer
-;; Copyright (C) 2004, 2005 Free Software Foundation, Inc.
+;; Copyright (C) 2004, 2005, 2013 Free Software Foundation, Inc.
 
 ;; Authors:	Eric Knauel <knauel@informatik.uni-tuebingen.de>
 ;;		Matthias Neubauer <neubauer@informatik.uni-freiburg.de>
@@ -193,8 +193,7 @@ See `fc-pattern-del' for documentation of patterns and error returns."
 	       property
 	       (if obsolete-p "
 \(Obsolete, only available on systems using Xft version 1.)"
-		 "")
-	       type)
+		 ""))
       (fc-pattern-del pattern ,property))
     ,property))
 
@@ -516,6 +515,68 @@ selected device."
            (if fc-weight-constant
                (fc-font-weight-translate-from-constant fc-weight-constant))))
      (fc-list-fonts-pattern-objects device pattern objectset))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Workarounds
+;;
+
+(defvar fc-name-parse-known-problem-attributes
+  '("charset")
+  "List of attribute names known to induce fc-name-parse failures.
+
+Note: The name returned by `xft-font-truename' has been observed to be
+unparseable.  The cause is unknown so you can't assume getting a name from a
+font instance then instantiating the font again will round-trip.  Hypotheses:
+\(1) name too long. FALSE
+\(2) name has postscriptname attribute. FALSE
+\(3) name has charset attribute. OBSERVED")
+
+(defun fc-name-parse-harder (fontname)
+  "Parse an Fc font name and return its representation as a Fc pattern object.
+Unlike `fc-parse-name', unparseable objects are skipped and reported in the
+*Warnings* buffer.  \(The *Warnings* buffer is popped up unless all of the
+unparsed objects are listed in `fc-name-parse-known-problem-attributes'.)"
+  (let* ((objects (split-string-by-char fontname ?: ?\\))
+         name omits display)
+    (labels ((prefixp (haystack needle)
+               "Return non-nil if HAYSTACK starts with NEEDLE."
+               (not (mismatch haystack needle :end1 (length needle))))
+             (prepare-omit (object)
+               (setq display
+                     (or (if (find object
+                                   fc-name-parse-known-problem-attributes
+                                   :test #'prefixp)
+                             (progn
+                               (setq object (concat "(KNOWN) " object))
+                               ;; This attribute is known, don't display the
+                               ;; error based on it alone.
+                               nil)
+                             ;; Attribute is not known.
+                             t)
+                         ;; Otherwise, if we're already decided we need to
+                         ;; show them, respect that.
+                         display))
+               object)
+             (fontconfig-quote (string)
+              (mapconcat #'identity (split-string-by-char string ?:) #r"\:")))
+      (when (find ?: objects :test #'position) 
+        (setq objects (mapcar #'fontconfig-quote objects)))
+      (setq name (pop objects))
+      (dolist (object objects)
+        (condition-case nil
+            (let ((try (concat name ":" object)))
+              (fc-name-parse try)
+              (setq name try))
+          (invalid-argument (push object omits))))
+      (when omits
+        (setq omits (mapconcat #'prepare-omit omits "\n"))
+        (lwarn 'fontconfig (if display 'warning 'info)
+          "Some objects in fontname weren't parsed (details in *Warnings*).
+This shouldn't affect your XEmacs except that the font may be inaccurate.
+Please report any unparseable objects below not marked as KNOWN with
+M-x report-xemacs-bug.  Objects:\n%sFontname:\n%s" omits fontname))
+      (fc-name-parse name))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

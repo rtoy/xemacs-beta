@@ -46,10 +46,9 @@ that the buffer's contents are equivalent to the string.
 
 If FOR-TEST-HARNESS is specified, a temporary buffer is used, and
 the Assert macro checks for correctness."
-  (let ((max (expt 2 (if (featurep 'mule) 21 8)))
-	(list nil)
+  (let ((list nil)
 	(i 0))
-    (while (< i max)
+    (while (< i char-code-limit)
       (and (not for-test-harness)
 	   (zerop (% i 1000))
 	   (message "%d" i))
@@ -461,6 +460,16 @@ This is a naive implementation in Lisp.  "
       finally (set-unicode-conversion scaron initial-unicode))
     (Check-Error args-out-of-range (set-unicode-conversion scaron -10000)))
 
+  (Assert (not (natnump (char-to-unicode (make-char 'japanese-jisx0208
+                                                    34 49))))
+          "checking character with no Unicode mapping treated as such")
+
+  (Assert (equal (decode-coding-string
+                  (encode-coding-string (make-char 'japanese-jisx0208 34 49)
+                                        'utf-8) 'utf-8)
+                 "\uFFFD")
+          "checking REPLACEMENT CHARACTER used correctly")
+
   (dolist (utf-8-char 
 	   '("\xc6\x92"		  ;; U+0192 LATIN SMALL LETTER F WITH HOOK
 	     "\xe2\x81\x8a"	  ;; U+204A TIRONIAN SIGN ET
@@ -809,6 +818,158 @@ This is a naive implementation in Lisp.  "
 		(shell-command "cat </dev/null >/dev/null")
 		t))))
 
+  ;; Test the Lisp printer when printing a string that has its data relocated
+  ;; in the course of printing, and, relatedly, when printing a symbol that
+  ;; has its name relocated in the course of printing.
+  (let
+      ((string
+        (decode-coding-string
+         ;; "ƒƒƒƒƒƒƒƒ\\a\\ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ")
+         (concat "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\x5c\x61\x5c\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                 "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                 "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                 "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                 "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92")
+         'utf-8))
+       (scratch-output (get-buffer-create (generate-new-buffer-name
+                                           " *temp*")))
+       symbol)
+    (labels
+        ((stream (character)
+           (when (eq character ?a)
+             (fill string ?a)
+             (aset string (- (length string) 3) ?\")
+	     (aset string 8 ?\\)
+	     (aset string 10 ?\\))
+           (write-char character scratch-output))
+         (stream1 (character)
+           (when (eq character ?\\)
+             (fill string ?b))
+           (write-char character scratch-output)))
+      (Assert (zerop (- (point-max scratch-output) (point-min scratch-output)))
+              "checking for empty buffer")
+      (print string #'stream)
+      (Assert (eql (- (point-max scratch-output) (point-min scratch-output))
+                   ;; #'print adds two newlines.
+                   (+ (length (prin1-to-string string)) 2))
+              "correct number of chars printed despite byte len changes")
+      (Assert (eql (encode-char (char-after 3 scratch-output) 'ucs)
+                   #x0192)
+              "first character printed as expected before byte len change")
+      (Assert (eql ?a (char-after (- (point-max scratch-output) 4)
+                                  scratch-output))
+              "character printed as expected after byte len change")
+      (delete-region (point-min scratch-output) (point-max scratch-output)
+                     scratch-output)
+      (setq string
+            ;; "ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ\\a\\ƒƒƒƒƒƒƒƒƒƒƒƒƒƒ")
+            (decode-coding-string
+             (concat "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\x5c\x61\x5c\xc6\x92"
+                     "\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6"
+                     "\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92\xc6\x92")
+             'utf-8))
+      (Check-Error invalid-state (print string #'stream))
+      (delete-region (point-min scratch-output) (point-max scratch-output)
+                     scratch-output)
+
+      ;; "ƒƒƒ;aa"
+      (setq string (decode-coding-string "\xc6\x92\xc6\x92\xc6\x92;aa" 'utf-8)
+            symbol (make-symbol string))
+
+      ;; This would crash previously, since the offset inside print_symbol
+      ;; became invalid:
+      (print symbol #'stream1)
+      (Assert (equal (buffer-string scratch-output)
+                     (decode-coding-string
+                      "\n#:\xc6\x92\xc6\x92\xc6\x92\\bbb\n"
+                      'utf-8))
+              "checking printing a symbol with relocated name does something")
+      (kill-buffer scratch-output)))
+
+  ;;; Test suite for truncate-string-to-width, from Colin Walters' tests in
+  ;;; mule-util.el in GNU.
+  (macrolet
+      ((test-truncate-string-to-width (&rest tests)
+         (let ((decode-any-string
+                ;; We can't store the East Asian characters directly in this
+                ;; file, since it needs to be read (but not executed) by
+                ;; non-Mule. Store them as UTF-8, decode them at
+                ;; macro-expansion time.
+                #'(lambda (object)
+                    (if (stringp object)
+                        (decode-coding-string object 'utf-8)
+                      object))))
+           (cons
+            'progn
+            (mapcar
+             (function*
+              (lambda ((arguments . result))
+                `(Assert (equal (truncate-string-to-width
+                               ,@(mapcar decode-any-string arguments))
+                                ,(funcall decode-any-string result)))))
+             tests)))))
+    (test-truncate-string-to-width
+      (("" 0) . "")
+      (("x" 1) . "x")
+      (("xy" 1) . "x")
+      (("xy" 2 1) . "y")
+      (("xy" 0) . "")
+      (("xy" 3) . "xy")
+      (("\344\270\255" 0) . "")
+      (("\344\270\255" 1) . "")
+      (("\344\270\255" 2) . "\344\270\255")
+      (("\344\270\255" 1 nil ? ) . " ")
+      (("\344\270\255\346\226\207" 3 1 ? ) . "  ")
+      (("x\344\270\255x" 2) . "x")
+      (("x\344\270\255x" 3) . "x\344\270\255")
+      (("x\344\270\255x" 3) . "x\344\270\255")
+      (("x\344\270\255x" 4 1) . "\344\270\255x")
+      (("kor\355\225\234e\352\270\200an" 8 1 ? ) .
+       "or\355\225\234e\352\270\200")
+      (("kor\355\225\234e\352\270\200an" 7 2 ? ) . "r\355\225\234e ")
+      (("" 0 nil nil "...") . "")
+      (("x" 3 nil nil "...") . "x")
+      (("\344\270\255" 3 nil nil "...") . "\344\270\255")
+      (("foo" 3 nil nil "...") . "foo")
+      (("foo" 2 nil nil "...") . "fo") ;; (old) XEmacs failure?
+      (("foobar" 6 0 nil "...") . "foobar")
+      (("foobarbaz" 6 nil nil "...") . "foo...")
+      (("foobarbaz" 7 2 nil "...") . "ob...")
+      (("foobarbaz" 9 3 nil "...") . "barbaz")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 15
+        1 ?  t) . " h\343\202\223e\343\201\253l\343\201\241l\343\201\257o")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 14
+        1 ?  t) . " h\343\202\223e\343\201\253l\343\201\241...")
+      (("x" 3 nil nil "\347\262\265\350\252\236") . "x")
+      (("\344\270\255" 2 nil nil "\347\262\265\350\252\236") . "\344\270\255")
+      ;; XEmacs used to error
+      (("\344\270\255" 1 nil ?x "\347\262\265\350\252\236") . "x") 
+      (("\344\270\255\346\226\207" 3 nil ?  "\347\262\265\350\252\236") .
+       ;; XEmacs used to error
+       "\344\270\255 ") 
+      (("foobarbaz" 4 nil nil  "\347\262\265\350\252\236") .
+       "\347\262\265\350\252\236")
+      (("foobarbaz" 5 nil nil  "\347\262\265\350\252\236") .
+       "f\347\262\265\350\252\236")
+      (("foobarbaz" 6 nil nil  "\347\262\265\350\252\236") .
+       "fo\347\262\265\350\252\236")
+      (("foobarbaz" 8 3 nil "\347\262\265\350\252\236") .
+       "b\347\262\265\350\252\236")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 14
+        4 ?x "\346\227\245\346\234\254\350\252\236") .
+        "xe\343\201\253\346\227\245\346\234\254\350\252\236")
+      (("\343\201\223h\343\202\223e\343\201\253l\343\201\241l\343\201\257o" 13
+        4 ?x "\346\227\245\346\234\254\350\252\236") .
+        "xex\346\227\245\346\234\254\350\252\236")))
   ) ; end of tests that require MULE built in.
 
 ;;; end of mule-tests.el

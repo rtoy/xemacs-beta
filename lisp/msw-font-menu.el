@@ -77,7 +77,7 @@ or if you change your font path, you can call this to re-initialize the menus."
 	dev-cache cache families sizes weights)
     (dolist (name (cond ((null debug)	; debugging kludge
 			 (font-list "::::" device))
-			((stringp debug) (split-string debug "\n"))
+			((stringp debug) (split-string-by-char debug ?\n))
 			(t debug)))
       (when (and (string-match mswindows-font-regexp-ascii name)
 		 (string-match mswindows-font-regexp name))
@@ -86,15 +86,13 @@ or if you change your font path, you can call this to re-initialize the menus."
 	      size   (string-to-int (match-string 3 name))
 	      family (match-string 1 name))
 	(unless (string-match mswindows-font-menu-junk-families family)
-	  (setq entry (or (vassoc name cache)
-			  (car (setq cache
-				     (cons (vector family nil nil t)
-					   cache)))))
+	  (setq entry (or (assoc family cache)
+                          (car (push `(,family nil nil t) cache))))
 	  (or (member family families) (push family families))
 	  (or (member weight weights)  (push weight weights))
 	  (or (member size   sizes)    (push size   sizes))
-	  (or (member weight (aref entry 1)) (push weight (aref entry 1)))
-	  (or (member size   (aref entry 2)) (push size   (aref entry 2))))))
+	  (or (member weight (elt entry 1)) (push weight (elt entry 1)))
+	  (or (member size (elt entry 2)) (push size (elt entry 2))))))
       ;;
       ;; Hack scalable fonts.
       ;; Some fonts come only in scalable versions (the only size is 0)
@@ -118,15 +116,15 @@ or if you change your font path, you can call this to re-initialize the menus."
 		 done)
 	       (setq sizes (cons (car common) sizes)))
 	      (setq common (cdr common)))
-	    (setq sizes (delq 0 sizes))))
+	    (setq sizes (delete* 0 sizes))))
 
       (setq families (sort families 'string-lessp)
 	    weights  (sort weights 'string-lessp)
 	    sizes    (sort sizes '<))
       
       (dolist (entry cache)
-	(aset entry 1 (sort (aref entry 1) 'string-lessp))
-	(aset entry 2 (sort (aref entry 2) '<)))
+        (setf (elt entry 1) (sort (elt entry 1) 'string-lessp))
+        (setf (elt entry 2) (sort (elt entry 2) '<)))
 
       (setq dev-cache (assq device device-fonts-cache))
       (or dev-cache
@@ -172,11 +170,11 @@ or if you change your font path, you can call this to re-initialize the menus."
 	 family size weight entry slant)
     (when (string-match mswindows-font-regexp name)
       (setq family (match-string 1 name))
-      (setq entry (vassoc family (aref dcache 0))))
+      (setq entry (assoc family (aref dcache 0))))
     (when (and (null entry)
 	       (string-match mswindows-font-regexp truename))
       (setq family (match-string 1 truename))
-      (setq entry  (vassoc family (aref dcache 0))))
+      (setq entry  (assoc family (aref dcache 0))))
     (when (null entry)
       (return-from mswindows-font-menu-font-data (make-vector 5 nil)))
     
@@ -187,9 +185,9 @@ or if you change your font path, you can call this to re-initialize the menus."
     (when (string-match mswindows-font-regexp truename)
       (destructuring-bind (newweight . slant)
 	  (mswindows-parse-font-style (match-string 2 truename))
-	(when (not (member weight (aref entry 1)))
+	(when (not (member weight (elt entry 1)))
 	  (setq weight newweight))
-	(when (not (member size   (aref entry 2)))
+	(when (not (member size (elt entry 2)))
 	  (setq size (string-to-int (match-string 3 truename))))))
       
     (vector entry family size weight slant)))

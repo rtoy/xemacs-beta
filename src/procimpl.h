@@ -49,7 +49,7 @@ struct process_methods
 #ifdef HAVE_SOCKETS
   void (*open_network_stream) (Lisp_Object name, Lisp_Object host,
 			       Lisp_Object service, Lisp_Object protocol,
-			       void** vinfd, void** voutfd);
+			       void** vinfd, void** voutfd, Boolint tls);
 #ifdef HAVE_MULTICAST
   void (*open_multicast_group) (Lisp_Object name, Lisp_Object dest,
 				Lisp_Object port, Lisp_Object ttl,

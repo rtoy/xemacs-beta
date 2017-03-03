@@ -1,6 +1,6 @@
 ;;; register.el --- register commands for Emacs
 
-;; Copyright (C) 1985, 1993, 1994, 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1993, 1994, 1997, 2012 Free Software Foundation, Inc.
 
 ;; Maintainer: FSF
 ;; Keywords: internal, dumped
@@ -237,7 +237,7 @@ The Lisp value REGISTER is a character."
 	    (princ val))
 	(cond
 	 ;; Extract first N characters starting with first non-whitespace.
-	 ((string-match (format "[^ \t\n].\\{,%d\\}"
+	 ((string-match (format "[^ \t\n].\\{0,%d\\}"
 				;; Deduct 6 for the spaces inserted below.
 				(min 20 (max 0 (- (window-width) 6))))
 			val)

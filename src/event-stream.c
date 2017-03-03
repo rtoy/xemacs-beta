@@ -81,6 +81,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "device-impl.h"
 #include "elhash.h"
 #include "events.h"
+#include "extents.h"
 #include "frame-impl.h"
 #include "insdel.h"		/* for buffer_reset_changes */
 #include "keymap.h"
@@ -196,10 +197,13 @@ Lisp_Object Vlast_input_time;
    of the last-command-event. */
 Lisp_Object Vlast_command_event_time;
 
-/* Character to recognize as the help char.  */
+/* Key specifier to recognize as the help char.  */
 Lisp_Object Vhelp_char;
 
-/* Form to execute when help char is typed.  */
+/* List of other key specifiers that work in the same way as Vhelp_char. */
+Lisp_Object Vhelp_event_list;
+
+/* Form to execute when Vhelp_char or one of Vhelp_event_list is typed.  */
 Lisp_Object Vhelp_form;
 
 /* Command to run when the help character follows a prefix key.  */
@@ -336,6 +340,7 @@ static const struct memory_description command_builder_description [] = {
   { XD_LISP_OBJECT, offsetof (struct command_builder, last_non_munged_event) },
   { XD_LISP_OBJECT, offsetof (struct command_builder, console) },
   { XD_LISP_OBJECT_ARRAY, offsetof (struct command_builder, first_mungeable_event), 2 },
+  { XD_LISP_OBJECT, offsetof (struct command_builder, echo_buf) },
   { XD_END }
 };
 
@@ -348,24 +353,13 @@ mark_command_builder (Lisp_Object obj)
   mark_object (builder->last_non_munged_event);
   mark_object (builder->first_mungeable_event[0]);
   mark_object (builder->first_mungeable_event[1]);
+  mark_object (builder->echo_buf);
   return builder->console;
-}
-
-static void
-finalize_command_builder (Lisp_Object obj)
-{
-  struct command_builder *b = XCOMMAND_BUILDER (obj);
-  if (b->echo_buf)
-    {
-      xfree (b->echo_buf);
-      b->echo_buf = 0;
-    }
 }
 
 DEFINE_NODUMP_LISP_OBJECT ("command-builder", command_builder,
 			   mark_command_builder,
-			   internal_object_printer,
-			   finalize_command_builder, 0, 0, 
+			   internal_object_printer, 0, 0, 0,
 			   command_builder_description,
 			   struct command_builder);
 
@@ -389,17 +383,14 @@ allocate_command_builder (Lisp_Object console, int with_echo_buf)
   reset_command_builder_event_chain (builder);
   if (with_echo_buf)
     {
-      /* #### This badly needs to be turned into a Dynarr */
-      builder->echo_buf_length = 300; /* #### Kludge */
-      builder->echo_buf = xnew_array (Ibyte, builder->echo_buf_length);
-      builder->echo_buf[0] = 0;
+      builder->echo_buf = Fmake_string (make_fixnum (300 * MAX_ICHAR_LEN),
+                                        make_char (0));
     }
   else
     {
-      builder->echo_buf_length = 0;
-      builder->echo_buf = NULL;
+      builder->echo_buf = Qnil;
     }
-  builder->echo_buf_index = -1;
+  builder->echo_buf_fill_pointer = builder->echo_buf_end = -1;
   builder->self_insert_countdown = 0;
 
   return builder_obj;
@@ -443,17 +434,6 @@ copy_command_builder (struct command_builder *collapsing,
 				  new_buildings->current_events);
 
   return wrap_command_builder (new_buildings);
-}
-
-static void
-free_command_builder (struct command_builder *builder)
-{
-  if (builder->echo_buf)
-    {
-      xfree (builder->echo_buf);
-      builder->echo_buf = NULL;
-    }
-  free_normal_lisp_object (wrap_command_builder (builder));
 }
 
 static void
@@ -660,35 +640,37 @@ echo_key_event (struct command_builder *command_builder,
 {
   /* This function can GC */
   DECLARE_EISTRING_MALLOC (buf);
-  Bytecount buf_index = command_builder->echo_buf_index;
-  Ibyte *e;
+  Bytecount buf_fill_pointer = command_builder->echo_buf_fill_pointer;
   Bytecount len;
 
-  if (buf_index < 0)
+  if (buf_fill_pointer < 0)
     {
-      buf_index = 0;              /* We're echoing now */
+      buf_fill_pointer = 0;
       clear_echo_area (selected_frame (), Qnil, 0);
     }
 
   format_event_object (buf, event, 1);
   len = eilen (buf);
 
-  if (len + buf_index + 4 > command_builder->echo_buf_length)
+  if (NILP (command_builder->echo_buf) ||
+      (len + buf_fill_pointer + 3 > XSTRING_LENGTH (command_builder->echo_buf)))
     {
       eifree (buf);
       return;
     }
-  e = command_builder->echo_buf + buf_index;
-  memcpy (e, eidata (buf), len);
-  e += len;
+
+  eicat_ascii (buf, " - ");
+
+  memcpy (XSTRING_DATA (command_builder->echo_buf) + buf_fill_pointer,
+          eidata (buf), eilen (buf));
+  init_string_ascii_begin (command_builder->echo_buf);
+  bump_string_modiff (command_builder->echo_buf);
+  sledgehammer_check_ascii_begin (command_builder->echo_buf);
+
+  command_builder->echo_buf_end = buf_fill_pointer + eilen (buf);
+  /* Including the first space of the trailing " - ". */
+  command_builder->echo_buf_fill_pointer = buf_fill_pointer + len + 1;
   eifree (buf);
-
-  e[0] = ' ';
-  e[1] = '-';
-  e[2] = ' ';
-  e[3] = 0;
-
-  command_builder->echo_buf_index = buf_index + len + 1;
 }
 
 static void
@@ -697,7 +679,11 @@ regenerate_echo_keys_from_this_command_keys (struct command_builder *
 {
   Lisp_Object event;
 
-  builder->echo_buf_index = 0;
+  builder->echo_buf_fill_pointer = builder->echo_buf_end = 0;
+  if (STRINGP (builder->echo_buf))
+    {
+      detach_all_extents (builder->echo_buf);
+    }
 
   EVENT_CHAIN_LOOP (event, Vthis_command_keys)
     echo_key_event (builder, event);
@@ -734,11 +720,8 @@ maybe_echo_keys (struct command_builder *command_builder, int no_snooze)
 	    goto done;
 	}
 
-      echo_area_message (f, command_builder->echo_buf, Qnil, 0,
-			 /* not echo_buf_index.  That doesn't include
-			    the terminating " - ". */
-			 strlen ((char *) command_builder->echo_buf),
-			 Qcommand);
+      echo_area_message (f, NULL, command_builder->echo_buf, 0,
+                         max (command_builder->echo_buf_end, 0), Qcommand);
     }
 
  done:
@@ -754,7 +737,10 @@ reset_key_echo (struct command_builder *command_builder,
   struct frame *f = selected_frame ();
 
   if (command_builder)
-    command_builder->echo_buf_index = -1;
+    {
+      command_builder->echo_buf_fill_pointer =
+        command_builder->echo_buf_end = -1;
+    }
 
   if (remove_echo_area_echo)
     clear_echo_area (f, Qcommand, 0);
@@ -807,6 +793,27 @@ print_help (Lisp_Object object)
   return Qnil;
 }
 
+/* Return true if should recognize C as "the help character".  */
+static Boolint
+help_char_p (Lisp_Object event)
+{
+  if (event_matches_key_specifier_p (event, Vhelp_char))
+    {
+      return 1;
+    }
+
+  {
+    EXTERNAL_LIST_LOOP_2 (key_sequence, Vhelp_event_list)
+      {
+        if (event_matches_key_specifier_p (event, key_sequence))
+          {
+            return 1;
+          }
+      }
+  }
+  return 0;
+}
+
 static void
 execute_help_form (struct command_builder *command_builder,
                    Lisp_Object event)
@@ -814,18 +821,13 @@ execute_help_form (struct command_builder *command_builder,
   /* This function can GC */
   Lisp_Object help = Qnil;
   int speccount = specpdl_depth ();
-  Bytecount buf_index = command_builder->echo_buf_index;
-  Lisp_Object echo = ((buf_index <= 0)
-                      ? Qnil
-                      : make_string (command_builder->echo_buf,
-				     buf_index));
-  struct gcpro gcpro1, gcpro2;
-  GCPRO2 (echo, help);
+
+  struct gcpro gcpro1;
+  GCPRO1 (help);
 
   record_unwind_protect (Feval,
                          list2 (Qset_window_configuration,
                                 call0 (Qcurrent_window_configuration)));
-  reset_key_echo (command_builder, 1);
 
   help = IGNORE_MULTIPLE_VALUES (Feval (Vhelp_form));
   if (STRINGP (help))
@@ -852,14 +854,11 @@ execute_help_form (struct command_builder *command_builder,
   if (event_matches_key_specifier_p (event, make_char (' ')))
     {
       /* Discard next key if it is a space */
-      reset_key_echo (command_builder, 1);
+      /* No need to reset the key echo here. */
+      /* reset_key_echo (command_builder, 1); */
       Fnext_command_event (event, Qnil);
     }
 
-  command_builder->echo_buf_index = buf_index;
-  if (buf_index > 0)
-    memcpy (command_builder->echo_buf,
-            XSTRING_DATA (echo), buf_index + 1); /* terminating 0 */
   UNGCPRO;
 }
 
@@ -2182,19 +2181,29 @@ The returned event will be one of the following types:
   if (!NILP (prompt))
     {
       Bytecount len;
+      Lisp_Object args[] = { Qnil, prompt };
       CHECK_STRING (prompt);
 
       len = XSTRING_LENGTH (prompt);
-      if (command_builder->echo_buf_length < len)
-	len = command_builder->echo_buf_length - 1;
-      memcpy (command_builder->echo_buf, XSTRING_DATA (prompt), len);
-      command_builder->echo_buf[len] = 0;
-      command_builder->echo_buf_index = len;
-      echo_area_message (XFRAME (CONSOLE_SELECTED_FRAME (con)),
-			 command_builder->echo_buf,
-			 Qnil, 0,
-			 command_builder->echo_buf_index,
-			 Qcommand);
+
+      detach_all_extents (command_builder->echo_buf);
+      if (XSTRING_LENGTH (command_builder->echo_buf) < len)
+        {
+          command_builder->echo_buf
+            = Fmake_string (make_fixnum (len + 300 * MAX_ICHAR_LEN),
+                            make_char (0));
+        }
+
+      args[0] = command_builder->echo_buf;
+      Freplace (countof (args), args);
+      copy_string_extents (command_builder->echo_buf, prompt, 0, 0,
+                           XSTRING_LENGTH (prompt));
+      command_builder->echo_buf_fill_pointer
+        = command_builder->echo_buf_end = len;
+
+      echo_area_message (XFRAME (CONSOLE_SELECTED_FRAME (con)), NULL,
+			 command_builder->echo_buf, 0,
+                         command_builder->echo_buf_end, Qcommand);
     }
 
  start_over_and_avoid_hosage:
@@ -2294,13 +2303,20 @@ The returned event will be one of the following types:
 
   switch (XEVENT_TYPE (event))
     {
+    case button_press_event:	/* key or mouse input can trigger prompting */
+      {
+        if (!event_mouse_wheel_p (event))
+          {
+            goto STORE_AND_EXECUTE_KEY;
+          }
+        /* Fallthrough in the case of wheel events, echoing them is
+           pointless. */
+      }
     case button_release_event:
     case misc_user_event:
       /* don't echo menu accelerator keys */
       reset_key_echo (command_builder, 1);
       goto EXECUTE_KEY;
-    case button_press_event:	/* key or mouse input can trigger prompting */
-      goto STORE_AND_EXECUTE_KEY;
     case key_press_event:         /* any key input can trigger autosave */
       break;
     default:
@@ -2383,8 +2399,7 @@ The returned event will be one of the following types:
      the help form and swallow this character.  Note that
      execute_help_form() calls Fnext_command_event(), which calls this
      function, as well as Fdispatch_event.  */
-  if (!NILP (Vhelp_form) &&
-      event_matches_key_specifier_p (event, Vhelp_char))
+  if (!NILP (Vhelp_form) && help_char_p (event))
     {
       /* temporarily reenable quit checking here, because we could get stuck */
       Vquit_flag = Qnil; /* see begin_dont_check_for_quit() */
@@ -2436,7 +2451,11 @@ but it also makes a provision for displaying keystrokes in the echo area.
    
   maybe_echo_keys (XCOMMAND_BUILDER
 		   (XCONSOLE (Vselected_console)->
-		    command_builder), 0); /* #### This sucks bigtime */
+		    command_builder),
+                   /* Only snooze displaying keystrokes if we don't have a
+                      prompt. (If we have a prompt, our callers want us to
+                      show it!) */
+                   !NILP (prompt));
 
   for (;;)
     {
@@ -2605,7 +2624,6 @@ Return non-nil iff we received any output before the timeout expired.
   int timeout_id = -1;
   int timeout_enabled = 0;
   int done = 0;
-  struct buffer *old_buffer = current_buffer;
   int count;
 
   /* We preserve the current buffer but nothing else.  If a focus
@@ -2626,7 +2644,7 @@ Return non-nil iff we received any output before the timeout expired.
       if (!NILP (timeout_msecs))
 	{
           check_integer_range (timeout_msecs, Qzero,
-                               make_integer (MOST_POSITIVE_FIXNUM));
+                               make_fixnum (MOST_POSITIVE_FIXNUM));
 	  msecs += XFIXNUM (timeout_msecs);
 	}
       if (msecs)
@@ -2642,6 +2660,7 @@ Return non-nil iff we received any output before the timeout expired.
   record_unwind_protect (sit_for_unwind,
 			 timeout_enabled ? make_fixnum (timeout_id) : Qnil);
   recursive_sit_for = 1;
+  record_unwind_protect (Fset_buffer, wrap_buffer (current_buffer));
 
   while (!done &&
          ((NILP (process) && timeout_enabled) ||
@@ -2711,7 +2730,7 @@ Return non-nil iff we received any output before the timeout expired.
   status_notify ();
 
   UNGCPRO;
-  current_buffer = old_buffer;
+
   return result;
 }
 
@@ -3388,7 +3407,7 @@ command_builder_find_leaf_no_jit_binding (struct command_builder *builder,
 	      copy_command_builder (neub, builder);
 	      *did_munge = 1;
 	    }
-	  free_command_builder (neub);
+          free_normal_lisp_object (wrap_command_builder (neub));
 	  UNGCPRO;
 	  if (!NILP (result))
             return result;
@@ -3396,8 +3415,8 @@ command_builder_find_leaf_no_jit_binding (struct command_builder *builder,
     }
 
   /* help-char is `auto-bound' in every keymap */
-  if (!NILP (Vprefix_help_command) &&
-      event_matches_key_specifier_p (builder->most_current_event, Vhelp_char))
+  if (!NILP (Vprefix_help_command)
+      && help_char_p (builder->most_current_event))
     return Vprefix_help_command;
 
   return Qnil;
@@ -3600,7 +3619,7 @@ command_builder_find_leaf (struct command_builder *builder,
 		(newb, allow_misc_user_events_p, did_munge);
 	    }
 
-	  free_command_builder (newb);
+          free_normal_lisp_object (wrap_command_builder (newb));
 	  UNGCPRO;
 
 	  if (!NILP (result))
@@ -3716,7 +3735,7 @@ modify them.
   else
     {
       check_integer_range (number, Qzero,
-                           make_integer (ARRAY_DIMENSION_LIMIT));
+                           make_fixnum (ARRAY_DIMENSION_LIMIT));
       nwanted = XFIXNUM (number);
     }
 
@@ -3916,8 +3935,7 @@ extract_this_command_keys_nth_mouse_event (int n)
 Lisp_Object
 extract_vector_nth_mouse_event (Lisp_Object vector, int n)
 {
-  int i;
-  int len = XVECTOR_LENGTH (vector);
+  Elemcount len = XVECTOR_LENGTH (vector), i;
 
   for (i = 0; i < len; i++)
     {
@@ -4067,17 +4085,32 @@ lookup_command_event (struct command_builder *command_builder,
 #endif
 	  {
 	    Lisp_Object prompt = Fkeymap_prompt (leaf, Qt);
-	    if (STRINGP (prompt))
+	    if (STRINGP (prompt) && STRINGP (command_builder->echo_buf))
 	      {
 		/* Append keymap prompt to key echo buffer */
-		int buf_index = command_builder->echo_buf_index;
+		Bytecount buf_fill_pointer
+                  = max (command_builder->echo_buf_fill_pointer, 0);
 		Bytecount len = XSTRING_LENGTH (prompt);
 
-		if (len + buf_index + 1 <= command_builder->echo_buf_length)
+		if (len + buf_fill_pointer + 1
+                    <= XSTRING_LENGTH (command_builder->echo_buf))
 		  {
-		    Ibyte *echo = command_builder->echo_buf + buf_index;
-		    memcpy (echo, XSTRING_DATA (prompt), len);
-		    echo[len] = 0;
+                    memcpy (XSTRING_DATA (command_builder->echo_buf)
+                            + buf_fill_pointer,
+                            XSTRING_DATA (prompt),
+                            len);
+                    copy_string_extents (command_builder->echo_buf, prompt,
+                                         buf_fill_pointer, 0, len);
+
+                    init_string_ascii_begin (command_builder->echo_buf);
+                    bump_string_modiff (command_builder->echo_buf);
+                    sledgehammer_check_ascii_begin (command_builder->echo_buf);
+
+                    /* Show the keymap prompt, but don't adjust the fill
+                       pointer to reflect it. */
+                    command_builder->echo_buf_end
+                      = buf_fill_pointer + len;
+                    command_builder->echo_buf_fill_pointer = buf_fill_pointer;
 		  }
 		maybe_echo_keys (command_builder, 1);
 	      }
@@ -4100,12 +4133,13 @@ lookup_command_event (struct command_builder *command_builder,
     else if (!NILP (leaf))
       {
 	if (EQ (Qcommand, echo_area_status (f))
-	    && command_builder->echo_buf_index > 0)
+	    && command_builder->echo_buf_fill_pointer > 0)
 	  {
 	    /* If we had been echoing keys, echo the last one (without
 	       the trailing dash) and redisplay before executing the
 	       command. */
-	    command_builder->echo_buf[command_builder->echo_buf_index] = 0;
+            command_builder->echo_buf_end =
+              command_builder->echo_buf_fill_pointer;
 	    maybe_echo_keys (command_builder, 1);
 	    Fsit_for (Qzero, Qt);
 	  }
@@ -4364,7 +4398,7 @@ post_command_hook (void)
 
   safe_run_hook_trapping_problems
     (Qcommand, Qpost_command_hook,
-     0);
+     NO_INHIBIT_THROWS);
 
 #if 0 /* FSF Emacs */
   if (!NILP (current_buffer->mark_active))
@@ -4812,9 +4846,9 @@ dribble_out_event (Lisp_Object event)
 	/* one-char key events are printed with just the key name */
 	Fprinc (keysym, Vdribble_file);
       else if (EQ (keysym, Qreturn))
-	Lstream_putc (XLSTREAM (Vdribble_file), '\n');
+	(void) Lstream_putc (XLSTREAM (Vdribble_file), '\n');
       else if (EQ (keysym, Qspace))
-	Lstream_putc (XLSTREAM (Vdribble_file), ' ');
+	(void) Lstream_putc (XLSTREAM (Vdribble_file), ' ');
       else
 	Fprinc (event, Vdribble_file);
     }
@@ -4848,7 +4882,8 @@ If FILENAME is nil, close any open dribble file.
 		     CREAT_MODE);
       if (fd < 0)
 	report_file_error ("Unable to create dribble file", filename);
-      Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING);
+      Vdribble_file = make_filedesc_output_stream (fd, 0, 0, LSTR_CLOSING,
+						   NULL);
 #ifdef MULE
       Vdribble_file =
 	make_coding_output_stream
@@ -4891,6 +4926,7 @@ syms_of_event_stream (void)
   DEFSYMBOL (Qcommand_event_p);
 
   DEFERROR_STANDARD (Qundefined_keystroke_sequence, Qsyntax_error);
+  DEFERROR_STANDARD (Qno_character_typed, Qundefined_keystroke_sequence);
   DEFERROR_STANDARD (Qinvalid_key_binding, Qinvalid_state);
 
   DEFSUBR (Frecent_keys);
@@ -5137,18 +5173,25 @@ in preference to looking at and/or setting `this-command'.
   Vthis_command_properties = Qnil;
 
   DEFVAR_LISP ("help-char", &Vhelp_char /*
-Character to recognize as meaning Help.
+Key specifier to recognize as meaning Help.
 When it is read, do `(eval help-form)', and display result if it's a string.
-If the value of `help-form' is nil, this char can be read normally.
-This can be any form recognized as a single key specifier.
-The help-char cannot be a negative number in XEmacs.
+If the value of `help-form' is nil, this key can be read normally.
+This can be any form recognized as a single key specifier; see
+`event-matches-key-specifier-p' and `define-key'.
 */ );
   Vhelp_char = make_char (8); /* C-h */
 
+  DEFVAR_LISP ("help-event-list", &Vhelp_event_list /*
+List of extra key specifiers to recognize as meaning Help.
+These are in addition to the value of `help-char', which see.  They function
+in the same way, and can equally be suppressed by binding `help-form' to nil.
+*/ );
+  Vhelp_event_list = Qnil;
+
   DEFVAR_LISP ("help-form", &Vhelp_form /*
-Form to execute when character help-char is read.
+Form to execute when `help-char' or an element of `help-event-list' is read.
 If the form returns a string, that string is displayed.
-If `help-form' is nil, the help char is not recognized.
+If `help-form' is nil, `help-char' and `help-event-list' are ignored.
 */ );
   Vhelp_form = Qnil;
 

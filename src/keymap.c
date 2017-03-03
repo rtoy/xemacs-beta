@@ -188,18 +188,32 @@ Lisp_Object Qsuppress_keymap;
 Lisp_Object Qmodeline_map;
 Lisp_Object Qtoolbar_map;
 
+Lisp_Object Qremap;
+Lisp_Object Qxemacs_command_remapping; /* Uninterned, so there's no conflict
+                                          with any key named remap. */
+
 EXFUN (Fkeymap_fullness, 1);
 EXFUN (Fset_keymap_name, 2);
 EXFUN (Fsingle_key_description, 1);
 
-static void describe_command (Lisp_Object definition, Lisp_Object buffer);
+static Lisp_Object remap_command (Lisp_Object keymap, Lisp_Object old,
+                                  Lisp_Object new_);
+static void describe_command (Lisp_Object definition, Lisp_Object stream);
 static void describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 			  void (*elt_describer) (Lisp_Object, Lisp_Object),
 			  int partial,
 			  Lisp_Object shadow,
 			  int mice_only_p,
-			  Lisp_Object buffer);
+			  Lisp_Object stream);
 static Lisp_Object keymap_submaps (Lisp_Object keymap);
+static int get_relevant_keymaps (Lisp_Object, Lisp_Object, int,
+                                 Lisp_Object maps[]);
+static Lisp_Object lookup_keys (Lisp_Object, int, Lisp_Object *, int);
+static void map_keymap (Lisp_Object keymap_table, int sort_first,
+                        void (*function) (const Lisp_Key_Data *key,
+                                          Lisp_Object binding,
+                                          void *fn_arg),
+                        void *fn_arg);
 
 Lisp_Object Qcontrol, Qctrl, Qmeta, Qsuper, Qhyper, Qalt, Qshift;
 
@@ -208,8 +222,6 @@ Lisp_Object Qcontrol, Qctrl, Qmeta, Qsuper, Qhyper, Qalt, Qshift;
 Lisp_Object Qbutton##num;			\
 Lisp_Object Qbutton##num##up;
 #include "keymap-buttons.h"
-
-Lisp_Object Qmenu_selection;
 
 /* Emacs compatibility */
 #define FROB(num)				\
@@ -220,17 +232,21 @@ Lisp_Object Qdown_mouse_##num;
 /* Kludge kludge kludge */
 Lisp_Object QLFD, QTAB, QRET, QESC, QDEL, QSPC, QBS;
 
+#define CHECK_REMAPPING_POSITION(object)        do                      \
+    {                                                                   \
+      if (!(NILP (object) || FIXNUMP (object) || MARKERP (object)       \
+            || EVENTP (object)))                                        \
+        {                                                               \
+          wtaerror ("Not a valid POSITION", object);                    \
+        }                                                               \
+    } while (0)
+
 
 /************************************************************************/
 /*                     The keymap Lisp object                           */
 /************************************************************************/
 
-/* Keymaps are equal if Faces are equal if all of their display attributes are equal.  We
-   don't compare names or doc-strings, because that would make equal
-   be eq.
-
-   This isn't concerned with "unspecified" attributes, that's what
-   #'face-differs-from-default-p is for. */
+/* Keymaps are equal if all of their attributes are equal. */
 static int
 keymap_equal (Lisp_Object obj1, Lisp_Object obj2, int depth,
 	      int UNUSED (foldcase))
@@ -286,7 +302,7 @@ print_keymap (Lisp_Object obj, Lisp_Object printcharfun,
   write_ascstring (printcharfun, "#<keymap ");
   if (!NILP (keymap->name))
     {
-      write_fmt_string_lisp (printcharfun, "%S ", 1, keymap->name);
+      write_fmt_string_lisp (printcharfun, "%S ", keymap->name);
     }
   write_fmt_string (printcharfun, "size %ld 0x%x>",
 		    (long) XFIXNUM (Fkeymap_fullness (obj)),
@@ -453,7 +469,7 @@ make_key_description (const Lisp_Key_Data *key, int prettify)
   int modifiers = KEY_DATA_MODIFIERS (key);
   if (prettify && CHARP (keysym))
     {
-      /* This is a little slow, but (control a) is prettier than (control 65).
+      /* This is a little slow, but (control a) is prettier than (control ?a).
 	 It's now ok to do this for digit-chars too, since we've fixed the
 	 bug where \9 read as the integer 9 instead of as the symbol with
 	 "9" as its name.
@@ -462,7 +478,7 @@ make_key_description (const Lisp_Key_Data *key, int prettify)
       Ibyte str [1 + MAX_ICHAR_LEN];
       Bytecount count = set_itext_ichar (str, XCHAR (keysym));
       str[count] = 0;
-      keysym = intern_istring (str);
+      keysym = intern ((const CIbyte *) str);
     }
   return control_meta_superify (keysym, modifiers);
 }
@@ -992,7 +1008,7 @@ The keymap may be autoloaded first if necessary.
        (object))
 {
   /* This function can GC */
-  return KEYMAPP (get_keymap (object, 0, 0)) ? Qt : Qnil;
+  return KEYMAPP (get_keymap (object, 0, 1)) ? Qt : Qnil;
 }
 
 /* Check that OBJECT is a keymap (after dereferencing through any
@@ -1309,13 +1325,13 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 
   if (SYMBOLP (*keysym))
     {
-      Ibyte *name = XSTRING_DATA (XSYMBOL (*keysym)->name);
+      Lisp_Object name = XSYMBOL (*keysym)->name;
 
       /* GNU Emacs uses symbols with the printed representation of keysyms in
 	 their names, like `M-x', and we use the syntax '(meta x).  So, to
 	 avoid confusion, notice the M-x syntax and signal an error -
 	 because otherwise it would be interpreted as a regular keysym, and
-	 would even show up in the list-buffers output, causing confusion
+	 would even show up in the describe-bindings output, causing confusion
 	 to the naive.
 
 	 We can get away with this because none of the X keysym names contain
@@ -1324,58 +1340,36 @@ define_key_check_and_coerce_keysym (Lisp_Object spec,
 	 It might be useful to reject keysyms which are not x-valid-keysym-
 	 name-p, but that would interfere with various tricks we do to
 	 sanitize the Sun keyboards, and would make it trickier to
-	 conditionalize a .emacs file for multiple X servers.
-	 */
-      if (((int) qxestrlen (name) >= 2 && name[1] == '-')
-#if 1
-          ||
+	 conditionalize a .emacs file for multiple X servers. */
+      if ((XSTRING_LENGTH (name) > 2
+           && itext_ichar_eql (string_char_addr (name, 1), '-')
+           /* Check for a function binding if the symbol looks like c-...,
+              otherwise command remapping and C mode interact badly. */
+           && NILP (Ffunctionp (XSYMBOL_FUNCTION (*keysym))))
 	  /* Ok, this is a bit more dubious - prevent people from doing things
 	     like (global-set-key 'RET 'something) because that will have the
 	     same problem as above.  (Gag!)  Maybe we should just silently
 	     accept these as aliases for the "real" names?
 	     */
-	  (XSTRING_LENGTH (XSYMBOL (*keysym)->name) <= 3 &&
-	   (!qxestrcmp_ascii (name, "LFD") ||
-	    !qxestrcmp_ascii (name, "TAB") ||
-	    !qxestrcmp_ascii (name, "RET") ||
-	    !qxestrcmp_ascii (name, "ESC") ||
-	    !qxestrcmp_ascii (name, "DEL") ||
-	    !qxestrcmp_ascii (name, "SPC") ||
-	    !qxestrcmp_ascii (name, "BS")))
-#endif /* unused */
-          )
-	invalid_argument
-          ("Invalid (GNU Emacs) key format (see doc of define-key)",
-	   *keysym);
-
-      /* #### Ok, this is a bit more dubious - make people not lose if they
-	 do things like (global-set-key 'RET 'something) because that would
-	 otherwise have the same problem as above.  (Gag!)  We silently
-	 accept these as aliases for the "real" names.
-	 */
-      else if (!qxestrncmp_ascii (name, "kp_", 3))
+          || (EQ (*keysym, QBS))
+          || (XSTRING_LENGTH (name) == 3 &&
+              (EQ (*keysym, QLFD) || EQ (*keysym, QTAB) ||
+               EQ (*keysym, QRET) || EQ (*keysym, QESC) ||
+               EQ (*keysym, QDEL) || EQ (*keysym, QSPC))))
+        {
+          invalid_argument
+            ("Invalid (GNU Emacs) key format (see doc of define-key)",
+             *keysym);
+        }
+      else if (XSTRING_LENGTH (name) > 3 &&
+               !qxestrncmp_ascii (XSTRING_DATA (name), "kp_", 3))
 	{
-	  /* Likewise, the obsolete keysym binding of kp_.* should not lose. */
+	  /* The obsolete keysym binding of kp_.* should not lose. */
 	  DECLARE_EISTRING (temp);
-	  eicpy_raw (temp, name, qxestrlen (name));
+	  eicpy_lstr (temp, name);
 	  eisetch_char (temp, 2, '-');
 	  *keysym = Fintern_soft (eimake_string (temp), Qnil, Qnil);
 	}
-      else if (EQ (*keysym, QLFD))
-	*keysym = QKlinefeed;
-      else if (EQ (*keysym, QTAB))
-	*keysym = QKtab;
-      else if (EQ (*keysym, QRET))
-	*keysym = QKreturn;
-      else if (EQ (*keysym, QESC))
-	*keysym = QKescape;
-      else if (EQ (*keysym, QDEL))
-	*keysym = QKdelete;
-      else if (EQ (*keysym, QSPC))
-	*keysym = QKspace;
-      else if (EQ (*keysym, QBS))
-	*keysym = QKbackspace;
-      /* Emacs compatibility */
 #define FROB(num)				\
       else if (EQ(*keysym, Qdown_mouse_##num))	\
         *keysym = Qbutton##num;			\
@@ -1498,30 +1492,9 @@ define_key_parser (Lisp_Object spec, Lisp_Key_Data *returned_value)
 
 /* Used by character-to-event */
 void
-key_desc_list_to_event (Lisp_Object list, Lisp_Object event,
-                        int allow_menu_events)
+key_desc_list_to_event (Lisp_Object list, Lisp_Object event)
 {
   Lisp_Key_Data raw_key;
-
-  if (allow_menu_events &&
-      CONSP (list) &&
-      /* #### where the hell does this come from? */
-      EQ (XCAR (list), Qmenu_selection))
-    {
-      Lisp_Object fn, arg;
-      if (! NILP (Fcdr (Fcdr (list))))
-	invalid_argument ("Invalid menu event desc", list);
-      arg = Fcar (Fcdr (list));
-      if (SYMBOLP (arg))
-	fn = Qcall_interactively;
-      else
-	fn = Qeval;
-      XSET_EVENT_TYPE (event, misc_user_event);
-      XSET_EVENT_CHANNEL (event, wrap_frame (selected_frame ()));
-      XSET_EVENT_MISC_USER_FUNCTION (event, fn);
-      XSET_EVENT_MISC_USER_OBJECT (event, arg);
-      return;
-    }
 
   define_key_parser (list, &raw_key);
 
@@ -1583,6 +1556,9 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
     event2 = Fcharacter_to_event (key_specifier, Qnil, Qnil, Qnil);
   if (XEVENT (event2)->event_type != key_press_event)
     retval = 0;
+  else if (EQ (XEVENT_KEY_KEYSYM (event), XEVENT_KEY_KEYSYM (event2)) &&
+	   XEVENT_KEY_MODIFIERS (event) == XEVENT_KEY_MODIFIERS (event2))
+    retval = 1;
   else if (CONSOLE_TTY_P (XCONSOLE (XEVENT_CHANNEL (event))))
     {
       int ch1, ch2;
@@ -1591,9 +1567,6 @@ event_matches_key_specifier_p (Lisp_Object event, Lisp_Object key_specifier)
       ch2 = event_to_character (event2, 0, 0);
       retval = (ch1 >= 0 && ch2 >= 0 && ch1 == ch2);
     }
-  else if (EQ (XEVENT_KEY_KEYSYM (event), XEVENT_KEY_KEYSYM (event2)) &&
-	   XEVENT_KEY_MODIFIERS (event) == XEVENT_KEY_MODIFIERS (event2))
-    retval = 1;
   else
     retval = 0;
   Fdeallocate_event (event2);
@@ -1826,6 +1799,12 @@ Besides the canonical representation as a vector of lists of symbols,
 `define-key' also accepts a number of abbreviations, aliases, and variants
 for convenience, compatibility, and internal use.
 
+A key sequence can also be the vector [remap COMMAND]; this shadows any
+bindings for COMMAND in KEYMAP, using DEF instead of COMMAND.  See
+`command-remapping' and `remap-command'.  Specify [(remap) KEYSTROKE] if
+your keyboard has a key with the name `remap' and you'd like to use it as a
+prefix.
+
 A keystroke may be represented by a key; this is treated as though it were a
 list containing that key as the only element.  A keystroke may also be
 represented by an event object, as returned by the `next-command-event' and
@@ -1892,7 +1871,7 @@ it is possible to redefine only one of those sequences like so:
   /* This function can GC */
   int idx;
   int metized = 0;
-  int len;
+  Elemcount len;
   int ascii_hack;
   struct gcpro gcpro1, gcpro2, gcpro3;
 
@@ -1928,6 +1907,13 @@ it is possible to redefine only one of those sequences like so:
   ascii_hack = (STRINGP (keys));
 
   keymap = get_keymap (keymap, 1, 1);
+
+  /* Allow access to any keys named remap, use our uninterned symbol. For
+     compatibility, don't sanity-check (aref KEYS 1) or DEF. */
+  if (2 == len && VECTORP (keys) && EQ (Qremap, XVECTOR_DATA (keys) [0]))
+    {
+      RETURN_UNGCPRO (remap_command (keymap, XVECTOR_DATA (keys) [1], def));
+    }
 
   idx = 0;
   while (1)
@@ -2036,7 +2022,213 @@ it is possible to redefine only one of those sequences like so:
       }
     }
 }
+
+static Lisp_Object
+remap_command (Lisp_Object keymap, Lisp_Object old, Lisp_Object new_)
+{
+  Lisp_Key_Data parsed;
+  Lisp_Object cmd;
 
+  define_key_parser (Qxemacs_command_remapping, &parsed);
+  cmd = keymap_lookup_1 (keymap, &parsed, 0);
+  if (NILP (cmd))
+    {
+      cmd = Fmake_sparse_keymap (Qnil);
+      XKEYMAP (cmd)->name /* for debugging */
+        = list2 (make_key_description (&parsed, 1), keymap);
+      keymap_store (keymap, &parsed, cmd);
+    }
+
+  assert (!NILP (Fkeymapp (cmd)));
+  define_key_parser (old, &parsed);
+  keymap_store (cmd, &parsed, new_);
+  return new_;
+}
+
+
+DEFUN ("remap-command", Fremap_command, 3, 3, 0, /*
+Ensure that NEW is called when previously OLD would be, in KEYMAP.
+
+NEW and OLD are both command symbols.  KEYMAP is a keymap object.
+
+This is equivalent to `(define-key KEYMAP [remap OLD] NEW])'.  See also
+`substitute-key-definition', an older way of doing a similar thing.
+*/
+       (keymap, old, new_))
+{
+  keymap = get_keymap (keymap, 1, 1);
+  CHECK_COMMAND (old);
+  CHECK_COMMAND (new_);
+
+  return remap_command (keymap, old, new_);
+}
+
+static Lisp_Object
+command_remapping (Lisp_Object definition, int nmaps, Lisp_Object *maps)
+{
+  Lisp_Object remapping = Qnil;
+  Lisp_Object keys[2] = { Qxemacs_command_remapping, definition };
+  int jj;
+
+  for (jj = 0; jj < nmaps; jj++)
+    {
+      remapping = lookup_keys (maps[jj], countof (keys), keys, 0);
+      if (!NILP (remapping) && !FIXNUMP (remapping))
+        {
+          return remapping;
+        }
+    }
+
+  return Qnil;
+}
+
+DEFUN ("command-remapping", Fcommand_remapping, 1, 3, 0, /*
+Return the remapping for command COMMAND.
+
+Return nil if COMMAND is not remapped (or not a symbol).  The remapping is
+the command that is executed when some key sequence in the relevant keymaps
+would normally execute COMMAND, but this has been intercepted by
+`remap-command' or the [remap COMMAND] syntax for KEYS in `define-key'.
+
+If the optional argument POSITION is non-nil, it specifies an event, and the
+remapping occurs in the keymaps associated with it.  It can also be a number
+or marker, in which case the keymap properties at the specified buffer
+position instead of point are used.  The KEYMAPS argument is ignored if
+POSITION is non-nil.
+
+If the optional argument KEYMAPS is non-nil, it should be a list of
+keymaps to search for command remapping.  Otherwise, search for the
+remapping in all currently active keymaps.
+*/
+       (command, position, keymaps))
+{
+  Lisp_Object maps[100];
+  Lisp_Object *gubbish = maps;
+  int nmaps, maps_count = countof (maps);
+
+  CHECK_COMMAND (command);
+  CHECK_LIST (keymaps);
+  CHECK_REMAPPING_POSITION (position);
+
+  /* Get keymaps as an array */
+  if (NILP (keymaps) || !NILP (position))
+    {
+      nmaps = get_relevant_keymaps (Qnil, position, maps_count, gubbish);
+    }
+  else
+    {
+      Elemcount jj = 0;
+      nmaps = XFIXNUM (Flength (keymaps));
+      if (nmaps > maps_count)
+        {
+          gubbish = alloca_array (Lisp_Object, nmaps);
+        }
+
+      {
+        LIST_LOOP_2 (elt, keymaps)
+          {
+            gubbish[jj++] = elt;
+          }
+      }
+    }
+
+  if (nmaps > maps_count)
+    {
+      gubbish = alloca_array (Lisp_Object, nmaps);
+      nmaps = get_relevant_keymaps (Qnil, position, nmaps, gubbish);
+    }
+
+  return command_remapping (command, nmaps, gubbish);
+}
+
+struct commands_remapped_to_closure
+{
+  Lisp_Object command;
+  Lisp_Object result;
+};
+
+static void
+commands_remapped_to_mapper (const Lisp_Key_Data *key, Lisp_Object binding,
+                             void *data)
+{
+  struct commands_remapped_to_closure *crtc
+    = (struct commands_remapped_to_closure *) data;
+
+  if (EQ (binding, crtc->command))
+    {
+      crtc->result = Fcons (key->keysym, crtc->result);
+    }
+}
+
+static Lisp_Object
+commands_remapped_to_traverser (Lisp_Object k, void *arg)
+{
+  Lisp_Object remapping
+    = lookup_keys (k, 1, &Qxemacs_command_remapping, 0);
+  if (KEYMAPP (remapping))
+    {
+      map_keymap (XKEYMAP (remapping)->table, 0, commands_remapped_to_mapper,
+                  arg);
+    }
+
+  return Qnil;
+}
+
+DEFUN ("commands-remapped-to", Fcommands_remapped_to, 1, 3, 0, /*
+Return a list of symbols for which COMMAND is their remapping in KEYMAPS.
+
+This is the inverse operation of `command-remapping', which see.
+*/
+       (command, keymaps, position))
+{
+  Lisp_Object maps[100];
+  Lisp_Object *gubbish = maps;
+  int nmaps, maps_count = countof (maps), jj;
+  struct commands_remapped_to_closure closure = { command, Qnil };
+  struct gcpro gcpro1;
+  
+  CHECK_COMMAND (command);
+  CHECK_LIST (keymaps);
+  CHECK_REMAPPING_POSITION (position);
+
+  /* Get keymaps as an array */
+  if (NILP (keymaps) || !NILP (position))
+    {
+      nmaps = get_relevant_keymaps (Qnil, position, maps_count, gubbish);
+    }
+  else
+    {
+      jj = 0;
+      nmaps = XFIXNUM (Flength (keymaps));
+      if (nmaps > maps_count)
+        {
+          gubbish = alloca_array (Lisp_Object, nmaps);
+        }
+
+      {
+        LIST_LOOP_2 (elt, keymaps)
+          {
+            gubbish[jj++] = elt;
+          }
+      }
+    }
+
+  if (nmaps > maps_count)
+    {
+      gubbish = alloca_array (Lisp_Object, nmaps);
+      nmaps = get_relevant_keymaps (Qnil, position, nmaps, gubbish);
+    }
+
+  GCPRO1 (closure.result);
+  
+  for (jj = 0; jj < nmaps; jj++)
+    {
+      traverse_keymaps (maps[jj], Qnil, commands_remapped_to_traverser,
+                        (void *) (&closure));
+    }
+
+  RETURN_UNGCPRO (closure.result);
+}
 
 /************************************************************************/
 /*                      Looking up keys in keymaps                      */
@@ -2318,8 +2510,8 @@ relevant_map_push (Lisp_Object map, struct relevant_maps *closure)
 }
 
 static int
-get_relevant_keymaps (Lisp_Object keys,
-                      int max_maps, Lisp_Object maps[])
+get_relevant_keymaps (Lisp_Object keys, Lisp_Object position, int max_maps,
+                      Lisp_Object maps[])
 {
   /* This function can GC */
   Lisp_Object terminal = Qnil;
@@ -2338,7 +2530,7 @@ get_relevant_keymaps (Lisp_Object keys,
     terminal = event_chain_tail (keys);
   else if (VECTORP (keys))
     {
-      int len = XVECTOR_LENGTH (keys);
+      Elemcount len = XVECTOR_LENGTH (keys);
       if (len > 0)
 	terminal = XVECTOR_DATA (keys)[len - 1];
     }
@@ -2464,6 +2656,31 @@ get_relevant_keymaps (Lisp_Object keys,
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
+  if (FIXNUMP (position))
+    {
+      get_relevant_extent_keymaps (position, wrap_buffer (current_buffer),
+                                   Qnil, &closure);
+    }
+  else if (MARKERP (position) && !NILP (Fmarker_buffer (position)))
+    {
+      get_relevant_extent_keymaps (Fmarker_position (position),
+                                   Fmarker_buffer (position),
+                                   Qnil, &closure);
+    }
+  else if (EVENTP (position))
+    {
+      Lisp_Object ew = Fevent_window (position);
+
+      get_relevant_extent_keymaps (Fevent_point (position),
+                                   WINDOWP (ew) ?
+                                   Fwindow_buffer (Fevent_window (position))
+                                   : Qnil, Qnil, &closure);
+    }
+  else
+    {
+      assert (NILP (position));
+    }
+
   if (CONSOLE_TTY_P (con))
     relevant_map_push (Vglobal_tty_map, &closure);
   else
@@ -2580,23 +2797,34 @@ various situations.
   int nmaps;
 
   GCPRO1 (event_or_keys);
-  nmaps = get_relevant_keymaps (event_or_keys, countof (maps),
+  nmaps = get_relevant_keymaps (event_or_keys, Qnil, countof (maps),
 				gubbish);
   if (nmaps > countof (maps))
     {
       gubbish = alloca_array (Lisp_Object, nmaps);
-      nmaps = get_relevant_keymaps (event_or_keys, nmaps, gubbish);
+      nmaps = get_relevant_keymaps (event_or_keys, Qnil, nmaps, gubbish);
     }
   UNGCPRO;
   return Flist (nmaps, gubbish);
 }
 
-DEFUN ("key-binding", Fkey_binding, 1, 2, 0, /*
+DEFUN ("key-binding", Fkey_binding, 1, 4, 0, /*
 Return the binding for command KEYS in current keymaps.
+
 KEYS is a string, a vector of events, or a vector of key-description lists
 as described in the documentation for the `define-key' function.
-The binding is probably a symbol with a function definition; see
-the documentation for `lookup-key' for more information.
+
+NO-REMAP, if non-nil, specifies that any substitutions that have been
+specified by `remap-command' (or, equivalently, by `(define-key KEYMAP
+\[remap OLD] NEW)') should be ignored.
+
+POSITION, if non-nil, specifies a marker (and its associated buffer) or an
+integer position (in the current buffer) to examine for relevant keymaps.
+It can also be an event, in which case the associated buffer and position of
+that event will be used.
+
+The binding is probably a symbol with a function definition; see the
+documentation for `lookup-key' for more information.
 
 For key-presses, the order of keymaps searched is:
   - the `keymap' property of any extent(s) at point;
@@ -2650,7 +2878,7 @@ actually looked up in the keymaps.  In particular:
    generate and display a list of possible key sequences and bindings
    given the prefix so far generated.
 */
-       (keys, accept_default))
+       (keys, accept_default, no_remap, position))
 {
   /* This function can GC */
   int i;
@@ -2659,7 +2887,7 @@ actually looked up in the keymaps.  In particular:
   struct gcpro gcpro1, gcpro2;
   GCPRO2 (keys, accept_default); /* get_relevant_keymaps may autoload */
 
-  nmaps = get_relevant_keymaps (keys, countof (maps), maps);
+  nmaps = get_relevant_keymaps (keys, position, countof (maps), maps);
 
   UNGCPRO;
 
@@ -2668,15 +2896,19 @@ actually looked up in the keymaps.  In particular:
 
   for (i = 0; i < nmaps; i++)
     {
-      Lisp_Object tem = Flookup_key (maps[i], keys,
-				     accept_default);
+      Lisp_Object tem = Flookup_key (maps[i], keys, accept_default);
+
       if (FIXNUMP (tem))
 	{
 	  /* Too long in some local map means don't look at global map */
 	  return Qnil;
 	}
-      else if (!NILP (tem))
-	return tem;
+
+      if (!NILP (tem) && NILP (no_remap) && SYMBOLP (tem))
+        {
+          Lisp_Object remap = command_remapping (tem, nmaps, maps);
+          return NILP (remap) ? tem : remap;
+        }
     }
   return Qnil;
 }
@@ -2719,16 +2951,28 @@ Lisp_Object
 event_binding (Lisp_Object event0, int accept_default)
 {
   /* This function can GC */
-  Lisp_Object maps[100];
+  Lisp_Object maps[100], result;
   int nmaps;
 
   assert (EVENTP (event0));
 
-  nmaps = get_relevant_keymaps (event0, countof (maps), maps);
+  nmaps = get_relevant_keymaps (event0, Qnil, countof (maps), maps);
   if (nmaps > countof (maps))
     nmaps = countof (maps);
-  return process_event_binding_result (lookup_events (event0, nmaps, maps,
-						      accept_default));
+
+  result = process_event_binding_result (lookup_events (event0, nmaps, maps,
+							accept_default));
+
+  if (!NILP (result) && SYMBOLP (result))
+    {
+      Lisp_Object remap = command_remapping (result, nmaps, maps);
+      if (!NILP (remap))
+	{
+	  result = remap;
+	}
+    }
+
+  return result;
 }
 
 /* like event_binding, but specify a keymap to search */
@@ -3024,6 +3268,13 @@ map_keymap_mapper (const Lisp_Key_Data *key,
   /* This function can GC */
   Lisp_Object fn;
   fn = GET_LISP_FROM_VOID (function);
+
+  /* Don't expose our remapping here. */
+  if (EQ (KEY_DATA_KEYSYM (key), Qxemacs_command_remapping))
+    {
+      return;
+    }
+
   call2 (fn, make_key_description (key, 1), binding);
 }
 
@@ -3127,8 +3378,7 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       Lisp_Object thisseq = Fcar (Fcar (closure->tail));
       Lisp_Object cmd = get_keyelt (contents, 1);
       Lisp_Object vec;
-      int j;
-      int len;
+      Elemcount len, j;
       Lisp_Key_Data key;
       key.keysym = keysym;
       key.modifiers = modifiers;
@@ -3136,9 +3386,9 @@ accessible_keymaps_mapper_1 (Lisp_Object keysym, Lisp_Object contents,
       assert (!NILP (cmd));
       cmd = get_keymap (cmd, 0, 1);
       assert (KEYMAPP (cmd));
-
-      vec = make_vector (XVECTOR_LENGTH (thisseq) + 1, Qnil);
       len = XVECTOR_LENGTH (thisseq);
+      vec = make_vector (len + 1, Qnil);
+
       for (j = 0; j < len; j++)
 	XVECTOR_DATA (vec) [j] = XVECTOR_DATA (thisseq) [j];
       XVECTOR_DATA (vec) [j] = make_key_description (&key, 1);
@@ -3483,12 +3733,12 @@ argument to KEYMAPS).
   /* Get keymaps as an array */
   if (NILP (keymaps))
     {
-      nmaps = get_relevant_keymaps (event_or_keys, countof (maps),
-				    gubbish);
+      nmaps = get_relevant_keymaps (event_or_keys, Qnil, countof (maps),
+                                    gubbish);
       if (nmaps > countof (maps))
 	{
 	  gubbish = alloca_array (Lisp_Object, nmaps);
-	  nmaps = get_relevant_keymaps (event_or_keys, nmaps, gubbish);
+	  nmaps = get_relevant_keymaps (event_or_keys, Qnil, nmaps, gubbish);
 	}
     }
   else if (CONSP (keymaps))
@@ -3518,6 +3768,11 @@ argument to KEYMAPS).
 	}
     }
 
+  if (!NILP (command_remapping (definition, nmaps, gubbish)))
+    {
+      return Qnil;
+    }
+
   return where_is_internal (definition, gubbish, nmaps, firstonly, 0);
 }
 
@@ -3536,11 +3791,11 @@ where_is_to_char (Lisp_Object definition, Eistring *buffer)
   int nmaps;
 
   /* Get keymaps as an array */
-  nmaps = get_relevant_keymaps (Qnil, countof (maps), gubbish);
+  nmaps = get_relevant_keymaps (Qnil, Qnil, countof (maps), gubbish);
   if (nmaps > countof (maps))
     {
       gubbish = alloca_array (Lisp_Object, nmaps);
-      nmaps = get_relevant_keymaps (Qnil, nmaps, gubbish);
+      nmaps = get_relevant_keymaps (Qnil, Qnil, nmaps, gubbish);
     }
 
   where_is_internal (definition, maps, nmaps, Qt, buffer);
@@ -3714,6 +3969,12 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	  continue;
 	}
 
+      /* Don't expose the command remapping to #'where-is-internal */
+      if (EQ (key, Qxemacs_command_remapping))
+        {
+          continue;
+        }
+
       /* If the map is a "bucky" map, then add a bit to the
 	 modifiers_so_far list.
 	 Otherwise, add a new raw_key onto the end of keys_so_far.
@@ -3857,7 +4118,7 @@ Fifth argument MOUSE-ONLY-P says to only print bindings for mouse clicks.
 
 void
 describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
-                   Lisp_Object prefix, int mice_only_p, Lisp_Object buffer)
+                   Lisp_Object prefix, int mice_only_p, Lisp_Object stream)
 {
   /* This function can GC */
   Lisp_Object maps = Qnil;
@@ -3918,7 +4179,7 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
                       partial,
                       sub_shadow,
                       mice_only_p,
-		      buffer);
+		      stream);
       }
     SKIP:
       NUNGCPRO;
@@ -3926,55 +4187,58 @@ describe_map_tree (Lisp_Object startmap, int partial, Lisp_Object shadow,
   UNGCPRO;
 }
 
-
 static void
-describe_command (Lisp_Object definition, Lisp_Object buffer)
+describe_command (Lisp_Object definition, Lisp_Object stream)
 {
   /* This function can GC */
   int keymapp = !NILP (Fkeymapp (definition));
   struct gcpro gcpro1;
   GCPRO1 (definition);
 
-  Findent_to (make_fixnum (16), make_fixnum (3), buffer);
   if (keymapp)
-    buffer_insert_ascstring (XBUFFER (buffer), "<< ");
+    write_ascstring (stream, "<< ");
 
   if (SYMBOLP (definition))
     {
-      buffer_insert1 (XBUFFER (buffer), Fsymbol_name (definition));
+      write_lisp_string (stream, XSYMBOL_NAME (definition), 0,
+                         XSTRING_LENGTH (XSYMBOL_NAME (definition)));
     }
   else if (STRINGP (definition) || VECTORP (definition))
     {
-      buffer_insert_ascstring (XBUFFER (buffer), "Kbd Macro: ");
-      buffer_insert1 (XBUFFER (buffer), Fkey_description (definition));
+      write_ascstring (stream, "Kbd Macro: ");
+      definition = Fkey_description (definition);
+      write_lisp_string (stream, definition, 0, XSTRING_LENGTH (definition));
     }
   else if (COMPILED_FUNCTIONP (definition))
-    buffer_insert_ascstring (XBUFFER (buffer), "Anonymous Compiled Function");
+    write_ascstring (stream, "Anonymous Compiled Function");
   else if (CONSP (definition) && EQ (XCAR (definition), Qlambda))
-    buffer_insert_ascstring (XBUFFER (buffer), "Anonymous Lambda");
+    write_ascstring (stream, "Anonymous Lambda");
   else if (KEYMAPP (definition))
     {
       Lisp_Object name = XKEYMAP (definition)->name;
       if (STRINGP (name) || (SYMBOLP (name) && !NILP (name)))
 	{
-	  buffer_insert_ascstring (XBUFFER (buffer), "Prefix command ");
+	  write_ascstring (stream, "Prefix command ");
 	  if (SYMBOLP (name)
 	      && EQ (find_symbol_value (name), definition))
-	    buffer_insert1 (XBUFFER (buffer), Fsymbol_name (name));
+            {
+              write_lisp_string (stream, XSYMBOL_NAME (name), 0,
+                                 XSTRING_LENGTH (XSYMBOL_NAME (name)));
+            }
 	  else
 	    {
-	      buffer_insert1 (XBUFFER (buffer), Fprin1_to_string (name, Qnil));
+              Fprin1 (stream, name);
 	    }
 	}
       else
-	buffer_insert_ascstring (XBUFFER (buffer), "Prefix Command");
+	write_ascstring (stream, "Prefix Command");
     }
   else
-    buffer_insert_ascstring (XBUFFER (buffer), "??");
+    write_ascstring (stream, "??");
 
   if (keymapp)
-    buffer_insert_ascstring (XBUFFER (buffer), " >>");
-  buffer_insert_ascstring (XBUFFER (buffer), "\n");
+    write_ascstring (stream, " >>");
+  write_ascstring (stream, "\n");
   UNGCPRO;
 }
 
@@ -4179,12 +4443,12 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      int partial,
 	      Lisp_Object shadow,
 	      int mice_only_p,
-	      Lisp_Object buffer)
+	      Lisp_Object stream)
 {
   /* This function can GC */
   struct describe_map_closure describe_map_closure;
   Lisp_Object list = Qnil;
-  struct buffer *buf = XBUFFER (buffer);
+  struct buffer *buf = BUFFERP (stream) ? XBUFFER (stream) : current_buffer;
   Ichar printable_min = (CHAR_OR_CHAR_INTP (buf->ctl_arrow)
 			  ? XCHAR_OR_CHAR_INT (buf->ctl_arrow)
 			  : ((EQ (buf->ctl_arrow, Qt)
@@ -4208,8 +4472,9 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 
   if (!NILP (list))
     {
+      Charcount columns = 0;
       list = list_sort (list, describe_map_sort_predicate, Qnil, Qnil);
-      buffer_insert_ascstring (buf, "\n");
+      write_ascstring (stream, "\n");
       while (!NILP (list))
 	{
           Lisp_Object elt = XCAR (XCAR (list));
@@ -4217,20 +4482,43 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	  int modifiers = XFIXNUM (XCDR (elt));
 
 	  if (!NILP (elt_prefix))
-	    buffer_insert_lisp_string (buf, elt_prefix);
+            {
+              write_lisp_string (stream, elt_prefix, 0,
+                                 XSTRING_LENGTH (elt_prefix));
+              columns += string_char_length (elt_prefix);
+            }
 
 	  if (modifiers & XEMACS_MOD_META)
-	    buffer_insert_ascstring (buf, "M-");
+            {
+              write_ascstring (stream, "M-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_CONTROL)
-	    buffer_insert_ascstring (buf, "C-");
+            {
+              write_ascstring (stream, "C-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_SUPER)
-	    buffer_insert_ascstring (buf, "S-");
+            {
+              write_ascstring (stream, "S-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_HYPER)
-	    buffer_insert_ascstring (buf, "H-");
+            {
+              write_ascstring (stream, "H-");
+              columns += 2;
+            }
 	  if (modifiers & XEMACS_MOD_ALT)
-	    buffer_insert_ascstring (buf, "Alt-");
+            {
+              write_ascstring (stream, "Alt-");
+              columns += 4;
+            }
 	  if (modifiers & XEMACS_MOD_SHIFT)
-	    buffer_insert_ascstring (buf, "Sh-");
+            {
+              write_ascstring (stream, "Sh-");
+              columns += 3;
+            }
+
 	  if (SYMBOLP (keysym))
 	    {
 	      Lisp_Object code = Fget (keysym, Qcharacter_of_keysym, Qnil);
@@ -4239,29 +4527,47 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      /* Calling Fsingle_key_description() would cons more */
 #if 0                           /* This is bogus */
 	      if (EQ (keysym, QKlinefeed))
-		buffer_insert_ascstring (buf, "LFD");
+		write_ascstring (stream, "LFD");
 	      else if (EQ (keysym, QKtab))
-		buffer_insert_ascstring (buf, "TAB");
+		write_ascstring (stream, "TAB");
 	      else if (EQ (keysym, QKreturn))
-		buffer_insert_ascstring (buf, "RET");
+		write_ascstring (stream, "RET");
 	      else if (EQ (keysym, QKescape))
-		buffer_insert_ascstring (buf, "ESC");
+		write_ascstring (stream, "ESC");
 	      else if (EQ (keysym, QKdelete))
-		buffer_insert_ascstring (buf, "DEL");
+		write_ascstring (stream, "DEL");
 	      else if (EQ (keysym, QKspace))
-		buffer_insert_ascstring (buf, "SPC");
+		write_ascstring (stream, "SPC");
 	      else if (EQ (keysym, QKbackspace))
-		buffer_insert_ascstring (buf, "BS");
+		write_ascstring (stream, "BS");
 	      else
 #endif
                 if (c >= printable_min)
-		  buffer_insert_emacs_char (buf, c);
-		else buffer_insert1 (buf, Fsymbol_name (keysym));
+                  {
+                    Ibyte cbuf[MAX_ICHAR_LEN];
+                    write_string_1 (stream, cbuf, set_itext_ichar (cbuf, c));
+                    columns += 1;
+                  }
+	      else
+                {
+                  write_lisp_string (stream, XSYMBOL_NAME (keysym), 0,
+                                     XSTRING_LENGTH (XSYMBOL_NAME (keysym)));
+                  columns += string_char_length (XSYMBOL_NAME (keysym));
+                }
 	    }
 	  else if (CHARP (keysym))
-	    buffer_insert_emacs_char (buf, XCHAR (keysym));
+            {
+              Ibyte cbuf[MAX_ICHAR_LEN];
+              
+              write_string_1 (stream, cbuf,
+                              set_itext_ichar (cbuf, XCHAR (keysym)));
+              columns += 1;
+            }
 	  else
-	    buffer_insert_ascstring (buf, "---bad keysym---");
+            {
+              write_ascstring (stream, "---bad keysym---");
+              columns += sizeof ("---bad keysym---") - 1;
+            }
 
 	  if (elided)
 	    elided = 0;
@@ -4277,16 +4583,27 @@ describe_map (Lisp_Object keymap, Lisp_Object elt_prefix,
 	      if (k != 0)
 		{
 		  if (k == 1)
-		    buffer_insert_ascstring (buf, ", ");
+                    {
+                      write_ascstring (stream, ", ");
+                      columns += 2;
+                    }
 		  else
-		    buffer_insert_ascstring (buf, " .. ");
+                    {
+                      write_ascstring (stream, " .. ");
+                      columns += 4;
+                    }
 		  elided = 1;
 		  continue;
 		}
 	    }
 
+          /* Indent to column 16, or at least 3 columns if already at column
+             16. */
+          write_string_1 (stream, (const Ibyte *)"                ",
+                          columns < 16 ? 16 - columns : 3);
 	  /* Print a description of the definition of this character.  */
-	  (*elt_describer) (XCDR (XCAR (list)), buffer);
+	  (*elt_describer) (XCDR (XCAR (list)), stream);
+	  columns = 0;
 	  list = XCDR (list);
 	}
     }
@@ -4307,6 +4624,7 @@ syms_of_keymap (void)
 
   DEFSYMBOL (Qmodeline_map);
   DEFSYMBOL (Qtoolbar_map);
+  DEFSYMBOL (Qremap);
 
   DEFSUBR (Fkeymap_parents);
   DEFSUBR (Fset_keymap_parents);
@@ -4326,6 +4644,9 @@ syms_of_keymap (void)
   DEFSUBR (Fmap_keymap);
   DEFSUBR (Fevent_matches_key_specifier_p);
   DEFSUBR (Fdefine_key);
+  DEFSUBR (Fremap_command);
+  DEFSUBR (Fcommands_remapped_to);
+  DEFSUBR (Fcommand_remapping);
   DEFSUBR (Flookup_key);
   DEFSUBR (Fkey_binding);
   DEFSUBR (Fuse_global_map);
@@ -4357,7 +4678,6 @@ syms_of_keymap (void)
   DEFSYMBOL (Qmouse_##num);			\
   DEFSYMBOL (Qdown_mouse_##num);
 #include "keymap-buttons.h"
-  DEFSYMBOL (Qmenu_selection);
   DEFSYMBOL (QLFD);
   DEFSYMBOL (QTAB);
   DEFSYMBOL (QRET);
@@ -4455,6 +4775,10 @@ Incremented for each change to any keymap.
 
   Vsingle_space_string = make_string ((const Ibyte *) " ", 1);
   staticpro (&Vsingle_space_string);
+
+  Qxemacs_command_remapping
+    = Fmake_symbol (build_ascstring ("xemacs-command-remapping"));
+  staticpro (&Qxemacs_command_remapping);
 }
 
 void

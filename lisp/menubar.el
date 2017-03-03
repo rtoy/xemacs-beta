@@ -79,9 +79,9 @@ See `current-menubar' for a description of the syntax of a menubar."
     (setq menu (cdr menu)))
   (let (menuitem item)
     (while (keywordp (setq item (car menu)))
-      (or (memq item '(:config :included :filter :accelerator))
+      (or (memq item '(:config :included :visible :filter :accelerator :active))
 	  (signal 'error
-		  (list "menu keyword must be :config, :included, :accelerator or :filter"
+		  (list "menu keyword must be :config, :included, :visible, :accelerator, :active or :filter"
 			item)))
       (if (or (not (cdr menu))
 	      (vectorp (nth 1 menu))
@@ -92,7 +92,8 @@ See `current-menubar' for a description of the syntax of a menubar."
       (setq menuitem (car menu))
       (cond
        ((stringp menuitem)
-	(and (string-match "^\\(-+\\|=+\\):\\(.*\\)" menuitem)
+	(and (find ?: menuitem)
+             (string-match "^\\(-+\\|=+\\):\\(.*\\)" menuitem)
 	     (setq item (match-string 2 menuitem))
 	     (or (member item '(;; Motif-compatible
 				"singleLine"
@@ -135,7 +136,7 @@ See `current-menubar' for a description of the syntax of a menubar."
 		  (setq item (aref menuitem i))
 		  (cond ((not (memq item '(:active :suffix :keys :style
 						   :full :included :selected
-						   :accelerator)))
+						   :visible :accelerator)))
 			 (signal 'error
 				 (list (if (keywordp item)
 					   "unknown menu item keyword"
@@ -178,35 +179,36 @@ Returns (ITEM . PARENT), where PARENT is the immediate parent of
  the item found.
 If the item does not exist, the car of the returned value is nil.
 If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
-  (find-menu-item-1 menubar item-path-list))
-
-(defun find-menu-item-1 (menubar item-path-list &optional parent)
-  (check-argument-type 'listp item-path-list)
-  (if (not (consp menubar))
-      nil
-    (let ((rest menubar)
-	  result)
-      (when (stringp (car rest))
-	(setq rest (cdr rest)))
-      (while (keywordp (car rest))
-	(setq rest (cddr rest)))
-      (while rest
-	(if (and (car rest)
-		 (stringp (car item-path-list))
-		 (= 0 (compare-menu-text (car item-path-list)
-					 (menu-item-text (car rest)))))
-	    (setq result (car rest)
-		  rest nil)
-	  (setq rest (cdr rest))))
-      (if (cdr item-path-list)
-	  (cond ((consp result)
-		 (find-menu-item-1 (cdr result) (cdr item-path-list) result))
-		(result
-		 (signal 'error (list (gettext "not a submenu") result)))
-		(t
-		 (signal 'error (list (gettext "no such submenu")
-				      (car item-path-list)))))
-	(cons result parent)))))
+  (labels
+      ((find-menu-item-1 (menubar item-path-list &optional parent)
+         (check-argument-type 'listp item-path-list)
+         (if (not (consp menubar))
+             nil
+           (let ((rest menubar)
+                 result)
+             (when (stringp (car rest))
+               (setq rest (cdr rest)))
+             (while (keywordp (car rest))
+               (setq rest (cddr rest)))
+             (while rest
+               (if (and (car rest)
+                        (stringp (car item-path-list))
+                        (= 0 (compare-menu-text (car item-path-list)
+                                                (menu-item-text (car rest)))))
+                   (setq result (car rest)
+                         rest nil)
+                 (setq rest (cdr rest))))
+             (if (cdr item-path-list)
+                 (cond ((consp result)
+                        (find-menu-item-1 (cdr result) (cdr item-path-list)
+                                          result))
+                       (result
+                        (signal 'error (list (gettext "not a submenu") result)))
+                       (t
+                        (signal 'error (list (gettext "no such submenu")
+                                             (car item-path-list)))))
+               (cons result parent))))))
+    (find-menu-item-1 menubar item-path-list)))
 
 (defun add-menu-item-1 (leaf-p menu-path new-item before in-menu)
   ;; This code looks like it could be cleaned up some more
@@ -232,7 +234,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 		      )))
     (unless menubar
       (error "`current-menubar' is nil: can't add menus to it."))
-    (unless menu
+    (unless menu  ; If we don't have all intervening submenus needed by menu-path, add them.
       (let ((rest menu-path)
 	    (so-far menubar))
 	(while rest
@@ -243,7 +245,7 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 		  (car (find-menu-item (cdr so-far) (list (car rest))))))
 	  (unless menu
 	    (let ((rest2 so-far))
-	      (while (and (cdr rest2) (car (cdr rest2)))
+	      (while (and (cdr rest2) (car (cdr rest2))) ; Walk rest2 down so-far till rest2 is the last item before divider or end of list.
 		(setq rest2 (cdr rest2)))
 	      (setcdr rest2
 		      (nconc (list (setq menu (list (car rest))))
@@ -252,15 +254,13 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	  (setq rest (cdr rest)))))
     (if (and item-found (car item-found))
 	;; hack the item in place.
-	(if menu
+	(if (or menu (not (eq (car item-found) (car menubar)))) ;If either replacing in submenu, or replacing non-initial top-level item.  
 	    ;; Isn't it very bad form to use nsubstitute for side effects?
-	    (nsubstitute new-item (car item-found) menu)
-	  (setq current-menubar (nsubstitute new-item
-					     (car item-found)
-					     current-menubar)))
+	    (nsubstitute new-item (car item-found) (or menu menubar))
+	  (setcar menubar new-item))
       ;; OK, we have to add the whole thing...
       ;; if BEFORE is specified, try to add it there.
-      (unless menu (setq menu current-menubar))
+      (unless menu (setq menu menubar))
       (when before
 	(setq before (car (find-menu-item menu (list before)))))
       (let ((rest menu)
@@ -274,8 +274,9 @@ If some menu in the ITEM-PATH-LIST does not exist, an error is signalled."
 	(when (not added-before)
 	  ;; adding before the first item on the menubar itself is harder
 	  (if (and (eq menu menubar) (eq before (car menu)))
-	      (setq menu (cons new-item menu)
-		    current-menubar menu)
+	      (let ((old-car (cons (car menubar) (cdr menubar))))
+		(setcar menubar new-item)
+		(setcdr menubar old-car))
 	    ;; otherwise, add the item to the end.
 	    (nconc menu (list new-item))))))
     (set-menubar-dirty-flag)
@@ -341,18 +342,18 @@ in the menu hierarchy.  The documentation of `add-submenu' describes
 menu paths.
 FROM-MENU, if provided, means use that instead of `current-menubar'
 as the menu to change."
-  (let* ((pair (condition-case nil (find-menu-item (or from-menu
-						       current-menubar) path)
+  (let* ((menubar (or from-menu current-menubar))
+	 (pair (condition-case nil (find-menu-item menubar path)
 		 (error nil)))
 	 (item (car pair))
-	 (parent (or (cdr pair) current-menubar)))
+	 (parent (or (cdr pair) menubar)))
     (if (not item)
 	nil
-      ;; the menubar is the only special case, because other menus begin
-      ;; with their name.
-      (if (eq parent current-menubar)
-	  (setq current-menubar (delq item parent))
-	(delq item parent))
+      (if (eq item (car menubar)) ; Deleting first item from a top-level menubar
+	  (progn
+	    (setcar menubar (car (cdr menubar)))
+	    (setcdr menubar (cdr (cdr menubar))))
+	(delete* item parent))
       (set-menubar-dirty-flag)
       item)))
 
@@ -493,8 +494,10 @@ which will not be used as accelerators."
   "Strip an auto-generated accelerator spec off of ITEM.
 ITEM should be a string.  This removes specs added by
 `menu-item-generate-accelerator-spec' and `submenu-generate-accelerator-spec'."
-  (if (string-match "%_. " item)
-      (substring item 4)
+  ; (if (string-match "%_. " item) ...)
+  (if (and (> (length item) 3) (eql (aref item 3) ?\x20)
+           (eql (aref item 1) ?_) (eql (aref item 0) ?%))
+      (subseq item 4)
     item))
 
 (defun menu-item-generate-accelerator-spec (n &optional omit-chars-list)
@@ -506,21 +509,20 @@ allows the Nth line to be selected by the number N.  '0' is used for the
 If OMIT-CHARS-LIST is given, it should be a list of lowercase characters,
 which will not be used as accelerators."
   (cond ((< n 10) (concat "%_" (int-to-string n) " "))
-	((= n 10) "%_0 ")
+	((eql n 10) "%_0 ")
 	((<= n 36)
 	 (setq n (- n 10))
 	 (let ((m 0))
-	   (while (> n 0)
-	     (setq m (1+ m))
-	     (while (memq (int-to-char (+ m (- (char-to-int ?a) 1)))
-			  omit-chars-list)
-	       (setq m (1+ m)))
-	     (setq n (1- n)))
+           (if omit-chars-list
+               (while (> n 0)
+                 (setq m (1+ m))
+                 (while (memq (int-to-char (+ m (- (char-to-int ?a) 1)))
+                              omit-chars-list)
+                   (setq m (1+ m)))
+                 (setq n (1- n)))
+             (setq m n))
 	   (if (<= m 26)
-	       (concat
-		"%_"
-		(char-to-string (int-to-char (+ m (- (char-to-int ?a) 1))))
-		" ")
+	       (concat "%_" (char-to-string (+ m (- ?a 1))) " ")
 	     "")))
 	(t "")))
 

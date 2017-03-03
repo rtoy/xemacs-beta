@@ -1,3 +1,30 @@
+2015-05-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* postgresql/configure.ac (PostgreSQL): Allow specification of subdir.
+	Add most recent versioned directories for multiversion
+	installations (eg, MacPorts.
+	* postgresql/configure: Regenerate.
+
+2014-08-11  Jerry James  <james@xemacs.org>
+
+	* common/Makefile.common (CPPFLAGS): New variable.
+
+2013-06-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.34 "kale" is released.
+
+2013-01-04  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.33 "horseradish" is released.
+
+2012-10-15  Mats Lidell  <matsl@xemacs.org>
+
+	* common/Makefile.common (distclean): Don't delete configure.
+
+2012-08-02  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* XEmacs 21.5.32 "habanero" is released.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* postgresql/postgresql.c (Fpq_conn_defaults):

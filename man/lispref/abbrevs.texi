@@ -41,7 +41,7 @@ Mode, xemacs, The XEmacs User's Manual}.
 * Standard Abbrev Tables::      Abbrev tables used by various major modes.
 @end menu
 
-@node Abbrev Mode
+@node Abbrev Mode, Abbrev Tables, Abbrevs, Abbrevs
 @section Setting Up Abbrev Mode
 
   Abbrev mode is a minor mode controlled by the value of the variable
@@ -61,7 +61,7 @@ This is the value of @code{abbrev-mode} for buffers that do not override it.
 This is the same as @code{(default-value 'abbrev-mode)}.
 @end defvar
 
-@node Abbrev Tables
+@node Abbrev Tables, Defining Abbrevs, Abbrev Mode, Abbrevs
 @section Abbrev Tables
 
   This section describes how to create and manipulate abbrev tables.
@@ -100,7 +100,7 @@ Otherwise the description is a Lisp expression---a call to
 is currently defined.
 @end defun
 
-@node Defining Abbrevs
+@node Defining Abbrevs, Abbrev Files, Abbrev Tables, Abbrevs
 @section Defining Abbrevs
 
   These functions define an abbrev in a specified abbrev table.
@@ -147,7 +147,7 @@ behavior of the functions in this section; it is examined by their
 callers.
 @end defopt
 
-@node Abbrev Files
+@node Abbrev Files, Abbrev Expansion, Defining Abbrevs, Abbrevs
 @section Saving Abbrevs in Files
 
   A file of saved abbrev definitions is actually a file of Lisp code.
@@ -192,7 +192,7 @@ Save all abbrev definitions, in all abbrev tables, in the file
 define the same abbrevs.  This function returns @code{nil}.
 @end deffn
 
-@node Abbrev Expansion
+@node Abbrev Expansion, Standard Abbrev Tables, Abbrev Files, Abbrevs
 @section Looking Up and Expanding Abbreviations
 
   Abbrevs are usually expanded by commands for interactive use,
@@ -304,7 +304,7 @@ aborts expansion if it is not confirmed.
           (error "Not expanding this abbrev"))))
 @end smallexample
 
-@node Standard Abbrev Tables
+@node Standard Abbrev Tables,  , Abbrev Expansion, Abbrevs
 @section Standard Abbrev Tables
 
   Here we list the variables that hold the abbrev tables for the

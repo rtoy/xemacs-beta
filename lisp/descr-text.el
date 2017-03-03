@@ -760,10 +760,10 @@ The list is null if CHAR isn't found in `describe-char-unicodedata-file'."
 		   last (<= char last))
 	      (setq found t)))
 	(if found
-	    (let ((fields (cdr (nsubst nil "" (split-string
+	    (let ((fields (cdr (nsubst nil "" (split-string-by-char
 					       (buffer-substring
 						(line-beginning-position)
-						(line-end-position)) ";")
+						(line-end-position)) ?\;)
 				       :test 'equal))))
 	      ;; The length depends on whether the last field was empty.
 	      (unless (or (eql 13 (length fields))
@@ -1235,8 +1235,7 @@ as well as widgets, buttons, overlays, and text properties."
                  (if (consp clm)
                      (progn (insert " ") (eval clm))
                    (when (>= (+ (current-column)
-                                (or (string-match "\n" clm)
-                                    (string-width clm))
+                                (or (position ?\n clm) (string-width clm))
                                 1)
                              (window-width))
                      (insert "\n")

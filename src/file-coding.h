@@ -353,6 +353,9 @@ struct coding_system_methods
      a result of the stream being rewound.  Optional. */
   void (*rewind_coding_stream_method) (struct coding_stream *str);
 
+  /* Return the number of characters *decoded*. Optional. */
+  Charcount (*character_tell_method) (struct coding_stream *str);
+
   /* Finalize coding stream method: Clean up the type-specific data
      attached to the coding stream (i.e. in struct TYPE_coding_stream).
      Happens when the Lstream is deleted using Lstream_delete() or is

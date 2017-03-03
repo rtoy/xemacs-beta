@@ -437,6 +437,7 @@ Epoch 4.0 released August 27, 1990.
 #include "sysfile.h"
 #include "systime.h"
 #include "sysproc.h" /* for qxe_getpid() */
+#include "tls.h"
 
 #ifdef QUANTIFY
 #include <quantify.h>
@@ -1432,18 +1433,21 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
   if (!initialized)
     {
-      /* Initialize things so that new Lisp objects
-	 can be created and objects can be staticpro'd.
-	 Must be basically the very first thing done
-	 because pretty much all of the initialization
-	 routines below create new objects. */
+      /* Initialize things so that new Lisp objects can be created and objects
+	 can be staticpro'd.  Must be basically the very first thing done
+	 because pretty much all of the initialization routines below create
+	 new objects. */
       init_alloc_once_early ();
 
       init_gc_once_early ();
 
-      /* Initialize Qnil, Qt, Qunbound, and the
-	 obarray.  After this, symbols can be
-	 interned.  This depends on init_alloc_once_early(). */
+      /* Make sure that hash tables (and packages) can be created.  Create
+         obarray. */
+      init_elhash_once_early ();
+
+      /* Initialize Qnil, Qt, and Qunbound.  After this, symbols can be
+	 interned.  This depends on init_alloc_once_early() and
+	 init_elhash_once_early(). */
       init_symbols_once_early ();
 
       /* Declare the basic symbols pertaining to errors,
@@ -1452,9 +1456,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
       /* Make sure that opaque pointers can be created. */
       init_opaque_once_early ();
-
-      /* Make sure that hash tables can be created. */
-      init_elhash_once_early ();
 
       /* Make sure that eistrings can be created. */
       init_eistring_once_early ();
@@ -1524,6 +1525,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
       syms_of_dired ();
       syms_of_doc ();
+      syms_of_doprnt ();
       syms_of_editfns ();
       syms_of_elhash ();
       syms_of_emacs ();
@@ -1605,6 +1607,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_scrollbar ();
 #endif
       syms_of_text ();
+#ifdef WITH_TLS
+      syms_of_tls ();
+#endif
 #ifdef HAVE_TOOLBARS
       syms_of_toolbar ();
 #endif
@@ -2212,9 +2217,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_search ();
       vars_of_select ();
       vars_of_sound ();
-      vars_of_symbols ();
       vars_of_syntax ();
       vars_of_text ();
+#ifdef WITH_TLS
+      vars_of_tls ();
+#endif
 #ifdef HAVE_TOOLBARS
       vars_of_toolbar ();
 #endif
@@ -2677,6 +2684,10 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   init_device_tty ();
 #endif
   init_console_stream (restart); /* Create the first console */
+#ifdef WITH_TLS
+  if (initialized && !restart)
+    init_tls ();
+#endif
 
   /* try to get the actual pathname of the exec file we are running */
   if (!restart)

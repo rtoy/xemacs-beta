@@ -23,7 +23,7 @@ reading) or where to put it (if printing).
 * Output Variables::  Variables that control what the printing functions do.
 @end menu
 
-@node Streams Intro
+@node Streams Intro, Input Streams, Read and Print, Read and Print
 @section Introduction to Reading and Printing
 @cindex Lisp reader
 @cindex printing
@@ -71,7 +71,7 @@ Comments can appear at certain points in the middle of an object's
 read sequence without affecting the result of reading it.
 @end itemize
 
-@node Input Streams
+@node Input Streams, Input Functions, Streams Intro, Read and Print
 @section Input Streams
 @cindex stream (for reading)
 @cindex input stream
@@ -268,7 +268,7 @@ yourself.
 @end defun
 @end ignore
 
-@node Input Functions
+@node Input Functions, Output Streams, Input Streams, Read and Print
 @section Input Functions
 
   This section describes the Lisp functions and variables that pertain
@@ -335,7 +335,7 @@ This variable holds the default input stream---the stream that
 @code{read} uses when the @var{stream} argument is @code{nil}.
 @end defvar
 
-@node Output Streams
+@node Output Streams, Output Functions, Input Functions, Read and Print
 @section Output Streams
 @cindex stream (for printing)
 @cindex output stream
@@ -504,7 +504,7 @@ Now we can put the output in the proper order by reversing the list:
 Calling @code{concat} converts the list to a string so you can see its
 contents more clearly.
 
-@node Output Functions
+@node Output Functions, Output Variables, Output Streams, Read and Print
 @section Output Functions
 
   This section describes the Lisp functions for printing Lisp objects.
@@ -653,7 +653,7 @@ See @code{format}, in @ref{String Conversion}, for other ways to obtain
 the printed representation of a Lisp object as a string.
 @end defun
 
-@node Output Variables
+@node Output Variables,  , Output Functions, Read and Print
 @section Variables Affecting Output
 
 @defvar standard-output

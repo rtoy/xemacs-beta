@@ -96,15 +96,16 @@
     (put dialog 'x-initial-entry widget)
 
     (if (plist-get keywords :verify)
-	(let ((changed-cb (lambda (editable dialog)
-			    (gtk-widget-set-sensitive
-			     (get dialog 'x-ok-button)
-			     (equal (gtk-entry-get-text
-				     (get dialog 'x-initial-entry))
-				    (gtk-entry-get-text
-				     (get dialog 'x-verify-entry)))))))
+	(labels ((changed-cb (editable dialog)
+                   (gtk-widget-set-sensitive
+                    (get dialog 'x-ok-button)
+                    (equal (gtk-entry-get-text
+                            (get dialog 'x-initial-entry))
+                           (gtk-entry-get-text
+                            (get dialog 'x-verify-entry))))))
 	  (gtk-container-set-border-width vbox 5)
-	  (setq widget (gtk-label-new (plist-get keywords :verify-prompt "Verify:")))
+          (setq widget (gtk-label-new (plist-get keywords
+                                                 :verify-prompt "Verify:")))
 	  (gtk-misc-set-alignment widget 0.0 0.5)
 	  (gtk-container-add vbox widget)
 
@@ -114,9 +115,9 @@
 	  (put dialog 'x-verify-entry widget)
 
 	  (gtk-signal-connect (get dialog 'x-initial-entry)
-			      'changed changed-cb dialog)
+			      'changed #'changed-cb dialog)
 	  (gtk-signal-connect (get dialog 'x-verify-entry)
-			      'changed changed-cb dialog)
+			      'changed #'changed-cb dialog)
 	  (gtk-widget-set-sensitive (get dialog 'x-ok-button) nil)))
 
     (if default

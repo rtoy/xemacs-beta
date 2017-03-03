@@ -32,10 +32,14 @@ dnl If PostgreSQL is installed into a different prefix,
 dnl (such as the default /usr/local/pgsql when building from source),
 dnl then specify CPPFLAGS and LDFLAGS when configuring.
 dnl
-dnl Look for these standard header file locations, known to be used on Linux
-for header_dir in "" "pgsql/" "postgresql/"; do
-  AC_CHECK_HEADER([${header_dir}libpq-fe.h],
-                  [libpq_fe_h_file=${header_dir}libpq-fe.h; break])
+dnl Look in standard header file locations.
+dnl These are known to be used on Linux or MacPorts.
+dnl Assume that the most recent version available is the most likely to be
+dnl found in an unversioned directory.
+libpq_fe_h_file=""
+  for header_dir in $pg_header_dir "" "pgsql" "postgresql" "postgresql94" "postgresql-9.4" "postgresql/9.4" "postgresql84" "postgresql-8.4" "postgresql/8.4"; do
+  AC_CHECK_HEADER(${header_dir}/libpq-fe.h,
+                  libpq_fe_h_file=${header_dir}/libpq-fe.h; break)
 done
 
 test -z "$libpq_fe_h_file" &&

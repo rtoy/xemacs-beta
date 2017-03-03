@@ -332,6 +332,9 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
   Lisp_Object c;
   EMACS_INT n;
 
+  /* It is sometimes useful to specify `self-insert-commmand' in Lisp code.
+     We may as well as all that to be done with default = 1. */
+  count = NILP (count) ? make_fixnum(1) : count;
   /* Can't insert more than most-positive-fixnum characters, the buffer
      won't hold that many. */
   check_integer_range (count, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
@@ -343,9 +346,9 @@ If a prefix arg COUNT is specified, the character is inserted COUNT times.
     c = Fevent_to_character (Vlast_command_event, Qnil, Qnil, Qnil);
 
   if (NILP (c))
-    invalid_operation (
-	    "Last typed key has no character equivalent (that we know of)",
-	    Fcopy_event (Vlast_command_event, Qnil));
+    {
+      Fsignal (Qno_character_typed, Fcopy_event (Vlast_command_event, Qnil));
+    }
 
   CHECK_CHAR_COERCE_INT (c);
 

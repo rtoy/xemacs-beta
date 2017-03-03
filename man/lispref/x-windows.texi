@@ -24,7 +24,7 @@ generalize well, and they are covered specially here.
 * X Miscellaneous::             Other X-specific functions and variables.
 @end menu
 
-@node X Selections
+@node X Selections, X Server, X-Windows, X-Windows
 @section X Selections
 @cindex selection (for X windows)
 
@@ -91,7 +91,7 @@ This function has no effect if support for cut buffers was not compiled in.
 This function is called @code{x-set-cut-buffer} in FSF Emacs.
 @end defun
 
-@node X Server
+@node X Server, X Miscellaneous, X Selections, X-Windows
 @section X Server
 
 This section describes how to access and change the overall status of
@@ -103,7 +103,7 @@ the X server XEmacs is using.
 * Grabs::                       Restricting access to the server by other apps.
 @end menu
 
-@node Resources
+@node Resources, Server Data, X Server, X Server
 @subsection Resources
 
 @defun default-x-device
@@ -255,7 +255,7 @@ be consulted and the value will be set according to whether any
 resources are found for the application class ``XEmacs''.
 @end defvar
 
-@node Server Data
+@node Server Data, Grabs, Resources, X Server
 @subsection Data about the X Server
 
   This section describes functions and a variable that you can use to
@@ -284,7 +284,7 @@ from previous versions of XEmacs, which returned @code{StaticGray},
 @code{GrayScale}, etc.)
 @end defun
 
-@node Grabs
+@node Grabs,  , Server Data, X Server
 @subsection Restricting Access to the Server by Other Apps
 
 @defun x-grab-keyboard &optional device
@@ -317,7 +317,7 @@ If optional first arg @var{device} is @code{nil} the selected device is
 used.  If it is @code{t} the pointer will be released on all X devices.
 @end defun
 
-@node X Miscellaneous
+@node X Miscellaneous,  , X Server, X-Windows
 @section Miscellaneous X Functions and Variables
 
 @defvar x-bitmap-file-path

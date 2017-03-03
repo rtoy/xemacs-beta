@@ -24,7 +24,7 @@ that XEmacs presents to the user.
 * Beeping::             Audible signal to the user.
 @end menu
 
-@node Refresh Screen
+@node Refresh Screen, Truncation, Display, Display
 @section Refreshing the Screen
 
 The function @code{redraw-frame} redisplays the entire contents of a
@@ -82,7 +82,7 @@ This function causes an immediate update of the cursor on @var{frame},
 which defaults to the selected frame.
 @end defun
 
-@node Truncation
+@node Truncation, The Echo Area, Refresh Screen, Display
 @section Truncation
 @cindex line wrapping
 @cindex continuation lines
@@ -158,7 +158,7 @@ This variable is automatically local in every buffer.
 @end defvar
 @end ignore
 
-@node The Echo Area
+@node The Echo Area, Warnings, Truncation, Display
 @section The Echo Area
 @cindex error display
 @cindex echo area
@@ -356,7 +356,7 @@ for brief periods of time.
 * Customizing Message Display::
 @end menu
 
-@node Customizing Message Display
+@node Customizing Message Display,  , The Echo Area, The Echo Area
 @subsection Customizing Message Display
 
 Message display function specify message intended for echo area by
@@ -389,7 +389,7 @@ it.  By default, when the variable value is @code{nil}, the equivalent
 of @code{(sit-for 2)} is run.
 @end defvar
 
-@node Warnings
+@node Warnings, Invisible Text, The Echo Area, Display
 @section Warnings
 
 XEmacs contains a facility for unified display of various warnings.
@@ -500,7 +500,7 @@ displayed.  The warning will still logged in the *Warnings* buffer
 buffer will not be automatically popped up.
 @end defvar
 
-@node Invisible Text
+@node Invisible Text, Selective Display, Warnings, Display
 @section Invisible Text
 
 @cindex invisible text
@@ -562,7 +562,7 @@ commands explicitly ignore invisible newlines.  Since this causes a
 slow-down of these commands it is turned off by default, controlled by
 the variable @code{line-move-ignore-invisible}.
 
-@node Selective Display
+@node Selective Display, Overlay Arrow, Invisible Text, Display
 @section Selective Display
 @cindex selective display
 
@@ -678,7 +678,7 @@ You can use a display table to substitute other text for the ellipsis
 (@samp{@dots{}}).  @xref{Display Tables}.
 @end defvar
 
-@node Overlay Arrow
+@node Overlay Arrow, Temporary Displays, Selective Display, Display
 @section The Overlay Arrow
 @cindex overlay arrow
 
@@ -713,7 +713,7 @@ given time.
   You can do the same job by creating an extent with a
 @code{begin-glyph} property.  @xref{Extent Properties}.
 
-@node Temporary Displays
+@node Temporary Displays, Blinking, Overlay Arrow, Display
 @section Temporary Displays
 
   Temporary displays are used by commands to put output into a buffer
@@ -829,7 +829,7 @@ result, if you later undo in this buffer, you will see the message come
 and go.
 @end defun
 
-@node Blinking
+@node Blinking, Usual Display, Temporary Displays, Display
 @section Blinking Parentheses
 @cindex parenthesis matching
 @cindex blinking
@@ -895,7 +895,7 @@ Here is an example of calling this function explicitly.
 @end smallexample
 @end deffn
 
-@node Usual Display
+@node Usual Display, Display Tables, Blinking, Display
 @section Usual Display Conventions
 
   The usual display conventions define how to display each character
@@ -959,7 +959,7 @@ that this feature is completely independent from the user-settable tab
 stops used by the command @code{tab-to-tab-stop}.  @xref{Indent Tabs}.
 @end defopt
 
-@node Display Tables
+@node Display Tables, Beeping, Usual Display, Display
 @section Display Tables
 
 @cindex display table
@@ -985,7 +985,7 @@ on your terminal, using the @dfn{rune table}.
 				  to support the ISO Latin 1 character set.
 @end ignore
 
-@node Display Table Format
+@node Display Table Format, Active Display Table, Display Tables, Display Tables
 @subsection Display Table Format
 
   A display table is an array of 256 elements. (In FSF Emacs, a display
@@ -1022,7 +1022,7 @@ effect of setting @code{ctl-arrow} to a non-@code{nil} value:
   (aset disptab 127 "^?"))
 @end example
 
-@node Active Display Table
+@node Active Display Table, Character Descriptors, Display Table Format, Display Tables
 @subsection Active Display Table
 @cindex active display table
 
@@ -1111,7 +1111,7 @@ this is set using @code{set-face-display-table}.  @xref{Faces}.
   If no display table can be determined for a particular window,
 then XEmacs uses the usual display conventions.  @xref{Usual Display}.
 
-@node Character Descriptors
+@node Character Descriptors, , Active Display Table, Display Tables
 @subsection Character Descriptors
 
 @cindex character descriptor
@@ -1165,7 +1165,7 @@ automatically by writing a terminal-specific Lisp file for the terminal
 type.
 @end ignore
 
-@node Beeping
+@node Beeping,  , Display Tables, Display
 @section Beeping
 @cindex beeping
 @cindex bell

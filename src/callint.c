@@ -240,14 +240,11 @@ callint_prompt (const Ibyte *prompt_start, Bytecount prompt_length,
                 const Lisp_Object *args, int nargs)
 {
   Lisp_Object s = make_string (prompt_start, prompt_length);
-  struct gcpro gcpro1;
-
-  /* Fformat no longer smashes its arg vector, so no need to copy it. */
 
   if (!strchr ((char *) XSTRING_DATA (s), '%'))
     return s;
-  GCPRO1 (s);
-  RETURN_UNGCPRO (emacs_vsprintf_string_lisp (0, s, nargs, args));
+  /* format() will GCPRO S, no need for us to. */
+  return format (s, nargs, args);
 }
 
 /* `lambda' for RECORD-FLAG is an XEmacs addition. */
@@ -292,7 +289,7 @@ when reading the arguments.
 
   if (!NILP (keys))
     {
-      int i, len;
+      Elemcount i, len;
 
       CHECK_VECTOR (keys);
       len = XVECTOR_LENGTH (keys);

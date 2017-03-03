@@ -79,6 +79,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "extents.h"
 #include "rangetab.h"
 #include "chartab.h"
+#include "sysfile.h"
 
 #ifdef HAVE_ZLIB
 #include "zlib.h"
@@ -286,7 +287,7 @@ print_coding_system_properties (Lisp_Object obj, Lisp_Object printcharfun)
   MAYBE_CODESYSMETH (c, print, (obj, printcharfun, 1));
   if (CODING_SYSTEM_EOL_TYPE (c) != EOL_AUTODETECT)
     write_fmt_string_lisp (printcharfun, " eol-type=%s",
-			   1, Fcoding_system_property (obj, Qeol_type));
+			   Fcoding_system_property (obj, Qeol_type));
 }
 
 static void
@@ -297,7 +298,7 @@ print_coding_system (Lisp_Object obj, Lisp_Object printcharfun,
   if (print_readably)
     printing_unreadable_lisp_object (obj, 0);
 
-  write_fmt_string_lisp (printcharfun, "#<coding-system %s ", 1, c->name);
+  write_fmt_string_lisp (printcharfun, "#<coding-system %s ", c->name);
   print_coding_system_properties (obj, printcharfun);
   write_ascstring (printcharfun, ">");
 }
@@ -309,7 +310,7 @@ static void
 print_coding_system_in_print_method (Lisp_Object cs, Lisp_Object printcharfun,
 				     int UNUSED (escapeflag))
 {
-  write_fmt_string_lisp (printcharfun, "%s[", 1, XCODING_SYSTEM_NAME (cs));
+  write_fmt_string_lisp (printcharfun, "%s[", XCODING_SYSTEM_NAME (cs));
   print_coding_system_properties (cs, printcharfun);
   write_ascstring (printcharfun, "]");
 }
@@ -658,7 +659,9 @@ find_coding_system (Lisp_Object coding_system_or_name,
                 }
             }
 
-          coding_system_or_name = intern_istring (eidata (desired_base));
+          coding_system_or_name = intern_istring (eidata (desired_base),
+						  eilen (desired_base),
+						  Qnil, Vobarray);
 
           /* Remove this coding system and its subsidiary coding
              systems from the hash, to avoid calling this code recursively. */
@@ -873,7 +876,7 @@ find_coding_system_for_text_file (Lisp_Object name, int eol_wrap)
           wrapper =
 	    make_internal_coding_system
 	      (coding_system,
-	       "internal-text-file-wrapper",
+	       "internal-text-file-wrapper-",
 	       Qchain,
 	       Qunbound, list4 (Qchain, chain,
 				Qcanonicalize_after_coding, coding_system));
@@ -891,7 +894,7 @@ find_coding_system_for_text_file (Lisp_Object name, int eol_wrap)
   wrapper =
     make_internal_coding_system
       (coding_system,
-       "internal-auto-eol-wrapper",
+       "internal-auto-eol-wrapper-",
        Qundecided, Qunbound,
        list4 (Qcoding_system, coding_system,
 	      Qdo_eol, Qt));
@@ -1085,7 +1088,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
       enum eol_type eol = coding_subsidiary_list[i].eol;
 
       qxestrcpy_ascii (codesys_name + len, extension);
-      codesys_name_sym = intern_istring (codesys_name);
+      codesys_name_sym = intern ((const CIbyte*) codesys_name);
       if (mlen != -1)
 	qxestrcpy_ascii (codesys_mnemonic + mlen, mnemonic_ext);
 
@@ -1102,7 +1105,7 @@ setup_eol_coding_systems (Lisp_Object codesys)
 				     Qconvert_eol_crlf);
 	  Lisp_Object canon =
 	    make_internal_coding_system
-	      (sub_codesys, "internal-subsidiary-eol-wrapper",
+	      (sub_codesys, "internal-subsidiary-eol-wrapper-",
 	       Qchain, Qunbound,
 	       mlen != -1 ?
 	       list6 (Qmnemonic, build_istring (codesys_mnemonic),
@@ -1184,29 +1187,24 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 
   if (prefix)
     {
-      Ibyte *newname =
-	emacs_sprintf_malloc (NULL, "%s-%s-%d",
-			      prefix,
-			      NILP (name_or_existing) ? (Ibyte *) "nil" :
-			      XSTRING_DATA (Fsymbol_name (XCODING_SYSTEM_NAME
-							  (name_or_existing))),
-			      ++coding_system_tick);
-      name_or_existing = intern_istring (newname);
-      xfree (newname);
-      
+      name_or_existing
+        = Fmake_symbol (concat3 (build_ascstring (prefix),
+                                 NILP (name_or_existing) ? Fsymbol_name (Qnil)
+                                 : Fsymbol_name (XCODING_SYSTEM_NAME
+                                                 (name_or_existing)),
+                                 Fnumber_to_string (make_fixnum
+                                                    (++coding_system_tick),
+                                                    Qnil, Qnil)));
       if (UNBOUNDP (description))
 	{
-	  newname =
-	    emacs_sprintf_malloc
-	      (NULL, "For Internal Use (%s)",
-	       XSTRING_DATA (Fsymbol_name (name_or_existing)));
-	  description = build_istring (newname);
-	  xfree (newname);
+          description = concat3 (build_ascstring ("For Internal Use ("),
+                                 Fsymbol_name (name_or_existing),
+                                 build_ascstring (")"));
 	}
 
-      newname = emacs_sprintf_malloc (NULL, "Int%d", coding_system_tick);
-      defmnem = build_istring (newname);
-      xfree (newname);
+      defmnem = concat2 (build_ascstring ("Int"),
+                         Fnumber_to_string (make_fixnum (coding_system_tick),
+                                            Qnil, Qnil));
     }
   else
     CHECK_SYMBOL (name_or_existing);
@@ -1349,19 +1347,18 @@ make_coding_system_1 (Lisp_Object name_or_existing, const Ascbyte *prefix,
 	   creating will have canonicalization expansion done on it,
 	   leading to infinite recursion.  So we have to generate a new,
 	   internal coding system with the previous value of CANONICAL. */
-	Ibyte *newname =
-	  emacs_sprintf_malloc
-	    (NULL, "internal-eol-copy-%s-%d",
-	     XSTRING_DATA (Fsymbol_name (name_or_existing)),
-	     ++coding_system_tick);
-	Lisp_Object newnamesym = intern_istring (newname);
+	Lisp_Object newnamesym
+          = Fmake_symbol (concat3 (build_ascstring ("internal-eol-copy-"),
+                                   Fsymbol_name (name_or_existing),
+                                   Fnumber_to_string (make_fixnum
+                                                      (++coding_system_tick),
+                                                      Qnil, Qnil)));
 	Lisp_Object copied = Fcopy_coding_system (csobj, newnamesym);
-	xfree (newname);
 	
 	XCODING_SYSTEM_CANONICAL (csobj) =
 	  make_internal_coding_system
 	    (csobj,
-	     "internal-eol-wrapper",
+	     "internal-eol-wrapper-",
 	     Qchain, Qunbound,
 	     list4 (Qchain,
 		    list2 (copied,
@@ -1989,6 +1986,25 @@ coding_seekable_p (Lstream *stream)
   return Lstream_seekable_p (str->other_end);
 }
 
+static Charcount
+coding_character_tell (Lstream *stream)
+{
+  struct coding_stream *str = CODING_STREAM_DATA (stream);
+  Charcount ctell
+    = XCODESYSMETH_OR_GIVEN (str->codesys, character_tell, (str), -1);
+  
+  if (ctell > 0 && Dynarr_length (str->convert_to) > 0)
+    {
+      ctell
+        -= buffered_bytecount_to_charcount ((const Ibyte *)
+                                            (Dynarr_begin (str->convert_to)),
+                                            Dynarr_length (str->convert_to));
+      text_checking_assert (ctell >= 0);
+    }
+
+  return ctell;
+}
+
 static int
 coding_flusher (Lstream *stream)
 {
@@ -2274,6 +2290,23 @@ encode_decode_coding_region (Lisp_Object start, Lisp_Object end,
       Bytecount size_in_bytes =
 	Lstream_read (istr, tempbuf, sizeof (tempbuf));
 
+      if (size_in_bytes < 0)
+	{
+	  int err = Lstream_errno (istr);
+	  if (err)
+	    signal_error_2 (Qtext_conversion_error,
+			    direction == CODING_DECODE
+			    ? "Internal error while decoding"
+			    : "Internal error while encoding",
+			    XCODING_SYSTEM_NAME (coding_system),
+			    lisp_strerror (err));
+	  else
+	    signal_error (Qtext_conversion_error,
+			  direction == CODING_DECODE
+			  ? "Internal error while decoding"
+			  : "Internal error while encoding",
+			  XCODING_SYSTEM_NAME (coding_system));
+	}
       if (!size_in_bytes)
 	break;
       newpos = lisp_buffer_stream_startpos (istr);
@@ -2547,7 +2580,7 @@ chain_canonicalize_after_coding (struct coding_stream *str)
   if (!NILP (codesys))
     return codesys;
   return make_internal_coding_system
-    (us, "internal-chain-canonicalizer-wrapper",
+    (us, "internal-chain-canonicalizer-wrapper-",
      Qchain, Qunbound, list2 (Qchain, chain));
 #endif /* 0 */
 }
@@ -2822,6 +2855,13 @@ chain_conversion_end_type (Lisp_Object codesys)
 
    #### Shouldn't we _call_ it that, then?  And while we're at it,
    separate it into "to_internal" and "to_external"? */
+
+struct no_conversion_coding_stream
+{
+  /* Number of characters seen when decoding. */
+  Charcount characters_seen;
+};
+
 DEFINE_CODING_SYSTEM_TYPE (no_conversion);
 
 /* This is used when reading in "binary" files -- i.e. files that may
@@ -2845,23 +2885,37 @@ no_conversion_convert (struct coding_stream *str,
 	  DECODE_ADD_BINARY_CHAR (c, dst);
 	}
 
+      CODING_STREAM_TYPE_DATA (str, no_conversion)->characters_seen
+        += orign;
+
       if (str->eof)
 	DECODE_OUTPUT_PARTIAL_CHAR (ch, dst);
     }
   else
     {
+      const Ibyte *bend = (const Ibyte *)src + n;
 
-      while (n--)
+      while (n > 0)
 	{
-	  c = *src++;
-	  if (byte_ascii_p (c))
+	  if (byte_ascii_p (*src))
 	    {
-	      assert (ch == 0);
-	      Dynarr_add (dst, c);
+              const Ibyte *nonascii = skip_ascii ((Ibyte *)src, bend);
+
+              Dynarr_add_many (dst, src, nonascii - src);
+              n -= nonascii - src;
+
+              src = nonascii;
+              if (n < 1)
+                {
+                  break;
+                }
 	    }
+
+	  n--, c = *src++;
+
 #ifdef MULE
-	  else if (ibyte_leading_byte_p (c))
-	    {
+	  if (ibyte_leading_byte_p (c))
+ 	    {
 	      assert (ch == 0);
 	      if (c == LEADING_BYTE_LATIN_ISO8859_1 ||
 		  c == LEADING_BYTE_CONTROL_1)
@@ -2890,6 +2944,12 @@ no_conversion_convert (struct coding_stream *str,
 
   str->ch    = ch;
   return orign;
+}
+
+static Charcount
+no_conversion_character_tell (struct coding_stream *str)
+{
+  return CODING_STREAM_TYPE_DATA (str, no_conversion)->characters_seen;
 }
 
 DEFINE_DETECTOR (no_conversion);
@@ -3516,11 +3576,16 @@ output_bytes_in_ascii_and_hex (const UExtbyte *src, Bytecount n)
 
 static int
 detect_coding_type (struct detection_state *st, const UExtbyte *src,
-		    Bytecount n)
+		    Bytecount n, int err)
 {
   Bytecount n2 = n;
   const UExtbyte *src2 = src;
   int i;
+
+  if (n < 0)
+    signal_error (Qtext_conversion_error,
+		  "Error reading file to determine coding system",
+		  err ? lisp_strerror (err) : Qnil);
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
@@ -3562,7 +3627,6 @@ detect_coding_type (struct detection_state *st, const UExtbyte *src,
       for (i = 0; i < coding_detector_category_count; i++)
 	stderr_out_lisp
 	  ("%s: %s\n",
-	   2,
 	   coding_category_id_to_symbol (i),
 	   detection_result_number_to_symbol ((enum detection_result)
 					      st->categories[i]));
@@ -3658,7 +3722,7 @@ detected_coding_system (struct detection_state *st)
 		       emacs_sprintf_string_lisp
 		       (
 "Detected coding %s is unlikely to be correct (likelihood == `%s')",
-			Qnil, 2, XCODING_SYSTEM_NAME (retval),
+                        XCODING_SYSTEM_NAME (retval),
 			detection_result_number_to_symbol
 			((enum detection_result) likelihood)));
 		  return retval;
@@ -3674,7 +3738,8 @@ detected_coding_system (struct detection_state *st)
    blanks).  If found, return it, otherwise nil. */
 
 static Lisp_Object
-snarf_coding_system (const UExtbyte *p, Bytecount len)
+snarf_coding_system (const UExtbyte *p, Bytecount len,
+                     Boolint find_coding_system_p)
 {
   Bytecount n;
   UExtbyte *name;
@@ -3698,7 +3763,16 @@ snarf_coding_system (const UExtbyte *p, Bytecount len)
       name[n] = '\0';
       /* This call to intern_istring() is OK because we already verified that
 	 there are only ASCII characters in the string */
-      return find_coding_system_for_text_file (intern_istring ((Ibyte *) name), 0);
+      if (find_coding_system_p)
+        {
+          return
+            find_coding_system_for_text_file (intern ((const CIbyte *) name),
+					      0);
+        }
+      else
+        {
+          return build_ascstring ((const Ascbyte *) name);
+        }
     }
 
   return Qnil;
@@ -3725,15 +3799,20 @@ unwind_free_detection_state (Lisp_Object opaque)
   return Qnil;
 }
 
-/* #### This duplicates code in `find-coding-system-magic-cookie-in-file'
-   in files.el.  Look into combining them. */
-
 static Lisp_Object
-look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
+look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len,
+                                     Boolint find_coding_system_p, int err)
 {
   const UExtbyte *p;
   const UExtbyte *scan_end;
   Bytecount cookie_len;
+
+  if (len < 0)
+    {
+      signal_error (Qtext_conversion_error,
+		    "Internal error while looking for coding cookie",
+		    err ? lisp_strerror (err) : Qnil);
+    }
 
   /* Look for initial "-*-"; mode line prefix */
   for (p = data,
@@ -3767,7 +3846,8 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 			    *(p-1) == ';')))
 		  {
 		    p += LENGTH ("coding:");
-		    return snarf_coding_system (p, suffix - p);
+		    return snarf_coding_system (p, suffix - p,
+                                                find_coding_system_p);
 		    break;
 		  }
 	      break;
@@ -3792,7 +3872,7 @@ look_for_coding_system_magic_cookie (const UExtbyte *data, Bytecount len)
 	suffix = p;
 	while (suffix < scan_end && !isspace (*suffix))
 	  suffix++;
-	return snarf_coding_system (p, suffix - p);
+	return snarf_coding_system (p, suffix - p, find_coding_system_p);
       }
   }
 
@@ -3807,13 +3887,15 @@ determine_real_coding_system (Lstream *stream)
 				     make_opaque_ptr (st));
   UExtbyte buf[4096];
   Bytecount nread = Lstream_read (stream, buf, sizeof (buf));
-  Lisp_Object coding_system = look_for_coding_system_magic_cookie (buf, nread);
+  Lisp_Object coding_system
+    = look_for_coding_system_magic_cookie (buf, nread, 1,
+					   Lstream_errno (stream));
 
   if (NILP (coding_system))
     {
       while (1)
 	{
-	  if (detect_coding_type (st, buf, nread))
+	  if (detect_coding_type (st, buf, nread, Lstream_errno (stream)))
 	    break;
 	  nread = Lstream_read (stream, buf, sizeof (buf));
 	  if (nread == 0)
@@ -3852,7 +3934,7 @@ undecided_init_coding_stream (struct coding_stream *str)
 
 #ifdef DEBUG_XEMACS
   if (!NILP (Vdebug_coding_detection))
-    stderr_out_lisp ("detected coding system: %s\n", 1, data->actual);
+    stderr_out_lisp ("detected coding system: %s\n", data->actual);
 #endif /* DEBUG_XEMACS */
 }
 
@@ -3911,6 +3993,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 	XCODING_SYSTEM_TYPE_DATA (str->codesys, undecided);
       struct undecided_coding_stream *data =
 	CODING_STREAM_TYPE_DATA (str, undecided);
+      int err = 0;
 
       if (str->eof)
 	{
@@ -3954,6 +4037,7 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 
 	  first_time = 1;
 	  data->c.initted = 1;
+	  err = Lstream_errno (str->other_end);
 	}
 
       /* If necessary, do encoding-detection now.  We do this when we're a
@@ -3971,13 +4055,14 @@ undecided_convert (struct coding_stream *str, const UExtbyte *src,
 		/* #### This is cheesy.  What we really ought to do is buffer
 		   up a certain minimum amount of data to get a better result.
 		   */
-		data->actual = look_for_coding_system_magic_cookie (src, n);
+		data->actual =
+		  look_for_coding_system_magic_cookie (src, n, 1, err);
 	      if (NILP (data->actual))
 		{
 		  /* #### This is cheesy.  What we really ought to do is buffer
 		     up a certain minimum amount of data so as to get a less
 		     random result when doing subprocess detection. */
-		  detect_coding_type (data->st, src, n);
+		  detect_coding_type (data->st, src, n, err);
 		  data->actual = detected_coding_system (data->st);
 		  /* kludge to prevent infinite recursion */
 		  if (XCODING_SYSTEM(data->actual)->methods->enumtype == undecided_coding_system)
@@ -4216,6 +4301,51 @@ type.  Optional arg BUFFER defaults to the current buffer.
   return val;
 }
 
+DEFUN ("find-coding-system-magic-cookie-in-file",
+       Ffind_coding_system_magic_cookie_in_file, 1, 1, 0, /*
+Look for the coding-system magic cookie in FILENAME.
+The coding-system magic cookie is either the local variable specification
+-*- ... coding: ... -*- on the first line, or the exact string
+\";;;###coding system: \" somewhere within the first 3000 characters
+of the file.  If found, the coding system name (as a string) is returned;
+otherwise nil is returned.  Note that it is extremely unlikely that
+either such string would occur coincidentally as the result of encoding
+some characters in a non-ASCII charset, and that the spaces make it
+even less likely since the space character is not a valid octet in any
+ISO 2022 encoding of most non-ASCII charsets.
+*/
+       (filename))
+{
+  Lisp_Object lstream;
+  UExtbyte buf[4096];
+  Bytecount nread;
+  int fd = -1, err;
+  struct stat st;
+
+  filename = Fexpand_file_name (filename, Qnil);
+
+  if (qxe_stat (XSTRING_DATA (filename), &st) < 0)
+    {
+    badopen:
+      report_file_error ("Opening input file", filename);
+    }
+
+  if (fd < 0)
+    {
+      if ((fd = qxe_interruptible_open (XSTRING_DATA (filename),
+					O_RDONLY | OPEN_BINARY, 0)) < 0)
+	goto badopen;
+    }
+
+  lstream = make_filedesc_input_stream (fd, 0, -1, 0, NULL);
+  Lstream_set_buffering (XLSTREAM (lstream), LSTREAM_UNBUFFERED, 0);
+  nread = Lstream_read (XLSTREAM (lstream), buf, sizeof (buf));
+  err = Lstream_errno (XLSTREAM (lstream));
+  Lstream_delete (XLSTREAM (lstream));
+  retry_close (fd);
+
+  return look_for_coding_system_magic_cookie (buf, nread, 0, err);
+}
 
 
 #ifdef DEBUG_XEMACS
@@ -4524,6 +4654,7 @@ syms_of_file_coding (void)
   DEFSUBR (Fdecode_coding_region);
   DEFSUBR (Fencode_coding_region);
   DEFSUBR (Fquery_coding_region);
+  DEFSUBR (Ffind_coding_system_magic_cookie_in_file);
   DEFSYMBOL_MULTIWORD_PREDICATE (Qcoding_systemp);
   DEFSYMBOL (Qno_conversion);
   DEFSYMBOL (Qconvert_eol);
@@ -4589,6 +4720,7 @@ lstream_type_create_file_coding (void)
   LSTREAM_HAS_METHOD (coding, writer);
   LSTREAM_HAS_METHOD (coding, rewinder);
   LSTREAM_HAS_METHOD (coding, seekable_p);
+  LSTREAM_HAS_METHOD (coding, character_tell);
   LSTREAM_HAS_METHOD (coding, marker);
   LSTREAM_HAS_METHOD (coding, flusher);
   LSTREAM_HAS_METHOD (coding, closer);
@@ -4632,7 +4764,14 @@ coding_system_type_create (void)
 
   INITIALIZE_CODING_SYSTEM_TYPE (no_conversion,
 				 "no-conversion-coding-system-p");
+  /* This is the only coding system type that has coding_stream info but no
+     coding_system info, which is why we're not using
+     INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA. */
+  no_conversion_coding_system_methods->coding_data_size = 
+    sizeof (struct no_conversion_coding_stream);
+
   CODING_SYSTEM_HAS_METHOD (no_conversion, convert);
+  CODING_SYSTEM_HAS_METHOD (no_conversion, character_tell);
 
   INITIALIZE_DETECTOR (no_conversion);
   DETECTOR_HAS_METHOD (no_conversion, detect);

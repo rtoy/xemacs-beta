@@ -433,7 +433,7 @@ peculiar to XEmacs Lisp or relate specifically to editing.
 * Acknowledgements::    The authors, editors, and sponsors of this manual.
 @end menu
 
-@node Caveats
+@node Caveats, Lisp History, Introduction, Introduction
 @section Caveats
 
   This manual has gone through numerous drafts.  It is nearly complete
@@ -489,7 +489,7 @@ comp.emacs.xemacs
  --Ben Wing
 @end display
 
-@node Lisp History
+@node Lisp History, Conventions, Caveats, Introduction
 @section Lisp History
 @cindex Lisp history
 
@@ -515,7 +515,7 @@ might be very confused.  We will occasionally point out how XEmacs
 Lisp differs from Common Lisp.  If you don't know Common Lisp, don't
 worry about it; this manual is self-contained.
 
-@node Conventions
+@node Conventions, Acknowledgements, Lisp History, Introduction
 @section Conventions
 
 This section explains the notational conventions that are used in this
@@ -531,7 +531,7 @@ manual.  You may want to skip this section and refer back to it later.
 * Format of Descriptions::   Notation for describing functions, variables, etc.
 @end menu
 
-@node Some Terms
+@node Some Terms, nil and t, Conventions, Conventions
 @subsection Some Terms
 
   Throughout this manual, the phrases ``the Lisp reader'' and ``the Lisp
@@ -547,7 +547,7 @@ including those you write.
 3)}.  Names that represent arguments or metasyntactic variables appear
 in this font or form: @var{first-number}.
 
-@node nil and t
+@node nil and t, Evaluation Notation, Some Terms, Conventions
 @subsection @code{nil} and @code{t}
 @cindex @code{nil}, uses of
 @cindex truth value
@@ -590,7 +590,7 @@ to use them as constants in a program.  An attempt to change their
 values results in a @code{setting-constant} error.  @xref{Accessing
 Variables}.
 
-@node Evaluation Notation
+@node Evaluation Notation, Printing Notation, nil and t, Conventions
 @subsection Evaluation Notation
 @cindex evaluation notation
 @cindex documentation notation
@@ -626,7 +626,7 @@ indicated with @samp{@equiv{}}.
 (cons 'a nil) @equiv{} (list 'a)
 @end example
 
-@node Printing Notation
+@node Printing Notation, Error Messages, Evaluation Notation, Conventions
 @subsection Printing Notation
 @cindex printing notation
 
@@ -651,7 +651,7 @@ the form (here @code{bar}) follows on a separate line.
 @end group
 @end example
 
-@node Error Messages
+@node Error Messages, Buffer Text Notation, Printing Notation, Conventions
 @subsection Error Messages
 @cindex error message notation
 
@@ -665,7 +665,7 @@ the echo area.
 @error{} Wrong type argument: integer-or-marker-p, x
 @end example
 
-@node Buffer Text Notation
+@node Buffer Text Notation, Format of Descriptions, Error Messages, Conventions
 @subsection Buffer Text Notation
 @cindex buffer text notation
 
@@ -689,7 +689,7 @@ This is the changed @point{}contents of foo.
 ---------- Buffer: foo ----------
 @end example
 
-@node Format of Descriptions
+@node Format of Descriptions,  , Buffer Text Notation, Conventions
 @subsection Format of Descriptions
 @cindex description format
 
@@ -715,7 +715,7 @@ The description follows on succeeding lines, sometimes with examples.
                                           @code{electric-future-map}.
 @end menu
 
-@node A Sample Function Description
+@node A Sample Function Description, A Sample Variable Description, Format of Descriptions, Format of Descriptions
 @subsubsection A Sample Function Description
 @cindex function descriptions
 @cindex command descriptions
@@ -819,7 +819,7 @@ grouped with the argument @var{var} into a list, to distinguish them
 from @var{body}, which includes all remaining elements of the form.
 @end deffn
 
-@node A Sample Variable Description
+@node A Sample Variable Description,  , A Sample Function Description, Format of Descriptions
 @subsubsection A Sample Variable Description
 @cindex variable descriptions
 @cindex option descriptions
@@ -842,7 +842,7 @@ have not yet thought about executing.
   User option descriptions have the same format, but `Variable' is
 replaced by `User Option'.
 
-@node Acknowledgements
+@node Acknowledgements,  , Conventions, Introduction
 @section Acknowledgements
 
   This manual was based on the GNU Emacs Lisp Reference Manual, version

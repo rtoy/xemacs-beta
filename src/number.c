@@ -32,7 +32,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 Lisp_Object Qrationalp, Qfloatingp, Qrealp;
 Lisp_Object Vdefault_float_precision;
 
-static Lisp_Object Qunsupported_type;
 static Lisp_Object Vbigfloat_max_prec;
 static int number_initialized;
 
@@ -52,9 +51,22 @@ static void
 bignum_print (Lisp_Object obj, Lisp_Object printcharfun,
 	      int UNUSED (escapeflag))
 {
-  Ascbyte *bstr = bignum_to_string (XBIGNUM_DATA (obj), 10);
-  write_ascstring (printcharfun, bstr);
-  xfree (bstr);
+  Ibyte *buf;
+  Bytecount size;
+
+#ifdef bignum_size_decimal
+  size = bignum_size_decimal (XBIGNUM_DATA (obj));
+  buf = alloca_ibytes (size);
+#else
+  size = -1;
+  buf = NULL;
+#endif
+  write_string_1 (printcharfun, buf,
+                  bignum_to_string (&buf, size, XBIGNUM_DATA (obj), 10,
+                                    Qnil));
+#ifndef bignum_size_decimal
+  xfree (buf);
+#endif
 }
 
 #ifdef NEW_GC
@@ -93,9 +105,16 @@ bignum_hash (Lisp_Object obj, int UNUSED (depth), Boolint equalp)
 static void
 bignum_convert (const void *object, void **data, Bytecount *size)
 {
-  CIbyte *bstr = bignum_to_string (*(bignum *)object, 10);
+  CIbyte *bstr = mpz_get_str (NULL, 16, *(bignum *)object);
   *data = bstr;
   *size = strlen(bstr)+1;
+
+  return;
+#if 0
+  len = bignum_to_string (&bstr, -1, *(bignum *)object, 16, Qnil);
+  *data = bstr;
+  *size = len + 1;
+#endif
 }
 
 static void
@@ -110,7 +129,7 @@ bignum_deconvert (void *object, void *data, Bytecount UNUSED (size))
 {
   bignum *b = (bignum *) object;
   bignum_init(*b);
-  bignum_set_string(*b, (const char *) data, 10);
+  bignum_set_string(*b, (const char *) data, 16);
   return object;
 }
 
@@ -149,9 +168,11 @@ static void
 ratio_print (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
-  CIbyte *rstr = ratio_to_string (XRATIO_DATA (obj), 10);
-  write_ascstring (printcharfun, rstr);
-  xfree (rstr);
+  Bytecount size = ratio_size_in_base (XRATIO_DATA (obj), 10);
+  Ibyte *rstr = alloca_ibytes (size);
+
+  write_string_1 (printcharfun, rstr,
+                  ratio_to_string (&rstr, size, XRATIO_DATA (obj), 10, Qnil));
 }
 
 #ifdef NEW_GC
@@ -309,6 +330,9 @@ DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("bigfloat", bigfloat, 0,
 					IF_NEW_GC (bigfloat_finalize),
 					bigfloat_equal, bigfloat_hash,
 					bigfloat_description, Lisp_Bigfloat);
+
+extern Lisp_Object float_to_bigfloat (const Ascbyte *, Lisp_Object,
+                                      unsigned long);
 
 #endif /* HAVE_BIGFLOAT */
 
@@ -602,15 +626,26 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  return Ftruncate (number, Qnil);
 	case BIGNUM_T:
 #ifdef HAVE_BIGNUM
-	  bignum_set_double (scratch_bignum, XFLOAT_DATA (number));
-	  return make_bignum_bg (scratch_bignum);
+          {
+            Lisp_Object truncate = Ftruncate (number, Qnil);
+            return FIXNUMP (truncate) ?
+              make_bignum (XREALFIXNUM (truncate)) : truncate;
+          }
 #else
 	  ABORT ();
 #endif /* HAVE_BIGNUM */
 	case RATIO_T:
 #ifdef HAVE_RATIO
-	  ratio_set_double (scratch_ratio, XFLOAT_DATA (number));
-	  return make_ratio_rt (scratch_ratio);
+          {
+            Lisp_Object truncate = Ftruncate (number, Qnil);
+            if (FIXNUMP (truncate))
+              {
+                return make_ratio (XREALFIXNUM (truncate), 1UL);
+              }
+
+            bignum_set_long (scratch_bignum, 1L);
+            return make_ratio_bg (XBIGNUM_DATA (truncate), scratch_bignum);
+          }
 #else
 	  ABORT ();
 #endif /* HAVE_RATIO */
@@ -618,9 +653,7 @@ internal_coerce_number (Lisp_Object number, enum number_type type,
 	  return number;
 	case BIGFLOAT_T:
 #ifdef HAVE_BIGFLOAT
-	  bigfloat_set_prec (scratch_bigfloat, precision);
-	  bigfloat_set_double (scratch_bigfloat, XFLOAT_DATA (number));
-	  return make_bigfloat_bf (scratch_bigfloat);
+          return float_to_bigfloat ("coerce-number", number, precision);
 #else
 	  ABORT ();
 #endif /* HAVE_BIGFLOAT */
@@ -811,9 +844,6 @@ syms_of_number (void)
   DEFSUBR (Frealp);
   DEFSUBR (Fcanonicalize_number);
   DEFSUBR (Fcoerce_number);
-
-  /* Errors */
-  DEFERROR_STANDARD (Qunsupported_type, Qwrong_type_argument);
 }
 
 void
@@ -870,7 +900,7 @@ init_number (void)
     {
       number_initialized = 1;
 
-#ifdef WITH_GMP
+#if defined(WITH_GMP) || defined(WITH_MPIR)
       init_number_gmp ();
 #endif
 #ifdef WITH_MP

@@ -66,7 +66,9 @@
   ;; override term-file-prefix. (startup.el does it after
   ;; loading the init file.)
   (when (and (find-coding-system 'euc-jp)
-             (string-match "^kterm" (getenv "TERM")))
+             (member* (mismatch "kterm" (console-tty-terminal-type console)
+                                :test #'equalp)
+                      '(nil 5)))
     (set-console-tty-coding-system console 'euc-jp))
   (when init-file-loaded
     ;; temporarily select the console so that the changes
