@@ -1,3 +1,11 @@
+2017-03-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* startup.el (normal-top-level):
+	Bind an uninterned #:buffer, rather than #:ntl-buffer, which is
+	less distracting in backtraces.
+	(Commit chiefly done to help get the xemacs-commit hook posting
+	again.)
+
 2017-02-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el:
