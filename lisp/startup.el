@@ -550,7 +550,7 @@ Type ^H^H^H (Control-h Control-h Control-h) to get more help options.\n"))
            ;; function (which will not be called recursively, and so won't
            ;; shadow itself) and doesn't require consing a closure at
            ;; runtime:
-           (cons 'progn (subst '#:ntl-buffer 'ntl-buffer body :test #'eq))))
+           (cons 'progn (subst '#:buffer 'ntl-buffer body :test #'eq))))
       (replace-ntl-buffer
        (let ((ntl-buffer (current-buffer)))
          (labels ((after-command-line (&optional error-data)
