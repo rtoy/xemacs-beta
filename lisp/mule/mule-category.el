@@ -5,6 +5,7 @@
 ;; Licensed to the Free Software Foundation.
 ;; Copyright (C) 1995 Amdahl Corporation.
 ;; Copyright (C) 1995 Sun Microsystems.
+;; Copyright (C) 2010 Ben Wing.
 
 ;; This file is part of XEmacs.
 
@@ -87,23 +88,8 @@ The changes are made in CATEGORY-TABLE, which defaults to the current
  buffer's category table.
 If optional fourth argument RESET is non-nil, previous categories associated
  with CHAR-RANGE are removed before adding the specified category."
-  (or category-table (setq category-table (category-table)))
-  (check-argument-type 'category-table-p category-table)
   (check-argument-type 'defined-category-p designator)
-  (if reset
-      ;; clear all existing stuff.
-      (put-char-table char-range nil category-table))
-  (map-char-table
-   #'(lambda (key value)
-       ;; make sure that this range has a bit-vector assigned to it
-       (if (not (bit-vector-p value))
-	   (setq value (make-bit-vector 95 0))
-	 (setq value (copy-sequence value)))
-       ;; set the appropriate bit in that vector.
-       (aset value (- designator 32) 1)
-       ;; put the vector back, thus assuring we have a unique setting for this range
-       (put-char-table key value category-table))
-   category-table char-range))
+  (modify-category-entry-internal char-range designator category-table reset))
 
 (defun char-category-list (character &optional category-table)
   "Return a list of the categories that CHARACTER is in.
@@ -111,26 +97,12 @@ CATEGORY-TABLE defaults to the current buffer's category table.
 The categories are given by their designators."
   (or category-table (setq category-table (category-table)))
   (check-argument-type 'category-table-p category-table)
-  (let ((vec (get-char-table character category-table)))
-    (if (null vec) nil
-      (let ((a 32) list)
-	(while (< a 127)
-	  (if (= 1 (aref vec (- a 32)))
-	      (setq list (cons (make-char 'ascii a) list)))
-	  (setq a (1+ a)))
-	(nreverse list)))))
-
-;; implemented in C, file chartab.c (97/3/14 jhod@po.iijnet.or.jp)
-;(defun char-in-category-p (char category &optional table)
-;  "Return non-nil if CHAR is in CATEGORY.
-;TABLE defaults to the current buffer's category table.
-;Categories are specified by their designators."
-;  (or table (setq table (category-table)))
-;  (check-argument-type 'category-table-p table)
-;  (check-argument-type 'category-designator-p category)
-;  (let ((vec (get-char-table char table)))
-;    (if (null vec) nil
-;      (= 1 (aref vec (- category 32))))))
+  (let (list)
+    (map-category-table
+     #'(lambda (char desig)
+	 (push desig list))
+     category-table character)
+    (nreverse list)))
 
 (put 'with-category-table 'lisp-indent-function 1)
 
@@ -140,10 +112,6 @@ The categories are given by their designators."
      (unwind-protect
 	 (progn ,@body)
        (set-category-table current-category-table))))
-
-(defun make-category-table ()
-  "Construct a new and empty category table and return it."
-  (make-char-table 'category))
 
 (defun describe-category ()
   "Describe the category specifications in the category table.
@@ -157,82 +125,100 @@ The descriptions are inserted in a buffer, which is then displayed."
   (let (first-char
 	last-char
 	prev-val
-	(describe-one
-	 (lambda (first last value stream)
-	   (if (and (bit-vector-p value)
-		    (> (reduce '+ value) 0))
-	       (progn
-		 (if (equal first last)
+	(chartab (make-char-table 'generic)))
+    (flet ((describe-one (first last value stream)
+	     (if value
+		 (progn
+		   (if (equal first last)
+		       (cond ((vectorp first)
+			      (princ (format "%s, row %d"
+					     (charset-name
+					      (aref first 0))
+					     (aref first 1))
+				     stream))
+			     ((charsetp first)
+			      (princ (charset-name first) stream))
+			     (t (princ first stream)))
 		     (cond ((vectorp first)
-			    (princ (format "%s, row %d"
+			    (princ (format "%s, rows %d .. %d"
 					   (charset-name
 					    (aref first 0))
-					   (aref first 1))
+					   (aref first 1)
+					   (aref last 1))
 				   stream))
-			   ((charsetp first)
-			    (princ (charset-name first) stream))
-			   (t (princ first stream)))
-		   (cond ((vectorp first)
-			  (princ (format "%s, rows %d .. %d"
-					 (charset-name
-					  (aref first 0))
-					 (aref first 1)
-					 (aref last 1))
-				 stream))
-			 (t
-			  (princ (format "%s .. %s" first last)
-				 stream))))
-		 (describe-category-code value stream))))))
-    (map-char-table
-     (lambda (range value)
-       (if (and (or
-		 (and (characterp range)
-		      (characterp first-char)
-		      (eq (char-charset range) (char-charset first-char))
-		      (= (char-to-int last-char) (1- (char-to-int range))))
-		 (and (vectorp range)
-		      (vectorp first-char)
-		      (eq (aref range 0) (aref first-char 0))
-		      (= (aref last-char 1) (1- (aref range 1))))
-		 (equal value prev-val)))
-	   (setq last-char range)
-	 (if first-char
-	     (progn
-	       (funcall describe-one first-char last-char prev-val stream)
-	       (setq first-char nil)))
-	 (funcall describe-one range range value stream))
-       nil)
-     table)
-    (if first-char
-	(funcall describe-one first-char last-char prev-val stream))))
+			   (t
+			    (princ (format "%s .. %s" first last)
+				   stream))))
+		   (describe-category-code value stream)))))
+      ;; We want to list things character-by-character.  So create a char table
+      ;; whose entries are lists of the designators of the categories
+      ;; that include that character.
+      (message "Mapping over category table ...")
+      (map-category-table
+       #'(lambda (char desig)
+	   (if (characterp char)
+	       (let ((list (get-char-table char chartab)))
+		 (put-char-table char (cons desig list) chartab))
+	     (let (list)
+	       (map-char-table
+		#'(lambda (char2 desig2)
+		    (push (cons char2 desig2) list)
+		    nil)
+		chartab char)
+	       (put-char-table char (list desig) chartab)
+	       (loop for (char2 . desig2) in (nreverse list) do
+		 (put-char-table char2 (cons desig desig2) chartab))))
+	   nil)
+       table)
+      (message "Mapping over char table ...")
+      (map-char-table
+       #'(lambda (range value)
+	   (cond ((null first-char)
+		  (setq first-char range
+			last-char range
+			prev-val value))
+		 ((and (or
+			(and (characterp range)
+			     (characterp last-char)
+			     (eq (char-charset range)
+				 (char-charset last-char))
+			     (= (char-to-int last-char)
+				(1- (char-to-int range))))
+			(and (vectorp range)
+			     (vectorp last-char)
+			     (eq (aref range 0) (aref last-char 0))
+			     (= (aref last-char 1) (1- (aref range 1)))))
+		       (equal value prev-val))
+		  (setq last-char range))
+		 (t
+		  (describe-one first-char last-char prev-val stream)
+		  (setq first-char range
+			last-char range
+			prev-val value)))
+	   nil)
+       chartab)
+      (if first-char
+	  (describe-one first-char last-char prev-val stream)))))
 
 (defun describe-category-code (code stream)
-  (let ((standard-output (or stream standard-output)))
+  (let ((standard-output (or stream standard-output))
+	(code (nreverse code)))
     (princ "\tin categories: ")
-    (if (not (bit-vector-p code))
+    (if (null code)
 	(princ "(none)")
-      (let ((i 0)
-	    already-matched)
-	(while (< i 95)
-	  (if (= 1 (aref code i))
-	      (progn
-		(if (not already-matched)
-		    (setq already-matched t)
-		  (princ " "))
-		(princ (int-to-char (+ 32 i)))))
-	  (setq i (1+ i)))
-	(if (not already-matched)
-	    (princ "(none)")))
-      (let ((i 0))
-	(while (< i 95)
-	  (if (= 1 (aref code i))
-	      (princ (format "\n\t\tmeaning: %s"
-			    (category-doc-string (int-to-char (+ 32 i))))))
-	  (setq i (1+ i)))))
+      (let (already-matched)
+	(loop for c in code do
+	  (if (not already-matched)
+	      (setq already-matched t)
+	    (princ " "))
+	  (princ c))
+	(loop for c in code do
+	  (princ (format "\n\t\tmeaning: %s"
+			 (category-doc-string c))))))
     (terpri)))
 
 (defconst predefined-category-list
-  '((latin-iso8859-1	?l "Latin-1 through Latin-5 character set")
+  `((latin-iso8859-1	?l "Latin-1 through Latin-5 character set")
     (latin-iso8859-2	?l)
     (latin-iso8859-3	?l)
     (latin-iso8859-4	?l)
@@ -247,10 +233,15 @@ The descriptions are inserted in a buffer, which is then displayed."
     (japanese-jisx0208	?j "Japanese 2-byte character set")
     (japanese-jisx0212	?j)
     (chinese-gb2312	?c "Chinese GB (China, PRC) 2-byte character set")
-    (chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
-    (chinese-cns11643-2	?t)
-    (chinese-big5-1	?t)
-    (chinese-big5-2	?t)
+    ;;@@#### This messes up things because it has ASCII and other chars in it.
+    ;;We need to incorporate the GNU Emacs stuff in their characters.el, which has
+    ;;much better category definitions.
+    ;;(chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
+    (chinese-cns11643-2	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
+    ,@(if (find-charset 'chinese-big5-1)
+	  '((chinese-big5-1	?t)
+	    (chinese-big5-2	?t))
+	'((chinese-big5	?t)))
     (korean-ksc5601	?h "Hangul (Korean) 2-byte character set")
     (jit-ucs-charset-0  ?J "Just-in-time-allocated Unicode character")
     )
@@ -267,10 +258,11 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
     (setq i (1+ i)))
   (setq l predefined-category-list)
   (while l
-    (if (and (nth 2 (car l))
-	     (not (defined-category-p (nth 2 (car l)))))
-	(define-category (nth 1 (car l)) (nth 2 (car l))))
-    (modify-category-entry (car (car l)) (nth 1 (car l)) nil t)
+    (when (find-charset (caar l))
+      (if (and (nth 2 (car l))
+               (not (defined-category-p (nth 2 (car l)))))
+          (define-category (nth 1 (car l)) (nth 2 (car l))))
+      (modify-category-entry (car (car l)) (nth 1 (car l)) nil t))
     (setq l (cdr l))))
 
 ;;; Setting word boundary.
@@ -327,10 +319,18 @@ Each element is a list of a charset, a designator, and maybe a doc string.")
 (defvar kanji-English-Lower  "[ａ-ｚ]")
 (defvar kanji-hiragana "\\cH")
 (defvar kanji-katakana "\\cK")
-(defvar kanji-Greek-Upper "[Α-Ω]")
-(defvar kanji-Greek-Lower "[α-ω]")
-(defvar kanji-Russian-Upper "[А-Я]")
-(defvar kanji-Russian-Lower "[а-я]")
+;; @@#### HACK FIXME.  The Unicode mappings for these double-width Kanji
+;; characters are the regular Greek/Cyrillic equivalents, and so saving/loading
+;; this file using Unicode-internal messes things up.  To get around this
+;; for the moment, decode things on-the-fly.
+(defvar kanji-Greek-Upper
+  (decode-coding-string "[\033$B&!\033(B-\033$B&8\033(B]" 'iso-2022-7bit))
+(defvar kanji-Greek-Lower
+  (decode-coding-string "[\033$B&A\033(B-\033$B&X\033(B]" 'iso-2022-7bit))
+(defvar kanji-Russian-Upper
+  (decode-coding-string "[\033$B'!\033(B-\033$B'A\033(B]" 'iso-2022-7bit))
+(defvar kanji-Russian-Lower
+  (decode-coding-string "[\033$B'Q\033(B-\033$B'q\033(B]" 'iso-2022-7bit))
 (defvar kanji-Kanji-1st-Level  "[亜-腕]")
 (defvar kanji-Kanji-2nd-Level  "[弌-瑤]")
 

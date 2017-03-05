@@ -48,6 +48,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "insdel.h"
 #include "lrecord.h"
 #include "extents.h"
+#include "chartab.h"
 
 /* Conversion to string, radix handling for rationals. */
 
