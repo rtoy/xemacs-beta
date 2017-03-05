@@ -431,6 +431,7 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_WAITPID
 #undef HAVE_WCSCMP
 #undef HAVE_WCSLEN
+#undef HAVE_WCWIDTH
 
 /* Functions and structs checked for vdb. */
 #undef HAVE_MPROTECT
@@ -631,10 +632,11 @@ things are arranged in config.h.in.  In particular:
    valid, etc. */
 #undef ERROR_CHECK_TEXT
 
-/* Turn on checks related to types -- make sure that all X... macros are
+/* Make sure that arguments are valid to functions and such.  Turns on
+   checks related to types -- makes sure that all X... macros are
    dereferencing the correct type, and that all XSET... macros (as much as
-   possible) are setting the correct type of structure; check any other
-   places that a specific type is expected. */
+   possible) are setting the correct type of structure.  Some code may
+   use a more specific error-checking flag. */
 #undef ERROR_CHECK_TYPES
 
 /* Define DEBUG_XEMACS if you want extra debugging code compiled in.
@@ -686,6 +688,12 @@ things are arranged in config.h.in.  In particular:
    in a non-Mule Unix; otherwise, defaults will be set so that all
    files are read in as binary.  Doesn't apply to Cygwin or MinGW. */
 #undef HAVE_DEFAULT_EOL_DETECTION
+
+/* Use Unicode-compatible character representation internally.  Otherwise,
+   the old Mule representation is used, which explicitly encodes the
+   character set of the char (with the result that multiple characters map
+   onto the same Unicode codepoint). */
+#undef UNICODE_INTERNAL
 
 /* Support X FontSets.  Evil, yes, but if we're going to make it go away
    by using faces in the menubar we should do so. */
@@ -1011,6 +1019,8 @@ extern "C" {
 #define SIGRETURN return
 #endif
 
+/********************* Window-system defines ******************/
+
 /* Define HAVE_WINDOW_SYSTEM if any windowing system is available. */
 #if defined (HAVE_GTK) || defined (HAVE_X_WINDOWS) || defined (HAVE_MS_WINDOWS)
 #define HAVE_WINDOW_SYSTEM
@@ -1059,12 +1069,23 @@ extern "C" {
 #define HAVE_UNIXOID_EVENT_LOOP
 #endif
 
+/********************* Mule defines ******************/
+
+/* Algorithmic conversion tables are currently used only for the
+   Unicode-slop charsets for characters having no other representation in a
+   charset. */
+#if defined (MULE) && !defined (UNICODE_INTERNAL)
+#define ALLOW_ALGORITHMIC_CONVERSION_TABLES
+#endif
+
 #ifdef HAVE_CANNA
 #  define CANNA_MULE
 #  define CANNA_PURESIZE 0
 #else  /* not CANNA */
 #  define CANNA_PURESIZE 0
 #endif /* not CANNA */
+
+/********************* Networking defines ******************/
 
 #if defined (HAVE_SOCKS) && !defined (DO_NOT_SOCKSIFY)
 #define accept Raccept
@@ -1073,6 +1094,8 @@ extern "C" {
 #define getsockname Rgetsockname
 #define listen Rlisten
 #endif /* HAVE_SOCKS && !DO_NOT_SOCKSIFY */
+
+/********************* Basic types defines ******************/
 
 #ifndef BITS_PER_CHAR
 #define BITS_PER_CHAR 8
@@ -1083,6 +1106,8 @@ extern "C" {
 #define LONG_LONG_BITS (SIZEOF_LONG_LONG * BITS_PER_CHAR)
 #define VOID_P_BITS (SIZEOF_VOID_P * BITS_PER_CHAR)
 #define DOUBLE_BITS (SIZEOF_DOUBLE * BITS_PER_CHAR)
+
+/********************* Inlining defines ******************/
 
 /* Use `INLINE_HEADER' to define inline functions in .h files.
    Use `inline static' to define inline functions in .c files.
@@ -1112,6 +1137,8 @@ extern "C" {
 
 #define DECLARE_INLINE_HEADER(header) \
   INLINE_HEADER header ; INLINE_HEADER header
+
+/************************* Misc defines ************************/
 
 #ifndef NOT_C_CODE /* Actually means C or C++ */
 # if defined (__cplusplus)
@@ -1148,6 +1175,8 @@ extern "C" {
    merge the two. */
 #define USE_C_FONT_LOCK
 
+/********************* Error-checking defines ******************/
+
 /* Keep the #defines sorted.
    #### Can this code ever be executed?  I guess if a developer #defines
    ERROR_CHECK_ALL above the #include it could be useful. */
@@ -1162,6 +1191,10 @@ extern "C" {
 #define ERROR_CHECK_TEXT
 #define ERROR_CHECK_TYPES
 #endif /* ERROR_CHECK_ALL */
+
+#if defined (ERROR_CHECK_BYTE_CODE) || defined (ERROR_CHECK_DISPLAY) || defined (ERROR_CHECK_EXTENTS) || defined (ERROR_CHECK_GC) || defined (ERROR_CHECK_GLYPHS) || defined (ERROR_CHECK_MALLOC) || defined (ERROR_CHECK_STRUCTURES) || defined (ERROR_CHECK_TEXT) || defined (ERROR_CHECK_TYPES)
+#define ERROR_CHECK_ANY
+#endif
 
 /* It's very tricky.  In some circumstances, if we don't include the
    ERROR_CHECK_TYPES functions in xemacs.def.in.in, we get lots of

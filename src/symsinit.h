@@ -1,6 +1,6 @@
 /* Various initialization function prototypes.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 2001, 2002, 2010 Ben Wing.
+   Copyright (C) 2001, 2002, 2005, 2010 Ben Wing.
 
 This file is part of XEmacs.
 
@@ -179,7 +179,7 @@ void syms_of_ralloc (void);
 void syms_of_rangetab (void);
 void syms_of_redisplay (void);
 void syms_of_scrollbar (void);
-void syms_of_scrollbar_mswindows(void);
+void syms_of_scrollbar_mswindows (void);
 void syms_of_search (void);
 void syms_of_select (void);
 void syms_of_select_gtk (void);
@@ -559,11 +559,13 @@ void complex_vars_of_glyphs_gtk (void);
 void complex_vars_of_glyphs_mswindows (void);
 void complex_vars_of_glyphs_x (void);
 void complex_vars_of_intl_win32 (void);
+void complex_vars_of_intl_win32 (void);
 void complex_vars_of_keymap (void);
 void complex_vars_of_menubar (void);
 void complex_vars_of_minibuf (void);
 void reinit_complex_vars_of_minibuf (void);
 void complex_vars_of_mule_charset (void);
+void complex_vars_of_mule_coding (void);
 void complex_vars_of_scrollbar (void);
 void complex_vars_of_syntax (void);
 void complex_vars_of_unicode (void);
@@ -589,12 +591,15 @@ void init_intl (void);
 void init_intl_win32 (void);
 void init_lread (void);
 void init_macros (void);
+void init_mule_charset (void);
+void init_mule_coding (void);
 void init_mswindows_environment (void);
 void init_nt (void);
 void init_postgresql_from_environment (void);
 void init_redisplay (void);
 void init_select_mswindows (void);
 void init_sunpro (void);
+void init_unicode (void);
 void init_win32 (void);
 void init_xemacs_process (void);
 

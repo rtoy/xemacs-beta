@@ -970,8 +970,11 @@ character)")
 (defun describe-char-display (pos char)
   (let* ((frame (selected-frame))
          (charset (char-charset char))
-         (ccl (or (and (charset-property charset 'encode-as-utf-8)
-                       ccl-encode-to-ucs-2)
+	 ;; @@#### We've eliminated ccl-encode-to-ucs-2 and encode-as-utf-8.
+	 ;; But now charsets may more generally be displayed as Unicode.
+	 ;; This whole function is pretty junky.
+         (ccl (or ;(and (charset-property charset 'encode-as-utf-8)
+                  ;     ccl-encode-to-ucs-2)
                   (charset-property charset 'ccl-program)))
          (ccl-vector (make-vector 8 0))
          font-instance)
