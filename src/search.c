@@ -1450,7 +1450,6 @@ search_buffer (struct buffer *buf, Lisp_Object string, Charbpos charbpos,
 	  inverse = TRANSLATE (inverse_trt, c);
 
 	  orig_bytelen = itext_ichar_len (base_pat);
-	  inv_bytelen = ichar_len (inverse);
 	  new_bytelen = set_itext_ichar (tmp_str, translated);
 
           if (boyer_moore_ok
