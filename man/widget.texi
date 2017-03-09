@@ -209,18 +209,6 @@ Everything else is here.  Do not load it explicitly, as
 it will be autoloaded when needed.
 @end table
 
-In order to minimize the code that is loaded by users who does not
-create any widgets, the code has been split in two files:
-
-@table @file
-@item widget.el
-This will declare the user variables, define the function
-@code{widget-define}, and autoload the function @code{widget-create}. 
-@item wid-edit.el
-Everything else is here, there is no reason to load it explicitly, as
-it will be autoloaded when needed.
-@end table
-
 @node User Interface, Programming Example, Introduction, Top
 @comment  node-name,  next,  previous,  up
 @chapter User Interface
