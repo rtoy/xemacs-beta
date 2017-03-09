@@ -192,7 +192,7 @@ This only has an effect on TTY devices and assumes that your terminal uses
 the SO/SI characters."
   (frob-display-table
    (lambda (x)
-     (put-char-table c (concat "\016" (char-to-string sc) "\017") x))
+     (put-char-table c (concat "\016" (list sc) "\017") x))
    locale '(tty)))
 
 ;;;###autoload
@@ -201,7 +201,7 @@ the SO/SI characters."
 This only has an effect on TTY devices and assumes VT100-compatible escapes."
   (frob-display-table
    (lambda (x)
-     (put-char-table c (concat "\e(0" (char-to-string gc) "\e(B") x))
+     (put-char-table c (concat "\e(0" (list gc) "\e(B") x))
    locale '(tty)))
 
 ;;;###autoload

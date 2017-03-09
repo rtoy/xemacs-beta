@@ -130,7 +130,7 @@ Returns the number of actions taken."
 						 (key-description
 						  (if (characterp (car elt))
 						      ;; XEmacs
-						      (char-to-string (car elt))
+						      (list (car elt))
 						    (car elt))))
 					     action-alist ", ")
 				  " ")

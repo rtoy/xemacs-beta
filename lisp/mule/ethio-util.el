@@ -1498,7 +1498,7 @@ The markers \"<sera>\" and \"</sera>\" themselves are not deleted."
       (delete-char 1)
       (insert
        (compose-string
-	(concat (char-to-string (ethio-ethiocode-to-char newch))	"$(3%s(B"))))
+	(concat (list (ethio-ethiocode-to-char newch))	"$(3%s(B"))))
 
      ;; simple vowel modification
      (t

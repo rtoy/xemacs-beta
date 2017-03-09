@@ -108,7 +108,7 @@
 	(entries nil))
     (while components
       (push (concat "/" (mapconcat 'identity (reverse components)
-				   (char-to-string directory-sep-char)))
+				   (list directory-sep-char)))
 	    entries)
       (pop components))
     (push (expand-file-name "." "~/") entries)

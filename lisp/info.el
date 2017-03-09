@@ -1453,12 +1453,12 @@ invoke \"xemacs -batch -f Info-batch-rebuild-dir /usr/local/info\"."
 		 (and (>= c ?a) (<= c ?z)))
 	     (setq regexp (concat regexp
 				  "["
-				  (char-to-string (downcase c))
+				  (list (downcase c))
 				  "\\|"
-				  (char-to-string (upcase c))
+				  (list (upcase c))
 				  "]")))
 	    (t
-	     (setq regexp (concat regexp (char-to-string c)))))
+	     (setq regexp (concat regexp (list c)))))
       (setq i (1+ i)))
     regexp))
 
@@ -2225,7 +2225,7 @@ A positive or negative prefix argument moves by multiple screenfuls."
 	  (message "Hit %s again to go to next node"
 		   (if (= last-command-char 0)
 		       "mouse button"
-		     (key-description (char-to-string last-command-char))))
+		     (key-description (list last-command-char))))
 	(Info-page-next)
 	(setq this-command 'Info))
     (scroll-up arg)))
