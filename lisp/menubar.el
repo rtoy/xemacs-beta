@@ -522,7 +522,7 @@ which will not be used as accelerators."
                  (setq n (1- n)))
              (setq m n))
 	   (if (<= m 26)
-	       (concat "%_" (char-to-string (+ m (- ?a 1))) " ")
+	       (concat "%_" (list (+ m (- ?a 1))) " ")
 	     "")))
 	(t "")))
 

@@ -282,8 +282,7 @@ is the top-level directory under which the package was installed."
     (save-excursion				;; Probably redundant.
       (set-buffer (get-buffer pkg-outbuf))	;; Probably already the current buffer.
       (goto-char (point-min))
-      (setq regexp (concat "\\bpkginfo" 
-			   (char-to-string directory-sep-char)
+      (setq regexp (concat "\\bpkginfo" (list directory-sep-char)
 			   "MANIFEST\\...*"))
 
       ;; Look for the manifest.

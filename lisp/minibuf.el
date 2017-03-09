@@ -2204,12 +2204,12 @@ in the minibuffer."
       (let* ((answers (remove-if-not #'consp answers))
 	     (possible
 	      (gettext
-	       (labels ((car-to-string-if (x)
+	       (labels ((car-to-sequence-if (x)
                           (setq x (car x))
-                          (if (stringp x)  x (char-to-string x))))
-		 (concat (mapconcat #'car-to-string-if
+                          (if (stringp x) x (list x))))
+		 (concat (mapconcat #'car-to-sequence-if
 			   (butlast answers) ", ") " or "
-			   (car-to-string-if (car (last answers)))))))
+			   (car-to-sequence-if (car (last answers)))))))
 	     (question (gettext question))
 	     (p (format "%s(%s) " question possible)))
 	(block nil

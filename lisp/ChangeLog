@@ -1,3 +1,26 @@
+2017-03-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	
+	* disp-table.el (standard-display-g1):
+	* disp-table.el (standard-display-graphic):
+	* disp-table.el (standard-display-underline):
+	* files.el (make-backup-file-name-1):
+	* files.el (wildcard-to-regexp):
+	* gtk-file-dialog.el (gtk-file-dialog-update-dropdown):
+	* info.el (Info-all-case-regexp):
+	* info.el (Info-scroll-next):
+	* map-ynp.el (map-y-or-n-p):
+	* menubar.el (menu-item-generate-accelerator-spec):
+	* menubar.el (menu-max-items):
+	* minibuf.el (get-user-response):
+	* package-admin.el (package-admin-check-manifest):
+	In contexts like (concat ... (char-to-string x) ...), (list x) is
+	a more idiomatic and faster way to construct a sequence. Use it.
+
+	* autoload.el (autoload-featurep-protect-autoloads):
+	The fixnum-char mapping for values less than #x100 is stable, no
+	need to construct the string "\x00-\xff" at runtime.
+
 2017-03-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* startup.el (normal-top-level):

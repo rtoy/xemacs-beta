@@ -1078,8 +1078,7 @@ Works just like `update-file-autoloads'."
 		   (progn
 		     (goto-char (point-min))
 		     ;; mrb- There must be a better way than skip-chars-forward
-		     (skip-chars-forward (concat (char-to-string 0) "-"
-						 (char-to-string 255)))
+		     (skip-chars-forward "\x00-\xff")
 		     (eq (point) (point-max))))
 	       (setq buffer-file-coding-system 'raw-text-unix)
 	     (setq buffer-file-coding-system 'escape-quoted))

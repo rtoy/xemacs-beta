@@ -2542,7 +2542,7 @@ doesn't exist, it is created."
 (defun make-backup-file-name-1 (file)
   "Subroutine of `make-backup-file-name' and `find-backup-file-name'."
   (let ((alist backup-directory-alist)
-	elt backup-directory dir-sep-string)
+	elt backup-directory)
     (while alist
       (setq elt (pop alist))
       (if (string-match (car elt) file)
@@ -2565,14 +2565,13 @@ doesn't exist, it is created."
 	      ;; Replace any invalid file-name characters (for the
 	      ;; case of backing up remote files).
 	      (setq file (expand-file-name (convert-standard-filename file)))
-	      (setq dir-sep-string (char-to-string directory-sep-char))
 	      (if (eq (aref file 1) ?:)
-		  (setq file (concat dir-sep-string
+		  (setq file (concat (list directory-sep-char)
 				     "drive_"
-				     (char-to-string (downcase (aref file 0)))
+				     (list (downcase (aref file 0)))
 				     (if (eq (aref file 2) directory-sep-char)
 					 ""
-				       dir-sep-string)
+				       (list directory-sep-char))
 				     (substring file 2)))))
 	    ;; Make the name unique by substituting directory
 	    ;; separators.  It may not really be worth bothering about
@@ -3991,7 +3990,7 @@ by `sh' are supported."
 		      ((eq ch ?$)  "\\$")
 		      ((eq ch ?\\) "\\\\") ; probably cannot happen...
 		      ((eq ch ??)  "[^\000]")
-		      (t (char-to-string ch)))))
+		      (t (list ch)))))
 	    (setq i (1+ i)))))
     ;; Shell wildcards should match the entire filename,
     ;; not its part.  Make the regexp say so.

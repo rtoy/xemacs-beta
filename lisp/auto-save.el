@@ -409,7 +409,7 @@ a special signal for non-file buffers."
 	  (if (< char 16)
 	      (upcase (format "=0%x" char))
 	    (upcase (format "=%x" char)))
-	(char-to-string char))))
+	(list char))))
    str ""))
 
 (defun auto-save-unescape-name (str)
@@ -423,7 +423,7 @@ See `auto-save-escape-name'."
              (code (parse-integer str :start (match-beginning 1)
                                   :end (match-end 2) :radix 16)))
 	(setq tmp (concat tmp (substring str 0 start)
-			  (char-to-string code))
+			  (list code))
 	      str (substring str (match-end 0)))))
     (setq tmp (concat tmp str))
     tmp))
