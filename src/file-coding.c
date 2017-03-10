@@ -3893,7 +3893,7 @@ no_conversion_decode (struct coding_stream *str, const UExtbyte *src,
     {
       c = *src++;
 
-      DECODE_ADD_BINARY_CHAR (c, dst);
+      DECODE_ADD_BINARY_CHAR (c, (Ibyte_dynarr *) dst);
     }
 
   CODING_STREAM_TYPE_DATA (str, no_conversion)->characters_seen

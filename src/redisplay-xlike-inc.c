@@ -283,7 +283,7 @@ separate_textual_runs_xft_mule (struct buffer *buf,
 	  runs_so_far++;
 	}
 
-      if (valid_utf_16_first_surrogate (*((XftChar16 *) (text_storage))))
+      if (valid_utf_16_leading_surrogate (*((XftChar16 *) (text_storage))))
         {
           text_storage += sizeof (XftChar16);
         }

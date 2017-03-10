@@ -4888,6 +4888,7 @@ MODULE_API EXFUN_NORETURN (Fthrow, UNEVALLED);
 MODULE_API EXFUN (Fcall_with_condition_handler, MANY);
 EXFUN (Ffunction_max_args, 1);
 EXFUN (Ffunction_min_args, 1);
+EXFUN (Fvalues, MANY);
 
 MODULE_API DECLARE_DOESNT_RETURN (throw_or_bomb_out (Lisp_Object,
                                                      Lisp_Object, int,
