@@ -2306,22 +2306,6 @@ wcsncmp_ascii (const wchar_t *s1, const Ascbyte *s2, Charcount len)
 /*               conversion between textual representations             */
 /************************************************************************/
 
-/* NOTE: Does not reset the Dynarr. */
-
-void
-convert_ibyte_string_into_ichar_dynarr (const Ibyte *str, Bytecount len,
-					Ichar_dynarr *dyn)
-{
-  const Ibyte *strend = str + len;
-
-  while (str < strend)
-    {
-      Ichar ch = itext_ichar (str);
-      Dynarr_add (dyn, ch);
-      INC_IBYTEPTR (str);
-    }
-}
-
 Charcount
 convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
 					Ichar *arr)
@@ -2335,52 +2319,6 @@ convert_ibyte_string_into_ichar_string (const Ibyte *str, Bytecount len,
       INC_IBYTEPTR (str);
     }
   return newlen;
-}
-
-/* Convert an array of Ichars into the equivalent string representation.
-   Store into the given Ibyte dynarr.  Does not reset the dynarr.
-   Does not add a terminating zero. */
-
-void
-convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
-					Ibyte_dynarr *dyn)
-{
-  Ibyte str[MAX_ICHAR_LEN];
-  int i;
-
-  for (i = 0; i < nels; i++)
-    {
-      Bytecount len = set_itext_ichar (str, arr[i]);
-      Dynarr_add_many (dyn, str, len);
-    }
-}
-
-/* Convert an array of Ichars into the equivalent string representation.
-   Malloc the space needed for this and return it.  If LEN_OUT is not a
-   NULL pointer, store into LEN_OUT the number of Ibytes in the
-   malloc()ed string.  Note that the actual number of Ibytes allocated
-   is one more than this: the returned string is zero-terminated. */
-
-Ibyte *
-convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
-					   Bytecount *len_out)
-{
-  /* Damn zero-termination. */
-  Ibyte *str = alloca_ibytes (nels * MAX_ICHAR_LEN + 1);
-  Ibyte *strorig = str;
-  Bytecount len;
-
-  int i;
-
-  for (i = 0; i < nels; i++)
-    str += set_itext_ichar (str, arr[i]);
-  *str = '\0';
-  len = str - strorig;
-  str = xnew_ibytes (1 + len);
-  memcpy (str, strorig, 1 + len);
-  if (len_out)
-    *len_out = len;
-  return str;
 }
 
 #define COPY_TEXT_BETWEEN_FORMATS(srcfmt, dstfmt)			\
@@ -2551,16 +2489,17 @@ add_to_dynarr_unless_present (Lisp_Object obj, Lisp_Object_dynarr *dynarr)
   Dynarr_add (dynarr, obj);
 }
 
-
-#if 0 /* Not currently used */
+/* Find the charsets in an array of Ichars, using BUF's Unicode-precedence
+   list when under Unicode-internal to decide which charset to pick.  Add
+   the charsets found to CHARSETS, but don't add any duplicates. */
 
 void
 find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 			       const Ibyte *str, Bytecount len,
 			       struct buffer *buf)
 {
+  const Ibyte *endp = str + len;
   Lisp_Object prev_charset = Qunbound;
-  const Ibyte *strend = str + len;
 
   /* #### SJT doesn't like this. */
   if (len == 0)
@@ -2569,54 +2508,31 @@ find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
       return;
     }
 
-  while (str < strend)
+  while (str < endp)
     {
-      Lisp_Object charset;
-      int c1, c2;
-      buffer_itext_to_charset_codepoint (str, buf, &charset,
-					 &c1, &c2, CONVERR_FAIL);
-      if (!NILP (charset) && !EQ (charset, prev_charset))
-	{
-	  prev_charset = charset;
-	  add_to_dynarr_unless_present (charset, charsets);
-	}
+      Ibyte i0 = *str;
 
-      INC_IBYTEPTR (str);
-    }
-}
+      if (byte_ascii_p (i0))
+        {
+	  add_to_dynarr_unless_present (Vcharset_ascii, charsets);
+          str = skip_ascii (str, endp);
+          continue;
+        }
+      else
+        {
+          Lisp_Object charset;
+          int c1, c2;
 
-#endif /* 0 */
+          buffer_ichar_to_charset_codepoint (itext_ichar (str), buf, &charset,
+                                             &c1, &c2, CONVERR_FAIL);
+          if (!NILP (charset) && !EQ (charset, prev_charset))
+            {
+              prev_charset = charset;
+              add_to_dynarr_unless_present (charset, charsets);
+            }
 
-/* Find the charsets in an array of Ichars, using BUF's Unicode-precedence
-   list when under Unicode-internal to decide which charset to pick.  Add
-   the charsets found to CHARSETS, but don't add any duplicates. */
-
-void
-find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
-			       const Ichar *str, Charcount len,
-			       struct buffer *buf)
-{
-  Lisp_Object prev_charset = Qunbound;
-  int j;
-
-  /* #### SJT doesn't like this. */
-  if (len == 0)
-    {
-      Dynarr_add (charsets, Vcharset_ascii);
-      return;
-    }
-
-  for (j = 0; j < len; j++)
-    {
-      Lisp_Object charset;
-      int c1, c2;
-      buffer_ichar_to_charset_codepoint (str[j], buf, &charset,
-					 &c1, &c2, CONVERR_FAIL);
-      if (!NILP (charset) && !EQ (charset, prev_charset))
-	{
-	  prev_charset = charset;
-	  add_to_dynarr_unless_present (charset, charsets);
-	}
+          INC_IBYTEPTR (str);
+        }
     }
 }
 
@@ -2662,34 +2578,6 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
     }
 
   return cols;
-}
-
-int
-ichar_string_displayed_columns (const Ichar *str, Charcount len)
-{
-  int cols = 0;
-  int i;
-
-  for (i = 0; i < len; i++)
-    cols += ichar_columns (str[i]);
-
-  return cols;
-}
-
-Charcount
-ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len)
-{
-  const Ibyte *end = str + len;
-  Charcount retval = 0;
-
-  while (str < end)
-    {
-      if (!byte_ascii_p (*str))
-	retval++;
-      INC_IBYTEPTR (str);
-    }
-
-  return retval;
 }
 
 

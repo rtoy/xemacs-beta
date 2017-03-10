@@ -718,8 +718,7 @@ extern Lisp_Object Qtop_bottom;
 EXFUN (Fredraw_frame, 2);
 
 int redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
-				 Ibyte *nonreloc, Lisp_Object reloc,
-				 Bytecount offset, Bytecount len);
+                                 const Ibyte *string, Bytecount len);
 int redisplay_frame (struct frame *f, int preemption_check);
 void redisplay_no_pre_idle_hook (void);
 void redisplay (void);

@@ -178,6 +178,127 @@
 	If END is specified, don't error on a circular list in this
 	function.
 
+2016-12-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Drop a lot of needless Ibyte -> Ichar conversion, redisplay.
+	The most benefit to this will be from the GTK and XFT code, and is
+	not yet directly visible.
+
+	* cm.c (send_string_to_tty_console):
+	Declare this with its STR argument const.
+	* console-gtk.h:
+	gtk_output_string(), take a vector of Ibytes rather than a Dynarr
+	of Ichars.
+	* console-impl.h (struct console_methods):
+	(*text_width_method)(), take an Ibyte pointer and a byte length rather
+	than an array of Ichars.
+	(*output_string_method)(), take an Ibyte pointer and a byte length
+	rather than an Ichar Dynarr.
+	* console-stream.c (stream_text_width):
+	Return a charcount here rather than just the byte length.
+	* console-tty.h:
+	Update this to reflect the const argument to
+	send_string_to_tty_console().
+	* console-x.h:
+	Update x_output_string()'s prototype to take an Ibyte vector and
+	length rather than an Ichar Dynarr.
+	* faces.c (face_cachel_charset_font_metric_info):
+	Take an array of Binbyte as an argument rather than unsigned char
+	*, face_cachel_charset_font_metric_info().
+	* faces.h:
+	Ditto
+	* frame.c:
+	No need for a static Dynarr for the title string, an alloca'd
+	buffer space is fine.
+	* frame.c (generate_title_string):
+	Ditto.
+	* frame.c (init_frame):
+	No need to allocate that new Dynarr when creating the frame.
+	* glyphs.c (query_string_geometry):
+	Make sure the face cachel is complete both when querying the
+	height *and* the width.
+	Compute the descent when it is requested on its own, don't require
+	that the height be also requested.
+	* lisp.h:
+	Remove find_charsets_in_ichar_string(), no longer used.
+	Remove ichar_string_displayed_columns(), no longer used.
+	Remove convert_ibyte_string_into_ichar_dynarr(), no longer used.
+	Remove convert_ichar_string_into_ibyte_dynarr(), no longer used.
+	Remove convert_ichar_string_into_malloced_string(), no longer used.
+	* redisplay-output.c:
+	* redisplay-output.c (redisplay_output_layout):
+	Call (*output_string_method) with its new calling convention,
+	which removes the necessity to transform our Lisp string argument
+	to an array of Ichars.
+	* redisplay-tty.c:
+	Remove tty_output_ichar_dynarr(), no longer used.
+	* redisplay-tty.c (tty_text_width):
+	Update the reflect the new Ibyte * calling convention.
+	* redisplay-tty.c (tty_output_display_block):
+	Use a stack-allocated array here for the text, rather than a
+	Dynarr.
+	* redisplay-tty.c (tty_output_ibyte_string):
+	Take a const *STR argnument, rather than just an Ibyte * pointer.
+	Remove tty_output_ichar_dynarr(), no longer used.
+	* redisplay-xlike-inc.c:
+	* redisplay-xlike-inc.c (struct textual_run):
+	PTR is now an Extbyte, reflecting external-format data.
+	Add ALLOCATE_RUNS_TEXT, a platform-specific #define allowing
+	e.g. the Xft code to transform to UTF-16 when allocating the stack
+	space for the text passed to it.
+	* redisplay-xlike-inc.c (separate_textual_runs_nomule):
+	Just use memcpy() in this, don't re-implement it, now we no longer
+	have an Ichar * argument.
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	Trust the external-format conversion we did when allocating the
+	space for our text.
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	Ditto. Support non-BMP characters correctly.
+	* redisplay-xlike-inc.c (separate_textual_runs_mule):
+	Move to taking a vector of Ibytes rather than a vector of
+	Ichars.
+	Compress the loop of this function if the whole string is
+	ASCII, use the skip_ascii inline function.
+	* redisplay-xlike-inc.c (separate_textual_runs):
+	Take a vector of Ibytes rather than a vector of Ichars.
+	* redisplay-xlike-inc.c (XLIKE_text_width_single_run):
+	On XFT builds, all XFT runs are of dimension two.
+	* redisplay-xlike-inc.c (XLIKE_text_width):
+	Take a vector of Ibyte * rather than of Ichar * here.
+	* redisplay-xlike-inc.c (XLIKE_output_display_block):
+	No need for a Dynarr of Ichars, when outputting strings, use
+	Ibyte vectors allocated on the stack.
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Don't take a Dynarr of Ichars, take a vector of Ibytes and a
+	length.
+	* redisplay.c:
+	Remove redisplay_window_text_width_ichar_string(), no longer used.
+	* redisplay.c (redisplay_window_text_width_string):
+	No longer take a RELOC argument in this function; take just an
+	Ibyte vector, a font index, and a byte length.
+	* redisplay.c (redisplay_text_width_string):
+	No longer implement this in terms of the Ichar width functions.
+	* redisplay.c (add_ichar_rune_1):
+	* redisplay.c (generate_fstring_runes):
+	* redisplay.h:
+	Update the declaration for redisplay_text_width_string() to
+	reflect its changed API.
+	* text.c:
+	* text.c (convert_ibyte_string_into_ichar_string): Removed.
+	* text.c (convert_ichar_string_into_ibyte_dynarr): Removed.
+	* text.c (convert_ichar_string_into_malloced_string): Removed.
+	* text.c (ichar_string_displayed_columns): Removed.	
+	* text.c (ibyte_string_nonascii_chars): Removed.	
+	* text.c (find_charsets_in_ibyte_string):
+	Take an array of Binbytes here.
+	Use the skip_ascii inline function, which will make it cheap for
+	ASCII text.
+	* toolbar-xlike.c (xlike_output_toolbar_button):
+	Use the toolbar face when determining the metrics for an image
+	text index.
+	No longer bother with the Ichar dynarr, use a stack-allocated
+	array of Ibyte *.
+
 2016-12-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (uint32_t_to_lisp, int32_t_to_lisp):

@@ -144,7 +144,7 @@ struct console_methods
   int (*left_margin_width_method) (struct window *);
   int (*right_margin_width_method) (struct window *);
   int (*text_width_method) (struct frame *f, struct face_cachel *cachel,
-			    const Ichar *str, Charcount len);
+			    const Ibyte *str, Bytecount len);
   void (*output_display_block_method) (struct window *, struct display_line *,
 				       int, int, int, int, int, int, int);
   int (*divider_height_method) (void);
@@ -172,7 +172,8 @@ struct console_methods
 				face_index findex, int cursor_start, int cursor_width,
 				int cursor_height, int offset_bitmap);
   void (*output_string_method) (struct window *w, struct display_line *dl,
-				Ichar_dynarr *buf, int xpos, int xoffset,
+				const Ibyte *buf, Bytecount len,
+                                int xpos, int xoffset,
 				int start_pixpos, int width, face_index findex,
 				int cursor, int cursor_start, int cursor_width,
 				int cursor_height);

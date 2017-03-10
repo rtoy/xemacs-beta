@@ -69,7 +69,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "window-impl.h"
 #include "line-number.h"
 #include "file-coding.h"
-
+#include "regex.h"
 #include "sysfile.h"
 
 #ifdef HAVE_TTY
@@ -635,64 +635,29 @@ const struct sized_memory_description display_line_dynarr_description = {
 /***************************************************************************/
 
 static int
-redisplay_window_text_width_ichar_string (struct window *w, int findex,
-					  Ichar *str, Charcount len)
-{
-  ensure_face_cachel_complete (WINDOW_FACE_CACHEL (w, findex), wrap_window (w),
-			       str, len);
-  return DEVMETH (WINDOW_XDEVICE (w),
-		  text_width, (WINDOW_XFRAME (w),
-			       WINDOW_FACE_CACHEL (w, findex), str,
-			       len));
-}
-
-static Ichar_dynarr *rtw_ichar_dynarr;
-
-static int
 redisplay_window_text_width_string (struct window *w, int findex,
-				    Ibyte *nonreloc, Lisp_Object reloc,
-				    Bytecount offset, Bytecount len)
+				    const Ibyte *string, Bytecount len)
 {
-  if (!rtw_ichar_dynarr)
-    rtw_ichar_dynarr = Dynarr_new (Ichar);
-  Dynarr_reset (rtw_ichar_dynarr);
-
-  fixup_internal_substring (nonreloc, reloc, offset, &len);
-  if (STRINGP (reloc))
-    nonreloc = XSTRING_DATA (reloc);
-  convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
-  return redisplay_window_text_width_ichar_string
-    (w, findex, Dynarr_begin (rtw_ichar_dynarr),
-     Dynarr_length (rtw_ichar_dynarr));
+  return DEVMETH (WINDOW_XDEVICE (w), text_width,
+                  (WINDOW_XFRAME (w), WINDOW_FACE_CACHEL (w, findex),
+                   string, len));
 }
 
 int
 redisplay_text_width_string (Lisp_Object domain, Lisp_Object face,
-			     Ibyte *nonreloc, Lisp_Object reloc,
-			     Bytecount offset, Bytecount len)
+			     const Ibyte *string, Bytecount len)
 {
   Lisp_Object window = DOMAIN_WINDOW (domain);
-  Lisp_Object frame  = DOMAIN_FRAME  (domain);
+  Lisp_Object frame  = DOMAIN_FRAME (domain);
   struct face_cachel cachel;
 
-  if (!rtw_ichar_dynarr)
-    rtw_ichar_dynarr = Dynarr_new (Ichar);
-  Dynarr_reset (rtw_ichar_dynarr);
-
-  fixup_internal_substring (nonreloc, reloc, offset, &len);
-  if (STRINGP (reloc))
-    nonreloc = XSTRING_DATA (reloc);
-  convert_ibyte_string_into_ichar_dynarr (nonreloc, len, rtw_ichar_dynarr);
   reset_face_cachel (&cachel);
   cachel.face = face;
   ensure_face_cachel_complete (&cachel, NILP (window) ? frame : window,
-			       Dynarr_atp (rtw_ichar_dynarr, 0),
-			       Dynarr_length (rtw_ichar_dynarr));
-  return DEVMETH (FRAME_XDEVICE (XFRAME (frame)),
-		  text_width, (XFRAME (frame),
-			       &cachel,
-			       Dynarr_begin (rtw_ichar_dynarr),
-			       Dynarr_length (rtw_ichar_dynarr)));
+                               string, len);
+
+  return DEVMETH (FRAME_XDEVICE (XFRAME (frame)), text_width,
+                  (XFRAME (frame), &cachel, string, len));
 }
 
 /* Return the display block from DL of the given TYPE.  A display line
@@ -1127,14 +1092,22 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 	    data->font_is_bogus = 0;
 
 	  fi = XFONT_INSTANCE (font_instance);
-	  if (!fi->proportional_p || data->font_is_bogus)
+	  if (!fi->proportional_p)
 	    {
-	      Ichar ch = data->font_is_bogus ? CANT_DISPLAY_CHAR : data->ch;
+              Ibyte chbuf[MAX_ICHAR_LEN];
 
 	      data->last_char_width =
-		redisplay_window_text_width_ichar_string
-		(XWINDOW (data->window), data->findex, &ch, 1);
+		redisplay_window_text_width_string
+		(XWINDOW (data->window), data->findex, chbuf,
+                 set_itext_ichar (chbuf, data->ch));
 	    }
+          else if (data->font_is_bogus)
+            {
+	      data->last_char_width =
+		redisplay_window_text_width_string
+		(XWINDOW (data->window), data->findex, (const Ibyte *) "~",
+                 ichar_len ('~'));
+            }
 	  else
 	    data->last_char_width = -1;
 
@@ -1150,8 +1123,15 @@ add_ichar_rune_1 (pos_data *data, int no_contribute_to_line_height)
 
       width = data->last_char_width;
       if (width < 0) /* proportional fonts */
-	width = redisplay_window_text_width_ichar_string
-	  (XWINDOW (data->window), data->findex, &data->ch, 1);
+        {
+          Ibyte chbuf[MAX_ICHAR_LEN];
+
+          width
+            = redisplay_window_text_width_string (XWINDOW (data->window),
+                                                  data->findex, chbuf,
+                                                  set_itext_ichar (chbuf,
+                                                                   data->ch));
+        }
     }
 
   if (data->max_pixpos != -1 && (data->pixpos + width > data->max_pixpos))
@@ -4235,12 +4215,11 @@ tail_recurse:
 		    {
 		      int cur_pixsize;
 		      int dash_pixsize;
-		      Ibyte ch = '-';
 		      SET_CURRENT_MODE_CHARS_PIXSIZE;
 
 		      dash_pixsize =
 			redisplay_window_text_width_string
-			(w, findex, &ch, Qnil, 0, 1);
+			(w, findex, (const Ibyte *) "-", ichar_len ('-'));
 
 		      if (dash_pixsize == 0)
 			num_to_add = 0;

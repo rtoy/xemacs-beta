@@ -2393,48 +2393,50 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 
   CHECK_STRING (string);
 
-  /* Compute height */
-  if (height)
+  /* Fallback to the default face if none was provided. */
+  if (!NILP (face))
     {
-      Ichar_dynarr *buf = Dynarr_new (Ichar);
-      convert_ibyte_string_into_ichar_dynarr
-	(XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
+      reset_face_cachel (&cachel);
+      update_face_cachel_data (&cachel,
+                               /* #### NOTE: in fact, I'm not sure if it's
+                                  #### possible to *not* get a window
+                                  #### here, but you never know...
+                                  #### -- dvl */
+                               NILP (window) ? frame : window,
+                               face);
+      the_cachel = &cachel;
+    }
+  else
+    {
+      the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
+                                       DEFAULT_INDEX);
+    }
 
-      /* Compute string metric info */
-
-      /* Fallback to the default face if none was provided. */
-      if (!NILP (face))
-	{
-	  reset_face_cachel (&cachel);
-	  update_face_cachel_data (&cachel,
-				   /* #### NOTE: in fact, I'm not sure if it's
-				      #### possible to *not* get a window
-				      #### here, but you never know...
-				      #### -- dvl */
-				   NILP (window) ? frame : window,
-				   face);
-	  the_cachel = &cachel;
-	}
-      else
-	the_cachel = WINDOW_FACE_CACHEL (DOMAIN_XWINDOW (domain),
-					 DEFAULT_INDEX);
-
+  /* Compute height */
+  if (height || descent)
+    {
       face_cachel_char_font_metric_info (the_cachel, domain,
-					 Dynarr_atp (buf, 0),
-					 Dynarr_length (buf), &fm);
+                                         XSTRING_DATA (string),
+                                         XSTRING_LENGTH (string),
+                                         &fm);
+      if (height) 
+        {
+          *height = fm.ascent + fm.descent;
+        }
 
-      *height = fm.ascent + fm.descent;
-      /* #### descent only gets set if we query the height as well. */
       if (descent)
-	*descent = fm.descent;
-      Dynarr_free (buf);
+        {
+          *descent = fm.descent;
+        }
     }
 
   /* Compute width */
   if (width)
-    *width = redisplay_text_width_string (domain,
-					  NILP (face) ? Vdefault_face : face,
-					  0, string, 0, -1);
+    {
+      *width = DEVMETH (DOMAIN_XDEVICE (domain), text_width,
+                        (XFRAME (frame), the_cachel, XSTRING_DATA (string),
+                         XSTRING_LENGTH (string)));
+    }
 }
 
 static void

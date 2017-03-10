@@ -272,14 +272,14 @@ Lisp_Object ensure_face_cachel_contains_charset (struct face_cachel *cachel,
 						 Lisp_Object domain,
 						 Lisp_Object charset);
 void ensure_face_cachel_complete (struct face_cachel *cachel,
-				  Lisp_Object domain, Ichar *ptr,
-				  Charcount len);
+				  Lisp_Object domain, const Ibyte *ptr,
+				  Bytecount len);
 void update_face_cachel_data (struct face_cachel *cachel,
 			      Lisp_Object domain,
 			      Lisp_Object face);
 void face_cachel_char_font_metric_info (struct face_cachel *cachel,
 					Lisp_Object domain,
-					Ichar *ptr, Charcount len,
+					const Ibyte *ptr, Bytecount len,
 					struct font_metric_info *fm);
 void mark_face_cachels (face_cachel_dynarr *elements);
 void mark_face_cachels_as_clean (struct window *w);
