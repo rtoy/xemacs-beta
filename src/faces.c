@@ -1285,15 +1285,15 @@ static Lisp_Object_dynarr *face_charset_dynarr;
 
 void
 ensure_face_cachel_complete (struct face_cachel *cachel,
-			     Lisp_Object domain, Ichar *ptr,
-			     Charcount len)
+			     Lisp_Object domain,
+                             const Ibyte *ptr, Bytecount len)
 {
   int i;
 
   if (!face_charset_dynarr)
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
-  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+  find_charsets_in_ibyte_string (face_charset_dynarr, ptr, len,
 				 DOMAIN_XBUFFER (domain));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     ensure_face_cachel_contains_charset (cachel, domain,
@@ -1303,7 +1303,7 @@ ensure_face_cachel_complete (struct face_cachel *cachel,
 void
 face_cachel_char_font_metric_info (struct face_cachel *cachel,
 				   Lisp_Object domain,
-				   Ichar *ptr, Charcount len,
+                                   const Ibyte *ptr, Bytecount len,
 				   struct font_metric_info *fm)
 {
   int i;
@@ -1318,7 +1318,7 @@ face_cachel_char_font_metric_info (struct face_cachel *cachel,
   if (!face_charset_dynarr)
     face_charset_dynarr = Dynarr_new (Lisp_Object);
   Dynarr_reset (face_charset_dynarr);
-  find_charsets_in_ichar_string (face_charset_dynarr, ptr, len,
+  find_charsets_in_ibyte_string (face_charset_dynarr, ptr, len,
 				 DOMAIN_XBUFFER (domain));
   for (i = 0; i < Dynarr_length (face_charset_dynarr); i++)
     {

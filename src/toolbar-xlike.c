@@ -273,12 +273,9 @@ xlike_output_toolbar_button (struct frame *f, Lisp_Object button)
 	}
       else if (IMAGE_INSTANCE_TYPE (p) == IMAGE_TEXT)
 	{
-	  /* #### We need to make the face used configurable. */
-	  struct face_cachel *cachel =
-	    WINDOW_FACE_CACHEL (w, DEFAULT_INDEX);
+	  struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, button_findex);
 	  struct display_line dl;
 	  Lisp_Object string = IMAGE_INSTANCE_TEXT_STRING (p);
-	  Ichar_dynarr *buf;
 	  struct font_metric_info fm;
 
 	  /* This could be true if we were called via the Expose event
@@ -290,12 +287,10 @@ xlike_output_toolbar_button (struct frame *f, Lisp_Object button)
 	      MARK_TOOLBAR_CHANGED;
 	      return;
 	    }
-	  buf = Dynarr_new (Ichar);
-	  convert_ibyte_string_into_ichar_dynarr
-	    (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
+
 	  face_cachel_char_font_metric_info (cachel, window,
-					     Dynarr_begin (buf),
-					     Dynarr_length (buf), &fm);
+                                             XSTRING_DATA (string),
+                                             XSTRING_LENGTH (string), &fm);
 
 	  dl.ascent = fm.ascent;
 	  dl.descent = fm.descent;
@@ -312,9 +307,9 @@ xlike_output_toolbar_button (struct frame *f, Lisp_Object button)
 	    }
 
 	  MAYBE_DEVMETH (d, output_string,
-			 (w, &dl, buf, tb->x + x_offset, 0, 0, width,
-			  button_findex, 0, 0, 0, 0));
-	  Dynarr_free (buf);
+			 (w, &dl, XSTRING_DATA (string),
+                          XSTRING_LENGTH (string), tb->x + x_offset, 0, 0,
+                          width, button_findex, 0, 0, 0, 0));
 	}
 
       /* We silently ignore the image if it isn't a pixmap or text. */

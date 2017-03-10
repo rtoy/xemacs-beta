@@ -6087,24 +6087,14 @@ void seed_random (long arg);
 void find_charsets_in_ibyte_string (Lisp_Object_dynarr *charsets,
 				    const Ibyte *str, Bytecount len,
 				    struct buffer *buf);
-void find_charsets_in_ichar_string (Lisp_Object_dynarr *charsets,
-				    const Ichar *str, Charcount len,
-				    struct buffer *buf);
 void find_charsets_in_buffer (Lisp_Object_dynarr *charsets,
 			      struct buffer *buf, Charbpos pos, Charcount len);
 int ibyte_string_displayed_columns (const Ibyte *str, Bytecount len);
-int ichar_string_displayed_columns (const Ichar *str, Charcount len);
-Charcount ibyte_string_nonascii_chars (const Ibyte *str, Bytecount len);
-void convert_ibyte_string_into_ichar_dynarr (const Ibyte *str,
-						Bytecount len,
-						Ichar_dynarr *dyn);
+
 Charcount convert_ibyte_string_into_ichar_string (const Ibyte *str,
 						     Bytecount len,
 						     Ichar *arr);
-void convert_ichar_string_into_ibyte_dynarr (Ichar *arr, int nels,
-						Ibyte_dynarr *dyn);
-Ibyte *convert_ichar_string_into_malloced_string (Ichar *arr, int nels,
-						    Bytecount *len_out);
+
 Bytecount copy_text_between_formats (const Ibyte *src, Bytecount srclen,
 				     Internal_Format srcfmt,
 				     Lisp_Object srcobj,

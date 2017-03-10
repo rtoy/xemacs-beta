@@ -2347,24 +2347,16 @@ very_bogusly_return_only_the_first_needed_font (Lisp_Object string,
 						Lisp_Object domain)
 {
   int i;
-
   struct face_cachel frame_cachel;
   struct face_cachel *cachel;
   Lisp_Object frame = DOMAIN_FRAME (domain);
-  Ichar_dynarr *buf = Dynarr_new (Ichar);
-
-  convert_ibyte_string_into_ichar_dynarr
-    (XSTRING_DATA (string), XSTRING_LENGTH (string), buf);
 
   reset_face_cachel (&frame_cachel);
   update_face_cachel_data (&frame_cachel, frame, face);
   cachel = &frame_cachel;
 
-  ensure_face_cachel_complete (cachel, domain,
-			       Dynarr_atp (buf, 0),
-			       Dynarr_length (buf));
-
-  Dynarr_free (buf);
+  ensure_face_cachel_complete (cachel, domain, XSTRING_DATA (string),
+                               XSTRING_LENGTH (string));
 
   /* @@#### This is majorly bogus.  We are just returning the first font
      we find, which will be wrong when there are multiple fonts needed. */

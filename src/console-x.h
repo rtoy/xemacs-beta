@@ -131,7 +131,7 @@ Extbyte *menu_separator_style_and_to_external (const Ibyte *s);
 Lisp_Object widget_value_unwind (Lisp_Object closure);
 
 void x_output_string (struct window *w, struct display_line *dl,
-		      Ichar_dynarr *buf, int xpos, int xoffset,
+		      const Ibyte *buf, Bytecount len, int xpos, int xoffset,
 		      int start_pixpos, int width, face_index findex,
 		      int cursor, int cursor_start, int cursor_width,
 		      int cursor_height);
