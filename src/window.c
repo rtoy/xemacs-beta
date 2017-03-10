@@ -1,7 +1,7 @@
 /* Window creation, deletion and examination for XEmacs.
    Copyright (C) 1985-1987, 1992-1995 Free Software Foundation, Inc.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -149,32 +149,53 @@ do {						\
 
 
 
-static const struct memory_description int_description_1[] = {
+static const struct memory_description int_stynarr_description_1[] = {
+  XD_STYNARR_DESC (int_stynarr, &int_description, &int_dynarr_description),
   { XD_END }
 };
 
-static const struct sized_memory_description int_description = {
-  sizeof (int),
-  int_description_1
+const struct sized_memory_description int_stynarr_description = {
+  sizeof (int_stynarr),
+  int_stynarr_description_1
 };
 
-static const struct memory_description int_dynarr_description_1[] = {
-  XD_DYNARR_DESC (int_dynarr, &int_description),
+static const struct memory_description unsigned_char_stynarr_description_1[] =
+{
+  XD_STYNARR_DESC (unsigned_char_stynarr, &unsigned_char_description,
+		   &unsigned_char_dynarr_description),
   { XD_END }
 };
 
-static const struct sized_memory_description int_dynarr_description = {
-  sizeof (int_dynarr),
-  int_dynarr_description_1
+const struct sized_memory_description unsigned_char_stynarr_description = {
+  sizeof (unsigned_char_stynarr),
+  unsigned_char_stynarr_description_1
+};
+
+static const struct memory_description Lisp_Object_pair_stynarr_description_1[] = {
+  XD_STYNARR_DESC (Lisp_Object_pair_stynarr, &Lisp_Object_pair_description,
+		   &Lisp_Object_pair_dynarr_description),
+  { XD_END }
+};
+
+const struct sized_memory_description Lisp_Object_pair_stynarr_description = {
+  sizeof (Lisp_Object_pair_stynarr),
+  Lisp_Object_pair_stynarr_description_1
 };
 
 static const struct memory_description face_cachel_description_1[] = {
-  { XD_BLOCK_PTR, offsetof (face_cachel, merged_faces),
-    1, { &int_dynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, merged_faces),
+    1, { &int_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font_specified),
+    1, { &unsigned_char_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font_updated),
+    1, { &unsigned_char_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font_final_stage),
+    1, { &unsigned_char_stynarr_description } },
+  { XD_BLOCK_ARRAY, offsetof (face_cachel, font),
+    1, { &Lisp_Object_pair_stynarr_description } },
   { XD_LISP_OBJECT, offsetof (face_cachel, face) },
   { XD_LISP_OBJECT, offsetof (face_cachel, foreground) },
   { XD_LISP_OBJECT, offsetof (face_cachel, background) },
-  { XD_LISP_OBJECT_ARRAY, offsetof (face_cachel, font), NUM_LEADING_BYTES },
   { XD_LISP_OBJECT, offsetof (face_cachel, display_table) },
   { XD_LISP_OBJECT, offsetof (face_cachel, background_pixmap) },
   { XD_END }
@@ -341,11 +362,11 @@ finalize_window (Lisp_Object obj)
       for (i = 0; i < Dynarr_length (w->face_cachels); i++)
 	{
 	  struct face_cachel *cachel = Dynarr_atp (w->face_cachels, i);
-	  if (cachel->merged_faces)
-	    {
-	      Dynarr_free (cachel->merged_faces);
-	      cachel->merged_faces = 0;
-	    }
+	  Stynarr_free (cachel->merged_faces);
+	  Stynarr_free (cachel->font);
+	  Stynarr_free (cachel->font_specified);
+	  Stynarr_free (cachel->font_updated);
+	  Stynarr_free (cachel->font_final_stage);
 	}
       Dynarr_free (w->face_cachels);
       w->face_cachels = 0;
@@ -712,6 +733,8 @@ find_window_mirror (struct window *w)
 				      XWINDOW_MIRROR (f->root_mirror), w);
 }
 
+#ifdef MEMORY_USAGE_STATS
+
 /* Given a real window, return its mirror structure, if it exists.
    Don't do any updating. */
 static struct window_mirror *
@@ -723,6 +746,8 @@ find_window_mirror_maybe (struct window *w)
   return find_window_mirror_internal (f->root_window,
 				      XWINDOW_MIRROR (f->root_mirror), w);
 }
+
+#endif /* MEMORY_USAGE_STATS */
 
 /*****************************************************************************
  find_window_by_pixel_pos
@@ -1515,6 +1540,13 @@ decode_window (Lisp_Object window)
   return XWINDOW (window);
 }
 
+/* The following three functions exist because in window.h, we don't
+   have direct access to the `struct window' structure, so things like
+   WINDOW_BUFFER and WINDOW_LIVE_P need to call a function to get the
+   values.  In window-impl.h, WINDOW_BUFFER is redefined to be a simple
+   structure reference.
+*/
+
 int
 window_live_p (struct window *w)
 {
@@ -1538,7 +1570,7 @@ Return the buffer that WINDOW is displaying.
 */
        (window))
 {
-  return decode_window (window)->buffer;
+  return WINDOW_BUFFER (decode_window (window));
 }
 
 DEFUN ("window-frame", Fwindow_frame, 0, 1, 0, /*
@@ -3894,9 +3926,9 @@ temp_output_buffer_show (Lisp_Object buf, Lisp_Object same_frame)
       w = XWINDOW (window);
       w->hscroll = 0;
       w->modeline_hscroll = 0;
-      set_marker_restricted (w->start[CURRENT_DISP], make_fixnum (1), buf);
-      set_marker_restricted (w->pointm[CURRENT_DISP], make_fixnum (1), buf);
-      set_marker_restricted (w->sb_point, make_fixnum (1), buf);
+      set_marker_restricted (w->start[CURRENT_DISP], Qone, buf);
+      set_marker_restricted (w->pointm[CURRENT_DISP], Qone, buf);
+      set_marker_restricted (w->sb_point, Qone, buf);
     }
 }
 
@@ -4060,11 +4092,13 @@ returned.
   p->prev = window;
   o->next = new_;
   p->parent = o->parent;
-  p->buffer = Qt;
-
-  reset_face_cachels (p);
-  reset_glyph_cachels (p);
-
+  /* We used to do this: */
+  /* p->buffer = Qt; */
+  /* but it seems a bad idea in that the calls to reset_face_cachels()
+     and especially reset_glyph_cachels() can trigger all sorts of code,
+     and we don't have to have a bad value for the buffer. --ben 1-10-10 */
+  p->buffer = o->buffer;
+  
 
   /* Apportion the available frame space among the two new windows */
 
@@ -4087,8 +4121,16 @@ returned.
 
   XFRAME (p->frame)->mirror_dirty = 1;
 
+  reset_face_cachels (p);
+  reset_glyph_cachels (p);
+
   note_object_created (new_);
 
+  /* #### Do we need to do this?  We had it before (see above), and
+     I'm putting it here because maybe Fset_window_buffer() won't
+     work right if it sees that the buffer has already been set.
+     --ben 1-10-10 */
+  p->buffer = Qt;
   /* do this last (after the window is completely initialized and
      the mirror-dirty flag is set) so that specifier recomputation
      caused as a result of this will work properly and not abort. */
@@ -4257,7 +4299,7 @@ window_displayed_height (struct window *w)
 	    ypos1 = WINDOW_TEXT_TOP (w);
 	  else
 	    {
-	      dl = Dynarr_atp (dla, Dynarr_length (dla) - 1);
+	      dl = Dynarr_lastp (dla);
 	      /* If this line is clipped then we know that there is no
                  blank room between eob and the modeline.  If we are
                  scrolling on clipped lines just know off the clipped
@@ -4280,7 +4322,7 @@ window_displayed_height (struct window *w)
 	num_lines--;
 
       if (scroll_on_clipped_lines
-	  && Dynarr_atp (dla, Dynarr_length (dla) - 1)->clip)
+	  && Dynarr_lastp (dla)->clip)
 	num_lines--;
     }
 
@@ -5759,7 +5801,7 @@ This is a specifier; use `set-specifier' to change it.
   {
     Lisp_Object fb = Qnil;
 #ifdef HAVE_TTY
-    fb = Fcons (Fcons (list1 (Qtty), make_fixnum (1)), fb);
+    fb = Fcons (Fcons (list1 (Qtty), Qone), fb);
 #endif
 #ifdef HAVE_GTK
     fb = Fcons (Fcons (list1 (Qgtk), make_fixnum (3)), fb);

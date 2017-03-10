@@ -1,6 +1,6 @@
 /* Synchronize redisplay structures and output changes.
    Copyright (C) 1994, 1995 Board of Trustees, University of Illinois.
-   Copyright (C) 1995, 1996, 2002, 2003 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2003, 2005 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
    Copyright (C) 1999, 2002 Andy Piper.
    Copyright (C) 2010 Didier Verna
@@ -1555,16 +1555,14 @@ redisplay_output_layout (Lisp_Object domain,
 			struct display_line dl;	/* this is fake */
 			Lisp_Object string =
 			  IMAGE_INSTANCE_TEXT_STRING (childii);
-			Binbyte charsets[NUM_LEADING_BYTES];
-			struct face_cachel *cachel
-			  = WINDOW_FACE_CACHEL (w, findex);
+			struct face_cachel *cachel =
+			  WINDOW_FACE_CACHEL (w, findex);
 
 			DISPLAY_LINE_INIT (dl);
 
-			find_charsets_in_ibyte_string (charsets,
-						       XSTRING_DATA (string),
-						       XSTRING_LENGTH (string));
-			ensure_face_cachel_complete (cachel, window, charsets);
+			ensure_face_cachel_complete (cachel, window,
+                                                     XSTRING_DATA (string),
+                                                     XSTRING_LENGTH (string));
 
 			redisplay_normalize_display_box (&cdb, &cdga);
 			/* Offsets are now +ve again so be careful

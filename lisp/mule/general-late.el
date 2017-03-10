@@ -1,6 +1,7 @@
 ;;; general-late.el --- General Mule code that needs to be run late when
 ;;                      dumping.
 ;; Copyright (C) 2006 Free Software Foundation
+;; Copyright (C) 2010 Ben Wing.
 
 ;; Author: Aidan Kehoe
 
@@ -69,40 +70,11 @@
       ;; twice, which is a significant improvement.
       system-type (symbol-value (intern "\u0073ystem-type")))
 
-;; When this file is being compiled, all the charsets have been loaded, so
-;; we can construct the query-skip-chars-arg string correctly. 
-(set-unicode-query-skip-chars-args
- (eval-when-compile 
-   (when-fboundp 'map-charset-chars 
-     (loop
-       for charset in (charset-list)
-       with skip-chars-string = ""
-       do
-       (block no-ucs-mapping
-         (map-charset-chars
-          #'(lambda (begin end)
-              (loop
-                while (and begin (>= end begin))
-                do
-                (when (= -1 (char-to-unicode begin))
-                  (return-from no-ucs-mapping))
-                (setq begin (int-to-char (1+ begin)))))
-          charset)
-         (setq skip-chars-string
-               (concat skip-chars-string
-                       (charset-skip-chars-string charset))))
-       finally return skip-chars-string)))
- unicode-invalid-sequence-regexp-range
- (eval-when-compile
-   (concat (loop
-             for i from #x80 to #xFF
-             collect (aref (decode-coding-string (int-char i)
-                                                 'utf-8) 0)))))
+;; At this point in the dump, all the charsets have been loaded.
+;; Now, set the precedence list. @@#### There should be a better way.
+(initialize-default-unicode-precedence-list)
 
-;; At this point in the dump, all the charsets have been loaded. Now, load
-;; their Unicode mappings.
-(if load-unicode-tables-at-dump-time
-    (let ((data-directory (expand-file-name "etc" source-directory)))
-      (load-unicode-tables)))
+;; This is a utility function; we don't want it in the dumped XEmacs.
+(fmakunbound 'setup-case-pairs)
 
 ;;; general-late.el ends here

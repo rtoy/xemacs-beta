@@ -2338,8 +2338,37 @@ Subwindows are not currently implemented.
 #ifdef HAVE_X_WIDGETS
 
 /************************************************************************/
-/*                            widgets                            */
+/*                                widgets                               */
 /************************************************************************/
+
+static Lisp_Object
+very_bogusly_return_only_the_first_needed_font (Lisp_Object string,
+						Lisp_Object face,
+						Lisp_Object domain)
+{
+  int i;
+  struct face_cachel frame_cachel;
+  struct face_cachel *cachel;
+  Lisp_Object frame = DOMAIN_FRAME (domain);
+
+  reset_face_cachel (&frame_cachel);
+  update_face_cachel_data (&frame_cachel, frame, face);
+  cachel = &frame_cachel;
+
+  ensure_face_cachel_complete (cachel, domain, XSTRING_DATA (string),
+                               XSTRING_LENGTH (string));
+
+  /* @@#### This is majorly bogus.  We are just returning the first font
+     we find, which will be wrong when there are multiple fonts needed. */
+  for (i = 0; i < Stynarr_length (cachel->font); i++)
+    {
+      Lisp_Object font = Stynarr_at (cachel->font, i).value;
+      assert (!UNBOUNDP (font));
+      return font;
+    }
+
+  return Qnil;			/* NOT REACHED */
+}
 
 static void
 update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
@@ -2363,10 +2392,12 @@ update_widget_face (widget_value* wv, Lisp_Image_Instance *ii,
 
   {
     Lisp_Object face = IMAGE_INSTANCE_WIDGET_FACE (ii);
+    /* @@#### Fix me.  This should extract all fonts.  These should somehow
+       get incorporated into the fontList below in XmFontListCreate(),
+       and there should be a way of passing multiple fonts into lwlib. */
     Lisp_Font_Instance *fi =
-      XFONT_INSTANCE (query_string_font (IMAGE_INSTANCE_WIDGET_TEXT (ii),
-					 face,
-					 domain));
+      XFONT_INSTANCE (very_bogusly_return_only_the_first_needed_font
+		      (IMAGE_INSTANCE_WIDGET_TEXT (ii), face, domain));
     XFontStruct *fs = FONT_INSTANCE_X_FONT (fi);
 #ifdef HAVE_XFT
     XftFont *rf = FONT_INSTANCE_X_XFTFONT (fi);

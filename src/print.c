@@ -51,6 +51,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "sysfile.h"
 #include "elhash.h"
+#include "chartab.h"
 
 #include <float.h>
 /* Define if not in float.h */
@@ -91,6 +92,10 @@ Lisp_Object Qprint_string_length;
    effectively infinity.  */
 
 Lisp_Object Vprint_level;
+
+/* Maximum length of char tables, range tables, etc. to print; noninteger
+   means effectively infinity */
+Lisp_Object Vprint_table_nonreadably_length;
 
 /* Label to use when making echo-area messages. */
 
@@ -353,22 +358,6 @@ external_out (int dest, const CIbyte *fmt, ...)
   va_start (args, fmt);
   write_string_to_external_output_va (fmt, args, dest);
   va_end (args);
-}
-
-/* Output portably to stderr or its equivalent (i.e. may be a console
-   window under MS Windows), as well as alternate-debugging-output and
-   (under MS Windows) the C debugging output, i.e. OutputDebugString().
-   Works like stderr_out(). */
-
-void
-debug_out (const CIbyte *fmt, ...)
-{
-  int depth =  begin_inhibit_non_essential_conversion_operations ();
-  va_list args;
-  va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
-  va_end (args);
-  unbind_to (depth);
 }
 
 DOESNT_RETURN
@@ -2449,6 +2438,10 @@ print_symbol (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 }
 
 
+/*************************************************************************/
+/*                    debug-printing: implementation                     */
+/*************************************************************************/
+
 /* Useful on systems or in places where writing to stdout is unavailable or
    not working. */
 
@@ -2826,12 +2819,38 @@ external_debug_print (Lisp_Object object, int dest)
   ext_print_end (dest, depth);
 }
 
+
+/*************************************************************************/
+/*                 debug-printing: external entry points                 */
+/*************************************************************************/
+
+/* All of the following functions output simultaneously to the following
+   destinations:
+
+   (1) stderr
+   (2) alternate_do_string -- a string containing debug output, for situations
+       where stderr may be unavailable (e.g. on MS Windows)
+   (3) on MS Windows, the "debugging output" (output using OutputDebugString,
+       which shows up in a debugger)
+
+   Furthermore, they inhibit DFC-style conversion, so they will work during
+   initialization or death, or when called from within the DFC conversion
+   routines. */
+
+/* Printf-style debugging output. */
+
 void
-debug_p3 (Lisp_Object obj)
+debug_out (const CIbyte *fmt, ...)
 {
-  debug_p4 (obj);
-  debug_out ("\n");
+  int depth =  begin_inhibit_non_essential_conversion_operations ();
+  va_list args;
+  va_start (args, fmt);
+  write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
+  va_end (args);
+  unbind_to (depth);
 }
+
+/* Basic entry point: Print out a Lisp object to the debugging output. */
 
 void
 debug_print (Lisp_Object debug_print_obj)
@@ -2882,8 +2901,7 @@ dpa (Lisp_Object debug_print_obj)
   return alternate_do_string;
 }
 
-/* Debugging kludge -- unbuffered */
-/* This function provided for the benefit of the debugger.  */
+/* Do a backtrace to stderr. */
 void
 debug_backtrace (void)
 {
@@ -2904,6 +2922,8 @@ db (void)
 {
   debug_backtrace ();
 }
+
+/* Do a "short" backtrace. */
 
 void
 debug_short_backtrace (int length)
@@ -3034,6 +3054,14 @@ Maximum length of string to print before abbreviating.
 A value of nil means no limit.
 */ );
   Vprint_string_length = Qnil;
+
+  DEFVAR_LISP ("print-table-nonreadably-length",
+	       &Vprint_table_nonreadably_length /*
+Maximum length of table objects to print before abbreviating.
+This applies only when printing non-readably (i.e. `print-readably' is nil).
+A value of nil means no limit.
+*/ );
+  Vprint_table_nonreadably_length = make_fixnum (20);
 
   DEFVAR_LISP ("print-level", &Vprint_level /*
 Maximum depth of list nesting to print before abbreviating.
