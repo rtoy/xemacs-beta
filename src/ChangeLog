@@ -1,3 +1,34 @@
+2017-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Get the recent redisplay changes building on mswindows with
+	unicode-internal.
+
+	* file-coding.c (no_conversion_decode):
+	* mule-coding.c (shift_jis_decode):
+	* mule-coding.c (big5_decode):
+	* mule-coding.c (restore_left_to_right_direction):
+	* mule-coding.c (ensure_correct_direction):
+	* mule-coding.c (iso2022_decode):
+	Cast the Dynarr argument to DECODE_ADD_BINARY_CHAR(), now it's an
+	inline function and the type checking chokes when passed an
+	unsigned_char_dynarr *.
+	* lisp.h:
+	Declare Fvalues().
+
+	* redisplay-msw.c:
+	* redisplay-msw.c (separate_textual_runs):
+	* redisplay-msw.c (mswindows_output_cursor):
+	* redisplay-msw.c (mswindows_output_string):
+	* redisplay-msw.c (mswindows_text_width):
+	Merge the recent redisplay change that avoids needless Ibyte * ->
+	Ichar conversion into the mswindows unicode-internal code.
+
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	Correct this in passing, use valid_utf_16_leading_surrogate()
+	instead of its old name.
+	* sequence.c:
+	Qsubstitute is now in general-slots.h, remove it from here.
+
 2017-03-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* search.c (Fstring_match_p):

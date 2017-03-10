@@ -46,6 +46,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "redisplay.h"
 #include "sysdep.h"
 #include "window-impl.h"
+#include "text.h"
 
 #include "console-msw-impl.h"
 #include "glyphs-msw.h"
@@ -79,7 +80,8 @@ typedef struct textual_run
    worst case, which is LEN runs. */
 
 static Elemcount
-separate_textual_runs (WCHAR *text_storage, struct textual_run *run_storage,
+separate_textual_runs (struct buffer *buf, WCHAR *text_storage,
+                       struct textual_run *run_storage,
                        const Ibyte *str, Bytecount len)
 {
   Lisp_Object prev_charset = Qunbound;
@@ -92,7 +94,9 @@ separate_textual_runs (WCHAR *text_storage, struct textual_run *run_storage,
   while (str < end)
     {
       Ichar ch = itext_ichar (str);
-      Lisp_Object charset = ichar_charset (ch);
+      Lisp_Object charset
+        /* @@#### fix me */
+        = buffer_ichar_charset_obsolete_me_baby (buf, ch);
 
       if (!EQ (charset, prev_charset))
 	{
@@ -108,7 +112,9 @@ separate_textual_runs (WCHAR *text_storage, struct textual_run *run_storage,
 	  runs_so_far++;
 	}
 
-      if (valid_utf_16_first_surrogate (*text_storage))
+      /* This check will work whatever the endianness, since the dereference
+         of the WCHAR pointer gives an integer of the host byte order. */
+      if (valid_unicode_leading_surrogate (*text_storage))
         {
           text_storage++;
         }
@@ -331,7 +337,9 @@ mswindows_output_cursor (struct window *w, struct display_line *dl, int xpos,
       struct face_cachel *font_cachel = WINDOW_FACE_CACHEL (w, findex);
       Ibyte chbuf[MAX_ICHAR_LEN];
 
-      font = FACE_CACHEL_FONT (font_cachel, ichar_charset (ch));
+      font = FACE_CACHEL_FONT (font_cachel,
+                               buffer_ichar_charset_obsolete_me_baby
+                               (WINDOW_XBUFFER (w), ch));
       mswindows_set_dc_font (hdc, font,
 			     font_cachel->underline, font_cachel->strikethru);
 
@@ -520,7 +528,9 @@ mswindows_output_string (struct window *w, struct display_line *dl,
      value possible is the number of Ichars at BUF). */
   runs = alloca_array (textual_run, text_storage_len >> 1);
 
-  nruns = separate_textual_runs ((WCHAR *) text_storage, runs, buf, len);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (w),
+                                 (WCHAR *) text_storage,
+                                 runs, buf, len);
 
   for (i = 0; i < nruns; i++)
     {
@@ -1246,7 +1256,8 @@ mswindows_text_width (struct frame *f, struct face_cachel *cachel,
 
   runs = alloca_array (textual_run, text_storage_len >> 1);
 
-  nruns = separate_textual_runs ((WCHAR *) text_storage, runs, str, len);
+  nruns = separate_textual_runs (WINDOW_XBUFFER (FRAME_SELECTED_XWINDOW (f)),
+                                 (WCHAR *) text_storage, runs, str, len);
 
   for (i = 0; i < nruns; i++)
     width_so_far += mswindows_text_width_single_run (hdc, cachel, runs + i);

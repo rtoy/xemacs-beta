@@ -657,7 +657,7 @@ shift_jis_decode (struct coding_stream *str, const UExtbyte *src,
 	      (Vcharset_katakana_jisx0201, 0, c, dst,
 	       CONVERR_USE_PRIVATE);
 	  else if (byte_ascii_p (c))
-	    DECODE_ADD_BINARY_CHAR (c, dst);
+	    DECODE_ADD_BINARY_CHAR (c, (Ibyte_dynarr *) dst);
 	  else
 	    DECODE_ERROR_OCTET (c, dst);
 	}
@@ -1048,7 +1048,7 @@ big5_decode (struct coding_stream *str, const UExtbyte *src,
 	  if (byte_big5_two_byte_1_p (c))
 	    data->ch = c;
 	  else if (byte_ascii_p (c))
-	    DECODE_ADD_BINARY_CHAR (c, dst);
+	    DECODE_ADD_BINARY_CHAR (c, (Ibyte_dynarr *) dst);
 	  else
 	    DECODE_ERROR_OCTET (c, dst);
 	}
@@ -2531,7 +2531,7 @@ restore_left_to_right_direction (Lisp_Object codesys,
 	  Dynarr_add (dst, '[');
 	}
       else if (internal_p)
-	DECODE_ADD_BINARY_CHAR (ISO_CODE_CSI, dst);
+	DECODE_ADD_BINARY_CHAR (ISO_CODE_CSI, (Ibyte_dynarr *) dst);
       else
 	Dynarr_add (dst, ISO_CODE_CSI);
       Dynarr_add (dst, '0');
@@ -2566,7 +2566,7 @@ ensure_correct_direction (int direction, Lisp_Object codesys,
 	  Dynarr_add (dst, '[');
 	}
       else if (internal_p)
-	DECODE_ADD_BINARY_CHAR (ISO_CODE_CSI, dst);
+	DECODE_ADD_BINARY_CHAR (ISO_CODE_CSI, (Ibyte_dynarr *) dst);
       else
 	Dynarr_add (dst, ISO_CODE_CSI);
       Dynarr_add (dst, '2');
@@ -2635,7 +2635,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 #endif /* ENABLE_COMPOSITE_CHARS */
 
 		case ISO_ESC_LITERAL:
-		  DECODE_ADD_BINARY_CHAR (c, dst);
+		  DECODE_ADD_BINARY_CHAR (c, (Ibyte_dynarr *) dst);
 		  break;
 
 		default:
@@ -2723,7 +2723,7 @@ iso2022_decode (struct coding_stream *str, const UExtbyte *src,
 	  flags &= ISO_STATE_LOCK;
 
 	  if (!parse_iso2022_esc (str->codesys, data, c, &flags, 1))
-	    DECODE_ADD_BINARY_CHAR (c, dst);
+	    DECODE_ADD_BINARY_CHAR (c, (Ibyte_dynarr *) dst);
 	}
       else
 	{			/* Graphic characters */
