@@ -1,7 +1,7 @@
 /* toolbar implementation -- "Generic" (X or GTK) redisplay interface.
    Copyright (C) 1995 Board of Trustees, University of Illinois.
    Copyright (C) 1995 Sun Microsystems, Inc.
-   Copyright (C) 1995, 1996, 2002, 2010 Ben Wing.
+   Copyright (C) 1995, 1996, 2002, 2005, 2010 Ben Wing.
    Copyright (C) 1996 Chuck Thompson.
 
 This file is part of XEmacs.
@@ -276,7 +276,6 @@ xlike_output_toolbar_button (struct frame *f, Lisp_Object button)
 	  struct face_cachel *cachel = WINDOW_FACE_CACHEL (w, button_findex);
 	  struct display_line dl;
 	  Lisp_Object string = IMAGE_INSTANCE_TEXT_STRING (p);
-	  Binbyte charsets[NUM_LEADING_BYTES];
 	  struct font_metric_info fm;
 
 	  /* This could be true if we were called via the Expose event
@@ -289,10 +288,9 @@ xlike_output_toolbar_button (struct frame *f, Lisp_Object button)
 	      return;
 	    }
 
-	  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
-                                         XSTRING_LENGTH (string));
-	  ensure_face_cachel_complete (cachel, window, charsets);
-	  face_cachel_charset_font_metric_info (cachel, charsets, &fm);
+	  face_cachel_char_font_metric_info (cachel, window,
+                                             XSTRING_DATA (string),
+                                             XSTRING_LENGTH (string), &fm);
 
 	  dl.ascent = fm.ascent;
 	  dl.descent = fm.descent;

@@ -2382,11 +2382,10 @@ string_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
    helper that is used elsewhere for calculating text geometry. */
 void
 query_string_geometry (Lisp_Object string, Lisp_Object face,
-		       int* width, int* height, int* descent,
-                       Lisp_Object domain)
+		       int *width, int *height, int *descent,
+		       Lisp_Object domain)
 {
   struct font_metric_info fm;
-  Binbyte charsets[NUM_LEADING_BYTES];
   struct face_cachel cachel;
   struct face_cachel *the_cachel;
   Lisp_Object window = DOMAIN_WINDOW (domain);
@@ -2394,9 +2393,6 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
 
   CHECK_STRING (string);
 
-  /* Compute string metric info */
-  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
-                                 XSTRING_LENGTH (string));
   /* Fallback to the default face if none was provided. */
   if (!NILP (face))
     {
@@ -2416,13 +2412,13 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
                                        DEFAULT_INDEX);
     }
 
-  ensure_face_cachel_complete (the_cachel, domain, charsets);
-
   /* Compute height */
   if (height || descent)
     {
-      face_cachel_charset_font_metric_info (the_cachel, charsets, &fm);
-
+      face_cachel_char_font_metric_info (the_cachel, domain,
+                                         XSTRING_DATA (string),
+                                         XSTRING_LENGTH (string),
+                                         &fm);
       if (height) 
         {
           *height = fm.ascent + fm.descent;
@@ -2441,31 +2437,6 @@ query_string_geometry (Lisp_Object string, Lisp_Object face,
                         (XFRAME (frame), the_cachel, XSTRING_DATA (string),
                          XSTRING_LENGTH (string)));
     }
-}
-
-Lisp_Object
-query_string_font (Lisp_Object string, Lisp_Object face, Lisp_Object domain)
-{
-  Binbyte charsets[NUM_LEADING_BYTES];
-  struct face_cachel cachel;
-  int i;
-  Lisp_Object window = DOMAIN_WINDOW (domain);
-  Lisp_Object frame  = DOMAIN_FRAME  (domain);
-
-  /* Compute string font info */
-  find_charsets_in_ibyte_string (charsets, XSTRING_DATA (string),
-				 XSTRING_LENGTH (string));
-
-  reset_face_cachel (&cachel);
-  update_face_cachel_data (&cachel, NILP (window) ? frame : window, face);
-  ensure_face_cachel_complete (&cachel, domain, charsets);
-
-  for (i = 0; i < NUM_LEADING_BYTES; i++)
-    if (charsets[i])
-      return FACE_CACHEL_FONT
-	((&cachel), charset_by_leading_byte (i + MIN_LEADING_BYTE));
-
-  return Qnil;			/* NOT REACHED */
 }
 
 static void

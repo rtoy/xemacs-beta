@@ -941,7 +941,7 @@ end-bracket
 
 // file IME.H -- doesn't exist under Cygwin
 
-no SendIMEMessageEx obsolete, no docs available
+// no SendIMEMessageEx obsolete, no docs available
 
 file OBJBASE.H
 

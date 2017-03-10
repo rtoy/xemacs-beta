@@ -896,7 +896,7 @@ batch_test_emacs = $(BATCH_PACKAGES) -l test-harness -f batch-test-emacs $(testd
 
 .PHONY: remove-config-dependent-elcs config-changed
 remove-config-dependent-elcs:
-	rm $(LISP)/mule/chinese.elc $(LISP)/mule/general-late.elc
+	$(RM) $(LISP)/mule/chinese.elc
 config-changed: remove-config-dependent-elcs all
 
 
@@ -1064,3 +1064,11 @@ FRC.unicode-encapsulate:
 unicode-encapsulate: FRC.unicode-encapsulate
 	cd $(SRC) && \
 	perl ../lib-src/make-mswin-unicode.pl --c-output intl-auto-encap-win32.c --h-output intl-auto-encap-win32.h intl-encap-win32.c
+
+###################### Case-table generation
+
+.PHONY: make-case-conv
+FRC.make-case-conv:
+make-case-conv: FRC.make-case-conv
+	cd $(SRC) && \
+	python ../lib-src/make-case-conv.py > ../lisp/mule/uni-case-conv.el
