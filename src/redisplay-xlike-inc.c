@@ -323,7 +323,7 @@ separate_textual_runs_mule (struct buffer *buf,
   Lisp_Object prev_charset = Qunbound, ccl_prog;
   int runs_so_far = 0;
   const Ibyte *end = str + len;
-  int dimension = 1, graphic = 0, need_ccl_conversion = 0;
+  int dimension = 1, need_ccl_conversion = 0;
   struct ccl_program char_converter;
 
   int translate_to_ucs_2 = 0;
@@ -376,8 +376,6 @@ separate_textual_runs_mule (struct buffer *buf,
 	     First, classify font.
 	     If the font is indexed by UCS-2, set `translate_to_ucs_2'.
 	     Else if the charset has a CCL program, set `need_ccl_conversion'.
-	     Else if the font is indexed by an ISO 2022 "graphic register",
-	         set `graphic'.
 	     These flags are almost mutually exclusive, but we're sloppy
 	     about resetting "shadowed" flags.  So the flags must be checked
 	     in the proper order in computing byte1 and byte2, below. */
@@ -445,38 +443,23 @@ separate_textual_runs_mule (struct buffer *buf,
                                           make_fixnum (byte2),
 					  &byte1, &byte2, 1);
 	}
-      else if (graphic == 0)
+      else if (EQ (charset, Vcharset_ascii) && byte2 != CANT_DISPLAY_CHAR)
 	{
-	  /* Only do the ASCII optimization if the attributes of the
-	     charset reflect the attributes of the normal ASCII set,
-	     so that the user can override with translate_to_ucs_2 or
-	     a CCL conversion if he or she so wishes. */
-	  if (EQ (charset, Vcharset_ascii))
-	    {
-	      const Ibyte *nonascii;
+	  const Ibyte *nonascii;
 
-	      nonascii = skip_ascii (str, end);
-	      memcpy (text_storage, str, nonascii - str);
-	      text_storage += nonascii - str;
-	      str = nonascii;
-	      continue;
-	    }
-
-	  byte1 &= 0x7F;
-	  byte2 &= 0x7F;
-	}
-      else
-	{
-	  byte1 |= 0x80;
-	  byte2 |= 0x80;
+	  nonascii = skip_ascii (str, end);
+	  memcpy (text_storage, str, nonascii - str);
+	  text_storage += nonascii - str;
+	  str = nonascii;
+	  continue;
 	}
 
-      *text_storage++ = (Extbyte) byte1;
       if (2 == dimension)
 	{
-	  *text_storage++ = (Extbyte) byte2;
+	  *text_storage++ = (Extbyte) byte1;
 	}
 
+      *text_storage++ = (Extbyte) byte2;
       INC_IBYTEPTR (str);
     }
 
