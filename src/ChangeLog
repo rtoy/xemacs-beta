@@ -1,3 +1,10 @@
+2017-03-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	Correct a thinko here introduced in the last change, the new name
+	is valid_unicode_leading_surrogate(). Thank you for the report,
+	Mike Sperber!
+
 2017-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Get the recent redisplay changes building on mswindows with
