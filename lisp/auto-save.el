@@ -421,7 +421,7 @@ See `auto-save-escape-name'."
     (while (string-match #r"=\([0-9a-f][0-9a-f]\)" str)
       (let* ((start (match-beginning 0))
              (code (parse-integer str :start (match-beginning 1)
-                                  :end (match-end 2) :radix 16)))
+                                  :end (match-end 1) :radix 16)))
 	(setq tmp (concat tmp (substring str 0 start)
 			  (list code))
 	      str (substring str (match-end 0)))))
