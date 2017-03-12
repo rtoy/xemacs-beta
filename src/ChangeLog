@@ -2,6 +2,14 @@
 
 	* file-coding.c:
 	* file-coding.c (coding_system_type_create):
+	Sigh, that improved things but didn't resolve them. Revert the
+	revert, and add a dummy integer to the no_conversion_coding_system
+	structure.
+
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c:
+	* file-coding.c (coding_system_type_create):
 	Revert to the pre-merge description of the no-conversion coding
 	system type, the approach I had taken on the unicode-internal side
 	leads to dumping problems with the C++ build.

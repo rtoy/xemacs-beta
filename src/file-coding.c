@@ -3863,7 +3863,23 @@ struct no_conversion_coding_stream
   Charcount characters_seen;
 };
 
-DEFINE_CODING_SYSTEM_TYPE (no_conversion);
+struct no_conversion_coding_system
+{
+  int dummy; /* NEWGC doesn't like an actual zero-length structure here, even
+                if the description suggests it's zero length. */
+};
+
+static const struct memory_description
+  no_conversion_coding_system_description[] = {
+  { XD_END }
+};
+
+static const struct memory_description
+  no_conversion_coding_stream_description[] = {
+  { XD_END }
+};
+
+DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (no_conversion);
 
 /* This is used when reading in "binary" files -- i.e. files that may
    contain all 256 possible byte values and that are not to be
@@ -5813,13 +5829,8 @@ coding_system_type_create (void)
   dump_add_opaque_int (&coding_detector_count);
   dump_add_opaque_int (&coding_detector_category_count);
 
-  INITIALIZE_CODING_SYSTEM_TYPE (no_conversion,
-                                 "no-conversion-coding-system-p");
-  /* This is the only coding system type that has coding_stream info but no
-     coding_system info, which is why we're not using
-     INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA. */
-  no_conversion_coding_system_methods->stream_data_size = 
-    sizeof (struct no_conversion_coding_stream);
+  INITIALIZE_CODING_SYSTEM_TYPE_WITH_DATA (no_conversion,
+                                           "no-conversion-coding-system-p");
 
   CODING_SYSTEM_HAS_METHOD (no_conversion, convert);
   CODING_SYSTEM_HAS_METHOD (no_conversion, character_tell);
