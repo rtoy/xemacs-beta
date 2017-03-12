@@ -1914,7 +1914,7 @@ itext_ichar_eql (const Ibyte *str, Ichar ch)
   if (ichar_ascii_p (ch))
     /* This is fine, since ASCII characters are not part of the subsequent
        octets of non-ASCII characters. */
-    return simple_itext_ichar (str) == ch; 
+    return *str == (Ibyte) ch; 
 #ifdef MULE
   return non_ascii_itext_ichar (str) == ch;
 #endif
