@@ -1,3 +1,9 @@
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.h (itext_ichar_eql):
+	Don't crash when ERROR_CHECK_TEXT is turned on and we're comparing
+	an ASCII CH to a non-ASCII *str.
+
 2017-03-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
