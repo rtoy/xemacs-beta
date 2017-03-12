@@ -1,5 +1,14 @@
 2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* file-coding.c:
+	* file-coding.c (coding_system_type_create):
+	Revert to the pre-merge description of the no-conversion coding
+	system type, the approach I had taken on the unicode-internal side
+	leads to dumping problems with the C++ build.
+	Thank you for the buildbot reports, Matsl!
+
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Make some small changes to placate the buildbot.
 	* charset.h (Vcharset_control_1):
 	Make this available on non-Mule.
