@@ -4,6 +4,7 @@
 	Add a parenthesis which had gone astray while merging.
 	Test #'auto-save-escape-name, #'auto-save-unescape-name,
 	reasonably important functions which previously had no testing.
+	Test the new escaping of ESC with the same two functions.
 
 2017-03-03  Aidan Kehoe  <kehoea@parhasard.net>
 

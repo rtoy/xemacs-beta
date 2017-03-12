@@ -163,12 +163,9 @@ individually by doing `recover-file'."
   :type 'boolean
   :group 'auto-save)
 
-;;; This defvar is in efs.el now, but doesn't hurt to give it here as
-;;; well so that loading first auto-save.el does not abort.
-
-;; #### Now that `auto-save' is dumped, this is looks obnoxious.
-(or (boundp 'efs-auto-save) (defvar efs-auto-save 0))
-(or (boundp 'efs-auto-save-remotely) (defvar efs-auto-save-remotely nil))
+;; This has a defcustom in efs.el, which unfortunately won't be picked up when
+;; `efs-ftp-path' is autoloaded, because that is in efs-cu.el.
+(defvar efs-auto-save-remotely nil)
 
 (defcustom auto-save-offer-delete nil
   "*If non-nil, `recover-all-files' offers to delete autosave files
@@ -200,23 +197,15 @@ created by you, never nil.")
 
 (defun auto-save-checked-directory (dir)
   "Make sure the directory DIR exists and return it expanded if non-nil."
-    (when dir
-      (setq dir (expand-file-name dir))
-      ;; Make sure directory exists
-      (unless (file-directory-p dir)
-	;; Else we create and chmod 0700 the directory
-	(setq dir (directory-file-name dir)) ; some systems need this
-	(make-directory dir)
-	(set-file-modes dir #o700))
-      dir))
-
-;; This make no sense at dump time
-;; (mapc #'auto-save-check-directory
-;     '(auto-save-directory auto-save-directory-fallback))
-
-;(and auto-save-hash-p
-;     (auto-save-check-directory 'auto-save-hash-directory))
-
+  (when dir
+    (setq dir (expand-file-name dir))
+    ;; Make sure directory exists
+    (unless (file-directory-p dir)
+      ;; Else we create and chmod 0700 the directory
+      (setq dir (directory-file-name dir)) ; some systems need this
+      (make-directory dir)
+      (set-file-modes dir #o700))
+    dir))
 
 ;;; Computing an autosave name for a file and vice versa
 
@@ -349,13 +338,14 @@ Hashed files are not understood, see `auto-save-hash-p'."
 	   (concat savedir (substring basename 1 -1))))))
 
 (defun auto-save-name-in-fixed-directory (filename &optional prefix)
-  ;; Escape and enclose the whole FILENAME in `#' to make an auto
-  ;; save file in the auto-save-directory, or if that is nil, in
-  ;; auto-save-directory-fallback (which must be the name of an
-  ;; existing directory).  If the results would be too long for 14
-  ;; character filenames, and `auto-save-hash-p' is set, hash FILENAME
-  ;; into a shorter name.
-  ;; Optional PREFIX is string to use instead of "#" to prefix name.
+  "Escape FILENAME using `#' to make a file in `auto-save-directory'.
+
+If `auto-save-directory' is nil, make a file in `auto-save-directory-fallback'
+(which must be the name of an existing directory).  If the results would be
+too long for 14 character filenames, and `auto-save-hash-p' is set, hash
+FILENAME into a shorter name.
+
+Optional PREFIX is string to use instead of \"#\" to prefix FILENAME."
   (let ((base-name (concat (or prefix "#")
 			   (auto-save-escape-name filename)
 			   "#")))
@@ -363,20 +353,23 @@ Hashed files are not understood, see `auto-save-hash-p'."
 	     auto-save-hash-directory
 	     (> (length base-name) 14))
 	(expand-file-name (auto-save-cyclic-hash-14 filename)
-			  (auto-save-checked-directory auto-save-hash-directory))
+			  (auto-save-checked-directory
+                           auto-save-hash-directory))
       (expand-file-name base-name
 			(auto-save-checked-directory
 			   (or auto-save-directory
 			       auto-save-directory-fallback))))))
 
 (defun auto-save-name-in-same-directory (filename &optional prefix)
-  ;; Enclose the non-directory part of FILENAME in `#' to make an auto
-  ;; save file in the same directory as FILENAME.  But if this
-  ;; directory is not writable, use auto-save-directory-fallback.
-  ;; FILENAME is assumed to be in non-directory form (no trailing slash).
-  ;; It may be a name without a directory part (presumably it really
-  ;; comes from a buffer name then), the fallback is used then.
-  ;; Optional PREFIX is string to use instead of "#" to prefix name.
+  "Escape FILENAME using `#', creating an auto-save name in its directory.
+
+If that directory is not writable, use `auto-save-directory-fallback'.
+
+FILENAME is assumed to be in non-directory form (no trailing slash).  It may
+be a name without a directory part, in which case the current directory is
+used.
+
+Optional PREFIX is string to use instead of \"#\" to prefix FILENAME."
   (let ((directory (file-name-directory filename)))
     (or (null directory)
 	(file-writable-p directory)
@@ -388,75 +381,83 @@ Hashed files are not understood, see `auto-save-hash-p'."
 	    "#")))
 
 (defconst auto-save-reserved-chars
-  '(
-    ?\0 ?\1 ?\2 ?\3 ?\4 ?\5 ?\6 ?\7 ?\10 ?\11 ?\12 ?\13 ?\14 ?\15 ?\16
+  '(?\0 ?\1 ?\2 ?\3 ?\4 ?\5 ?\6 ?\7 ?\10 ?\11 ?\12 ?\13 ?\14 ?\15 ?\16
     ?\17 ?\20 ?\21 ?\22 ?\23 ?\24 ?\25 ?\26 ?\27 ?\30 ?\31 ?\32 ?\33
     ?\34 ?\35 ?\36 ?\37 ?\40 ?? ?* ?: ?< ?> ?| ?/ ?\\ ?& ?^ ?% ?= ?\")
   "List of characters disallowed (or potentially disallowed) in filenames.
-Includes everything that can get us into trouble under MS Windows or Unix.")
 
-;; This code based on code in Bill Perry's url.el.
-    
-(defun auto-save-escape-name (str)
-  "Escape any evil nasty characters in a potential filename.
-Uses quoted-printable-style escaping -- e.g. the dreaded =3D.
-Does not use URL escaping (with %) because filenames beginning with #% are
-a special signal for non-file buffers."
-  (mapconcat
-   (function
-    (lambda (char)
-      (if (memq char auto-save-reserved-chars)
-	  (if (< char 16)
-	      (upcase (format "=0%x" char))
-	    (upcase (format "=%x" char)))
-	(list char))))
-   str ""))
+Includes everything that can get us into trouble under MS Windows or Unix.
+Characters that `file-name-coding-system' cannot handle are dealt with
+separately from this list.")
 
-(defun auto-save-unescape-name (str)
-  "Undo any escaping of evil nasty characters in a file name.
+;; This code based (ultimately) on code in Bill Perry's url.el.
+
+(defun auto-save-escape-name (string)
+  "Escape any reserved characters in a potential filename.
+
+Uses quoted-printable-style escaping -- e.g. =3D.  Does not use URL escaping
+(with %) because filenames beginning with #% are a special signal for non-file
+buffers.
+
+If STRING contains characters that `file-name-coding-system' cannot encode,
+these are also escaped, after having been transformed to `escape-quoted'
+encoding.  Both operations are reversed by `auto-save-unescape-name', which
+see."
+  (let ((start 0) stream)
+    (multiple-value-bind (ignored details)
+        (query-coding-string string 'file-name)
+      (declare (special ignored))
+      (loop for char being each element in string using (index index)
+            if (or (memq char auto-save-reserved-chars)
+                   (and details (get-range-table index details)))
+            do (progn
+                 (write-sequence string (or stream
+                                            (setq stream
+                                                  (make-string-output-stream)))
+                                 :start start :end index)
+                 (if (or (eql char ?\033)
+                         (> char (load-time-value
+                                  (reduce #'max auto-save-reserved-chars))))
+                     (loop for character
+                       ;; We know escape-quoted can encode the file name!
+                       across (encode-coding-char char 'escape-quoted)
+                       do (format-into stream "=%02X" character))
+                   (format-into stream "=%02X" char))
+                 (setf start (1+ index))))
+      (if stream
+          (get-output-stream-string
+           (prog1 stream (write-sequence string stream :start start)))
+        string))))
+
+(defun auto-save-unescape-name (string)
+  "Undo any escaping of reserved characters in STRING.
+
 See `auto-save-escape-name'."
-  (setq str (or str ""))
-  (let ((tmp "")
-	(case-fold-search t))
-    (while (string-match #r"=\([0-9a-f][0-9a-f]\)" str)
-      (let* ((start (match-beginning 0))
-             (code (parse-integer str :start (match-beginning 1)
-                                  :end (match-end 1) :radix 16)))
-	(setq tmp (concat tmp (substring str 0 start)
-			  (list code))
-	      str (substring str (match-end 0)))))
-    (setq tmp (concat tmp str))
-    tmp))
-
-;; The old versions are below.
-
-;(defun auto-save-escape-name (s)
-;  ;;  "Quote any slashes in string S by replacing them with the two
-;  ;;characters `\\!'.
-;  ;;Also, replace any backslash by double backslash, to make it one-to-one."
-;  (let ((limit 0))
-;    (while (string-match "[/\\]" s limit)
-;      (setq s (concat (substring s 0 (match-beginning 0))
-;		      (if (string= (substring s
-;					      (match-beginning 0)
-;					      (match-end 0))
-;				   "/")
-;			  "\\!"
-;			"\\\\")
-;		      (substring s (match-end 0))))
-;      (setq limit (1+ (match-end 0)))))
-;  s)
-
-;(defun auto-save-unescape-name (s)
-;  ;;"Reverse of `auto-save-escape-name'."
-;  (let (pos)
-;    (while (setq pos (string-match "\\\\[\\!]" s pos))
-;      (setq s (concat (substring s 0 pos)
-;		      (if (eq ?! (aref s (1+ pos))) "/" "\\")
-;		      (substring s (+ pos 2)))
-;	    pos (1+ pos))))
-;  s)
-
+  (let ((start 0) (string (or string "")) offset stream fixnum decode)
+    (while (setq offset
+                 (string-match-p #r"=[[:xdigit:]]\{2,2\}" string start))
+      (write-sequence string (or stream
+                                 (setq stream (make-string-output-stream)))
+                      :start start :end offset)
+      (write-char (setq fixnum
+                        (parse-integer string :start (+ offset (length "="))
+                                       :end (+ offset (length "=ab"))
+                                       :radix 16))
+                  stream)
+      (or (and ;; ESC will have been doubled, it always needs decoding.
+           (not (eql fixnum #o033))
+           (memq (int-char fixnum) auto-save-reserved-chars))
+          (setf decode t))
+      (setf start (+ offset (length "=ab"))))
+    (if stream
+        (if decode
+            (decode-coding-string
+             (get-output-stream-string
+              (prog1 stream (write-sequence string stream :start start)))
+             'escape-quoted t)
+          (get-output-stream-string
+           (prog1 stream (write-sequence string stream :start start))))
+      string)))
 
 ;;; Hashing for autosave names
 
@@ -464,11 +465,11 @@ See `auto-save-escape-name'."
 ;;; based upon C code from pot@fly.cnuce.cnr.IT (Francesco Potorti`).
 
 (defun auto-save-cyclic-hash-14 (s)
-  ;;   "Hash string S into a string of length 14.
-  ;; A 7-bytes cyclic code for burst correction is calculated on a
-  ;; byte-by-byte basis. The polynomial used is D^7 + D^6 + D^3 +1.
-  ;; The resulting string consists of hexadecimal digits [0-9a-f].
-  ;; In particular, it contains no slash, so it can be used as autosave name."
+  "Hash string S into a string of length 14.
+A 7-bytes cyclic code for burst correction is calculated on a
+byte-by-byte basis. The polynomial used is D^7 + D^6 + D^3 +1.
+The resulting string consists of hexadecimal digits [0-9a-f].
+In particular, it contains no slash, so it can be used as autosave name."
   (let ((crc (make-vector 7 ?\0)))
     (mapc
      (lambda (new)
@@ -489,38 +490,6 @@ See `auto-save-escape-name'."
 	    (logand 255 (aref crc 4))
 	    (logand 255 (aref crc 5))
 	    (logand 255 (aref crc 6)))))
-
-;; #### It is unclear to me how the following function is useful.  It
-;; should be used in `auto-save-name-in-same-directory', if anywhere.
-;; -hniksic
-
-;; This leaves two characters that could be used to wrap it in `#' or
-;; make two filenames from it: one for autosaving, and another for a
-;; file containing the name of the autosaved file, to make hashing
-;; reversible.
-;(defun auto-save-cyclic-hash-12 (s)
-;  "Outputs the 12-characters ascii hex representation of a 6-bytes
-;cyclic code for burst correction calculated on STRING on a
-;byte-by-byte basis. The used polynomial is D^6 + D^5 + D^4 + D^3 +1."
-;  (let ((crc (make-string 6 0)))
-;    (mapc
-;     (lambda (new)
-;       (setq new (+ new (aref crc 5)))
-;       (aset crc 5 (+ (aref crc 4) new))
-;       (aset crc 4 (+ (aref crc 3) new))
-;       (aset crc 3 (+ (aref crc 2) new))
-;       (aset crc 2 (aref crc 1))
-;       (aset crc 1 (aref crc 0))
-;       (aset crc 0 new))
-;     s)
-;    (format "%02x%02x%02x%02x%02x%02x"
-;            (aref crc 0)
-;            (aref crc 1)
-;            (aref crc 2)
-;            (aref crc 3)
-;            (aref crc 4)
-;            (aref crc 5))))
-
 
 
 ;;; Recovering files
