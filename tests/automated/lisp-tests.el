@@ -4240,11 +4240,22 @@ run-hook-with-args-until-success")
                                       ,(format "hello=20=%02Xab" char))
                                ,(format "hello %cab" char))))))))
   (create-individual-char-tests
-   ;; This is the value of auto-save-reserved-chars. Don't reference the
-   ;; variable from the test code, we want the set to be stable.
+   ;; This is (almost) the value of auto-save-reserved-chars. Don't reference
+   ;; the variable from the test code, we want the set to be stable.
    ?\0 ?\1 ?\2 ?\3 ?\4 ?\5 ?\6 ?\7 ?\10 ?\11 ?\12 ?\13 ?\14 ?\15 ?\16
-   ?\17 ?\20 ?\21 ?\22 ?\23 ?\24 ?\25 ?\26 ?\27 ?\30 ?\31 ?\32 ?\33
+   ?\17 ?\20 ?\21 ?\22 ?\23 ?\24 ?\25 ?\26 ?\27 ?\30 ?\31 ?\32 ; ?\33
    ?\34 ?\35 ?\36 ?\37 ?\40 ?? ?* ?: ?< ?> ?| ?/ ?\\ ?& ?^ ?% ?= ?\"))
+
+;; Test ?\33 separately, since it is doubled because of the escape-quoting.
+
+(Assert (equal (auto-save-escape-name "hello  there")
+               "hello=20=1B=1B=20there"))
+(Assert (equal (auto-save-unescape-name "hello=20=1B=1B=20there")
+               "hello  there"))
+(Assert (equal (auto-save-escape-name "hello ") "hello=20=1B=1B"))
+(Assert (equal (auto-save-unescape-name "hello=20=1B=1B") "hello "))
+(Assert (equal (auto-save-escape-name "hello ab") "hello=20=1B=1Bab"))
+(Assert (equal (auto-save-unescape-name "hello=20=1B=1Bab") "hello ab"))
 
 (when (featurep 'mule)
   (let ((file-name-alias (coding-system-aliasee 'file-name))

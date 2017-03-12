@@ -1,5 +1,33 @@
 2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Clean up auto-save.el, extend the functionality of
+	#'auto-save-{un,}escape-name.
+
+	* auto-save.el:
+	* auto-save.el (efs-auto-save-remotely):
+	Always provide a defvar for this, since this file is dumped efs.el
+	will not be loaded before auto-save.el.
+	* auto-save.el (auto-save-checked-directory):
+	Fix some indentation; remove some long-commented code, avoiding
+	distraction.
+	* auto-save.el (auto-save-name-in-fixed-directory):
+	We have DOC now, it's not expensive of RAM to have function
+	docstrings, uncomment this one.
+	* auto-save.el (auto-save-name-in-same-directory):
+	Ditto.
+	* auto-save.el (auto-save-reserved-chars):
+	Expand the docstring of this a little.
+	* auto-save.el (auto-save-escape-name):
+	Preserve those characters which wouldn't be preserved by
+	file-name-coding-system in this function.
+	* auto-save.el (auto-save-unescape-name):
+	Do the inverse of the newly-added functionality of
+	#'auto-save-escape-name.
+	* auto-save.el (auto-save-cyclic-hash-14):
+	Uncomment the docstring for this function.
+
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* auto-save.el (auto-save-unescape-name):
 	Fix a bug in this, limit the hex parsing correctly.
 
