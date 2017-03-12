@@ -1839,12 +1839,12 @@ Otherwise, [0-9A-F]."
   "Transcribe file content into Ethiopic dependig on filename suffix."
   (cond
 
-   ((string-match "\\.sera$" (buffer-file-name))
+   ((string-match-p "\\.sera$" (buffer-file-name))
     (save-excursion
       (ethio-sera-to-fidel-buffer nil 'force)
       (set-buffer-modified-p nil)))
 
-   ((string-match "\\.html$" (buffer-file-name))
+   ((string-match-p "\\.html$" (buffer-file-name))
     (let ((sera-being-called-by-w3 t))
       (save-excursion
 	(ethio-sera-to-fidel-marker 'force)
@@ -1855,12 +1855,12 @@ Otherwise, [0-9A-F]."
 	    (replace-match "$(3%w(B")))
 	(set-buffer-modified-p nil))))
 
-   ((string-match "\\.tex$" (buffer-file-name))
+   ((string-match-p "\\.tex$" (buffer-file-name))
     (save-excursion
       (ethio-tex-to-fidel-buffer)
       (set-buffer-modified-p nil)))
 
-   ((string-match "\\.java$" (buffer-file-name))
+   ((string-match-p "\\.java$" (buffer-file-name))
     (save-excursion
       (ethio-java-to-fidel-buffer)
       (set-buffer-modified-p nil)))
@@ -1873,14 +1873,14 @@ Otherwise, [0-9A-F]."
   "Transcribe Ethiopic characters in ASCII depending on the file extension."
   (cond
 
-   ((string-match "\\.sera$" (buffer-file-name))
+   ((string-match-p "\\.sera$" (buffer-file-name))
     (save-excursion
       (ethio-fidel-to-sera-buffer nil 'force)
       (goto-char (point-min))
       (ethio-record-user-preference)
       (set-buffer-modified-p nil)))
 
-   ((string-match "\\.html$" (buffer-file-name))
+   ((string-match-p "\\.html$" (buffer-file-name))
     (save-excursion
       (let ((sera-being-called-by-w3 t)
 	    (lq (aref ethio-fidel-to-sera-map 461))
@@ -1895,12 +1895,12 @@ Otherwise, [0-9A-F]."
 	(aset ethio-fidel-to-sera-map 462 rq)
 	(set-buffer-modified-p nil))))
 
-   ((string-match "\\.tex$" (buffer-file-name))
+   ((string-match-p "\\.tex$" (buffer-file-name))
     (save-excursion
       (ethio-fidel-to-tex-buffer)
       (set-buffer-modified-p nil)))
 
-   ((string-match "\\.java$" (buffer-file-name))
+   ((string-match-p "\\.java$" (buffer-file-name))
     (save-excursion
       (ethio-fidel-to-java-buffer)
       (set-buffer-modified-p nil)))

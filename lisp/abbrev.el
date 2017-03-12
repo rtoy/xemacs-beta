@@ -112,7 +112,7 @@ To undefine an abbrev, define it with an expansion of `nil'."
 		 (string-equal oexp expansion))
       (setq abbrevs-changed t)
       ;; If there is a non-word character in the string, set the flag.
-      (if (string-match "\\W" name)
+      (if (string-match-p "\\W" name)
           (puthash " " nil table)))
     (set sym expansion)
     (fset sym hook)

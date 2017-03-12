@@ -1,5 +1,125 @@
 2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Replace calls to #'string-match, where the match data isn't used,
+	with calls to #'string-match-p. This will lead to fewer
+	undesired interactions (= bugs) with other code.
+
+	* abbrev.el (define-abbrev):
+	* auto-save.el (auto-save-file-name-p):
+	* auto-save.el (auto-save-original-name):
+	* buff-menu.el (list-buffers-internal):
+	* byte-optimize.el (byte-compile-log-lap-1):
+	* bytecomp-runtime.el (error-unless-tests-match):
+	* bytecomp-runtime.el (byte-compile-file-being-compiled):
+	* bytecomp.el (byte-recompile-directory):
+	* bytecomp.el (byte-recompile-file):
+	* bytecomp.el (batch-byte-compile-one-file):
+	* cl-extra.el (names):
+	* cmdloop.el:
+	* cmdloop.el (keyboard-escape-quit):
+	* code-files.el (find-file-coding-system-for-read-from-filename):
+	* code-files.el (find-file-coding-system-for-write-from-filename):
+	* code-process.el (call-process):
+	* code-process.el (start-process):
+	* code-process.el (network-stream-open-starttls):
+	* code-process.el (open-network-stream):
+	* cus-edit.el (custom-guess-type):
+	* cus-edit.el (customize-apropos):
+	* custom.el (custom-group-of-mode):
+	* custom.el (custom-load-symbol):
+	* derived.el (derived-mode-make-docstring):
+	* descr-text.el (describe-text-sexp):
+	* etags.el (get-tag-table-buffer):
+	* etags.el (add-to-tag-completion-table):
+	* faces.el (face-complain-about-font):
+	* files.el:
+	* files.el (file-chase-links):
+	* files.el (find-file-noselect):
+	* files.el (set-auto-mode):
+	* files.el (hack-local-variables):
+	* files.el (hack-one-local-variable):
+	* files.el (file-name-sans-versions):
+	* files.el (make-backup-file-name-1):
+	* files.el (backup-file-name-p):
+	* files.el (backup-extract-version):
+	* files.el (file-relative-name):
+	* files.el (rename-uniquely):
+	* files.el (wildcard-to-regexp):
+	* files.el (shell-quote-wildcard-pattern):
+	* files.el (insert-directory):
+	* files.el (file-name-non-special):
+	* files.el (file-system-ignore-case-p):
+	* fill.el:
+	* fill.el (fill-context-prefix):
+	* finder.el (finder-edit):
+	* finder.el (finder-view):
+
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+
+	* abbrev.el (define-abbrev):
+	* auto-save.el (auto-save-file-name-p):
+	* auto-save.el (auto-save-original-name):
+	* buff-menu.el (list-buffers-internal):
+	* byte-optimize.el (byte-compile-log-lap-1):
+	* bytecomp-runtime.el (error-unless-tests-match):
+	* bytecomp-runtime.el (byte-compile-file-being-compiled):
+	* bytecomp.el (byte-recompile-directory):
+	* bytecomp.el (byte-recompile-file):
+	* bytecomp.el (batch-byte-compile-one-file):
+	* cl-extra.el (names):
+	* cmdloop.el:
+	* cmdloop.el (keyboard-escape-quit):
+	* code-files.el (find-file-coding-system-for-read-from-filename):
+	* code-files.el (find-file-coding-system-for-write-from-filename):
+	* code-process.el (call-process):
+	* code-process.el (start-process):
+	* code-process.el (network-stream-open-starttls):
+	* code-process.el (open-network-stream):
+	* cus-edit.el (custom-guess-type):
+	* cus-edit.el (customize-apropos):
+	* custom.el (custom-group-of-mode):
+	* custom.el (custom-load-symbol):
+	* derived.el (derived-mode-make-docstring):
+	* descr-text.el (describe-text-sexp):
+	* etags.el (get-tag-table-buffer):
+	* etags.el (add-to-tag-completion-table):
+	* faces.el (face-complain-about-font):
+	* files.el:
+	* files.el (file-chase-links):
+	* files.el (find-file-noselect):
+	* files.el (set-auto-mode):
+	* files.el (hack-local-variables):
+	* files.el (hack-one-local-variable):
+	* files.el (file-name-sans-versions):
+	* files.el (make-backup-file-name-1):
+	* files.el (backup-file-name-p):
+	* files.el (backup-extract-version):
+	* files.el (file-relative-name):
+	* files.el (rename-uniquely):
+	* files.el (wildcard-to-regexp):
+	* files.el (shell-quote-wildcard-pattern):
+	* files.el (insert-directory):
+	* files.el (file-name-non-special):
+	* files.el (file-system-ignore-case-p):
+	* fill.el:
+	* fill.el (fill-context-prefix):
+	* finder.el (finder-edit):
+	* finder.el (finder-view):
+	* mule/chinese.el ("Chinese-GB"):
+	* mule/chinese.el ("Chinese-BIG5"):
+	* mule/ethio-util.el (ethio-find-file):
+	* mule/ethio-util.el (ethio-write-file):
+	* mule/general-late.el (posix-charset-to-coding-system-hash):
+	* mule/mule-charset.el (charset-tag-full-p):
+	* mule/mule-charset.el (charset-tag-name):
+	* mule/mule-cmds.el (parse-posix-locale-string):
+	* mule/mule-cmds.el (get-language-environment-from-locale):
+	* mule/tibet-util.el:
+	* mule/tibet-util.el (tibetan-add-components):
+
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Clean up auto-save.el, extend the functionality of
 	#'auto-save-{un,}escape-name.
 

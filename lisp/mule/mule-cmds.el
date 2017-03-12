@@ -1055,7 +1055,7 @@ function returns nil. "
 	     ;; Feedback wanted!
 	     (setq charset "windows-1251"))
 	   (values language region charset modifiers))
-	  ((and (string-match "^[a-z0-9]+$" locale-string)
+	  ((and (string-match-p "^[a-z0-9]+$" locale-string)
 		(assoc-ignore-case locale-string language-info-alist))
 	   (setq language (get-language-info locale-string 'locale)
 		 language (if (listp language) (car language) language))
@@ -1131,7 +1131,7 @@ Uses the `locale' property of the language environment."
 		       (return-from langenv lang)))
 		  ((stringp loc)
 		   (when (or (equal loc language)
-			     (string-match
+			     (string-match-p
 			      (format "^%s\\([^A-Za-z0-9]\\|$\\)" loc)
 			      locale))
 		     (if (or (null desired-coding-system)

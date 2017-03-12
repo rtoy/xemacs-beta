@@ -120,7 +120,7 @@ The returned string has no composition information."
 ;;;
 ;;; Here are examples of the words "bsgrubs" and "hfauM"
 ;;;
-;;;            4$(7"70"714%qx!"U0"G###C"U14"70"714"G0"G1(B            4$(7"Hx!"Rx!"Ur'"_0"H"R"U"_1(B
+;;;            4$(7"70"714%qx!"U0"G###C"U14"70"714"G0"G1(B            4$(7"Hx!"Rx!"Ur'"_0"H"R"U"_1(B
 ;;;
 ;;;                             M
 ;;;             b s b s         h
@@ -147,7 +147,7 @@ The returned string has no composition information."
     ;; If 'a follows a consonant, turn it into the subjoined form.
     ;; * Disabled by Tomabechi 2000/06/09 *
     ;; Because in Unicode, $(7"A(B may follow directly a consonant without
-    ;; any intervening vowel, as in 4$(7"90"914""0"""Q14"A0"A1!;(B=4$(7"90"91(B 4$(7""0""1(B 4$(7"A0"A1(B not 4$(7"90"91(B 4$(7""0""1(B $(7"Q(B 4$(7"A0"A1(B  
+    ;; any intervening vowel, as in 4$(7"90"914""0"""Q14"A0"A1!;(B=4$(7"90"91(B 4$(7""0""1(B 4$(7"A0"A1(B not 4$(7"90"91(B 4$(7""0""1(B $(7"Q(B 4$(7"A0"A1(B  
     ;;(if (and (= char ?$(7"A(B)
     ;;	     (char-in-category-p (car last) ?0))
     ;;	(setq char ?$(7"R(B)) ;; modified for new font by Tomabechi 1999/12/10
@@ -183,7 +183,7 @@ The returned string has no composition information."
      (t
       (let ((laststr (char-to-string (car last))))
 	(if (and (/= char ?$(7"R(B) ;; modified for new font by Tomabechi
-		 (string-match "[$(7"!(B-$(7"="?"@"D(B-$(7"J"K(B]" laststr))
+		 (string-match-p "[$(7"!(B-$(7"="?"@"D(B-$(7"J"K(B]" laststr))
 	    (setcar last (string-to-char
 			  (cdr (assoc (char-to-string (car last))
 				      tibetan-base-to-subjoined-alist)))))

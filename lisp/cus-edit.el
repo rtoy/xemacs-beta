@@ -447,7 +447,7 @@ if that fails, the doc string with `custom-guess-doc-alist'."
     (while names
       (setq current (car names)
 	    names (cdr names))
-      (when (string-match (nth 0 current) name)
+      (when (string-match-p (nth 0 current) name)
 	(setq found (nth 1 current)
 	      names nil)))
     (unless found
@@ -457,7 +457,7 @@ if that fails, the doc string with `custom-guess-doc-alist'."
 	  (while docs
 	    (setq current (car docs)
 		  docs (cdr docs))
-	    (when (string-match (nth 0 current) doc)
+	    (when (string-match-p (nth 0 current) doc)
 	      (setq found (nth 1 current)
 		    docs nil))))))
     found))
@@ -985,7 +985,7 @@ user-settable, as well as faces and groups."
   (interactive "sCustomize regexp: \nP")
   (let ((found nil))
     (mapatoms (lambda (symbol)
-		(when (string-match regexp (symbol-name symbol))
+		(when (string-match-p regexp (symbol-name symbol))
 		  (when (and (not (memq all '(faces options)))
 			     (get symbol 'custom-group))
 		    (push (list symbol 'custom-group) found))

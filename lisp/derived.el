@@ -287,7 +287,7 @@ abbrev table and syntax table:
 which more-or-less shadow %s's corresponding tables."
 		      parent map abbrev syntax parent))))
 
-    (unless (string-match (regexp-quote (symbol-name hook)) docstring)
+    (unless (string-match-p (regexp-quote (symbol-name hook)) docstring)
       ;; Make sure the docstring mentions the mode's hook.
       (setq docstring
 	    (concat docstring
@@ -295,14 +295,14 @@ which more-or-less shadow %s's corresponding tables."
 			"\n\nThis mode "
 		      (concat
 		       "\n\nIn addition to any hooks its parent mode "
-		       (if (string-match (regexp-quote (format "`%s'" parent))
+		       (if (string-match-p (regexp-quote (format "`%s'" parent))
 					 docstring) nil
 			 (format "`%s' " parent))
 		       "might have run,\nthis mode "))
 		    (format "runs the hook `%s'" hook)
 		    ", as the final step\nduring initialization.")))
 
-    (unless (string-match "\\\\[{[]" docstring)
+    (unless (string-match-p "\\\\[{[]" docstring)
       ;; And don't forget to put the mode's keymap.
       (setq docstring (concat docstring "\n\n\\{" (symbol-name map) "}")))
 

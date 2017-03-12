@@ -102,7 +102,7 @@ or go back to just one window (by deleting all but the selected window)."
 	 (funcall buffer-quit-function))
 	((not (one-window-p t))
 	 (delete-other-windows))
-	((string-match "^ \\*" (buffer-name (current-buffer)))
+	((string-match-p "^ \\*" (buffer-name (current-buffer)))
 	 (bury-buffer))))
 
 ;; `cancel-mode-internal' is a function of a misc-user event, which is

@@ -732,7 +732,7 @@ unlike `file-truename'."
 	;; target of any directory symlink.
 	;; This code is not quite complete; it does not handle
 	;; embedded .. in some cases such as ./../foo and foo/bar/../../../lose.
-	(while (string-match "\\`\\.\\./" tem) ;#### Unix specific
+	(while (string-match-p "\\`\\.\\./" tem) ;#### Unix specific
 	  (setq tem (substring tem 3))
 	  (setq newname (file-name-as-directory
 			 ;; Do the .. by hand.
@@ -1262,8 +1262,8 @@ If RAWFILE is non-nil, the file is read literally."
 	  (error "%s is a directory" filename))
     (if (and wildcards
 	     find-file-wildcards
-	     (not (string-match "\\`/:" filename))
-	     (string-match "[[*?]" filename))
+	     (not (string-match-p "\\`/:" filename))
+	     (string-match-p "[[*?]" filename))
 	(let ((files (condition-case nil
 			 (file-expand-wildcards filename t)
 		       (error (list filename))))
@@ -1311,7 +1311,7 @@ If RAWFILE is non-nil, the file is read literally."
 			;; if they have changed on disk and not in the buffer.
 			((and (not (buffer-modified-p buf))
 			      (dolist (rx revert-without-query nil)
-				(when (string-match rx filename)
+				(when (string-match-p rx filename)
 				  (return t))))
 			 (with-current-buffer buf
 			   (message "Reverting file %s..." filename)
@@ -1792,7 +1792,7 @@ and we don't even do that unless it would come from the file name."
 			      (goto-char (point-min)) (end-of-line) (point)))))
 		      (setq alist interpreter-mode-alist)
 		      (while alist
-			(if (string-match (car (car alist)) firstline)
+			(if (string-match-p (car (car alist)) firstline)
 			    (progn
 			      (setq mode (cdr (car alist)))
 			      (setq alist nil))
@@ -1839,7 +1839,7 @@ for current buffer."
 			  sufs)
 		   (setq name (substring name 0 (match-beginning 0))))
 		 (while (and temp
-			     (not (string-match (car temp) name)))
+			     (not (string-match-p (car temp) name)))
 		   (setq temp (cdr temp))
 		   temp))))
       (progn
@@ -2099,7 +2099,7 @@ A few variable names are treated specially."
 	;; Likewise for setting hook variables.
 	((or (get var 'risky-local-variable)
 	     (and
-	      (string-match "-hooks?$\\|-functions?$\\|-forms?$\\|-program$\\|-command$\\|-predicate$"
+	      (string-match-p "-hooks?$\\|-functions?$\\|-forms?$\\|-program$\\|-command$\\|-predicate$"
 			    (symbol-name var))
 	      (not (get var 'safe-local-variable))))
 	 ;; Permit evalling a put of a harmless property.
@@ -2431,14 +2431,15 @@ we do not remove backup version numbers, only true file version numbers."
       (substring name 0
 		 (if keep-backup-version
 		     (length name)
-		   (or (string-match "\\.~[0-9.]+~\\'" name)
+		   (or (string-match-p "\\.~[0-9.]+~\\'" name)
 		       ;; XEmacs - VC uses extensions like ".~tagname~" or ".~1.1.5.2~"
-		       (let ((pos (string-match "\\.~\\([^.~ \t]+\\|[0-9.]+\\)~\\'" name)))
+		       (let ((pos (string-match-p
+				   "\\.~\\([^.~ \t]+\\|[0-9.]+\\)~\\'" name)))
 			 (and pos
 			      ;; #### - is this filesystem check too paranoid?
 			      (file-exists-p (substring name 0 pos))
 			      pos))
-		       (string-match "~\\'" name)
+		       (string-match-p "~\\'" name)
 		       (length name)))))))
 
 (defun file-ownership-preserved-p (file)
@@ -2545,7 +2546,7 @@ doesn't exist, it is created."
 	elt backup-directory)
     (while alist
       (setq elt (pop alist))
-      (if (string-match (car elt) file)
+      (if (string-match-p (car elt) file)
 	  (setq backup-directory (cdr elt)
 		alist nil)))
     (if (null backup-directory)
@@ -2590,7 +2591,7 @@ doesn't exist, it is created."
   "Return non-nil if FILE is a backup file name (numeric or not).
 This is a separate function so you can redefine it for customization.
 You may need to redefine `file-name-sans-versions' as well."
-  (string-match "~\\'" file))
+  (string-match-p "~\\'" file))
 
 (defvar backup-extract-version-start)
 
@@ -2601,11 +2602,12 @@ You may need to redefine `file-name-sans-versions' as well."
   "Given the name of a numeric backup file, FN, return the backup number.
 Uses the free variable `backup-extract-version-start', whose value should be
 the index in the name where the version number begins."
-  (if (and (string-match "[0-9]+~$" fn backup-extract-version-start)
-	   (eql (match-beginning 0) backup-extract-version-start))
+  (if (and backup-extract-version-start
+	   (eql (string-match-p "[0-9]+~$" fn backup-extract-version-start)
+		backup-extract-version-start))
       (parse-integer fn :start backup-extract-version-start
                      :end (- (length fn) 1))
-      0))
+    0))
 
 ;; [[ FSF 21.2 says:
 ;; I believe there is no need to alter this behavior for VMS;
@@ -2685,9 +2687,10 @@ and directory use different drive names) then it returns FILENAME."
 	  filename
 	(let ((ancestor ".")
 	      (fname-dir (file-name-as-directory fname)))
-	  (while (and (not (string-match (concat "^" (regexp-quote directory))
-					 fname-dir))
-		      (not (string-match (concat "^" (regexp-quote directory)) fname)))
+	  (while (and (not (string-match-p (concat "^" (regexp-quote directory))
+					   fname-dir))
+		      (not (string-match-p (concat "^" (regexp-quote directory))
+					   fname)))
 	    (setq directory (file-name-directory (substring directory 0 -1))
 		  ancestor (if (equal ancestor ".")
 			       ".."
@@ -3322,7 +3325,7 @@ or multiple mail buffers, etc."
   (interactive)
   (save-match-data
     (let ((base-name (buffer-name)))
-      (and (string-match "<[0-9]+>\\'" base-name)
+      (and (string-match-p "<[0-9]+>\\'" base-name)
 	   (not (and buffer-file-name
 		     (string= base-name
 			      (file-name-nondirectory buffer-file-name))))
@@ -3930,7 +3933,7 @@ Also rename any existing auto save file, if it was made in this session."
 The generated regexp will match a filename iff the filename
 matches that wildcard according to shell rules.  Only wildcards known
 by `sh' are supported."
-  (let* ((i (string-match "[[.*+\\^$?]" wildcard))
+  (let* ((i (string-match-p "[[.*+\\^$?]" wildcard))
 	 ;; Copy the initial run of non-special characters.
 	 (result (substring wildcard 0 i))
 	 (len (length wildcard)))
@@ -3980,7 +3983,7 @@ by `sh' are supported."
 			  (prog1	; copy everything upto next `]'.
 			      (substring wildcard
 					 i
-					 (setq j (string-match
+					 (setq j (string-match-p
 						  "]" wildcard i)))
 			    (setq i (if j (1- j) (1- len)))))))
 		      ((eq ch ?.)  "\\.")
@@ -4090,13 +4093,14 @@ PATTERN that already quotes some of the special characters."
       ;; DOS/Windows don't allow `"' in file names.  So if the
       ;; argument has quotes, we can safely assume it is already
       ;; quoted by the caller.
-      (if (or (string-match "[\"]" pattern)
+      (if (or (string-match-p "[\"]" pattern)
 	      ;; We quote [&()#$'] in case their shell is a port of a
 	      ;; Unixy shell.  We quote [,=+] because stock DOS and
 	      ;; Windows shells require that in some cases, such as
 	      ;; passing arguments to batch files that use positional
 	      ;; arguments like %1.
-	      (not (string-match "[ \t;&()#$',=+]" pattern)))
+	      (not (string-match-p "[ \t;&()#$',=+]" pattern)))
+
 	  pattern
 	(let ((result "\"")
 	      (beg 0)
@@ -4225,7 +4229,7 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 	  ;; directory listing, even if `ls' returned nonzero.
 	  ;; So ignore any errors.
 	  (when (if (stringp switches)
-		    (string-match "--dired\\>" switches)
+		    (string-match-p "--dired\\>" switches)
 		  (member "--dired" switches))
 	    (save-excursion
 	      (forward-line -2)
@@ -4290,7 +4294,7 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 
 	(when (or (and (listp switches)
 		       (member "--dired" switches))
-		  (string-match "--dired\\>" switches))
+		  (string-match-p "--dired\\>" switches))
 	  (forward-line -2)
 	  (when (looking-at "//SUBDIRED//")
 	    (delete-region (point) (progn (forward-line 1) (point)))
@@ -4510,7 +4514,7 @@ to that remote system.
       (while (consp file-arg-indices)
 	(let ((pair (nthcdr (car file-arg-indices) arguments)))
 	  (and (car pair)
-	       (string-match "\\`/:" (car pair))
+	       (string-match-p "\\`/:" (car pair))
 	       (setcar pair
 		       (if (eql (length (car pair)) 2)
 			   "/"
@@ -4544,7 +4548,7 @@ Otherwise, return nil.  See `file-system-case-alist' and
       (loop
         for (pattern . val)
         in file-system-case-alist
-        do (and (string-match pattern path) (return val))
+        do (and (string-match-p pattern path) (return val))
         finally (return default-file-system-ignore-case))
     default-file-system-ignore-case))
 

@@ -60,9 +60,9 @@
                 ;; instead.
 		(with-output-to-string (cl-prettyprint sexp))
 	      (error (prin1-to-string signal)))))
-    (when (string-match "\n\\'" pp)
-      (setq pp (substring pp 0 (1- (length pp)))))
-    (if (cond ((string-match "\n" pp)
+    (when (string-match-p "\n\\'" pp)
+      (setq pp (subseq pp 0 -1)))
+    (if (cond ((find ?\n pp)
 	       nil)
 	      ((> (length pp) (- (window-width) (current-column)))
 	       nil)

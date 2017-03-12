@@ -256,7 +256,7 @@ G2: Sisheng (PinYin - ZhuYin)"
 		(native-coding-system cn-gb-2312)
 		(input-method . "chinese-py-punct")
 		(features china-util)
-		(sample-text . "Chinese (中文,普通话,汉语)	你好")
+		(sample-text . "Chinese (中文,普通话,汉语)	你好")
 		(documentation .
 "Supports Simplified Chinese, used in mainland China.
 Uses the GB2312 character set."))
@@ -268,7 +268,7 @@ Uses the GB2312 character set."))
                    (list "zh_CN.eucCN" "zh_CN.EUC" "zh_CN" "chinese-s" "zh"
 			 (lambda (arg)
                            (and arg (let ((case-fold-search t))
-                                      (string-match "^zh_.*\\.GB.*" arg))))))
+                                      (string-match-p "^zh_.*\\.GB.*" arg))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Chinese BIG5 (traditional)
@@ -334,7 +334,8 @@ of a Chinese character\"."))
 			  "chinese-t"
 			  #'(lambda (arg)
 			      (and arg (let ((case-fold-search t))
-					 (string-match "^zh_.*.BIG5.*" arg)))))
+					 (string-match-p "^zh_.*.BIG5.*"
+                                                         arg)))))
 		  (cygwin-locale "zh_TW")
 		  (mswindows-locale ("CHINESE" . "CHINESE_TRADITIONAL"))
 		  (native-coding-system big5)

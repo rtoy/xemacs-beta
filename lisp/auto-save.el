@@ -311,7 +311,7 @@ See also function `auto-save-file-name-p'."
   "Return non-nil if FILENAME can be yielded by `make-auto-save-file-name'.
 FILENAME should lack slashes.
 You can redefine this for customization."
-  (string-match "\\`#.*#\\'" filename))
+  (string-match-p "\\`#.*#\\'" filename))
 
 (defun auto-save-original-name (savename)
   "Reverse of `make-auto-save-file-name'.
@@ -322,7 +322,7 @@ Hashed files are not understood, see `auto-save-hash-p'."
   (let ((basename (file-name-nondirectory savename))
 	(savedir (file-name-directory savename)))
     (cond ((or (not (auto-save-file-name-p basename))
-	       (string-match "^#%" basename))
+	       (string-match-p "^#%" basename))
 	   nil)
 	  ;; now we know it looks like #...# thus substring is safe to use
 	  ((or (equal savedir

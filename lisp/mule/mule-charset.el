@@ -365,9 +365,9 @@ no such translation table instead of returning nil."
 	((and (listp obj) (every #'charset-or-charset-tag-p obj)) t)
 	(t nil)))
 
-(defsubst charset-tag-full-p (tag)
+(defsubst* charset-tag-full-p (tag)
   "Return true if charset tag TAG is in full form."
-  (not (null (string-match "/" (symbol-name tag)))))
+  (and (find ?/ (symbol-name tag)) t))
 
 (defun charset-tag-name (tag)
   "Return the NAME portion of TAG."
