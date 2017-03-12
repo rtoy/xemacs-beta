@@ -97,6 +97,8 @@ extern Lisp_Object Vcharset_hash_table;
    be done */
 
 #define Vcharset_ascii Qnil
+#define Vcharset_control_1 Qunbound /* A character's charset will never be
+                                       this. */
 
 #define ichar_charset(ch) Vcharset_ascii
 #define ichar_leading_byte(ch) LEADING_BYTE_ASCII

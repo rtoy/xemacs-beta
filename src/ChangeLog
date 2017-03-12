@@ -1,5 +1,20 @@
 2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Make some small changes to placate the buildbot.
+	* charset.h (Vcharset_control_1):
+	Make this available on non-Mule.
+	* redisplay-xlike-inc.c:
+	Restore ALLOCATE_RUNS_TEXT() for nonmule.
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_nomule):
+	* redisplay-xlike-inc.c (separate_textual_runs_xft_mule):
+	Declare TEXT_STORAGE as non-const, even for those functions where
+	it is not modified, it is not worth the book-keeping to fight
+	with the C++ compile for it.
+	* text.c (ibyte_string_displayed_columns):
+	Removed a compiler-placating USED() that's no longer necessary.
+
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* text.h (itext_ichar_eql):
 	Don't crash when ERROR_CHECK_TEXT is turned on and we're comparing
 	an ASCII CH to a non-ASCII *str.

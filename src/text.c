@@ -2587,10 +2587,6 @@ ibyte_string_displayed_columns (const Ibyte *str, Bytecount len)
       INC_IBYTEPTR (str);
     }
 
-#ifndef MULE
-  USED (ch);
-#endif
-
   return cols;
 }
 

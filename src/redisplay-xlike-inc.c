@@ -176,9 +176,13 @@ struct textual_run
 */
 
 #if !defined (USE_XFT) && !defined (MULE)
+
+#define ALLOCATE_RUNS_TEXT(storage, storage_len, str, len)      \
+    (storage = alloca_extbytes (len))
+
 static int
 separate_textual_runs_nomule (struct buffer * UNUSED (buf),
-			      const Extbyte *text_storage,
+			      Extbyte *text_storage,
 			      struct textual_run *run_storage,
                               const Ibyte *str, Bytecount len,
 			      struct face_cachel *UNUSED(cachel))
@@ -222,7 +226,7 @@ extern Lisp_Object Qutf_16_little_endian;
   UCS-2. */
 static int
 separate_textual_runs_xft_nomule (struct buffer * UNUSED (buf),
-				  const Extbyte *text_storage,
+				  Extbyte *text_storage,
 				  struct textual_run *run_storage,
 				  const Ibyte *str, Bytecount len,
 				  struct face_cachel *UNUSED (cachel))
@@ -243,7 +247,7 @@ separate_textual_runs_xft_nomule (struct buffer * UNUSED (buf),
 #if defined (USE_XFT) && defined (MULE)
 static int
 separate_textual_runs_xft_mule (struct buffer *buf,
-				const Extbyte *text_storage,
+				Extbyte *text_storage,
 				struct textual_run *run_storage,
 				const Ibyte *str, Bytecount len,
 				struct face_cachel *UNUSED (cachel))
@@ -262,7 +266,6 @@ separate_textual_runs_xft_mule (struct buffer *buf,
       Ichar ch = itext_ichar (str);
       Lisp_Object charset;
       int byte1, byte2;
-      int ucs = ichar_to_unicode (ch, CONVERR_SUBSTITUTE);
 
       /* @@#### This use of CONVERR_SUBSTITUTE is somewhat bogus.
 	 It will substitute a '?' if we can't convert.  Not clear whether
