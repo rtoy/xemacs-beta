@@ -1,3 +1,8 @@
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* auto-save.el (auto-save-unescape-name):
+	Fix a bug in this, limit the hex parsing correctly.
+
 2017-03-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	

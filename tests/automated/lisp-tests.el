@@ -3830,7 +3830,7 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (>= 35 max) "checking base 36 is supported, `digit-fixnum-map'")
   (Assert (<= min 2) "checking base two supported, `digit-fixnum-map'")
   (Assert (eql (digit-char-p max-char (1+ max)) max))
-  (Assert (eql (digit-char-p min-char (1+ min)) min))
+  (Assert (eql (digit-char-p min-char (1+ min)) min)))
 
 (let ((binary-table
        (copy-char-table #s(char-table :type generic :default -1 :data ()))))
@@ -4200,5 +4200,66 @@ run-hook-with-args-until-success")
                                         (garbage-collect))
                            '#:g3456)))
                (eval form)))
+
+;;-----------------------------------------------------
+;; Test `auto-save-escape-name', `auto-save-unescape-name'
+;;-----------------------------------------------------
+
+(Assert (equal (auto-save-escape-name "abcdefghijk") "abcdefghijk"))
+
+;; We don't check whether auto-save-escape-name creates a new string object
+;; when there are no characters that need escaping.
+
+(Assert (equal (auto-save-escape-name "") ""))
+
+(Assert (equal (auto-save-escape-name "äüö") "äüö"))
+
+(Assert (not (eq (auto-save-escape-name "abcdefghijk") "abcdefghijk")))
+
+(macrolet
+    ((create-individual-char-tests (&rest characters)
+       (cons
+        'progn
+        (loop for char in characters
+              nconc `((Assert (equal (auto-save-escape-name
+                                      ,(format "hello %c there" char))
+                               ,(format "hello=20=%02X=20there" char)))
+                      (Assert (equal (auto-save-unescape-name
+                                      ,(format "hello=20=%02X=20there" char))
+                                     ,(format "hello %c there" char)))
+                      (Assert (equal (auto-save-escape-name
+                                      ,(format "hello %c" char))
+                               ,(format "hello=20=%02X" char)))
+                      (Assert (equal (auto-save-unescape-name
+                                      ,(format "hello=20=%02X" char))
+                                     ,(format "hello %c" char)))
+                      (Assert (equal (auto-save-escape-name
+                                      ,(format "hello %cab" char))
+                               ,(format "hello=20=%02Xab" char)))
+                      (Assert (equal (auto-save-unescape-name
+                                      ,(format "hello=20=%02Xab" char))
+                               ,(format "hello %cab" char))))))))
+  (create-individual-char-tests
+   ;; This is the value of auto-save-reserved-chars. Don't reference the
+   ;; variable from the test code, we want the set to be stable.
+   ?\0 ?\1 ?\2 ?\3 ?\4 ?\5 ?\6 ?\7 ?\10 ?\11 ?\12 ?\13 ?\14 ?\15 ?\16
+   ?\17 ?\20 ?\21 ?\22 ?\23 ?\24 ?\25 ?\26 ?\27 ?\30 ?\31 ?\32 ?\33
+   ?\34 ?\35 ?\36 ?\37 ?\40 ?? ?* ?: ?< ?> ?| ?/ ?\\ ?& ?^ ?% ?= ?\"))
+
+(when (featurep 'mule)
+  (let ((file-name-alias (coding-system-aliasee 'file-name))
+        (complicated-file-name
+         (decode-coding-string "/hel\xc5\x82o\n" 'utf-8)))
+    (unwind-protect
+         (progn
+           ;; Check that we preserve data that may be lost by the file-name
+           ;; coding system.
+           (define-coding-system-alias 'file-name 'iso-8859-1)
+           (Assert (equal complicated-file-name
+                          (auto-save-unescape-name
+                           (encode-coding-string
+                            (auto-save-escape-name complicated-file-name)
+                            'file-name t)))))
+      (define-coding-system-alias 'file-name file-name-alias))))
 
 ;;; end of lisp-tests.el

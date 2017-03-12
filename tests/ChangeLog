@@ -1,3 +1,10 @@
+2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Add a parenthesis which had gone astray while merging.
+	Test #'auto-save-escape-name, #'auto-save-unescape-name,
+	reasonably important functions which previously had no testing.
+
 2017-03-03  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/regexp-tests.el:
