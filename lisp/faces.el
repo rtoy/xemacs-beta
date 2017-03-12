@@ -2036,7 +2036,7 @@ XEmacs.%s.attributeFont: -dt-*-medium-i-*
 or
 XEmacs.%s.attributeForeground: hotpink\n"
 		invocation-name
-		(if (string-match "\\`[aeiouAEIOU]" face) "an" "a")
+		(if (string-match-p "\\`[aeiouAEIOU]" face) "an" "a")
 		face
 		default-name
 		face

@@ -325,7 +325,7 @@ If appropriate, reverting the buffer, and possibly build a completion-table."
       ;; Make the TAGS buffer invisible.
       (when (and check-name
 		 make-tags-files-invisible
-		 (string-match "\\`[^ ]" (buffer-name)))
+		 (string-match-p "\\`[^ ]" (buffer-name)))
 	(rename-buffer (generate-new-buffer-name
 			(concat " " (buffer-name)))))
       (or (verify-visited-file-modtime buf)
@@ -555,13 +555,13 @@ work with xemacs etags."
 	    ;; file-type.  This was way too slow, as it had to process
 	    ;; an enormous amount of regexps for each time.  Now we
 	    ;; use the shotgun approach with only two regexps.
-	    file-type (cond ((string-match "\\.\\([cC]\\|cc\\|cxx\\)\\'"
+	    file-type (cond ((string-match-p "\\.\\([cC]\\|cc\\|cxx\\)\\'"
 					   filename)
 			     'c-mode)
-			    ((string-match "\\.\\(el\\|cl\\|lisp\\)\\'"
-					   filename)
+			    ((string-match-p "\\.\\(el\\|cl\\|lisp\\)\\'"
+					     filename)
 			     'lisp-mode)
-			    ((string-match "\\.scm\\'" filename)
+			    ((string-match-p "\\.scm\\'" filename)
 			     'scheme-mode)
 			    (t nil)))
       (defvar c-mode-syntax-table)

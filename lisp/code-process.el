@@ -103,7 +103,7 @@ proceed essentially independently one from the other, as in `start-process'."
 	(let ((alist process-coding-system-alist)
 	      (case-fold-search nil))
 	  (while alist
-	    (if (string-match (car (car alist)) program)
+	    (if (string-match-p (car (car alist)) program)
 		(throw 'found (setq ret (cdr (car alist)))))
 	    (setq alist (cdr alist))
 	    )))
@@ -235,7 +235,7 @@ See also `set-process-filter' and `set-process-stderr-filter'."
 	(let ((alist process-coding-system-alist)
 	      (case-fold-search nil))
 	  (while alist
-	    (if (string-match (car (car alist)) program)
+	    (if (string-match-p (car (car alist)) program)
 		(throw 'found (setq ret (cdr (car alist)))))
 	    (setq alist (cdr alist))
 	    )))
@@ -363,7 +363,7 @@ See also the function `find-operation-coding-system'.")
 	       (not (eq (plist-get parameters :type) 'plain)))
       (when (let ((response
 		   (network-stream-command stream starttls-command eoc)))
-	      (and response (string-match success-string response)))
+	      (and response (string-match-p success-string response)))
 	;; The server said it was OK to begin STARTTLS negotiations.
 	(let ((cert (network-stream-certificate host service parameters)))
 	  (condition-case nil
@@ -545,11 +545,10 @@ You can change the coding systems later on using
 		    (and (numberp service)
 			 (eq pattern service)))
 		   ((stringp pattern)
-		    (or (and (stringp service)
-			     (string-match pattern service))
+		    (or (and (stringp service) (string-match-p pattern service))
 			(and (numberp service)
-			     (string-match pattern
-					   (number-to-string service))))))
+			     (string-match-p pattern
+					     (number-to-string service))))))
 	     (throw 'found (setq ret (cdr (car alist)))))
 	    (setq alist (cdr alist))
 	    )))

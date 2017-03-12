@@ -1796,7 +1796,7 @@ recompile every `.el' file that already has a `.elc' file."
 		   (setq directories
 			 (nconc directories (list source))))
 	     ;; It is an ordinary file.  Decide whether to compile it.
-	     (if (and (string-match emacs-lisp-file-regexp source)
+	     (if (and (string-match-p emacs-lisp-file-regexp source)
 		      (not (auto-save-file-name-p source))
 		      ;; make sure not a mule file we can't handle.
 		      (or (not byte-recompile-ignore-uncompilable-mule-files)
@@ -1840,7 +1840,7 @@ compiled.  But a prefix argument (optional second arg) means ask user
 whether to compile it.  Prefix argument 0 don't ask and recompile anyway."
   (interactive "fByte recompile file: \nP")
   (let ((dest))
-    (if (and (string-match emacs-lisp-file-regexp filename)
+    (if (and (string-match-p emacs-lisp-file-regexp filename)
 	     (not (auto-save-file-name-p filename))
 	     (setq dest (byte-compile-dest-file filename))
 	     (if (file-exists-p dest)
@@ -5011,7 +5011,7 @@ it won't work in an interactive Emacs."
 	(let ((files (directory-files file-to-process))
 	      source dest)
 	  (while files
-	    (if (and (string-match emacs-lisp-file-regexp (car files))
+	    (if (and (string-match-p emacs-lisp-file-regexp (car files))
 		     (not (auto-save-file-name-p (car files)))
 		     (setq source (expand-file-name
 				   (car files)

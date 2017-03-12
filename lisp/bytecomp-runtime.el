@@ -541,8 +541,8 @@ the same value for the expression as when it is run.  Please delete
 		       (if (eval test) "false" "true")
 		       (cond
 			((null source) "the .elc for this file")
-			((string-match "\.elc$" source) source)
-			((string-match "\.el$" source) (concat source "c"))
+			((string-match-p "\\.elc$" source) source)
+			((string-match-p "\\.el$" source) (concat source "c"))
 			(t (concat source ".elc"))))))))
 
 (defun byte-compile-file-being-compiled ()

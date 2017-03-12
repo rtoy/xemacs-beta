@@ -564,7 +564,7 @@ to generate such a string.  This variable is always buffer-local.")
           (cond ((null name))           ;deleted buffer
                 ((and predicate
                       (not (if (stringp predicate)
-                               (string-match predicate name)
+                               (string-match-p predicate name)
                                (funcall predicate buffer))))
                  nil)
                 (t
@@ -582,7 +582,7 @@ to generate such a string.  This variable is always buffer-local.")
                    (insert (if ro
                                ?\%
                                ?\ ))
-                   (if (string-match "[\n\"\\ \t]" name)
+                   (if (string-match-p "[\n\"\\ \t]" name)
                        (let ((print-escape-newlines t))
                          (prin1 name output))
                        (insert ?\  name))

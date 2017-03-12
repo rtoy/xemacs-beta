@@ -35,8 +35,9 @@
         with res = (make-hash-table :test #'equal)
         do
         (setq coding-system (symbol-name coding-system))
-        (unless (or (string-match #r"\(-unix\|-mac\|-dos\)$" coding-system)
-                    (string-match #r"^\(internal\|mswindows\)" coding-system))
+        (unless (or (string-match-p #r"\(-unix\|-mac\|-dos\)$" coding-system)
+                    (string-match-p #r"^\(internal\|mswindows\)"
+                                    coding-system))
           (puthash 
            (replace-in-string (downcase coding-system) "[^a-z0-9]" "")
            (coding-system-name (intern coding-system)) res))

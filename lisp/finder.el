@@ -332,7 +332,7 @@ FILE should be in a form suitable for passing to `locate-library'."
 (defun finder-edit ()
   (interactive)
   (let ((entry (finder-current-item)))
-    (if (string-match finder-file-regexp entry)
+    (if (string-match-p finder-file-regexp entry)
 	(let ((path (finder-find-library entry)))
 	  (if path
 	      (find-file-other-window path)
@@ -344,7 +344,7 @@ FILE should be in a form suitable for passing to `locate-library'."
 (defun finder-view ()
   (interactive)
   (let ((entry (finder-current-item)))
-    (if (string-match finder-file-regexp entry)
+    (if (string-match-p finder-file-regexp entry)
 	(let ((path (finder-find-library entry)))
 	  (if path
 	      (view-file-other-window path)

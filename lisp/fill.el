@@ -244,7 +244,7 @@ first line, insist it must match FIRST-LINE-REGEXP."
 	(and result
 	     (or at-second
 		 (null first-line-regexp)
-		 (string-match first-line-regexp result))
+		 (string-match-p first-line-regexp result))
 	     result)))))
 
 ;; XEmacs (stig) - this is pulled out of fill-region-as-paragraph so that it

@@ -845,14 +845,14 @@ available; see `describe-char-unicode-data'."
 	(let ((unicode-data
 	       (assoc "Name" (describe-char-unicode-data character))))
 	  (and unicode-data
-	       (if (string-match "^<[^>]+>$" (cadr unicode-data))
+	       (if (string-match-p "^<[^>]+>$" (cadr unicode-data))
 		   (format "U%04X" (char-to-unicode character))
 		 (replace-in-string (cadr unicode-data) " " "_" t))))))
 
   (defun name-char (name)
     "Return a character with name NAME, a string."
     (or (car (rassoc* name names :test #'equalp))
-	(if (string-match "^[uU][0-9A-Fa-f]+$" name)
+	(if (string-match-p "^[uU][0-9A-Fa-f]+$" name)
 	    (unicode-to-char (parse-integer name :start 1 :radix 16))
 	  (with-current-buffer (get-buffer-create " *Unicode Data*")
 	    (require 'descr-text)

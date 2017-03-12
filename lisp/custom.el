@@ -434,9 +434,9 @@ If there already is an entry for OPTION and WIDGET, nothing is done."
 If no such group is found, return nil."
   (or (get mode 'custom-mode-group)
       (if (or (get mode 'custom-group)
-	      (and (string-match "-mode\\'" (symbol-name mode))
-		   (get (setq mode (intern (substring (symbol-name mode)
-						      0 (match-beginning 0))))
+	      (and (string-match-p "-mode\\'" (symbol-name mode))
+		   (get (setq mode (intern (substring (symbol-name mode) 0
+                                                      (- (length "-mode")))))
 			'custom-group)))
 	  mode)))
 
@@ -563,7 +563,7 @@ LOAD should be either a library file name, or a feature name."
 		     (found nil))
 		 (dolist (loaded load-history)
 		   (and (stringp (car loaded))
-			(string-match regexp (car loaded))
+			(string-match-p regexp (car loaded))
 			(setq found t)))
 		 found))
 	      ;; Without this, we would load cus-edit recursively.
