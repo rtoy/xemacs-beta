@@ -1,3 +1,8 @@
+2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT:
+	Update mid.gmane.org to mid.xemacs.org. We miss you, Gmane.
+
 2014-12-05  Jerry James  <james@xemacs.org>
 
 	* xemacs.appdata.xml:
