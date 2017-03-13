@@ -1,3 +1,9 @@
+2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* ChangeLog:
+	* data.c:
+	Update mid.gmane.org to mid.xemacs.org. We miss you, Gmane.
+
 2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Replace calls to #'string-match, where the match data isn't used,
@@ -2210,7 +2216,7 @@
 	Update this, adding everything that maps to no-conversion or
 	no-conversion-multibyte in GNU's auto-mode-alist.
 	In particular, add PDFs, important given gnus' problem with them
-	of http://mid.gmane.org/m3r637lpm5.fsf@mikesoffice.com and the
+	of http://mid.xemacs.org/m3r637lpm5.fsf@mikesoffice.com and the
 	associated thread, and Uwe's recent re-reporting of the same
 	problem.
 
@@ -2239,7 +2245,7 @@
 
 	* cl-macs.el (cl-defsubst-expand):
 	Change set 2a6a8da4dd7c of
-	http://mid.gmane.org/19966.17522.332164.615228@parhasard.net
+	http://mid.xemacs.org/19966.17522.332164.615228@parhasard.net
 	wasn't sufficiently comprehensive, symbol macros can be mutually
 	rather than simply recursive, and they can equally hang. Thanks
 	for the bug report, Michael Sperber, and for the test case,
@@ -2252,7 +2258,7 @@
 	eval-when-compile form hasn't done save-excursion when
 	appropriate), error and exit; we can't guarantee we'll give useful
 	code in that context. See
-	http://mid.gmane.org/20110909110831.GD2875@acm.acm and related
+	http://mid.xemacs.org/20110909110831.GD2875@acm.acm and related
 	discussion. 
 
 2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
@@ -4170,7 +4176,7 @@
 	in practice only seen with XFree86 and derived non-US layouts)
 	exists on the keyboard layout, make it equivalent to shift-tab,
 	addressing the issue FKtPp sees in
-	http://mid.gmane.org/1269358206.4873.1.camel@fktpp-laptop .
+	http://mid.xemacs.org/1269358206.4873.1.camel@fktpp-laptop .
 
 2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -4285,7 +4291,7 @@
 	in practice only seen with XFree86 and derived non-US layouts)
 	exists on the keyboard layout, make it equivalent to shift-tab,
 	addressing the issue FKtPp sees in
-	http://mid.gmane.org/1269358206.4873.1.camel@fktpp-laptop .
+	http://mid.xemacs.org/1269358206.4873.1.camel@fktpp-laptop .
 
 2010-03-21  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -5080,7 +5086,7 @@
 
 	* indent.el (indent-region):
 	Make COLUMN optional as in GNU, merging Andreas Roehler's change
-	of http://mid.gmane.org/4B46F5FC.2070506@online.de ; thank you
+	of http://mid.xemacs.org/4B46F5FC.2070506@online.de ; thank you
 	Andreas!
 
 2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
@@ -5367,7 +5373,7 @@
 
 	* indent.el (indent-region):
 	Make COLUMN optional as in GNU, merging Andreas Roehler's change
-	of http://mid.gmane.org/4B46F5FC.2070506@online.de ; thank you
+	of http://mid.xemacs.org/4B46F5FC.2070506@online.de ; thank you
 	Andreas!
 
 2010-01-07  Aidan Kehoe  <kehoea@parhasard.net>
@@ -5571,7 +5577,7 @@
 	* faces.el (init-other-random-faces):
 	If the modeline face is using its fallbacks, avoid that, specify
 	the corresponding problems instead. Fixes problems described in
-	http://mid.gmane.org/3ggprc2diyt.wl_Ron.Isaacson@morganstanley.com
+	http://mid.xemacs.org/3ggprc2diyt.wl_Ron.Isaacson@morganstanley.com
 
 2009-11-09  Didier Verna  <didier@xemacs.org>
 
@@ -6192,7 +6198,7 @@
 	autodetection fails. (Ignoring that for the user, autodetection
 	failing is something very distinct from what we use it to mean
 	here.) See
-	http://mid.gmane.org/18986.53111.800393.660612@parhasard.net and
+	http://mid.xemacs.org/18986.53111.800393.660612@parhasard.net and
 	the related thread.
 
 2009-06-06  Aidan Kehoe  <kehoea@parhasard.net>
@@ -6305,7 +6311,7 @@
 	* descr-text.el (describe-char-unicodedata-file):
 	Back out Stephen's change of 2009-01-01, 16c9098dd3d2; do a
 	Mercurial merge, add this ChangeLog entry.
-	See also http://mid.gmane.org/8763jbsyr7.fsf@xemacs.org .
+	See also http://mid.xemacs.org/8763jbsyr7.fsf@xemacs.org .
 
 2009-02-02  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -6519,7 +6525,7 @@
 	Fix a cosmetic bug; the relationship between
 	file-name-coding-system and the file-name coding system alias
 	established in coding.el wasn't being maintained. See Katsumi
-	Yamaoka's comment in http://mid.gmane.org/b4m4p03bt43.fsf@jpl.org .
+	Yamaoka's comment in http://mid.xemacs.org/b4m4p03bt43.fsf@jpl.org .
 
 2009-01-11  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -6945,7 +6951,7 @@
 
 	* subr.el (add-to-list): Implement the same logic with a more
 	concise syntax; thank you Stephen, in
-	http://mid.gmane.org/87ablomdwx.fsf@uwakimon.sk.tsukuba.ac.jp .
+	http://mid.xemacs.org/87ablomdwx.fsf@uwakimon.sk.tsukuba.ac.jp .
 
 2008-02-25  bpalmer  <bpalmer@gmail.com>
 

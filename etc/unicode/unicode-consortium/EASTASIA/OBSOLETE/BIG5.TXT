@@ -61,7 +61,7 @@
 #
 #       XEmacs change; we map them to private use characters above
 #       U+F0000. 0xA15A => U+FA15A, and so on. See
-#       http://mid.gmane.org/s3tsl7j7zg9.fsf@magellan.suse.de and related
+#       http://mid.xemacs.org/s3tsl7j7zg9.fsf@magellan.suse.de and related
 #       discussion.
 #	
 #	Notes:

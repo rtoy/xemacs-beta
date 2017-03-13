@@ -1,3 +1,8 @@
+2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* ChangeLog:
+	Update mid.gmane.org to mid.xemacs.org. We miss you, Gmane.
+
 2017-01-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac (HAVE_XFACE): giflib 5.0 removed a function we
@@ -742,9 +747,9 @@
 	libgdbm_compat.so, also link to that library. 
 	Correct a thinko with DBM version 4 checks. Both from Hans de
 	Graaff, in 
-	http://mid.gmane.org/20050812092756.6850.qmail@graaff.xs4all.nl
+	http://mid.xemacs.org/20050812092756.6850.qmail@graaff.xs4all.nl
 	and
-	http://mid.gmane.org/pan.2007.06.24.10.10.57@gentoo.org; thank you
+	http://mid.xemacs.org/pan.2007.06.24.10.10.57@gentoo.org; thank you
 	Hans!
 	* configure:
 	Regenerate.

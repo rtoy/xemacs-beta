@@ -156,7 +156,7 @@
       (goto-char (point-max))
       (Assert (not (search-backward string nil t 6))))))
 
-;; Bug reported in http://mid.gmane.org/y9lk5lu5orq.fsf@deinprogramm.de from
+;; Bug reported in http://mid.xemacs.org/y9lk5lu5orq.fsf@deinprogramm.de from
 ;; Michael Sperber. Fixed 2008-01-29.
 (with-string-as-buffer-contents "\n\nDer beruhmte deutsche Flei\xdf\n\n"
   (goto-char (point-min))

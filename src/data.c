@@ -3093,7 +3093,7 @@ In this case, zeros are shifted in on the left.
           /* Sigh, this won't catch all overflows in the MPZ type under GMP,
              and there's no way to hook into the library so that an overflow
              errors rather than aborting. See
-             http://mid.gmane.org/5529.2096.e5823.ccba@parhasard.net . */
+             http://mid.xemacs.org/5529.2096.e5823.ccba@parhasard.net . */
 	  if (!bignum_fits_ulong_p (scratch_bignum))
             {
               args_out_of_range_3 (count,

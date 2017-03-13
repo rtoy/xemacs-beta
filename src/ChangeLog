@@ -1,3 +1,8 @@
+2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Flsh):
+	Update mid.gmane.org to mid.xemacs.org. We miss you, Gmane.
+
 2017-03-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c:
@@ -3270,7 +3275,7 @@
 	is deleted, the window display code uses the buffer's actual point
 	instead of the position that the marker had been moved to.
 	Fixes Michael Heinrich's problem of
-	http://mid.gmane.org/6zr42uxtf5.fsf@elektra.science-computing.de ,
+	http://mid.xemacs.org/6zr42uxtf5.fsf@elektra.science-computing.de ,
 	introduced by Ben's patch of
 	https://bitbucket.org/xemacs/xemacs/commits/047d37eb70d70f43803 .
 
@@ -5530,7 +5535,7 @@
 	The EMACS_INT typedef was not changed, it does not describe
 	non-bignum Lisp integers.
 	Script that did the change available in
-	http://mid.gmane.org/20067.17650.181273.12014@parhasard.net .
+	http://mid.xemacs.org/20067.17650.181273.12014@parhasard.net .
 
 2011-09-06  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -6460,7 +6465,7 @@
 	* specifier.c (specifier_instance_from_inst_list):
 	Call call_with_suspended_errors() with ERROR_ME_WARN, explicitly;
 	avoids the problem Giacomo Boffi describes in
-	http://mid.gmane.org/19617.52517.341117.388679@aiuole.stru.polimi.it
+	http://mid.xemacs.org/19617.52517.341117.388679@aiuole.stru.polimi.it
 	, but the specifier instantiation bug that makes XEmacs fail for
 	him is still visible.
 
@@ -17894,7 +17899,7 @@
 	* redisplay-msw.c (mswindows_text_width_single_run):
 	Explicitly check for the null font instance, and return zero if
 	so. Avoids the crash documented in
-	http://mid.gmane.org/18473.32468.712317.149457@parhasard.net .
+	http://mid.xemacs.org/18473.32468.712317.149457@parhasard.net .
 
 2008-05-27  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -18193,9 +18198,9 @@
 	If the charset is not specified when calling the
 	font_spec_matches_charset device method, its value is Qnil, not
 	Qunbound. See
-	http://mid.gmane.org/E1EfbmW-00029r-5G@iwi191.iwi.uni-sb.de and
+	http://mid.xemacs.org/E1EfbmW-00029r-5G@iwi191.iwi.uni-sb.de and
 	Ben Wing's patch of
-	http://mid.gmane.org/439FA06B.3090007@xemacs.org.
+	http://mid.xemacs.org/439FA06B.3090007@xemacs.org.
 
 2007-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 

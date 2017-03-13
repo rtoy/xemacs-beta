@@ -32,7 +32,7 @@
     (defmacro Assert (assertion &optional failing-case)
       ;; This file can actually execute on GNU, though it exposes some bugs
       ;; as of So 1 Jan 2012 14:41:32 GMT, described in
-      ;; http://mid.gmane.org/20224.27302.821804.284656@parhasard.net .
+      ;; http://mid.xemacs.org/20224.27302.821804.284656@parhasard.net .
       `(condition-case err
            (assert ,assertion nil
                    ,@(if (memq (car-safe assertion)
