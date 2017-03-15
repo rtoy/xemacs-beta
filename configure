@@ -13530,7 +13530,10 @@ EOF
 	  -D*=* ) val=`echo '' $word | sed -e 's:^.*=::'` ;;
 	  *     ) val=1 ;;
 	esac
-	if grep "^#define $sym " confdefs.h >/dev/null; then :; else
+       if grep "^#define $sym " confdefs.h >/dev/null          || \
+           test "$have_glibc" = "yes" -a "$sym" = "_BSD_SOURCE" || \
+           test "$have_glibc" = "yes" -a "$sym" = "_SVID_SOURCE";
+        then :; else
 	  if test "$val" = "1"
 	    then cat >>confdefs.h <<_ACEOF
 #define $sym 1
