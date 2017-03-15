@@ -3141,7 +3141,12 @@ EOF
 	  *     ) val=1 ;;
 	esac
 dnl Avoid re-AC_DEFINE-ing xmkmf symbols we've already defined above.
-	if grep "^#define $sym " confdefs.h >/dev/null; then :; else
+dnl Also, glibc doesn't like two of the traditional POSIX macros that xmkmf 
+dnl likes us to define; ignore them if appropriate. 
+       if grep "^#define $sym " confdefs.h >/dev/null          || \ 
+           test "$have_glibc" = "yes" -a "$sym" = "_BSD_SOURCE" || \ 
+           test "$have_glibc" = "yes" -a "$sym" = "_SVID_SOURCE"; 
+        then :; else 
 	  if test "$val" = "1"
 	    then AC_DEFINE_UNQUOTED($sym)
 	    else AC_DEFINE_UNQUOTED($sym,$val)

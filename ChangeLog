@@ -9,6 +9,13 @@
 	were checking for.
 	* configure: Rebuild.
 
+2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac:
+	Don't #define _BSD_SOURCE or _SVID_SOURCE on glibc, even if xmkmf
+	asks us to. Silences a warning on Linux. Thank you Mats Lidell.
+	* configure: Regenerate.
+
 2016-11-05  Michael Sperber  <mike@xemacs.org>
 
 	* configure.ac: Disable ASLR on macOS Sierra..
