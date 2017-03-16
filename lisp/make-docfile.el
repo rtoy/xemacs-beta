@@ -50,7 +50,7 @@
 (defvar source-src (expand-file-name "../src" source-lisp))
 
 (defun message (fmt &rest args)
-  (write-sequence (apply #'format fmt args))
+  (apply #'format-into standard-output fmt args)
   (write-char ?\n))
 
 ;; Gobble up the stuff we don't wish to pass on.
@@ -236,35 +236,25 @@
   (setq exec-path (list build-lib-src))
 
   ;; (locate-file-clear-hashing nil)
-  (if (memq system-type '(berkeley-unix next-mach))
-      ;; Suboptimal, but we have a unresolved bug somewhere in the
-      ;; low-level process code.  #### Now that we've switched to using
-      ;; the regular asynch process code, we should try removing this.
-      (call-process-internal
-       "/bin/csh"
-       nil
-       t
-       nil
-       "-fc"
-       (mapconcat
-	#'identity
-	(append
-	 (list (expand-file-name "make-docfile" build-lib-src))
-	 options processed)
-	" "))
-    ;; (message (prin1-to-string (append options processed)))
-    (apply 'call-process-internal
-	   ;; exec-path is set.
-	   ;; (expand-file-name "make-docfile" build-lib-src)
-	   "make-docfile"
-	   nil
-	   t
-	   nil
-	   (append options processed)))
-
-  (message "Spawning make-docfile ...done")
-  ;; (write-region-internal (point-min) (point-max) "/tmp/DOC")
-  )
+  ;; (message (prin1-to-string (append options processed)))
+  (let* ((standard-error (get-buffer-create
+                          (generate-new-buffer-name "stderr")))
+         (status
+          (apply 'call-process-internal
+                 ;; exec-path is set.
+                 ;; (expand-file-name "make-docfile" build-lib-src)
+                 "make-docfile"
+                 nil
+                 (list t standard-error)
+                 nil
+                 (append options processed))))
+    (if (equal status 0)
+        (message "%sSpawning make-docfile ...done"
+                 (buffer-substring nil nil standard-error))
+      (message "%sSpawning make-docfile ... error, failed with status %d."
+               (buffer-substring nil nil standard-error)
+               status))
+    (kill-emacs status)))
 
 (kill-emacs)
 

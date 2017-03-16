@@ -1099,15 +1099,25 @@ scan_lisp_file (const char *filename, const char *mode)
 	  c = getc_skipping_iso2022 (infile);
 	  if (c == '@')
 	    {
-	      int length = 0;
-	      int i;
+	      unsigned int nlength = 0, length = 0;
+	      unsigned int i;
 
 	      /* Read the length.  */
 	      while ((c = getc_skipping_iso2022 (infile),
 		      c >= '0' && c <= '9'))
 		{
-		  length *= 10;
-		  length += c - '0';
+                  length = nlength;
+		  nlength *= 10;
+		  nlength += c - '0';
+
+                  if (length <= nlength)
+                    {
+                      length = nlength;
+                    }
+                  else
+                    {
+                      break; /* Overflow, stick with the old value. */
+                    }
 		}
 
 	      /* The next character is a space that is counted in the length
@@ -1120,7 +1130,15 @@ scan_lisp_file (const char *filename, const char *mode)
 		free (saved_string);
 	      saved_string = (char *) xmalloc (length);
 	      for (i = 0; i < length; i++)
-		saved_string[i] = getc (infile);
+                {
+                  saved_string[i] = c = getc (infile);
+                  if (c == EOF)
+                    {
+                      saved_string[i] = '\0';
+                      fatal ("docstring ran off end of file: `%.50s ...'",
+                             saved_string);
+                    }
+                }
 	      /* The last character is a ^_.
 		 That is needed in the .elc file
 		 but it is redundant in DOC.  So get rid of it here.  */
@@ -1129,7 +1147,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      while (c == '\n')
 		c = getc_skipping_iso2022 (infile);
 	      /* Skip the following line.  */
-	      while (c != '\n')
+	      while (c != '\n' && c != EOF)
 		c = getc_skipping_iso2022 (infile);
 	    }
 	  continue;
@@ -1167,7 +1185,7 @@ scan_lisp_file (const char *filename, const char *mode)
 	      continue;
 	    }
 	  else
-	    while (c != ')')
+	    while (c != ')' && c != EOF)
 	      {
 		c = getc_skipping_iso2022 (infile);
 		if (c < 0)

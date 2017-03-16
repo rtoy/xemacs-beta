@@ -1,3 +1,12 @@
+2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.el:
+	Don't bother working around a berkeley-unix and next-mach bug
+	that is likely long fixed anyway.
+	Print the stderr of make-docfile to the terminal instead of simply
+	discarding it.
+	Pass through make-docfile's exit code.
+
 2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* ChangeLog:

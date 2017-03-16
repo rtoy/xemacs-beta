@@ -1,3 +1,8 @@
+2017-03-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-reader-tests.el (args-out-of-range):
+	Test we don't wrap on reading a C integer with long #@ comments.
+
 2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/completion-tests.el (featurep):
