@@ -1,3 +1,10 @@
+2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (read1):
+	If a #@INTEGER docstring comment has an unreasonably large
+	INTEGER, error, instead of silently wrapping. Thank you for the
+	bug report, Hao Sun.
+
 2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c (Flsh):

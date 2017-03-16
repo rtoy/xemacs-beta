@@ -1,3 +1,10 @@
+2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-docfile.c (scan_lisp_file):
+	Don't wrap the integer counter when reading the length of a #@
+	comment. Thank you for the tracker bug report, Hao Sun in tracker
+	issue 870!
+
 2015-03-08  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gnuserv.c (echo_request):

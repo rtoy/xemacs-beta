@@ -2638,12 +2638,26 @@ retry:
 	      /* #@NUMBER is used to skip NUMBER following characters.
 		 That's used in .elc files to skip over doc strings
 		 and function definitions.  */
-	      int i, nskip = 0;
+	      UINT_32_BIT i, skip = 0, oskip = 0;
 
 	      /* Read a decimal integer.  */
 	      while ((c = readchar (readcharfun)) >= 0
 		     && c >= '0' && c <= '9')
-                nskip = (10 * nskip) + (c - '0');
+                {
+                  skip = (10 * skip) + (c - '0');
+                  if (oskip <= skip)
+                    {
+                      oskip = skip;
+                    }
+                  else
+                    {
+                      /* Overflow, error. */
+                      args_out_of_range_3 (make_unsigned_integer (skip),
+                                           Qzero, make_fixnum (0x3fffffff));
+                      break;
+                    }
+                }
+
 	      if (c >= 0)
 		unreadchar (readcharfun, c);
 
@@ -2652,7 +2666,7 @@ retry:
 		 losing.  We handle this differently. */
 
 	      /* Skip that many characters.  */
-	      for (i = 0; i < nskip && c >= 0; i++)
+	      for (i = 0; i < skip && c >= 0; i++)
 		c = readchar (readcharfun);
 
 	      goto retry;

@@ -346,4 +346,8 @@
 (Assert (equal "20000e-" (prin1-to-string '20000e-))
         "checking Lisp printer recognises non-number syntax, trailing -")
 
+;; Checking we don't overflow on long #@ comments.
+
+(Check-Error args-out-of-range (read "#@4294967296 hello"))
+
 ;;; end of lisp-reader-tests.el
