@@ -1,3 +1,10 @@
+2017-03-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gc.c (GC_CONS_THRESHOLD):
+	Increase this (from about 2 megabytes to about 32) and the related
+	incremental-GC defaults, giving better performance with modern RAM
+	sizes.
+
 2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (read1):

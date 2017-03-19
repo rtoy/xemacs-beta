@@ -361,14 +361,14 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 
 /* Number of bytes of consing since gc before a full gc should happen. */
-#define GC_CONS_THRESHOLD                  2000000
-
+#define GC_CONS_THRESHOLD                 32000000
+                                          
 /* Number of bytes of consing since gc before another cycle of the gc
    should happen in incremental mode. */
-#define GC_CONS_INCREMENTAL_THRESHOLD       200000
+#define GC_CONS_INCREMENTAL_THRESHOLD       800000
 
 /* Number of elements marked in one cycle of incremental GC. */
-#define GC_INCREMENTAL_TRAVERSAL_THRESHOLD  100000
+#define GC_INCREMENTAL_TRAVERSAL_THRESHOLD  400000
 
 /* Number of bytes of consing done since the last GC. */
 EMACS_INT consing_since_gc;
