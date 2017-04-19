@@ -293,10 +293,13 @@ See also the function @code{get-buffer-create} in @ref{Creating Buffers}.
 This function returns a name that would be unique for a new buffer---but
 does not create the buffer.  It starts with @var{starting-name}, and
 produces a name not currently in use for any buffer by appending a
-number inside of @samp{<@dots{}>}.
+number inside of @samp{<@dots{}>}.  The numbers appended start at 2, or
+at a random value if @var{starting-name} begins with the space
+character, which indicates that a buffer is not visible to users.
 
-If @var{ignore} is given, it specifies a name that is okay to use (if it
-is in the sequence to be tried), even if a buffer with that name exists.
+If @var{ignore} is given, it should be a string.  This means to consider
+@var{ignore} as an acceptable buffer name, even if a buffer of that name
+already exists.
 
 See the related function @code{generate-new-buffer} in @ref{Creating
 Buffers}.

@@ -395,13 +395,11 @@ get_buffer (Lisp_Object name, int error_if_deleted_or_does_not_exist)
   else
     {
       Lisp_Object buf;
-      struct gcpro gcpro1;
 
       CHECK_STRING (name);
       name = LISP_GETTEXT (name);
-      GCPRO1 (name);
-      buf = Fcdr (Fassoc (name, Vbuffer_alist));
-      UNGCPRO;
+      buf = Fcdr (assoc_no_quit (name, Vbuffer_alist));
+
       if (NILP (buf) && error_if_deleted_or_does_not_exist)
 	nsberror (name);
       return buf;
@@ -770,43 +768,98 @@ DEFUN ("generate-new-buffer-name", Fgenerate_new_buffer_name, 1, 2, 0, /*
 Return a string that is the name of no existing buffer based on NAME.
 If there is no live buffer named NAME, then return NAME.
 Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
-until an unused name is found, and then return that name.
-Optional second argument IGNORE specifies a name that is okay to use
-\(if it is in the sequence to be tried)
-even if a buffer with that name exists.
+\(starting at 2) until an unused name is found, and then return that name.
+
+Optional second argument IGNORE specifies a name that is okay to use (if it
+is in the sequence to be tried) even if a buffer with that name exists.
+
+If NAME begins with a space (i.e., a buffer that is not normally
+visible to users), then if buffer NAME already exists a random number
+is first appended to NAME, to speed up finding a non-existent buffer.
 */
        (name, ignore))
 {
-  REGISTER Lisp_Object gentemp, tem;
-  int count;
-  Ibyte number[10];
+  Ibyte *candidate;
+  Bytecount csize, clen, ignore_length = -1;
+  EMACS_INT count;
 
   CHECK_STRING (name);
 
-  name = LISP_GETTEXT (name);
 #ifdef I18N3
   /* #### Doc string should indicate that the buffer name will get
      translated. */
 #endif
+  name = LISP_GETTEXT (name);
 
-  tem = Fget_buffer (name);
-  if (NILP (tem))
-    return name;
+  if (!NILP (ignore))
+    {
+      CHECK_STRING (ignore);
+      ignore_length = XSTRING_LENGTH (ignore);
 
-  count = 1;
+      if (ignore_length == XSTRING_LENGTH (name)
+          && !qxememcmp (XSTRING_DATA (name), XSTRING_DATA (ignore),
+                         ignore_length))
+        {
+          return name;
+        }
+    }
+
+  if (NILP (Fget_buffer (name))) /* XEmacs; don't #'string-equal on nil, see
+                                    above for the IGNORE handling. */
+    {
+      return name;
+    }
+
+  csize = XSTRING_LENGTH (name) + DECIMAL_PRINT_SIZE (EMACS_INT)
+    + sizeof ("<>");
+  candidate = alloca_ibytes (csize);
+
+  count = itext_ichar_eql (XSTRING_DATA (name), ' ') ? get_random () : 2;
   while (1)
     {
-      qxesprintf (number, "<%d>", ++count);
-      gentemp = concat2 (name, build_istring (number));
-      if (!NILP (ignore))
+      /* XEmacs; GNU worry about the performance of this function, and then
+         allocate a full new Lisp string on the heap for every iteration of
+         the loop, and call a full Fget_buffer, too. If the performance of
+         #'generate-new-buffer-name really matters--and I've seen no real
+         evidence that is the case--the approach below with snprintf() and
+         ALIST_LOOP_3() is better. */
+      clen = emacs_snprintf (candidate, csize, "%s<%ld>", XSTRING_DATA (name),
+                             ++count);
+      if (clen == ignore_length &&
+          !qxememcmp (candidate, XSTRING_DATA (ignore), clen))
         {
-          tem = Fstring_equal (gentemp, ignore);
-          if (!NILP (tem))
-            return gentemp;
+          return ignore;
         }
-      tem = Fget_buffer (gentemp);
-      if (NILP (tem))
-	return gentemp;
+      else
+        {
+          Boolint seen = 0;
+          ALIST_LOOP_3 (bufname, bufobj, Vbuffer_alist)
+            {
+              if (XSTRING_LENGTH (bufname) == clen
+                  && !qxememcmp (candidate, XSTRING_DATA (bufname), clen))
+                {
+                  seen = 1;
+                  break;
+                }
+            }
+
+          USED (bufobj); /* Silence warning for this. */
+
+          if (!seen)
+            {
+              Lisp_Object result = make_string (candidate, clen);
+
+              if (string_extent_info (name) != NULL)
+                {
+                  /* Despite what other code thinks, stretch_string_extents()
+                     doesn't call Lisp, this is OK from the GC perspective. */
+                  stretch_string_extents (result, name, 0, 0,
+                                          XSTRING_LENGTH (name), clen);
+                }
+
+              return result;
+            }
+        }
     }
 }
 

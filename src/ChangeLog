@@ -1,3 +1,17 @@
+2017-04-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buffer.c:
+	* buffer.c (get_buffer):
+	Vbuffer_alist is an internal list, no need to GCPRO and call
+	Fassoc.
+	* buffer.c (Fgenerate_new_buffer_name):
+	Update this to match GNU's current API; if NAME starts with a
+	space, generate the candidate new buffer names using get_random(),
+	start with suffixes of <2> rather than <1>.
+	Don't make new Lisp strings or call get_buffer() in the loop.
+	Copy string extent info to the new buffer name if NAME has extent
+	info.
+
 2017-03-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gc.c (GC_CONS_THRESHOLD):
