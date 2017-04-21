@@ -1,3 +1,9 @@
+2017-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (intern_istring):
+	Accept a vector PACKAGE here too, thank you for the bug report,
+	Raymond Toy.	
+
 2017-04-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* buffer.c:
