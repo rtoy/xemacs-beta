@@ -1862,6 +1862,20 @@ intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
   Lisp_Hash_Table *ht;
   htentry *entries, *probe;
 
+  /* Sigh, the poor old GNUs people went ahead and used
+     binding-obarray-dynamically-and-then-calling-#'read as a way to implement
+     a cache. I will send them a patch to avoid this, to, for example, write a
+     hash table object as a readable hash table object, but for the moment we
+     need to put up with it. */
+  if (VECTORP (package))
+    {
+      return call2 (Qxemacs_intern_in_vector,
+                    /* call2() GCPROs the newly-heap-allocated string, that's
+                       not an issue. */
+                    STRINGP (reloc) ? reloc : make_string (str, len),
+                    package);
+    }
+
   lookup = oblookup (package, str, len);
   if (FIXNUMP (lookup))
     {
