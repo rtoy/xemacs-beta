@@ -3143,7 +3143,7 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
   XSET_STRING_LENGTH (s, XSTRING_LENGTH (s) + delta);
   /* If pos < 0, the string won't be zero-terminated.
      Terminate now just to make sure. */
-  XSTRING_DATA (s)[XSTRING_LENGTH (s)] = '\0';
+  set_string_byte (s, XSTRING_LENGTH (s), '\0');
 
   if (pos >= 0)
     /* We also have to adjust all of the extent indices after the

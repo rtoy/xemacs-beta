@@ -1935,11 +1935,24 @@ itext_ichar_eql (const Ibyte *str, Ichar ch)
 
 #define string_char_length(s) \
   string_index_byte_to_char (s, XSTRING_LENGTH (s))
-/* Without the cast, C++ promotes the following expression to an int and then
-   complains about a narrowing cast when it is used as an Ibyte. */
-#define string_byte(s, i) (Ibyte) (XSTRING_DATA (s)[i] + 0)
+
+DECLARE_INLINE_HEADER (
+Ibyte
+string_byte (Lisp_Object s, Bytecount i)
+)
+{
+  /* C++ deals with a macro version of this badly. */
+  return XSTRING_DATA (s)[i];
+}
 /* In case we ever allow strings to be in a different format ... */
-#define set_string_byte(s, i, c) (XSTRING_DATA (s)[i] = (c))
+DECLARE_INLINE_HEADER (
+Ibyte
+set_string_byte(Lisp_Object s, Bytecount i, Ibyte c)
+)
+{
+  /* See above re C++. */
+  return XSTRING_DATA (s)[i] = (c);
+}
 
 #define ASSERT_VALID_CHAR_STRING_INDEX_UNSAFE(s, x) do {		\
   text_checking_assert ((x) >= 0 && x <= string_char_length (s));	\
