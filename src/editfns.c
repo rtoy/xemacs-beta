@@ -1230,24 +1230,40 @@ arguments: (SECOND MINUTE HOUR DAY MONTH YEAR &optional ZONE &rest REST)
       /* #### This business of modifying environ is horrendous!
 	 Why don't we just putenv()?  Why don't we implement our own
 	 funs that don't require this futzing? */
-      Extbyte tzbuf[100];
+      Ibyte tzbuf[100];
       Extbyte *tzstring;
       Extbyte **oldenv = environ, **newenv;
 
       if (STRINGP (zone))
 	tzstring = LISP_STRING_TO_EXTERNAL (zone, Qtime_zone_encoding);
-      else if (FIXNUMP (zone))
+      else if (INTEGERP (zone))
 	{
-	  int abszone = abs (XFIXNUM (zone));
-	  /* We specify the time zone in offset notation (see `man
-	     tzset' for details).  The offset indicates the value one
-	     must add to local time to arrive at UTC.  Thus, we sign
-	     the offset with a `-' if the time zone is east of GMT; we
-	     sign the offset with a `+' if the time zone is GMT (then
-	     the offset is 0) or if the time zone is west of GMT. */
-	  sprintf (tzbuf, "XXX%s%d:%02d:%02d", (XFIXNUM (zone) < 0) ? "+" : "-",
-		   abszone / (60*60), (abszone/60) % 60, abszone % 60);
-	  tzstring = tzbuf;
+          int abszone;
+          Bytecount bufwritten;
+
+          /* The number of hours must be less or equal to 24, documented as
+             such on OS X and Linux as of 2017. */
+          check_integer_range (zone, make_fixnum (-86400),
+                               make_fixnum (86400));
+
+          abszone = abs ((int) (XFIXNUM (zone)));
+
+          /* We specify the time zone in offset notation (see `man tzset' for
+             details).  The offset indicates the value one must add to local
+             time to arrive at UTC; the Emacs sign convention is the opposite
+             of that used by tzset(3).
+
+             Thus, we sign the offset with a `-' if the time zone is east of
+             GMT; we sign the offset with a `+' if the time zone is GMT (then
+             the offset is 0) or if the time zone is west of GMT. */
+          bufwritten
+            = emacs_snprintf (tzbuf, sizeof (tzbuf), "XXX%s%d:%02d:%02d", 
+                              XFIXNUM (zone) <= 0 ? "+" : "-",
+                              abszone / (60*60),
+                              (abszone/60) % 60,
+                              abszone % 60);
+          assert (bufwritten < (Bytecount) (sizeof (tzbuf)));
+          tzstring = (Extbyte *) tzbuf;
 	}
       else
 	invalid_argument ("Invalid time zone specification", Qunbound);
