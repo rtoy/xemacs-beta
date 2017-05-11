@@ -1504,7 +1504,7 @@ Lisp_Object
 build_fixnum_to_char_map (Lisp_Object radix_table)
 {
   Lisp_Object highest_value, result;
-  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, Qnil, 0 };
+  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, 0, Qnil, 0 };
   Ichar *cctable;
   EMACS_INT ii, cclen;
   Ibyte *data;

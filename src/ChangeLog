@@ -1,3 +1,10 @@
+2017-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* chartab.c (char_table_print_preprocess):
+	(char_table_nsubst_structures_descend):
+	data.c (build_fixnum_to_char_map):
+	Fix chartab_range initializers.
+
 2017-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* elhash.c (intern_istring):
