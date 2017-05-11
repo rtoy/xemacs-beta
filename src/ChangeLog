@@ -1,5 +1,12 @@
 2017-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* editfns.c (Fencode_time):
+	Restrict the possible integer values passed as the ZONE argument
+	to this function, as per the OS X and Linux documentation for
+	tzset(3).
+
+2017-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* alloc.c (resize_string):
 	Use set_string_byte() here for the zero termination.
 	* text.h:

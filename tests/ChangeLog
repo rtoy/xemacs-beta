@@ -1,3 +1,9 @@
+2017-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/os-tests.el:
+	Test restrictions just introduced to the integer values passed as
+	the ZONE argument to #'encode-time.
+
 2017-03-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-reader-tests.el (args-out-of-range):
