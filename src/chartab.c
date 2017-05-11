@@ -157,7 +157,7 @@ static void
 char_table_print_preprocess (Lisp_Object object, Lisp_Object print_number_table,
                              Elemcount *seen_object_count)
 {
-  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, Qnil, 0 };
+  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, 0, Qnil, 0 };
   preprocess_info_t preprocess_info = { print_number_table, seen_object_count };
   map_char_table (object, &ctr, print_preprocess_mapper, &preprocess_info);
 }
@@ -193,7 +193,7 @@ char_table_nsubst_structures_descend (Lisp_Object new_, Lisp_Object old,
                                       Lisp_Object number_table,
                                       Boolint test_not_unboundp)
 {
-  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, Qnil, 0 };
+  struct chartab_range ctr = { CHARTAB_RANGE_ALL, 0, 0, Qnil, 0 };
   nsubst_structures_info_t nsubst_structures_info
     = { number_table, new_, old, object, test_not_unboundp };
 
