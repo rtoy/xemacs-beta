@@ -1,3 +1,12 @@
+2017-05-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (resize_string):
+	Use set_string_byte() here for the zero termination.
+	* text.h:
+	Make string_byte(), set_string_byte() into inline functions to
+	work around g++ type (+/- template) difficulties with the macro
+	versions.
+
 2017-04-27  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* chartab.c (char_table_print_preprocess):
