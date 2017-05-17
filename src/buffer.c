@@ -814,7 +814,7 @@ is first appended to NAME, to speed up finding a non-existent buffer.
     + sizeof ("<>");
   candidate = alloca_ibytes (csize);
 
-  count = itext_ichar_eql (XSTRING_DATA (name), ' ') ? get_random () : 2;
+  count = itext_ichar_eql (XSTRING_DATA (name), ' ') ? get_random () : 1;
   while (1)
     {
       /* XEmacs; GNU worry about the performance of this function, and then
