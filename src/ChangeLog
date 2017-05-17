@@ -27,6 +27,11 @@
 	Accept a vector PACKAGE here too, thank you for the bug report,
 	Raymond Toy.	
 
+2017-05-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* buffer.c (Fgenerate_new_buffer_name):
+	Start the count here at <2> as documented, rather than 3.
+
 2017-04-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* buffer.c:
