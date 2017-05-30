@@ -4392,6 +4392,8 @@ to indicate particular branches, etc.
 */ );
 #ifdef XEMACS_EXTRA_NAME
   Vxemacs_extra_name = build_ascstring (XEMACS_EXTRA_NAME);
+#else
+  Vxemacs_extra_name = Qnil;
 #endif
   
   DEFVAR_LISP ("xemacs-release-date", &Vxemacs_release_date /*

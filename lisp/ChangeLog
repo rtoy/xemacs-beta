@@ -1,3 +1,12 @@
+2017-05-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* about.el (about-xemacs):
+	Correct a recently-introduced bug here, give the correct bounding
+	keywords to #'parse-integer when working out the month of the
+	release date.
+	Don't check for xemacs-extra-name, xemacs-release-date being
+	#'boundp, we control src/emacs.c, and can ensure they always are.
+
 2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-docfile.el:

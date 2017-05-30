@@ -1,3 +1,9 @@
+2017-05-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* emacs.c (vars_of_emacs):
+	If there's no associated #define, initialise xemacs-extra-name to
+	nil.
+
 2017-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* editfns.c (Fencode_time):

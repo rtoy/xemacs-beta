@@ -380,23 +380,20 @@
 			     emacs-major-version
 			     emacs-minor-version))))
 	   (emacs-release-date
-	    (if (and (boundp 'xemacs-release-date)
-		     (stringp xemacs-release-date)
-		     (string-match "^\\([0-9]\\{4\\}\\)-\\([0-9][0-9]\\)-"
-				   xemacs-release-date))
+	    (if (string-match "^\\([0-9]\\{4\\}\\)-\\([0-9][0-9]\\)-"
+                              xemacs-release-date)
 		(format "%s %s"
 			(aref [ "January" "February" "March" "April"
 				"May" "June" "July" "August"
 				"September" "October" "November" "December" ]
 			      (1- (parse-integer xemacs-release-date
-                                                 :start (match-beginning 2))))
+                                                 :start (match-beginning 2)
+                                                 :end (match-end 2))))
 			(match-string 1 xemacs-release-date))
 	      "February 2005 (defaulted in about.el)"))
-	   (emacs-variant-info (if (and xemacs-extra-name
-					(stringp xemacs-extra-name)
-					(< 0 (length xemacs-extra-name)))
-				   (format " %s" xemacs-extra-name)
-				 ""))
+	   (emacs-variant-info (if (< 0 (length xemacs-extra-name))
+                                   (concat " " xemacs-extra-name)
+                                 ""))
 	   (emacs-about-version (format "version %s of %s%s"
 					emacs-short-version
 					emacs-release-date
