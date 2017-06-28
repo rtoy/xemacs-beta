@@ -1,3 +1,11 @@
+2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (Fchar_width):
+	* text.c (syms_of_text):
+	Move #'char-width to C, to allow it to be implemented in terms of
+	ichar_columns(), since with unicode-internal (charset-width
+	(char-charset X)) can now error.
+
 2017-05-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* emacs.c (vars_of_emacs):

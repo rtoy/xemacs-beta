@@ -5950,6 +5950,17 @@ nil or `fail'	Return nil
     return list2 (XCHARSET_NAME (charset), make_fixnum (c1));
 }
 
+DEFUN ("char-width", Fchar_width, 1, 1, 0, /*
+Return number of columns a CHARACTER occupies when displayed.
+*/
+       (character))
+{
+  CHECK_CHAR_COERCE_INT (character);
+
+  /* #### Consider having this take a graphical context--a buffer or frame or
+     #### whatever. Ditto with #'string-width.  */
+  return make_fixnum (ichar_columns (XCHAR (character)));
+}
 
 /************************************************************************/
 /*                     composite character functions                    */
@@ -6057,6 +6068,7 @@ syms_of_text (void)
   DEFSUBR (Fchar_charset);
   DEFSUBR (Fchar_octet);
   DEFSUBR (Fsplit_char);
+  DEFSUBR (Fchar_width);
 
   /* Qfail, Qsubstitute, Qsucceed in general.c */
   DEFSYMBOL (Qsubstitute_negated); /* #### what's this used for? */
