@@ -1076,10 +1076,6 @@ display width when using a window system.  With no international support,
 simply returns the length of the string."
   (reduce #'+ (the string string) :initial-value 0 :key #'char-width))
 
-(defun char-width (character)
-  "Return number of columns a CHARACTER occupies when displayed."
-  (charset-width (char-charset character)))
-
 ;; The following several functions are useful in GNU Emacs 20 because
 ;; of the multibyte "characters" the internal representation of which
 ;; leaks into Lisp.  In XEmacs/Mule they are trivial and unnecessary.

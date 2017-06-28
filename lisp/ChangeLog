@@ -1,3 +1,8 @@
+2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (char-width): Move this to C, necessary as part of the
+	unicode-internal support.
+
 2017-05-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* about.el (about-xemacs):
