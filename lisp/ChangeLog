@@ -7,6 +7,13 @@
 	* rect.el (spaces-strings): Removed.
 	* rect.el (spaces-string): Removed.
 	These aren't needed, (format "*s" N "") does the same job.
+	* rect.el (apply-on-rectangle):
+	* rect.el (delete-rectangle-line):
+	* rect.el (open-rectangle-line):
+	* rect.el (string-rectangle-line):
+	* rect.el (clear-rectangle-line):
+	* rect.el (rect):
+	Fixup whitespace in this file.
 
 2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 

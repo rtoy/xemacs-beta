@@ -106,9 +106,7 @@ when the function is called."
       (goto-char startpt)
       (while (< (point) endpt)
 	(apply function startcol endcol args)
-	(forward-line 1)))
-    ))
-
+	(forward-line 1)))))
 
 (defun delete-rectangle-line (startcol endcol fill)
   (let ((pt (point-at-eol)))
@@ -118,8 +116,7 @@ when the function is called."
 	;; else
 	(setq pt (point))
 	(move-to-column endcol t)
-	(delete-region pt (point))))
-    ))
+	(delete-region pt (point))))))
 
 ;;;###autoload
 (defun delete-rectangle (start end &optional fill)
@@ -154,7 +151,6 @@ deleted."
   (let ((lines (list nil)))
     (apply-on-rectangle 'delete-extract-rectangle-line start end lines fill)
     (nreverse (cdr lines))))
-
 
 ;; #### NOTE: this is actually the only function that needs to do complicated
 ;; stuff like what's happening in `operate-on-rectangle', because the buffer
@@ -194,7 +190,6 @@ as a list of strings, one for each line of the rectangle."
     (apply-on-rectangle 'extract-rectangle-line start end lines)
     (nreverse (cdr lines))))
 
-
 ;;;###autoload
 (defvar killed-rectangle nil
   "Rectangle for `yank-rectangle' to insert.")
@@ -220,7 +215,6 @@ deleted."
   (interactive "*")
   (insert-rectangle killed-rectangle))
 
-
 ;; This function is untouched --dv
 ;;;###autoload
 (defun insert-rectangle (rectangle)
@@ -244,7 +238,6 @@ and point is at the lower right corner."
       (insert (car lines))
       (setq lines (cdr lines)))))
 
-
 (defun open-rectangle-line (startcol endcol fill)
   (when (= (move-to-column startcol (or fill 'coerce)) startcol)
     (unless (and (not fill)
@@ -261,7 +254,6 @@ on the right side of the rectangle."
   (interactive "*r\nP")
   (apply-on-rectangle 'open-rectangle-line start end fill)
   (goto-char start))
-
 
 (defun string-rectangle-line (startcol endcol string delete)
   (move-to-column startcol t)
@@ -290,7 +282,6 @@ as if `pending-delete-mode' were active."
   (interactive "*r\nsString rectangle: ")
   (apply-on-rectangle 'string-rectangle-line start end string t))
 
-
 (defun clear-rectangle-line (startcol endcol fill)
   (let ((pt (point-at-eol))
 	spaces)
@@ -303,8 +294,7 @@ as if `pending-delete-mode' were active."
 	(move-to-column endcol t)
 	(setq spaces (- (point) pt))
 	(delete-region pt (point))
-	(indent-to (+ (current-column) spaces))))
-    ))
+	(indent-to (+ (current-column) spaces))))))
 
 ;;;###autoload
 (defun clear-rectangle (start end &optional fill)
@@ -316,7 +306,6 @@ With a prefix (or FILL) argument, also fill with blanks the parts of the
 rectangle which were empty."
   (interactive "*r\nP")
   (apply-on-rectangle 'clear-rectangle-line start end fill))
-
 
 (provide 'rect)
 
