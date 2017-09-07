@@ -1,3 +1,13 @@
+2017-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* rect.el (delete-extract-rectangle-line):
+	Use (format "%*s" N "") instead of (spaces-string N) in this
+	function.
+	* rect.el (extract-rectangle-line): Ditto.
+	* rect.el (spaces-strings): Removed.
+	* rect.el (spaces-string): Removed.
+	These aren't needed, (format "*s" N "") does the same job.
+
 2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (char-width): Move this to C, necessary as part of the
