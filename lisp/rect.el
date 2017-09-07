@@ -133,39 +133,16 @@ deleted."
   (interactive "*r\nP")
   (apply-on-rectangle 'delete-rectangle-line start end fill))
 
-
-;; I love ascii art ;-)
-(defconst spaces-strings '[""
-			   " "
-			   "  "
-			   "   "
-			   "    "
-			   "     "
-			   "      "
-			   "       "
-			   "        "])
-
-;; This function is untouched --dv
-(defun spaces-string (n)
-  (if (<= n 8) (aref spaces-strings n)
-    (let ((val ""))
-      (while (> n 8)
-	(setq val (concat "        " val)
-	      n (- n 8)))
-      (concat val (aref spaces-strings n)))))
-
-
 (defun delete-extract-rectangle-line (startcol endcol lines fill)
   (let ((pt (point-at-eol)))
     (if (< (move-to-column startcol (or fill 'coerce)) startcol)
-	(setcdr lines (cons (spaces-string (- endcol startcol))
+	(setcdr lines (cons (format "%*s" (- endcol startcol) "")
 			    (cdr lines)))
       ;; else
       (setq pt (point))
       (move-to-column endcol t)
       (setcdr lines (cons (buffer-substring pt (point)) (cdr lines)))
-      (delete-region pt (point)))
-    ))
+      (delete-region pt (point)))))
 
 ;;;###autoload
 (defun delete-extract-rectangle (start end &optional fill)
@@ -201,14 +178,12 @@ deleted."
       (let ((width (- (current-column)
 		      (save-excursion (backward-char 1)
 				      (current-column)))))
-	(setq line (concat (substring line 0 (- (point) end 1))
-			   (spaces-string width)
-			   (substring line (+ (length line)
-					      (- (point) end)))))))
+	(setq line (format "%.*s%*s%s"
+			   (- (point) end 1) line
+			   width ""
+			   (subseq line (+ (length line) (- (point) end)))))))
     (if (or (> begextra 0) (> endextra 0))
-	(setq line (concat (spaces-string begextra)
-			   line
-			   (spaces-string endextra))))
+	(setq line (format "%*s%s%*s" begextra "" line endextra "")))
     (setcdr lines (cons line (cdr lines)))))
 
 ;;;###autoload
