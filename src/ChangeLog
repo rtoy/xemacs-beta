@@ -1,3 +1,11 @@
+2017-09-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (read_process_output): Have this return a Bytecount,
+	not a Charcount; the precise number of characters wasn't used by
+	our callers, so we were usually calling bytecount_to_charcount()
+	for no reason.
+	* process.h: Update the declaration of this function.
+
 2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (Fchar_width):
