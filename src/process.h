@@ -99,7 +99,7 @@ extern Lisp_Object Vprocess_connection_type, Vprocess_list;
 void status_notify (void);
 void kick_status_notify (void);
 void deactivate_process (Lisp_Object proc);
-Charcount read_process_output (Lisp_Object proc, int read_stderr);
+Bytecount read_process_output (Lisp_Object proc, int read_stderr);
 int process_has_separate_stderr (Lisp_Object proc);
 const char *signal_name (int signum);
 Lisp_Object canonicalize_host_name (Lisp_Object host);
