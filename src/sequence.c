@@ -4836,7 +4836,8 @@ concatenate (int nsequences, Lisp_Object *sequences,
              Lisp_Object result_type, Boolint reuse_last_listp)
 {
   Lisp_Object *lisp_staging = NULL, *lisp_cursor = NULL, result = Qnil;
-  Elemcount ii, jj, staging_len = 0;
+  Elemcount ii, jj;
+  EMACS_UINT staging_len = 0, olen = 0;
   struct gcpro gcpro1, gcpro2;
 
   /* We can GC in #'coerce, and in copy_string_extents(). Our callers don't
@@ -4852,7 +4853,7 @@ concatenate (int nsequences, Lisp_Object *sequences,
      #'byte-length)), no need for character lengths or INC_IBYTEPTR. */
   if (EQ (result_type, Qstring))
     {
-      Bytecount bstaging_len = 0;
+      EMACS_UINT bstaging_len = 0;
       Ibyte *bstaging = NULL, *cursor = NULL;
       struct merge_string_extents_struct *args_mse
         = alloca_array (struct merge_string_extents_struct, nsequences);
@@ -4860,6 +4861,7 @@ concatenate (int nsequences, Lisp_Object *sequences,
 
       for (ii = 0; ii < nsequences; ++ii)
         {
+          olen = bstaging_len;
           if (STRINGP (sequences[ii]))
             {
               bstaging_len += XSTRING_LENGTH (sequences[ii]);
@@ -4872,6 +4874,16 @@ concatenate (int nsequences, Lisp_Object *sequences,
                  encountered. */
               bstaging_len
                 += (XFIXNUM (Flength (sequences[ii]))) * MAX_ICHAR_LEN;
+            }
+
+          if (bstaging_len >= STRING_BYTE_TOTAL_SIZE_LIMIT
+              || bstaging_len < olen)
+            {
+              invalid_argument_2 ("concatenate: length overflow",
+                                  result_type,
+                                  /* Don't pass SEQUENCES[II] to the error
+                                     handling, we don't want it printed */
+                                  make_unsigned_integer (bstaging_len));
             }
         }
 
@@ -4934,11 +4946,13 @@ concatenate (int nsequences, Lisp_Object *sequences,
             }
         }
 
-      if ((cursor - bstaging) != bstaging_len)
+      assert (cursor >= bstaging);
+ 
+      if ((EMACS_UINT) (cursor - bstaging) != bstaging_len)
         {
           Bytecount used_len = cursor - bstaging;
 
-          text_checking_assert (used_len < bstaging_len);
+          text_checking_assert ((EMACS_UINT) used_len < bstaging_len);
 
           /* No-one else has a pointer to RESULT, and calling resize_string()
              gives crashes in temacs, its implementation isn't thoroughly
@@ -5030,6 +5044,7 @@ concatenate (int nsequences, Lisp_Object *sequences,
 
   for (ii = 0; ii < nsequences; ++ii)
     {
+      olen = staging_len;
       if (STRINGP (sequences[ii]))
         {
           /* No need to actually get the char length, since the byte length
@@ -5043,6 +5058,15 @@ concatenate (int nsequences, Lisp_Object *sequences,
           /* Get the item count of each sequence; in passing, check their
              type and circularity, well-formedness. */
           staging_len += (XFIXNUM (Flength (sequences[ii])));
+        }
+
+      if (staging_len >= ARRAY_DIMENSION_LIMIT || staging_len < olen)
+        {
+          invalid_argument_2 ("concatenate: length overflow",
+                              result_type,
+                              /* Don't pass SEQUENCES[II] to the error
+                                 handling, we don't want it printed */
+                              make_unsigned_integer (staging_len));
         }
     }
 
