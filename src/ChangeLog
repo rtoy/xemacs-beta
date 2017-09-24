@@ -1,5 +1,33 @@
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* chartab.c (chartab_data_validate):
+	Silence an unused-variable compiler warning here.
+	* doprnt.c (bignum_to_string_1):
+	Fix a bug in this function, thank you clang++4.0.
+	* gc.c (KKCC_DO_CHECK_FREE):
+	Avoid an unused-variable warning when not ERROR_CHECK_GC.
+	* gccache-x.c (describe_gc_cache):
+	Fix a bug in this function, thank you clang++4.0.
+	* mule-charset.c (validate_charset_offset_or_size):
+	Be a bit more idiomatic in getting an external list length, and
+	silence a compiler warning while doing so.
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_string_text_block):
+	Fix the same bug in these two functions, thank you clang++4.0.
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_search_2):
+	* regex.c (re_match_2_internal):
+	Silence compiler warnings in this file, both when #define EMACS
+	and when not.
+	* text.c (copy_buffer_text_out):
+	Silence compiler warning here, add an assert to ensure the
+	approach is OK.
+	* unicode.c (free_precedence_array):
+	* unicode.c (recalculate_unicode_precedence):
+	Silence unused variable warnings in these two functions.
+
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Error when passed values that would overflow, #'make-vector,
 	#'make-string, #'make-bit-vector
 	* lisp.h:
