@@ -1,5 +1,51 @@
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Error when passed values that would overflow, #'make-vector,
+	#'make-string, #'make-bit-vector
+	* lisp.h:
+	Make ARRAY_DIMENSION_LIMIT more realistic; provide analagous
+	but larger STRING_BYTE_TOTAL_SIZE_LIMIT,
+	BIT_VECTOR_TOTAL_SIZE_LIMIT.
+	* lisp.h (struct Lisp_Vector):
+	SIZE is now an Elemcount, not a long.
+	* alloc.c:
+	Provide Vstring_total_size_limit, Vbit_vector_total_size_limit.
+	* alloc.c (make_uninit_vector):
+	Do our size calculation with EMACS_UINT; assert we haven't
+	overflowed.
+	* alloc.c (Fmake_vector):
+	Check LENGTH for range more correctly.
+	* alloc.c (Fvector):
+	Check NARGS for range.
+	* alloc.c (make_bit_vector_internal):
+	Document why we don't need to check SIZEI for range in this
+	function.
+	* alloc.c (make_bit_vector_from_byte_vector):
+	Check the range here, no point creating a bit vector where the
+	trailing elements can't be referenced from Lisp.
+	* alloc.c (Fmake_bit_vector):
+	Check LENGTH using BIT_VECTOR_TOTAL_SIZE_LIMIT; check that BIT is
+	a bit before allocating anything.
+	* alloc.c (Fbit_vector):
+	Check NARGS for range.
+	* alloc.c (make_uninit_string):
+	Do the length calculation and overflow assertion check with
+	EMACS_UINTs, so GCC doesn't eliminate the check when optimising.
+	* alloc.c (Fmake_string):
+	Check LENGTH for possible overflow in this function.
+	* alloc.c (Fstring):
+	Check NARGS for possible overflow in this function.
+	* alloc.c (vars_of_alloc):
+	Provide, document `string-total-size-limit',
+	`bit-vector-total-size-limit'.
+	* event-stream.c (Frecent_keys):
+	Use ARRAY_DIMENSION_LIMIT correctly here.
+	* sequence.c (concatenate):
+	Check for overflow before allocating strings, vectors, using
+	unsigned arithmetic so GCC doesn't optimize away signed checks.
+
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* symbols.c (do_symval_forwarding):
 	* symbols.c (store_symval_forwarding):
 	If we have bignum support, and a const-integer or built-in integer
