@@ -1358,7 +1358,7 @@ do								\
     }								\
 } while (0)
 #else
-#define KKCC_DO_CHECK_FREE(obj, allow_free) DO_NOTHING
+#define KKCC_DO_CHECK_FREE(obj, allow_free) (USED (allow_free))
 #endif
 
 static inline void

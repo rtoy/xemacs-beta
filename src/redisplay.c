@@ -2933,7 +2933,7 @@ done:
 
 	if (!(rb->type == RUNE_CHAR && rb->object.chr.ch < 0x100
 	    && isspace (rb->object.chr.ch))
-	    && !rb->type == RUNE_BLANK)
+	    && rb->type != RUNE_BLANK)
 	  {
 	    dl->bounds.right_white = rb->xpos + rb->width;
 	    done = 1;
@@ -5185,7 +5185,7 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 
 	if (!(rb->type == RUNE_CHAR && rb->object.chr.ch < 0x100
 	    && isspace (rb->object.chr.ch))
-	    && !rb->type == RUNE_BLANK)
+	    && rb->type != RUNE_BLANK)
 	  {
 	    dl->bounds.right_white = rb->xpos + rb->width;
 	    done = 1;

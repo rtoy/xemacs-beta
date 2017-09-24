@@ -589,12 +589,11 @@ validate_charset_offset_or_size (Lisp_Object keyword, Lisp_Object value,
     }
   else
     {
-      int len = 0;
+      Elemcount len = 0;
       Lisp_Object tem;
-      {
-	EXTERNAL_LIST_LOOP_1 (value)
-	  len++;
-      }
+
+      GET_EXTERNAL_LIST_LENGTH (value, len);
+
       if (len < 1 || len > 2)
 	invalid_constant_2
 	  ("Invalid value for property (list of 1 or 2 integers)",

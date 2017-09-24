@@ -1960,6 +1960,7 @@ chartab_data_validate (Lisp_Object UNUSED (keyword), Lisp_Object value,
       else if (CHARP (range))
 	continue;
       sferror ("Invalid range format", range);
+      USED (data);
     }
 
   return 1;

@@ -3465,6 +3465,8 @@ just_read_file (inf)
 
   LOOP_ON_INPUT_LINES (inf, lb, dummy)
     continue;
+
+  (void)(dummy); /* Silence compiler warning. */
 }
 
 /* Fortran parsing */

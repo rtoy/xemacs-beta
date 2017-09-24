@@ -95,7 +95,7 @@ main (int argc, char **argv)
   logical labels_saved, printing, header, first, last_was_blank_line;
   time_t ltoday;
   struct tm *tm;
-  char *labels, *p, *today;
+  char *labels = NULL, *p, *today;
   struct linebuffer data;
 
 #ifdef MSDOS
