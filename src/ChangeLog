@@ -1,3 +1,11 @@
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (do_symval_forwarding):
+	* symbols.c (store_symval_forwarding):
+	If we have bignum support, and a const-integer or built-in integer
+	value (bit width one more than Lisp fixnums) needs bignum support
+	to pass its value to Lisp, use that support.
+
 2017-09-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.c (read_process_output): Have this return a Bytecount,
