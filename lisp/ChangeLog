@@ -1,3 +1,13 @@
+2017-09-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* subr.el (concat):
+	This function hasn't accepted individual fixnums as arguments in
+	twenty years, and GNU's version of the function doesn't
+	either. Remove all mention of it.
+	Clarify the types of the elements accepted in the argument sequences.
+	* subr.el (bvconcat):
+	Clarify the types of the elements accepted in the argument sequences.
+
 2017-09-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* rect.el (delete-extract-rectangle-line):

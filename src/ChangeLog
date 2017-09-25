@@ -1,3 +1,15 @@
+2017-09-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Fchar_to_int):
+	Clarify the details of the integer to character mapping in the
+	docstring, mentioning Unicode.
+	* elhash.c (Fdefine_hash_table_test):
+	Correct my understanding of the required range for hash values;
+	since we get the modulus of the hash value base HT->SIZE, the most
+	significant bits don't matter as much.
+	* fns.c (Fstring_lessp):
+	Fix a typo in a comment here.
+
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* chartab.c (chartab_data_validate):
