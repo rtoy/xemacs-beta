@@ -2851,7 +2851,7 @@ DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 struct Lisp_Vector
 {
   NORMAL_LISP_OBJECT_HEADER header;
-  long size;
+  Elemcount size;
   Lisp_Object contents[1];
 };
 typedef struct Lisp_Vector Lisp_Vector;
@@ -4412,8 +4412,26 @@ DECLARE_DOESNT_RETURN (memory_full (void));
 void disksave_object_finalization (void);
 void finish_object_memory_usage_stats (void);
 extern int purify_flag;
-#define ARRAY_DIMENSION_LIMIT MOST_POSITIVE_FIXNUM
-extern Fixnum Varray_dimension_limit;
+
+/* ALLOC_SIZED_LISP_OBJECT() takes a signed Bytecount, and so the limitation
+   on the size of a vector is that number that would cause a signed Bytecount
+   to overflow, when plugged into FLEXIBLE_ARRAY_STRUCT_SIZEOF(). */
+#define ARRAY_DIMENSION_LIMIT ((MOST_POSITIVE_FIXNUM / sizeof (Lisp_Object)) \
+                               - (offsetof (Lisp_Vector, contents)      \
+                                  / sizeof (Lisp_Object)) + 1)
+
+/* String lengths are less restrictive, since there's no multiplication needed
+   in the calculation of the Bytecount. This is an exclusive bound. */
+#define STRING_BYTE_TOTAL_SIZE_LIMIT (MOST_POSITIVE_FIXNUM + 1)
+
+/* This could be even less restrictive than its string counterpart. We would
+   need to allow bignum string indices for that, which we currently reject in
+   #'aset, #'aref. */
+#define BIT_VECTOR_TOTAL_SIZE_LIMIT (MOST_POSITIVE_FIXNUM + 1)
+
+extern Fixnum Varray_dimension_limit, Vstring_total_size_limit;
+extern Fixnum Vfixnum_total_size_limit;
+
 #ifndef NEW_GC
 extern EMACS_INT gc_generation_number[1];
 #endif /* not NEW_GC */

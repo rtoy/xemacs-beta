@@ -95,6 +95,7 @@ static Fixnum debug_allocation_backtrace_length;
 #endif
 
 Fixnum Varray_dimension_limit, Varray_total_size_limit, Varray_rank_limit;
+Fixnum Vstring_total_size_limit, Vbit_vector_total_size_limit;
 
 int need_to_check_c_alloca;
 int need_to_signal_post_gc;
@@ -1864,11 +1865,16 @@ Lisp_Object
 make_uninit_vector (Elemcount sizei)
 {
   /* no `next' field; we use lcrecords */
-  Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
-						  contents, sizei);
-  Lisp_Object obj = ALLOC_SIZED_LISP_OBJECT (sizem, vector);
-  Lisp_Vector *p = XVECTOR (obj);
+  EMACS_UINT sizeui = sizei;
+  EMACS_UINT sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
+                                                   contents, sizeui);
+  Lisp_Object obj;
+  Lisp_Vector *p;
 
+  structure_checking_assert (sizem >= sizeui);
+
+  obj = ALLOC_SIZED_LISP_OBJECT (sizem, vector);
+  p = XVECTOR (obj);
   p->size = sizei;
   return obj;
 }
@@ -1891,7 +1897,10 @@ See also the function `vector'.
 */
        (length, object))
 {
-  check_integer_range (length, Qzero, make_fixnum (ARRAY_DIMENSION_LIMIT));
+  check_integer_range (length, Qzero,
+                       /* array-dimension-limit is an exclusive upper bound,
+                          check_integer_range() does <=, adjust for this. */
+                       make_fixnum (ARRAY_DIMENSION_LIMIT - 1));
   return make_vector (XFIXNUM (length), object);
 }
 
@@ -1903,7 +1912,12 @@ arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  Lisp_Object result = make_uninit_vector (nargs);
+  Lisp_Object result;
+  check_integer_range (make_fixnum (nargs), Qzero,
+                       /* array-dimension-limit is an exclusive upper bound,
+                          check_integer_range() does <=, adjust for this. */
+                       make_fixnum (ARRAY_DIMENSION_LIMIT - 1));
+  result = make_uninit_vector (nargs);
   memcpy (XVECTOR_DATA (result), args, sizeof (Lisp_Object) * nargs);
   return result;
 }
@@ -2135,6 +2149,9 @@ make_bit_vector_internal (Elemcount sizei)
   Bytecount sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Bit_Vector,
 						  unsigned long,
 						  bits, num_longs);
+  /* No need to do the overflow checks we do for vectors and strings, for
+     large values of SIZEI the number of longs is always going to be less than
+     SIZEI, the number of bits. */
   Lisp_Object obj = ALLOC_SIZED_LISP_OBJECT (sizem, bit_vector);
   Lisp_Bit_Vector *p = XBIT_VECTOR (obj);
 
@@ -2169,7 +2186,12 @@ Lisp_Object
 make_bit_vector_from_byte_vector (unsigned char *bytevec, Elemcount length)
 {
   Elemcount i;
-  Lisp_Bit_Vector *p = make_bit_vector_internal (length);
+  Lisp_Bit_Vector *p;
+
+  check_integer_range (make_integer (length), Qzero,
+                       make_fixnum (BIT_VECTOR_TOTAL_SIZE_LIMIT - 1));
+
+  p = make_bit_vector_internal (length);
 
   for (i = 0; i < length; i++)
     set_bit_vector_bit (p, i, bytevec[i]);
@@ -2194,7 +2216,9 @@ BIT must be one of the integers 0 or 1.  See also the function `bit-vector'.
 */
        (length, bit))
 {
-  check_integer_range (length, Qzero, make_fixnum (ARRAY_DIMENSION_LIMIT));
+  check_integer_range (length, Qzero,
+                       make_fixnum (BIT_VECTOR_TOTAL_SIZE_LIMIT - 1));
+  CHECK_BIT (bit);
   return make_bit_vector (XFIXNUM (length), bit);
 }
 
@@ -2208,7 +2232,11 @@ arguments: (&rest ARGS)
        (int nargs, Lisp_Object *args))
 {
   int i;
-  Lisp_Bit_Vector *p = make_bit_vector_internal (nargs);
+  Lisp_Bit_Vector *p;
+
+  check_integer_range (make_fixnum (nargs), Qzero,
+                       make_fixnum (BIT_VECTOR_TOTAL_SIZE_LIMIT - 1));
+  p = make_bit_vector_internal (nargs);  
 
   for (i = 0; i < nargs; i++)
     {
@@ -2944,10 +2972,11 @@ sledgehammer_check_ascii_begin (Lisp_Object str)
 Lisp_Object
 make_uninit_string (Bytecount length)
 {
+  EMACS_UINT ulength = length, fullsize = STRING_FULLSIZE (ulength);
   Lisp_String *s;
-  Bytecount fullsize = STRING_FULLSIZE (length);
 
-  assert (length >= 0 && fullsize > 0);
+  structure_checking_assert (length >= 0 && fullsize >= ulength
+                             && ((Bytecount) fullsize) >= 0);
 
 #ifdef NEW_GC
   s = XSTRING (ALLOC_NORMAL_LISP_OBJECT (string));
@@ -3228,43 +3257,90 @@ set_string_char (Lisp_Object ss, Charcount idx, Ichar cc)
 DEFUN ("make-string", Fmake_string, 2, 2, 0, /*
 Return a new string consisting of LENGTH copies of CHARACTER.
 LENGTH must be a non-negative integer.
+See the variable `string-total-size-limit' for restrictions on LENGTH.
 */
        (length, character))
 {
-  check_integer_range (length, Qzero, make_fixnum (ARRAY_DIMENSION_LIMIT));
+  Ibyte init_str[MAX_ICHAR_LEN];
+  Bytecount onelen;
+  Lisp_Object val;
+
   CHECK_CHAR_COERCE_INT (character);
-  {
-    Ibyte init_str[MAX_ICHAR_LEN];
-    int len = set_itext_ichar (init_str, XCHAR (character));
-    Lisp_Object val = make_uninit_string (len * XFIXNUM (length));
+  onelen = set_itext_ichar (init_str, XCHAR (character));
 
-    if (len == 1)
-      {
-	/* Optimize the single-byte case */
-	memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
-	XSET_STRING_ASCII_BEGIN (val, min (MAX_STRING_ASCII_BEGIN,
-					   len * XFIXNUM (length)));
-      }
-    else
-      {
-	EMACS_INT i;
-	Ibyte *ptr = XSTRING_DATA (val);
+  if (onelen == 1)
+    {
+      /* Optimize the single-byte case */
+      check_integer_range (length, Qzero,
+                           /* Exclusive upper bound, but check_integer_range()
+                              is inclusive. */
+                           make_fixnum (STRING_BYTE_TOTAL_SIZE_LIMIT - 1));
 
-	for (i = XFIXNUM (length); i; i--)
-	  {
-	    Ibyte *init_ptr = init_str;
-	    switch (len)
-	      {
-	      case 4: *ptr++ = *init_ptr++;
-	      case 3: *ptr++ = *init_ptr++;
-	      case 2: *ptr++ = *init_ptr++;
-	      case 1: *ptr++ = *init_ptr++;
-	      }
-	  }
-      }
-    sledgehammer_check_ascii_begin (val);
-    return val;
-  }
+      val = make_uninit_string (XFIXNUM (length));
+      memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
+      XSET_STRING_ASCII_BEGIN (val, min (MAX_STRING_ASCII_BEGIN,
+                                         XSTRING_LENGTH (val)));
+    }
+  else if (FIXNUMP (length) && XREALFIXNUM (length) >= 0)
+    {
+      EMACS_UINT clen = XREALFIXNUM (length);
+      EMACS_UINT oproduct = clen, product = clen, fsize;
+      EMACS_INT i;
+      Ibyte *ptr;
+
+      for (i = onelen, --i; i; i--)
+        {
+          product += clen;
+          if (product < oproduct) 
+            {
+              /* We're adding, not multiplying, because it's far harder to
+                 detect overflow when you multiply MOST_POSITIVE_FIXNUM by six
+                 on 32-bit platforms; you get a number greater than
+                 MOST_POSITIVE_FIXNUM that is still less than the number you
+                 want. */
+              goto range_issue;
+            }
+          oproduct = product;
+        }
+
+      if ((fsize = STRING_FULLSIZE (product)) < oproduct
+          || ((Bytecount) fsize < 0))
+        {
+          goto range_issue;
+        }
+      
+      val = make_uninit_string ((Bytecount) product);
+      ptr = XSTRING_DATA (val);
+
+      for (i = clen; i; i--)
+        {
+          Ibyte *init_ptr = init_str;
+          switch (onelen)
+            {
+#if MAX_ICHAR_LEN > 6
+#error "unimplemented"
+#elif MAX_ICHAR_LEN > 4
+            case 6: *ptr++ = *init_ptr++;
+            case 5: *ptr++ = *init_ptr++;
+#endif
+            case 4: *ptr++ = *init_ptr++;
+            case 3: *ptr++ = *init_ptr++;
+            case 2: *ptr++ = *init_ptr++;
+            case 1: *ptr++ = *init_ptr++;
+            }
+        }
+    }
+  else
+    {
+    range_issue:
+      check_integer_range (length, Qzero,
+                           make_fixnum ((STRING_BYTE_TOTAL_SIZE_LIMIT - 1) /
+                                        onelen));
+      return Qnil;
+    }
+
+  sledgehammer_check_ascii_begin (val);
+  return val;
 }
 
 DEFUN ("string", Fstring, 0, MANY, 0, /*
@@ -3274,8 +3350,15 @@ arguments: (&rest ARGS)
 */
        (int nargs, Lisp_Object *args))
 {
-  Ibyte *storage = alloca_ibytes (nargs * MAX_ICHAR_LEN);
-  Ibyte *p = storage;
+  Ibyte *storage, *p;
+
+  /* No need to work too hard at this overflow check, it will be very rare
+     that NARGS will be greater than #x10000. */
+  check_integer_range (make_fixnum (nargs), Qzero,
+                       make_fixnum ((STRING_BYTE_TOTAL_SIZE_LIMIT - 1) /
+                                    MAX_ICHAR_LEN));
+
+  storage = p = alloca_ibytes (nargs * MAX_ICHAR_LEN);
 
   for (; nargs; nargs--, args++)
     {
@@ -6159,10 +6242,35 @@ arrays can have more than one dimension.  In XEmacs this is not the case,
 and multi-dimensional arrays need to be implemented by the user with arrays
 of arrays.
 
-Note that XEmacs may not have enough memory available to create an array
-with this dimension.
+This limit is a result of the bit widths used in the implementation of the
+`vector' type. Note that XEmacs may not have enough memory available to create
+an array with this number of elements.
 */);
   Varray_total_size_limit = ARRAY_DIMENSION_LIMIT;
+
+  DEFVAR_CONST_INT ("string-total-size-limit", &Vstring_total_size_limit /*
+The exclusive upper bound on a string's length.
+
+This is usually significantly more than `array-total-size-limit'.
+Exclusively-ASCII strings can approach this limit in terms of their character
+count, but strings with significant non-ASCII content are more restricted,
+since each non-ASCII character takes more byte space than does an ASCII
+character.
+
+This limit is a result of the range limitations on arguments to `aref' and
+`aset', and the amount of memory available to XEmacs is a separate question.
+*/);
+  Vstring_total_size_limit = STRING_BYTE_TOTAL_SIZE_LIMIT;
+
+  DEFVAR_CONST_INT ("bit-vector-total-size-limit",
+                    &Vbit_vector_total_size_limit /*
+The exclusive upper bound on a bit vector's length.
+
+This limit is a result of the range limitations on arguments to `aref' and
+`aset'.  As with any operation that allocates memory, it is possible for
+`make-bit-vector' to fail if there is insufficient memory available to XEmacs.
+*/);
+  Vbit_vector_total_size_limit = BIT_VECTOR_TOTAL_SIZE_LIMIT;
 
 #ifdef DEBUG_XEMACS
   DEFVAR_INT ("debug-allocation", &debug_allocation /*

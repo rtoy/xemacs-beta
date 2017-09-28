@@ -2437,7 +2437,7 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
   {
     BUFFER_TEXT_LOOP (buf, pos, len, runptr, runlen)
       {
-	Bytecount the_src_used, the_dst_used;
+	Bytecount the_src_used = -1, the_dst_used;
 	
 	the_dst_used = copy_text_between_formats (runptr, runlen,
 						  BUF_FORMAT (buf),
@@ -2446,7 +2446,10 @@ copy_buffer_text_out (struct buffer *buf, Bytebpos pos,
 						  dstobj, &the_src_used);
 	dst_used += the_dst_used;
 	if (src_used)
-	  *src_used += the_src_used;
+          {
+            text_checking_assert (the_src_used >= 0);
+            *src_used += the_src_used;
+          }
 	if (dst)
 	  {
 	    dst += the_dst_used;

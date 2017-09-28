@@ -1771,8 +1771,9 @@ free_precedence_array (Lisp_Object precarray)
   /* We shouldn't be trying to free any precarray that's attached to a
      buffer */
   {
-    ALIST_LOOP_3 (name, buf, Vbuffer_alist)
-      assert (!EQ (precarray, XBUFFER (buf)->unicode_precedence_array));
+    LIST_LOOP_2 (elt, Vbuffer_alist)
+      assert (!EQ (precarray,
+                   XBUFFER (XCDR (elt))->unicode_precedence_array));
   }
   assert (!EQ (precarray, Vdefault_unicode_precedence_array));
 #endif /* ERROR_CHECK_TEXT */
@@ -1962,9 +1963,9 @@ recalculate_unicode_precedence (int flags)
     recalculate_unicode_precedence_1 (Vdefault_unicode_precedence_list,
 				      flags | RUP_MAKE_FULL_P);
   {
-    ALIST_LOOP_3 (name, buffer, Vbuffer_alist)
+    LIST_LOOP_2 (elt, Vbuffer_alist)
       {
-	struct buffer *buf = XBUFFER (buffer);
+	struct buffer *buf = XBUFFER (XCDR (elt));
 	buf->unicode_precedence_array =
 	  recalculate_unicode_precedence_1 (buf->unicode_precedence_list,
 					    flags);

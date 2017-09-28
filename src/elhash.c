@@ -2557,14 +2557,15 @@ EQUAL-FUNCTION must be a function taking two arguments and returning non-nil
 if both arguments are the same.  HASH-FUNCTION must be a function taking one
 argument and returning an integer that is the hash code of the argument.
 
-Computation should use the whole value range of the underlying machine long
-type.  In XEmacs this will necessitate bignums for values above
-`most-positive-fixnum' but below (1+ (* most-positive-fixnum 2)) and
-analogous values below `most-negative-fixnum'.  Relatively poor hashing
-performance is guaranteed in a build without bignums.
+Computation should ideally use the whole value range of the underlying machine
+long type.  In XEmacs this necessitates bignums for values above
+`most-positive-fixnum' but below (1+ (* most-positive-fixnum 2)) and analogous
+values below `most-negative-fixnum'.  With this implementation, however, the
+low-order bits are the most important, and so it is reasonable not to bother
+producing bignums.
 
-This function returns t if successful, and errors if NAME
-cannot be defined as a hash table test.
+This function returns t if successful, and errors if NAME cannot be defined as
+a hash table test.
 */
        (name, equal_function, hash_function))
 {

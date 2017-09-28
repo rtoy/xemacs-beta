@@ -338,6 +338,8 @@ main (int argc, char *argv[])
 #ifndef WIN32_NATIVE
   setuid (getuid ());
 #endif
+#else /* MAIL_USE_POP */
+  (void) (poppass); /* Silence compiler warning. */
 #endif /* MAIL_USE_POP */
 
 #ifndef DISABLE_DIRECT_ACCESS

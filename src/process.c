@@ -1079,17 +1079,16 @@ process_setup_for_insertion (Lisp_Object process, int read_stderr)
 
 /* Read pending output from the process channel,
    starting with our buffered-ahead character if we have one.
-   Yield number of characters read.
+   Yield number of bytes read.
 
    This function reads at most 1024 bytes.
    If you want to read all available subprocess output,
    you must call it repeatedly until it returns zero.  */
-
-Charcount
+Bytecount
 read_process_output (Lisp_Object process, int read_stderr)
 {
   /* This function can GC */
-  Bytecount nbytes, nchars;
+  Bytecount nbytes;
   Ibyte chars[1025];
   Lisp_Object outstream;
   Lisp_Process *p = XPROCESS (process);
@@ -1139,16 +1138,16 @@ read_process_output (Lisp_Object process, int read_stderr)
 
   /* !!#### if the coding system changed as a result of reading, we
      need to change the output coding system accordingly. */
-  nchars = bytecount_to_charcount (chars, nbytes);
   outstream = filter;
   if (!NILP (outstream))
     {
       /* Some FSF junk with running_asynch_code, to preserve the match
          data.  Not necessary because we don't call process filters
 	 asynchronously (i.e. from within QUIT). */
-      /* Don't catch errors here; we're not in any critical code. */
+      /* Don't catch errors here; we're not in any critical code. call2() will
+         GCPRO() the string argument. */
       call2 (outstream, process, make_string (chars, nbytes));
-      return nchars;
+      return nbytes;
     }
 
   /* If no filter, write into buffer if it isn't dead.  */
@@ -1177,7 +1176,8 @@ read_process_output (Lisp_Object process, int read_stderr)
       unbind_to (spec);
       UNGCPRO;
     }
-  return nchars;
+
+  return nbytes;
 }
 
 int

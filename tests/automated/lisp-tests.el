@@ -1184,6 +1184,8 @@ will be used to make debugging easier."
 (Assert (not (equal [1 2 3 4] [1 2 3])))
 (Assert (equal (vector 1 2 3) [1 2 3]))
 (Assert (equal (make-vector 3 1) [1 1 1]))
+(Check-Error args-out-of-range (make-vector array-total-size-limit ?a))
+(Check-Error args-out-of-range (make-vector -1 ?a))
 
 ;;-----------------------------------------------------
 ;; Test bit-vector functions
@@ -1198,6 +1200,24 @@ will be used to make debugging easier."
 (Assert (equal (bit-vector 0 1 0) #*010))
 (Assert (equal (make-bit-vector 3 1) #*111))
 (Assert (equal (make-bit-vector 3 0) #*000))
+(Check-Error args-out-of-range (make-bit-vector bit-vector-total-size-limit 1))
+(Check-Error args-out-of-range (make-bit-vector -1 1))
+(Check-Error wrong-type-argument (make-bit-vector most-positive-fixnum -1))
+
+;;-----------------------------------------------------
+;; Test string functions
+;;-----------------------------------------------------
+(Assert (equal "abc" "abc"))
+(Assert (equal "" ""))
+(Assert (not (equal "abc" "")))
+(Assert (not (equal "abc" "abd")))
+(Assert (not (equal "abc" "bcd")))
+(Assert (equal (string ?a ?b ?c) "abc"))
+(Assert (equal (string 1 2 3) "\x01\x02\x03"))
+(Assert (equal (make-string 3 ?a) "aaa"))
+(Assert (equal (make-string 3 0) "\0\0\0"))
+(Check-Error args-out-of-range (make-string string-total-size-limit ?a))
+(Check-Error args-out-of-range (make-string -1 ?a))
 
 ;;-----------------------------------------------------
 ;; Test buffer-local variables used as (ugh!) function parameters
