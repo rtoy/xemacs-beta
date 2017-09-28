@@ -4169,7 +4169,7 @@ vars_of_mule_coding (void)
   staticpro (&Vshift_jis_precedence);
 
   Vbig5_precedence = Qnil;
-  staticpro (&Vshift_jis_precedence);
+  staticpro (&Vbig5_precedence);
 }
 
 void

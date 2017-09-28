@@ -3999,15 +3999,12 @@ vars_of_unicode (void)
   Vprecedence_array_charsets_seen_hash =
     make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, Qeq);
 
-  staticpro (&Vprecedence_array_charsets_seen_hash);
-  Vprecedence_array_charsets_seen_hash =
-    make_lisp_hash_table (20, HASH_TABLE_NON_WEAK, Qeq);
-
   staticpro (&Vprecedence_list_to_array);
   Vprecedence_list_to_array =
     /* The entries are lists, but for speed in lookup, we only compare
        using `eq'. */
     make_lisp_hash_table (20, HASH_TABLE_KEY_WEAK, Qeq);
+
   staticpro (&Vprecedence_array_cons_to_array);
   Vprecedence_array_cons_to_array =
     /* We must compare with `equal' since we have conses.  We make the table

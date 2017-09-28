@@ -1,3 +1,14 @@
+2017-09-28  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	Fix crash in unicode_to_charset_codepoint_raw.
+
+	* mule-coding.c (vars_of_mule_coding):
+	Fix broken staticpro of Vbig5_precedence (cause of crash).
+
+	* unicode.c (vars_of_unicode):
+	Delete duplicated initialization of Vprecedence_array_cons_to_array.
+	(Defect, but probably harmless.)
+
 2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (Fchar_width):
