@@ -3801,7 +3801,10 @@ modify them.
   else
     {
       check_integer_range (number, Qzero,
-                           make_fixnum (ARRAY_DIMENSION_LIMIT));
+                           /* array-dimension-limit is an exclusive upper
+                              bound, check_integer_range() does <=, adjust for
+                              this. */
+                           make_fixnum (ARRAY_DIMENSION_LIMIT - 1));
       nwanted = XFIXNUM (number);
     }
 

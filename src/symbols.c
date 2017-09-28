@@ -875,7 +875,7 @@ do_symval_forwarding (Lisp_Object valcontents, struct buffer *buffer,
     {
     case SYMVAL_FIXNUM_FORWARD:
     case SYMVAL_CONST_FIXNUM_FORWARD:
-      return make_fixnum (*((Fixnum *)symbol_value_forward_forward (fwd)));
+      return make_integer (*((Fixnum *)symbol_value_forward_forward (fwd)));
 
     case SYMVAL_BOOLEAN_FORWARD:
     case SYMVAL_CONST_BOOLEAN_FORWARD:
@@ -1045,10 +1045,29 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
       switch (XSYMBOL_VALUE_MAGIC_TYPE (ovalue))
 	{
 	case SYMVAL_FIXNUM_FORWARD:
-	  CHECK_FIXNUM (newval);
+	  CHECK_INTEGER (newval);
 	  if (magicfun)
 	    magicfun (sym, &newval, Qnil, 0);
-	  *((Fixnum *) symbol_value_forward_forward (fwd)) = XFIXNUM (newval);
+#if HAVE_BIGNUM
+          if (BIGNUMP (newval))
+            {
+              if (bignum_fits_emacs_int_p (XBIGNUM_DATA (newval)))
+                {
+                  *((Fixnum *) symbol_value_forward_forward (fwd))
+                    = bignum_to_emacs_int (XBIGNUM_DATA (newval));
+                }
+              else
+                {
+                  args_out_of_range (sym, newval);
+                }
+            }
+          else 
+#endif
+            {
+              *((Fixnum *) symbol_value_forward_forward (fwd))
+                = XFIXNUM (newval);
+            }
+  
 	  return;
 
 	case SYMVAL_BOOLEAN_FORWARD:

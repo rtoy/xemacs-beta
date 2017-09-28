@@ -267,7 +267,7 @@ is implemented.
   /* Since we've assigned Control-1 and Latin-1 the two lowest leading
      bytes, the statement above about them and their ordering w.r.t.  other
      charsets is guaranteed.  Also, UTF-8 preserves Unicode character order
-     when comparing byte-by-byte.  So need no to do an actual char-by-char
+     when comparing byte-by-byte.  So no need to do an actual char-by-char
      comparison. */
 
   if (qxememcmp4 (XSTRING_DATA (p1), XSTRING_LENGTH (p1),

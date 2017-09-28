@@ -364,10 +364,10 @@ static Bytecount
 bignum_to_string_1 (Ibyte **buf, Bytecount *size_inout, bignum bn,
                     EMACS_UINT radix, Lisp_Object table)
 {
-  Boolint minusp, heap_allocp = size_inout < 0;
-  Ibyte *buf1 = *size_inout > -1 ? *buf :
+  Boolint minusp, heap_allocp = (*buf == NULL);
+  Ibyte *buf1 = heap_allocp ?
     ((*size_inout = 128 * MAX_ICHAR_LEN),
-     (*buf = xnew_array (Ibyte, *size_inout)));
+     (*buf = xnew_array (Ibyte, *size_inout))) : *buf;
   Ibyte *end = buf1 + *size_inout, *cursor = end, *this_digit = NULL;
   Ibyte *ftmdata = XSTRING_DATA (table);
   /* Since, in contrast with the fixnum code, we are repeatedly checking the

@@ -294,7 +294,7 @@ describe_gc_cache (struct gc_cache *cache, int flags)
   int count = 0;
   struct gc_cache_cell *cell = cache->head;
 
-  if (! flags & DGCCFLAG_SUMMARY) return;
+  if (!(flags & DGCCFLAG_SUMMARY)) return;
 
   stderr_out ("\nsize:    %d", cache->size);
   stderr_out ("\ncreated: %d", cache->create_count);

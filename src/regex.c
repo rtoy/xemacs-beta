@@ -4368,7 +4368,6 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 	case charset_mule:
 	  {
 	    int nentries;
-	    int i;
 	    Bitbyte flags = *p++;
 
 	    if (flags)
@@ -4957,9 +4956,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
   int depth;
 #endif
 #endif /* emacs */
-#if 1
   int forward_search_p;
-#endif
 
   /* Check for out-of-range STARTPOS.  */
   if (startpos < 0 || startpos > total_size)
@@ -4972,9 +4969,10 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
   else if (endpos > total_size)
     range = total_size - startpos;
 
-#if 1
   forward_search_p = range > 0;
-#endif
+
+  (void) (forward_search_p); /* This is only used with assertions, silence the
+                                compiler warning when they're turned off. */
 
   /* If the search isn't to be a backwards one, don't waste time in a
      search for a pattern that must be anchored.  */
@@ -5104,9 +5102,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		INC_IBYTEPTR_FMT (d, fmt);
 	      range -= d - orig_d;
 	      startpos += d - orig_d;
-#if 1
 	      assert (!forward_search_p || range >= 0);
-#endif
 	    }
 	  else if (range < 0)
 	    {
@@ -5175,9 +5171,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 #endif /* MULE */
 		      INC_IBYTEPTR_FMT (d, fmt);
 		      range -= (d - old_d);
-#if 1
 		      assert (!forward_search_p || range >= 0);
-#endif
 		    }
 		}
 #ifdef MULE
@@ -5193,9 +5187,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 			break;
 		      INC_IBYTEPTR_FMT (d, fmt);
 		      range -= (d - old_d);
-#if 1
 		      assert (!forward_search_p || range >= 0);
-#endif
 		    }
 		}
 #endif /* MULE */
@@ -5206,9 +5198,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 		      re_char *old_d = d;
 		      INC_IBYTEPTR (d);
 		      range -= (d - old_d);
-#if 1
-		assert (!forward_search_p || range >= 0);
-#endif
+                      assert (!forward_search_p || range >= 0);
 		    }
 		}
 
@@ -5288,9 +5278,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	       (startpos >= size1 ? string2 - size1 : string1) + startpos);
 	  d_size = itext_ichar_len_fmt (d, fmt);
 	  range -= d_size;
-#if 1
-		assert (!forward_search_p || range >= 0);
-#endif
+          assert (!forward_search_p || range >= 0);
 	  startpos += d_size;
 	}
       else
@@ -5303,9 +5291,7 @@ re_search_2 (struct re_pattern_buffer *bufp, const char *str1,
 	  DEC_IBYTEPTR_FMT (d, fmt);
 	  d_size = itext_ichar_len_fmt (d, fmt);
 	  range += d_size;
-#if 1
-		assert (!forward_search_p || range >= 0);
-#endif
+          assert (!forward_search_p || range >= 0);
 	  startpos -= d_size;
 	}
     }
@@ -6677,6 +6663,7 @@ re_match_2_internal (struct re_pattern_buffer *bufp, re_char *string1,
             POP_FAILURE_POINT (sdummy, pdummy,
                                dummy_low_reg, dummy_high_reg,
                                reg_dummy, reg_dummy, reg_info_dummy);
+            USED (pdummy);
           }
           /* Note fall through.  */
 

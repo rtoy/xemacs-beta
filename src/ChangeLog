@@ -9,6 +9,108 @@
 	Delete duplicated initialization of Vprecedence_array_cons_to_array.
 	(Defect, but probably harmless.)
 
+2017-09-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Fchar_to_int):
+	Clarify the details of the integer to character mapping in the
+	docstring, mentioning Unicode.
+	* elhash.c (Fdefine_hash_table_test):
+	Correct my understanding of the required range for hash values;
+	since we get the modulus of the hash value base HT->SIZE, the most
+	significant bits don't matter as much.
+	* fns.c (Fstring_lessp):
+	Fix a typo in a comment here.
+
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* chartab.c (chartab_data_validate):
+	Silence an unused-variable compiler warning here.
+	* doprnt.c (bignum_to_string_1):
+	Fix a bug in this function, thank you clang++4.0.
+	* gc.c (KKCC_DO_CHECK_FREE):
+	Avoid an unused-variable warning when not ERROR_CHECK_GC.
+	* gccache-x.c (describe_gc_cache):
+	Fix a bug in this function, thank you clang++4.0.
+	* mule-charset.c (validate_charset_offset_or_size):
+	Be a bit more idiomatic in getting an external list length, and
+	silence a compiler warning while doing so.
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_string_text_block):
+	Fix the same bug in these two functions, thank you clang++4.0.
+	* regex.c (re_compile_fastmap):
+	* regex.c (re_search_2):
+	* regex.c (re_match_2_internal):
+	Silence compiler warnings in this file, both when #define EMACS
+	and when not.
+	* text.c (copy_buffer_text_out):
+	Silence compiler warning here, add an assert to ensure the
+	approach is OK.
+	* unicode.c (free_precedence_array):
+	* unicode.c (recalculate_unicode_precedence):
+	Silence unused variable warnings in these two functions.
+
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Error when passed values that would overflow, #'make-vector,
+	#'make-string, #'make-bit-vector
+	* lisp.h:
+	Make ARRAY_DIMENSION_LIMIT more realistic; provide analagous
+	but larger STRING_BYTE_TOTAL_SIZE_LIMIT,
+	BIT_VECTOR_TOTAL_SIZE_LIMIT.
+	* lisp.h (struct Lisp_Vector):
+	SIZE is now an Elemcount, not a long.
+	* alloc.c:
+	Provide Vstring_total_size_limit, Vbit_vector_total_size_limit.
+	* alloc.c (make_uninit_vector):
+	Do our size calculation with EMACS_UINT; assert we haven't
+	overflowed.
+	* alloc.c (Fmake_vector):
+	Check LENGTH for range more correctly.
+	* alloc.c (Fvector):
+	Check NARGS for range.
+	* alloc.c (make_bit_vector_internal):
+	Document why we don't need to check SIZEI for range in this
+	function.
+	* alloc.c (make_bit_vector_from_byte_vector):
+	Check the range here, no point creating a bit vector where the
+	trailing elements can't be referenced from Lisp.
+	* alloc.c (Fmake_bit_vector):
+	Check LENGTH using BIT_VECTOR_TOTAL_SIZE_LIMIT; check that BIT is
+	a bit before allocating anything.
+	* alloc.c (Fbit_vector):
+	Check NARGS for range.
+	* alloc.c (make_uninit_string):
+	Do the length calculation and overflow assertion check with
+	EMACS_UINTs, so GCC doesn't eliminate the check when optimising.
+	* alloc.c (Fmake_string):
+	Check LENGTH for possible overflow in this function.
+	* alloc.c (Fstring):
+	Check NARGS for possible overflow in this function.
+	* alloc.c (vars_of_alloc):
+	Provide, document `string-total-size-limit',
+	`bit-vector-total-size-limit'.
+	* event-stream.c (Frecent_keys):
+	Use ARRAY_DIMENSION_LIMIT correctly here.
+	* sequence.c (concatenate):
+	Check for overflow before allocating strings, vectors, using
+	unsigned arithmetic so GCC doesn't optimize away signed checks.
+
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (do_symval_forwarding):
+	* symbols.c (store_symval_forwarding):
+	If we have bignum support, and a const-integer or built-in integer
+	value (bit width one more than Lisp fixnums) needs bignum support
+	to pass its value to Lisp, use that support.
+
+2017-09-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (read_process_output): Have this return a Bytecount,
+	not a Charcount; the precise number of characters wasn't used by
+	our callers, so we were usually calling bytecount_to_charcount()
+	for no reason.
+	* process.h: Update the declaration of this function.
+
 2017-06-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (Fchar_width):

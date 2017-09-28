@@ -1,3 +1,10 @@
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Basic checks that array-total-size-limit,
+	bit-vector-total-size-limit, string-total-size-limit are
+	respected.
+
 2017-05-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/os-tests.el:

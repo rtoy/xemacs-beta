@@ -1,3 +1,12 @@
+2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* b2m.c (main):
+	* etags.c:
+	* etags.c (just_read_file):
+	* movemail.c (main):
+	* ootags.c (just_read_file):
+	Silence a few compiler warnings in these files.
+
 2017-03-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-docfile.c (scan_lisp_file):
