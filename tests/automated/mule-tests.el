@@ -868,18 +868,30 @@ This is a naive implementation in Lisp.  "
       (Assert-elc-is-escape-quoted)
       (delete-region (point-min) (point-max))))
 
-  (Known-Bug-Expect-Error
-   invalid-constant
-   (loop
-     for i from #x0 to #x10FFFF 
-     with exceptions = #s(range-table type start-closed-end-closed
-                                      data ((#xFFFE #xFFFF) t
-                                            (#xFDD0 #xFDEF) t
-                                            (#xD800 #xDBFF) t
-                                            (#xDC00 #xDFFF) t))
-     do (unless (get-range-table i exceptions)
-          (read (format (if (> i #xFFFF) #r"?\U%08X" #r"?\u%04X") i)))
-     finally return t))
+  (labels
+      ((read-all-unicode ()
+         (with-temp-buffer
+           (loop for i from #x0 to #x10FFFF 
+                 with exceptions = #s(range-table type start-closed-end-closed
+                                                  data ((#xFFFE #xFFFF) t
+                                                        (#xFDD0 #xFDEF) t
+                                                        (#xD800 #xDBFF) t
+                                                        (#xDC00 #xDFFF) t))
+                 with result = t
+                 do (unless (get-range-table i exceptions)
+                      (delete-region (point-min) (point-max))
+                      (format-into (current-buffer)
+                                   (if (> i #xFFFF) #r"?\U%08X" #r"?\u%04X")
+                                   i)
+                      (goto-char (point-min))
+                      (setq result (and (characterp (read (current-buffer)))
+                                        result)))
+                 finally (Assert result)))))
+    (when (compiled-function-p #'read-all-unicode)
+      (if (featurep 'unicode-internal)
+          (read-all-unicode)
+        (Known-Bug-Expect-Error syntax-error (read-all-unicode)))))
+
   (loop
     for i from #x00 to #xff
     do (Assert
