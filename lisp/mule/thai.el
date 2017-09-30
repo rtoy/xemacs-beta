@@ -27,29 +27,17 @@
 
 ;;; Code:
 
-(make-charset
- 'thai-iso8859-11
- "Right-Hand Part of Latin/Thai Alphabet (ISO/IEC 8859-11)"
- '(dimension 1
-   registries ["ISO8859-11"]
-   chars 96
-   ;final ?T @@#### What is the final byte for this?
-   graphic 1
-   unicode-map ("unicode/unicode-consortium/ISO8859/8859-11.TXT" #xA0)
-   short-name "Thai (ISO8859-11)"
-   long-name "RHP of Thai (ISO 8859-11)"
-   tags (iso8859 thai)))
+;; XEmacs; drop the thai-iso8859-11 charset, which is identical to thai-tis620
+;; for our purposes, and confuses the digit-char checks in the test suite on
+;; non-unicode-internal.
 
 (make-coding-system
- 'thai-tis620 'multibyte "Thai/TIS620"
+ 'tis-620 'multibyte "Thai/TIS620"
  '(charsets (ascii thai-tis620)
    mnemonic "Thai"
    post-read-conversion thai-post-read-conversion
-   documentation "8-bit encoding for ASCII (MSB=0) and Thai TIS620 (MSB=1)"))
-
-(define-coding-system-alias 'th-tis620 'thai-tis620)
-(define-coding-system-alias 'tis620 'thai-tis620)
-(define-coding-system-alias 'tis-620 'thai-tis620)
+   documentation "8-bit encoding for ASCII (MSB=0) and Thai TIS620 (MSB=1)"
+   aliases (iso-8859-11 thai-tis620 th-tis620 tis620)))
 
 (set-language-info-alist
  "Thai" '((tutorial . "TUTORIAL.th")
