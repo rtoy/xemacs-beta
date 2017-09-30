@@ -4234,7 +4234,7 @@ run-hook-with-args-until-success")
 
 (Assert (equal (auto-save-escape-name "дьц") "дьц"))
 
-(Assert (not (eq (auto-save-escape-name "abcdefghijk") "abcdefghijk")))
+(Assert (equal (auto-save-escape-name "abcdefghijk") "abcdefghijk"))
 
 (macrolet
     ((create-individual-char-tests (&rest characters)
