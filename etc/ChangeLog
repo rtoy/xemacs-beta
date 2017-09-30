@@ -1,3 +1,10 @@
+2017-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* HELLO:
+	Encode the IPA using ISO-IR 196 rather than our proprietary
+	charset, which we dropped in the process of merging the
+	unicode-internal support.
+
 2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT:

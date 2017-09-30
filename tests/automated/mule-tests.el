@@ -668,7 +668,7 @@ This is a naive implementation in Lisp.  "
     (let ((sorted-charsets-in-HELLO
            '(arabic-iso8859-6 ascii chinese-big5-1 chinese-gb2312
              cyrillic-iso8859-5 ethiopic greek-iso8859-7 hebrew-iso8859-8
-             indian-is13194 ipa japanese-jisx0208 japanese-jisx0212
+             indian-is13194 japanese-jisx0208 japanese-jisx0212
              katakana-jisx0201 korean-ksc5601 lao latin-iso8859-1
              latin-iso8859-2 latin-iso8859-3 latin-iso8859-4 thai-tis620
              tibetan vietnamese-viscii-lower))

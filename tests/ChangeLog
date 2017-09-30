@@ -10,7 +10,11 @@
 	* automated/mule-tests.el (test-chars):
 	Update the docstring of this function. Only call it when the tests
 	are running byte-compiled.
-	
+	Remove ipa from the list of charsets in HELLO, since the
+	unicode-internal merge removed that charset, relying on the
+	just-in-time Unicode codepoint support for the corresponding
+	characters.
+
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
