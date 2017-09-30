@@ -1,3 +1,14 @@
+2017-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/thai.el:
+	* mule/thai.el (thai-tis620):
+	* mule/thai.el (tis-620):
+	The charset thai-iso8859-11 is identical to thai-tis620 for our
+	purposes, and its presence makes the digit-char test code fail on
+	non-mule. Remove it.  Use tis-620, the preferred IANA name for
+	related coding system, as the related coding system name. Provide
+	iso-8859-11, not actually an IANA name, as an alias.
+
 2017-09-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (concat):
