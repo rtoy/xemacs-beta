@@ -41,9 +41,10 @@
 
 (defun test-chars (&optional for-test-harness)
   "Insert all characters in a buffer, to see if XEmacs will crash.
-This is done by creating a string with all the legal characters
-in [0, 2^21) range, inserting it into the buffer, and checking
-that the buffer's contents are equivalent to the string.
+This is done by creating a string with all the legal characters 
+\(see the documentation for the variable `char-code-limit' and the function
+`char-int'), inserting it into the buffer, and checking that the buffer's
+contents are equivalent to the string.
 
 If FOR-TEST-HARNESS is specified, a temporary buffer is used, and
 the Assert macro checks for correctness."
@@ -73,11 +74,9 @@ the Assert macro checks for correctness."
 	(insert string)
 	(assert (equal (buffer-string) string))))))
 
-;; It would be really *really* nice if test-harness allowed a way to
-;; run a test in byte-compiled mode only.  It's tedious to have
-;; time-consuming tests like this one run twice, once interpreted and
-;; once compiled, for no good reason.
-(test-chars t)
+;; Run #'test-chars in byte-compiled mode only.
+(when (compiled-function-p (symbol-function 'test-chars))
+  (test-chars t))
 
 (defun unicode-code-point-to-utf-8-string (code-point)
   "Convert a Unicode code point to the equivalent UTF-8 string. 

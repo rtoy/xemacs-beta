@@ -7,7 +7,10 @@
 	* automated/lisp-tests.el:
 	Really don't check whether #'auto-save-escape-name always creates
 	a new string, now it doesn't.
-
+	* automated/mule-tests.el (test-chars):
+	Update the docstring of this function. Only call it when the tests
+	are running byte-compiled.
+	
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
