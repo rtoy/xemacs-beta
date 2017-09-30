@@ -14,6 +14,10 @@
 	unicode-internal merge removed that charset, relying on the
 	just-in-time Unicode codepoint support for the corresponding
 	characters.
+	The Lisp reader will now handle all legitimate Unicode code points
+	fine if unicode-internal, and Ben's code approach with old-mule
+	now gives a different error than the Known-Bug-Expect-Error
+	checked for. Update the code to reflect this.
 	* automated/os-tests.el:
 	Call #'Check-Error correctly here when testing the restrictions on
 	the ZONE argument to #'encode-time
