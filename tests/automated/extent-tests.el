@@ -669,8 +669,8 @@
                      "checking extent copied, \"MEINE\"")
              (Assert (eql (extent-start-position pE) 0))
              (Assert (eql (extent-end-position pE) (length MEINE)))
-             (Assert (equal MEINE
-                            (decode-coding-string "ME\xc4\xb0NE" 'utf-8))))
+             (Assert (equal (encode-coding-string MEINE 'utf-8)
+			    "ME\xc4\xb0NE")))
         (set-language-environment env))))
 
   (when (featurep 'menubar)

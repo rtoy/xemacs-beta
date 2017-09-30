@@ -1,3 +1,13 @@
+2017-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	Update check for varying-length case transformation to work
+	following the unicode-internal merge, LATIN CAPITAL LETTER I WITH
+	DOT ABOVE may be from a distinct charset on old-mule.
+	* automated/lisp-tests.el:
+	Really don't check whether #'auto-save-escape-name always creates
+	a new string, now it doesn't.
+
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
