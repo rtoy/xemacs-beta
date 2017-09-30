@@ -1507,7 +1507,7 @@ old_mule_non_ascii_valid_ichar_p (Ichar ch)
   int f1, f2, f3;
 
   /* Must have only lowest 21 bits set */
-  if (ch & ~0x1FFFFF)
+  if (ch & ~(CHAR_CODE_LIMIT - 1))
     return 0;
 
   f1 = ichar_field1 (ch);

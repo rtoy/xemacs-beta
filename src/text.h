@@ -507,12 +507,12 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 
 #ifdef UNICODE_INTERNAL
 #define MAX_ICHAR_LEN 6
-#else
-#define MAX_ICHAR_LEN 4
-#endif
-
 /* Exclusive upper bound on char codes. */
 #define CHAR_CODE_LIMIT 0x40000000
+#else
+#define MAX_ICHAR_LEN 4
+#define CHAR_CODE_LIMIT 0x200000
+#endif
 
 #ifdef UNICODE_INTERNAL
 #define FIRST_TRAILING_BYTE 0x80

@@ -1,3 +1,11 @@
+2017-09-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (old_mule_non_ascii_valid_ichar_p):
+	Use CHAR_CODE_LIMIT here rather than a magic constant.
+	* text.h:
+	Give CHAR_CODE_LIMIT a more useful value on old-Mule, especially
+	helpful for #'test-chars in mule-tests.el
+
 2017-09-28  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	Fix crash in unicode_to_charset_codepoint_raw.
