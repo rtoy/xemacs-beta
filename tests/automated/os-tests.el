@@ -125,11 +125,11 @@ cat process output."
 
 ;; Check some restrictions introduced to the ZONE argument to #'encode-time.
 
-(Check-Error (encode-time 24 4 20 11 5 2017 -86401) args-out-of-range)
+(Check-Error args-out-of-range (encode-time 24 4 20 11 5 2017 -86401))
 (Assert (equal (encode-time 24 4 20 11 5 2017 -86400)
                '(22806 . 5448))) ;; "05/12/17 09:04:25 PM"
 (Assert (equal (encode-time 24 4 20 11 5 2017 86400)
                '(22803 . 29256))) ;; "05/10/17 09:04:24 PM"
-(Check-Error (encode-time 24 4 20 11 5 2017 86401) args-out-of-range)
+(Check-Error args-out-of-range (encode-time 24 4 20 11 5 2017 86401))
 
 ;;; end of os-tests.el

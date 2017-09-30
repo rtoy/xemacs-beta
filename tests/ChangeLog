@@ -14,6 +14,9 @@
 	unicode-internal merge removed that charset, relying on the
 	just-in-time Unicode codepoint support for the corresponding
 	characters.
+	* automated/os-tests.el:
+	Call #'Check-Error correctly here when testing the restrictions on
+	the ZONE argument to #'encode-time
 
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
