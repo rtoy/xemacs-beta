@@ -522,15 +522,17 @@ rep_bytes_by_first_byte_1 (int fb, const char *file, int line)
 #define LAST_TRAILING_BYTE 0xFF
 #endif
 
-#ifndef UNICODE_INTERNAL
-MODULE_API int old_mule_non_ascii_valid_ichar_p (Ichar ch);
+#ifdef UNICODE_INTERNAL
+MODULE_API INT_32_BIT unicode_internal_handle_bad_ichar_to_unicode (Ichar,
+                                                                    enum
+                                                                    converr);
+#elif defined (MULE)
+MODULE_API INT_32_BIT old_mule_non_ascii_valid_ichar_p (Ichar ch);
 #endif
 
-/* Return whether the given Ichar is valid.
- */
-
+/* Return whether the given Ichar is valid. */
 DECLARE_INLINE_HEADER (
-int
+Boolint
 valid_ichar_p (Ichar ch)
 )
 {
@@ -826,12 +828,30 @@ int old_mule_charset_encodable (Lisp_Object charset);
    Return value will be -1 if cannot convert. */
 DECLARE_INLINE_HEADER (
 int
-ichar_to_unicode (Ichar chr, enum converr USED_IF_OLD_MULE (fail))
+ichar_to_unicode (Ichar chr, enum converr USED_IF_MULE (fail))
 )
 {
   ASSERT_VALID_ICHAR (chr);
 
-#if defined (MULE) && !defined (UNICODE_INTERNAL)
+  /* This shortcut depends on the representation of an Ichar, see text.c. */
+  if (chr < 256)
+    {
+      return (int) chr;
+    }
+
+#ifdef UNICODE_INTERNAL
+  if (fail == CONVERR_USE_PRIVATE)
+    {
+      return (int) chr;
+    }
+
+  if (valid_unicode_codepoint_p (chr, UNICODE_OFFICIAL_ONLY))
+    {
+      return (int) chr;
+    }
+
+  return unicode_internal_handle_bad_ichar_to_unicode (chr, fail);
+#elif defined (MULE)
   return old_mule_ichar_to_unicode (chr, fail);
 #else
   /* Unicode-internal or non-Mule */

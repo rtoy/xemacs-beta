@@ -1703,11 +1703,7 @@ int
 old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
 {
   ASSERT_VALID_ICHAR (chr);
-
-  /* This shortcut depends on the representation of an Ichar, see text.c. */
-  if (chr < 256)
-    return (int) chr;
-
+  text_checking_assert (chr < 256);
   {
     int c1, c2;
     Lisp_Object charset;
@@ -1861,6 +1857,39 @@ old_mule_round_down_to_valid_ichar (int charpos)
 }
 
 #endif /* not UNICODE_INTERNAL */
+
+int
+unicode_internal_handle_bad_ichar_to_unicode (Ichar chr, enum converr fail)
+{
+  ASSERT_VALID_ICHAR (chr);
+  text_checking_assert (fail != CONVERR_USE_PRIVATE);
+  text_checking_assert (!valid_unicode_codepoint_p (chr,
+                                                    UNICODE_OFFICIAL_ONLY));
+  switch (fail)
+    {
+    case CONVERR_FAIL:
+      return -1;
+    case CONVERR_ERROR:
+      if (chr > UNICODE_OFFICIAL_MAX)
+        {
+          args_out_of_range_3 (make_fixnum (chr), Qzero,
+                               make_fixnum (UNICODE_OFFICIAL_MAX));
+        }
+      if (chr >= FIRST_UTF_16_SURROGATE)
+        {
+          args_out_of_range_3 (make_fixnum (chr), Qzero,
+                               make_fixnum (FIRST_UTF_16_SURROGATE));
+        }
+      /* FALLTHROUGH */
+    case CONVERR_ABORT:
+    case CONVERR_USE_PRIVATE:
+    default:
+      ABORT ();
+    case CONVERR_SUCCEED:
+    case CONVERR_SUBSTITUTE:
+      return 0xFFFD;
+    }
+}
 
 #endif /* MULE */
 
@@ -5422,11 +5451,11 @@ HANDLE-ERROR is a symbol controlling error behavior stemming from inability
 to translate.  Currently, this happens only with Unicode-internal (see
 below):
 
-nil or `fail'	Return nil
-`abort'		Signal an error
-`succeed'	Same as `substitute'
-`substitute'	Substitute the Unicode replacement char (0xFFFD)
-`use-private'	Encode using private Unicode space
+`use-private' or `nil'	Encode using private Unicode space
+`fail'                  Return nil
+`error'                 Signal an error
+`succeed'               Same as `substitute'
+`substitute'            Substitute the Unicode replacement char (0xFFFD)
 
 Each octet should be in the range corresponding to the offset and size
 for that dimension, as defined in the charset.  For a typical one-dimensional
@@ -5602,10 +5631,16 @@ argument.  The following functions make use of a charset precedence list:
 */
        (charset, octet1, octet2, handle_error))
 {
-  enum converr fail = decode_handle_error (handle_error, 1);
+  enum converr fail;
   int a1, a2;
   Ichar ch;
 
+  if (NILP (handle_error))
+    {
+      handle_error = Quse_private;
+    }
+
+  fail = decode_handle_error (handle_error, 1);
   charset = get_external_charset_codepoint (charset, octet1, octet2,
 					    &a1, &a2, 1);
   ch = charset_codepoint_to_ichar (charset, a1, a2, fail);
@@ -5622,7 +5657,7 @@ present), this function simply does `char-to-int'.
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute the Unicode replacement char (0xFFFD)
 `use-private'	Encode using private Unicode space
@@ -5630,9 +5665,18 @@ nil or `fail'	Return nil
        (character, handle_error))
 {
   enum converr fail = decode_handle_error (handle_error, 1);
+  INT_32_BIT result;
 
   CHECK_CHAR_COERCE_INT (character);
-  return make_fixnum (ichar_to_unicode (XCHAR (character), fail));
+
+  result = ichar_to_unicode (XCHAR (character), fail);
+
+  if (result < 0)
+    {
+      return Qnil;
+    }
+
+  return make_fixnum (result);
 }
 
 DEFUN ("unicode-to-char", Funicode_to_char, 1, 3, 0, /*
@@ -5684,7 +5728,7 @@ charsets in some order.)
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute a '?' character
 */
@@ -5727,7 +5771,7 @@ found in any of the charsets in the precedence list.
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute a '?' character
 */
@@ -5761,7 +5805,7 @@ character in the character set (see `make-char').
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute the Unicode replacement char (0xFFFD)
 `use-private'	Encode using private Unicode space
@@ -5799,7 +5843,7 @@ found in any of the charsets in the precedence list.
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute a '?' character
 */
@@ -5849,7 +5893,7 @@ found in any of the charsets in the precedence list.
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute a '?' character
 */
@@ -5928,7 +5972,7 @@ found in any of the charsets in the precedence list.
 HANDLE-ERROR controls error behavior:
 
 nil or `fail'	Return nil
-`abort'		Signal an error
+`error'		Signal an error
 `succeed'	Same as `substitute'
 `substitute'	Substitute a '?' character
 */
