@@ -1,3 +1,18 @@
+2017-10-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule/chinese.el:
+	* mule/chinese.el (for):
+	* mule/chinese.el (chinese-big5/list):
+	* mule/chinese.el (find-charset):
+	* mule/mule-category.el (predefined-category-list):
+	* mule/mule-charset.el:
+	Remove Ben's attempt under unicode-internal to make Big5 into one
+	charset. This is incompatible with byte-compiled code from 21.4,
+	which uses the hackish chinese-big5-1, chinese-big5-2 charsets
+	with ISO-2022 escapes to encode these characters.
+	If at some point in the future where we use UTF-8 for compiled
+	code this could be revisited.
+
 2017-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/thai.el:

@@ -5824,12 +5824,10 @@ extern Lisp_Object
   Qchinese_cns11643_1,
   Qchinese_cns11643_2,
 #ifdef UNICODE_INTERNAL
-  Qchinese_big5,
   Qjapanese_shift_jis,
-#else /* not UNICODE_INTERNAL */
+#endif /* UNICODE_INTERNAL */
   Qchinese_big5_1,
   Qchinese_big5_2,
-#endif /* UNICODE_INTERNAL */
   Qchinese_sisheng,
   Qcomposite;
 

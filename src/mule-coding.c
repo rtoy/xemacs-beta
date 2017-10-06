@@ -898,8 +898,6 @@ static const struct memory_description big5_coding_stream_description[] = {
 /* BIG5 (used for Mandarin in Taiwan). */
 DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (big5);
 
-#ifndef UNICODE_INTERNAL
-
 /* BIG5 is a coding system encoding two character sets: ASCII and
    Big5.  An ASCII character is encoded as is.  Big5 is a two-byte
    character set and is encoded in two-byte.
@@ -991,8 +989,6 @@ DEFINE_CODING_SYSTEM_TYPE_WITH_DATA (big5);
   b2 += b2 < 0x3F ? 0x40 : 0x62;					\
 } while (0)
 
-#endif /* not UNICODE_INTERNAL */
-
 inline static int
 byte_big5_two_byte_1_p (int c)
 {
@@ -1024,17 +1020,11 @@ big5_decode (struct coding_stream *str, const UExtbyte *src,
 	  /* Previous character was first byte of Big5 char. */
 	  if (byte_big5_two_byte_2_p (c))
 	    {
-#ifdef UNICODE_INTERNAL
-	      non_ascii_charset_codepoint_to_dynarr
-		(Vcharset_chinese_big5, data->ch, c, dst,
-		 CONVERR_USE_PRIVATE);
-#else /* not UNICODE_INTERNAL */
 	      Lisp_Object charset;
 	      int b1, b2;
 	      DECODE_BIG5 (data->ch, c, charset, b1, b2);
 	      non_ascii_charset_codepoint_to_dynarr
 		(charset, b1, b2, dst, CONVERR_USE_PRIVATE);
-#endif /* UNICODE_INTERNAL */
 	    }
 	  else
 	    {
@@ -1084,13 +1074,6 @@ big5_encode (struct coding_stream *str, const Ibyte *src,
 	    }
 	  ichar_to_charset_codepoint
 	    (ich, Vbig5_precedence, &charset, &c1, &c2, CONVERR_FAIL);
-#ifdef UNICODE_INTERNAL
-	  if (EQ (charset, Vcharset_chinese_big5))
-	    {
-	      Dynarr_add (dst, c1);
-	      Dynarr_add (dst, c2);
-	    }
-#else /* not UNICODE_INTERNAL */
 	  if (EQ (charset, Vcharset_chinese_big5_1) ||
 	      EQ (charset, Vcharset_chinese_big5_2))
 	    {
@@ -1099,7 +1082,6 @@ big5_encode (struct coding_stream *str, const Ibyte *src,
 	      Dynarr_add (dst, b1);
 	      Dynarr_add (dst, b2);
 	    }
-#endif /* UNICODE_INTERNAL */
 	  else
 	    {
 	      handle_standard_encoding_error (str, src, dst);
@@ -1131,10 +1113,6 @@ big5_init_coding_stream (struct coding_stream *str)
 static Ichar
 decode_big5_char (int b1, int b2)
 {
-#ifdef UNICODE_INTERNAL
-  return charset_codepoint_to_ichar (Vcharset_chinese_big5, b1, b2,
-				     CONVERR_FAIL);
-#else /* not UNICODE_INTERNAL */
   if (byte_big5_two_byte_1_p (b1) &&
       byte_big5_two_byte_2_p (b2))
     {
@@ -1146,10 +1124,7 @@ decode_big5_char (int b1, int b2)
     }
   else
     return -1;
-#endif /* UNICODE_INTERNAL */
 }
-
-#ifndef UNICODE_INTERNAL
 
 void
 big5_char_to_fake_codepoint (int b1, int b2, Lisp_Object *charset, int *c1,
@@ -1167,8 +1142,6 @@ big5_char_to_fake_codepoint (int b1, int b2, Lisp_Object *charset, int *c1,
       *c2 = 0;
     }
 }
-
-#endif /* not UNICODE_INTERNAL */
 
 DEFUN ("decode-big5-char", Fdecode_big5_char, 1, 1, 0, /*
 Convert Big Five character codes in CODE into a character.
@@ -1208,12 +1181,6 @@ term `encode' is used for this operation.
   CHECK_CHAR_COERCE_INT (character);
   ichar_to_charset_codepoint (XCHAR (character), Vbig5_precedence,
 			      &charset, &c1, &c2, CONVERR_FAIL);
-#ifdef UNICODE_INTERNAL
-  if (EQ (charset, Vcharset_chinese_big5))
-    {
-      return Fcons (make_fixnum (c1), make_fixnum (c2));
-    }
-#else /* not UNICODE_INTERNAL */
   if (EQ (charset, Vcharset_chinese_big5_1) ||
       EQ (charset, Vcharset_chinese_big5_2))
     {
@@ -1221,7 +1188,6 @@ term `encode' is used for this operation.
       ENCODE_BIG5 (charset, c1, c2, b1, b2);
       return Fcons (make_fixnum (b1), make_fixnum (b2));
     }
-#endif /* UNICODE_INTERNAL */
   else
     return Qnil;
 }
@@ -4187,14 +4153,7 @@ init_mule_coding (void)
     simple_convert_predence_list_to_array
     (list3 (Vcharset_japanese_jisx0208, Vcharset_japanese_jisx0208_1978,
 	    Vcharset_katakana_jisx0201));
-
-#ifdef UNICODE_INTERNAL
-  Vbig5_precedence =
-    simple_convert_predence_list_to_array
-    (list1 (Vcharset_chinese_big5));
-#else /* not UNICODE_INTERNAL */
   Vbig5_precedence =
     simple_convert_predence_list_to_array
     (list2 (Vcharset_chinese_big5_1, Vcharset_chinese_big5_2));
-#endif /* UNICODE_INTERNAL */
 }

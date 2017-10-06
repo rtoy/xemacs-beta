@@ -238,10 +238,8 @@ The descriptions are inserted in a buffer, which is then displayed."
     ;;much better category definitions.
     ;;(chinese-cns11643-1	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
     (chinese-cns11643-2	?t "Chinese Taiwan (CNS or Big5) 2-byte character set")
-    ,@(if (find-charset 'chinese-big5-1)
-	  '((chinese-big5-1	?t)
-	    (chinese-big5-2	?t))
-	'((chinese-big5	?t)))
+    (chinese-big5-1	?t)
+    (chinese-big5-2	?t)
     (korean-ksc5601	?h "Hangul (Korean) 2-byte character set")
     (jit-ucs-charset-0  ?J "Just-in-time-allocated Unicode character")
     )
