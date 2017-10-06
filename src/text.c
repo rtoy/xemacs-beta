@@ -5521,14 +5521,11 @@ These are equivalent to:
 
 All codes above are two decimal numbers except for Big Five and ANSI
 Z39.64, which we don't support.  We add 32 to each of the decimal numbers.
-Note that in an old-Mule world (see below), Big Five is split in a rather
-hackish fashion into two charsets, `chinese-big5-1' and `chinese-big5-2',
-due to its excessive size (94x157), with the first codepoint in the range
-0xA1 to 0xFE and the second in the range 0x40 to 0x7E or 0xA1 to 0xFE.
-`decode-big5-char' is used to generate the char from its codes, and
-`encode-big5-char' extracts the codes.  This hack doesn't exist with
-Unicode-internal, and hence the expression (make-char 'chinese-big5 164 116)
-could be used.
+Big Five is split in a rather hackish fashion into two charsets,
+`chinese-big5-1' and `chinese-big5-2', due to its excessive size (94x157),
+with the first codepoint in the range 0xA1 to 0xFE and the second in the range
+0x40 to 0x7E or 0xA1 to 0xFE.  `decode-big5-char' is used to generate the char
+from its codes, and `encode-big5-char' extracts the codes.
 
 Note that there are three different internal formats for characters:
 

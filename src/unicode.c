@@ -2248,10 +2248,8 @@ verify_load_unicode_args (Lisp_Object filename, Lisp_Object start,
       {
 	if (EQ (elt, Qignore_first_column))
 	  *flags_out |= LOAD_UNICODE_IGNORE_FIRST_COLUMN;
-#ifndef UNICODE_INTERNAL
 	else if (EQ (elt, Qbig5))
 	  *flags_out |= LOAD_UNICODE_BIG5;
-#endif /* not UNICODE_INTERNAL */
 	else
 	  invalid_constant
 	    ("Unrecognized `load-unicode-mapping-table' flag", elt);
@@ -2324,9 +2322,7 @@ Unicode tables or in the charset:
   int flgs;
   int stage;
   int to_unicode_min_val[256], to_unicode_max_val[256];
-#ifndef UNICODE_INTERNAL
   int big5_other_unicode_min_val[256], big5_other_unicode_max_val[256];
-#endif
   int i;
 
   /* This may be called to autoload the Unicode tables, from a function
@@ -2338,7 +2334,6 @@ Unicode tables or in the charset:
   verify_load_unicode_args (filename, start, end, offset, flags,
 			    &st, &en, &of, &flgs);
 
-#ifndef UNICODE_INTERNAL
   if (flgs & LOAD_UNICODE_BIG5)
     {
       /* At this point the charsets haven't been initialized
@@ -2353,7 +2348,6 @@ Unicode tables or in the charset:
 	  big5_other_unicode_max_val[i] = 0;
 	}
     }
-#endif /* not UNICODE_INTERNAL */
 
   for (i = 0; i < 256; i++)
     {
@@ -2482,7 +2476,6 @@ Unicode tables or in the charset:
 		  cp1high = cp1 >> 8;
 		  cp1low = cp1 & 255;
 
-#ifndef UNICODE_INTERNAL
 		  if (flgs & LOAD_UNICODE_BIG5)
 		    {
 		      big5_char_to_fake_codepoint (cp1high, cp1low,
@@ -2509,7 +2502,6 @@ Unicode tables or in the charset:
 			set_unicode_conversion (cp2, charset, c1, c2);
 		    }
 		  else
-#endif /* not UNICODE_INTERNAL */
 		    {
 		      int l1, l2, h1, h2;
 		      c1 = cp1high, c2 = cp1low;
@@ -2520,9 +2512,7 @@ Unicode tables or in the charset:
 			goto out_of_range;
 		    }
 
-#ifndef UNICODE_INTERNAL
 		do_it:
-#endif
 		  if (stage == 0)
 		    {
 		      if (c2 < to_unicode_min_val[c1])

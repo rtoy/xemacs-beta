@@ -1,3 +1,25 @@
+2017-10-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h:
+	* mule-charset.c:
+	* mule-charset.c (syms_of_mule_charset):
+	* mule-charset.c (complex_vars_of_mule_charset):
+	* mule-charset.c (init_mule_charset):
+	* mule-coding.c:
+	* mule-coding.c (byte_big5_two_byte_1_p):
+	* mule-coding.c (big5_decode):
+	* mule-coding.c (big5_encode):
+	* mule-coding.c (decode_big5_char):
+	* mule-coding.c (big5_char_to_fake_codepoint):
+	* mule-coding.c (Fencode_big5_char):
+	* mule-coding.c (init_mule_coding):
+	* text.c:
+	* unicode.c (verify_load_unicode_args):
+	Remove the attempt to implement Big5 as one charset under
+	unicode-internal; this makes unicode-internal builds incompatible
+	with byte-code compiled by 21.4 and even source code,
+	e.g. leim/quail/Punct-B5.el.
+
 2017-10-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* text.c (old_mule_ichar_to_unicode):

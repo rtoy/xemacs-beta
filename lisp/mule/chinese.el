@@ -37,11 +37,8 @@
 
 ;; Setup auto-fill-chars for charsets that should invoke auto-filling.
 ;; SPACE and NEWLINE are already set.
-(loop for l in `(chinese-gb2312
-		 ,@(if (find-charset 'chinese-big5-1)
-		       '(chinese-big5-1 chinese-big5-2)
-		     '(chinese-big5)))
-  do (put-char-table l t auto-fill-chars))
+(loop for l in '(chinese-gb2312 chinese-big5-1 chinese-big5-2)
+      do (put-char-table l t auto-fill-chars))
 
 ;; CNS11643 Plane3 thru Plane7
 ;; These represent more and more obscure Chinese characters.
@@ -111,11 +108,9 @@
   :list '(chinese-cns11643-1 chinese-cns11643-2 chinese-cns11643-3
 	  chinese-cns11643-4 chinese-cns11643-5 chinese-cns11643-6
 	  chinese-cns11643-7))
-(define-charset-tag 'chinese-big5/list
-  :list (if (featurep 'unicode-internal) '(chinese-big5)
-	  '(chinese-big5-1 chinese-big5-2)))
-(define-charset-tag 'chinese-gb/list
-  :list '(chinese-gb2312 chinese-sisheng))
+(define-charset-tag 'chinese-big5/list :list '(chinese-big5-1 chinese-big5-2))
+
+(define-charset-tag 'chinese-gb/list :list '(chinese-gb2312 chinese-sisheng))
 
 (define-charset-tag 'chinese-gb-env/list
   :list '(chinese-gb/list chinese-big5/list chinese-cns/list chinese/language))
@@ -302,13 +297,8 @@ of a Chinese character\"."))
 
 (define-coding-system-alias 'cn-big5 'big5)
 
-;; Need to use `compiled-when' because otherwise we will get an error when
-;; compiling this file under Unicode-internal because (charset-id
-;; 'chinese-big5-2) gets evaluated at compile time and fails.
-(compiled-when (find-charset 'chinese-big5-1)
-  ;; Big5 font requires special encoding.  But under Unicode-internal we
-  ;; have one single charset `chinese-big5', with no special encoding
-  ;; needed.
+(when (find-charset 'chinese-big5-1)
+  ;; Big5 font requires special encoding.
   (define-ccl-program ccl-encode-big5-font
     `(0
       ;; In:  R0:chinese-big5-1 or chinese-big5-2

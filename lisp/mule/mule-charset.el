@@ -1254,73 +1254,64 @@ French, and Finnish languages in addition.\"")
    tags (cns kanji traditional-chinese chinese/language)
    ))
 
-(if (featurep 'unicode-internal)
-    ;; We can support Big5 directly.
-    (make-charset
-     'chinese-big5
-     "Big5 (Chinese traditional)"
-     '(dimension 2
-       ;; Big5 claims to be a 94x157 charset, but with gaps in the middle.
-       ;; In particular, the rows are (theoretically) indexed from A1 - FE
-       ;; and the columns from 40 - 7E and A1 - FE.  In fact, there are gaps
-       ;; in the rows as well (rows C7 and C8 are missing, as well as rows
-       ;; FA - FE), but that appears to be due to accident -- i.e. they just
-       ;; ran out of chars and/or wanted to make room for expansion.  Note
-       ;; also that the gap at C7 and C8 is due to the Level-1/Level-2
-       ;; division of Big5 (see below).  The 94 rows are those between
-       ;; A1 and FE, inclusive.  The 157 columns count the sum of the columns
-       ;; in each disjoint set.  For us, we need to use the size of the range
-       ;; [40, FE], which is 191.
-       chars (94 191)
-       offset (161 64)
-       short-name "Chinese traditional (Big5)"
-       long-name "Chinese traditional (Big5)"
-       registries ["big5.eten-0"]
-       unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT")
-       tags (kanji traditional-chinese chinese/language)
-       ))
-  ;; Old Mule situation; we can only handle up to 96x96 charsets.
-  ;; So we split it into two charsets.  According to Ken Lunde's CJKV
-  ;; book, Big5 itself is split into "Big Five Level 1" (rows A1-C6)
-  ;; and "Big Five Level 2" (rows C9-F9), with the latter containing
-  ;; less used characters.  We split the same way then coerce the
-  ;; result into a 94x94 block.
-  (make-charset
-   'chinese-big5-1
-   "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
-   '(dimension 2
-     chars 94
-     final ?0
-     graphic 0
-     short-name "Chinese traditional (Big5), L1"
-     long-name "Chinese traditional (Big5) (Level-1) A141-C67F"
-     registries ["big5.eten-0"]
-     ;; no unicode map, see chinese-big5-2
-     tags (kanji traditional-chinese chinese/language)
-     ))
-  (make-charset
-   'chinese-big5-2
-   "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
-   '(dimension 2
-     chars 94
-     final ?1
-     graphic 0
-     short-name "Chinese traditional (Big5), L2"
-     long-name "Chinese traditional (Big5) (Level-2) C940-FEFE"
-     registries ["big5.eten-0"]
-     ;; HACK HACK HACK!  The `big5' special flag tells the internal code
-     ;; in Fload_unicode_mapping_table() to take codepoints out of the
-     ;; Big5 table, convert them to a codepoint in a "fake" chinese-big5-1
-     ;; or chinese-big5-2, and store appropriately.  Hence, it actually
-     ;; ignores the name of the charset on which the property is set and
-     ;; always stores in the "right" place.  Correspondingly, we must set
-     ;; the property on big5-2, not 1, so that both charsets will be
-     ;; created by the time we initialize the map.
-     unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT"
-		  nil nil nil big5)
-     tags (kanji traditional-chinese chinese/language)
-     ))
-  )
+;; Big5 claims to be a 94x157 charset, but with gaps in the middle.
+;; In particular, the rows are (theoretically) indexed from A1 - FE
+;; and the columns from 40 - 7E and A1 - FE.  In fact, there are gaps
+;; in the rows as well (rows C7 and C8 are missing, as well as rows
+;; FA - FE), but that appears to be due to accident -- i.e. they just
+;; ran out of chars and/or wanted to make room for expansion.  Note
+;; also that the gap at C7 and C8 is due to the Level-1/Level-2
+;; division of Big5 (see below).  The 94 rows are those between
+;; A1 and FE, inclusive.  The 157 columns count the sum of the columns
+;; in each disjoint set.  For us, we need to use the size of the range
+;; [40, FE], which is 191.
+
+;; Old Mule situation; we can only handle up to 96x96 charsets.
+;; we split it into two charsets.  According to Ken Lunde's CJKV
+;; book, Big5 itself is split into "Big Five Level 1" (rows A1-C6)
+;; and "Big Five Level 2" (rows C9-F9), with the latter containing
+;; less used characters.  We split the same way then coerce the
+;; result into a 94x94 block.
+
+;; Since escape-quoted, used for byte-compiled files and auto-saves even on
+;; unicode-internal, is ISO 2022-based, it's not practical to switch, as Ben
+;; attempted to do, to a single Big5 charset for unicode-internal; doing this
+;; would mean byte-complied code from 21.4 would error on 21.5.
+
+(make-charset
+ 'chinese-big5-1
+ "Frequently used part (A141-C67F) of Big5 (Chinese traditional)"
+ '(dimension 2
+   chars 94
+   final ?0
+   graphic 0
+   short-name "Chinese traditional (Big5), L1"
+   long-name "Chinese traditional (Big5) (Level-1) A141-C67F"
+   registries ["big5.eten-0"]
+   ;; no unicode map, see chinese-big5-2
+   tags (kanji traditional-chinese chinese/language)))
+
+(make-charset
+ 'chinese-big5-2
+ "Less frequently used part (C940-FEFE) of Big5 (Chinese traditional)"
+ '(dimension 2
+   chars 94
+   final ?1
+   graphic 0
+   short-name "Chinese traditional (Big5), L2"
+   long-name "Chinese traditional (Big5) (Level-2) C940-FEFE"
+   registries ["big5.eten-0"]
+   ;; HACK HACK HACK!  The `big5' special flag tells the internal code
+   ;; in Fload_unicode_mapping_table() to take codepoints out of the
+   ;; Big5 table, convert them to a codepoint in a "fake" chinese-big5-1
+   ;; or chinese-big5-2, and store appropriately.  Hence, it actually
+   ;; ignores the name of the charset on which the property is set and
+   ;; always stores in the "right" place.  Correspondingly, we must set
+   ;; the property on big5-2, not 1, so that both charsets will be
+   ;; created by the time we initialize the map.
+   unicode-map ("unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT"
+                nil nil nil big5)
+   tags (kanji traditional-chinese chinese/language)))
 
 ;;;;;;;;;;;;;;;;;;;;; Korean ;;;;;;;;;;;;;;;;;;;;
 

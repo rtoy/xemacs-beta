@@ -60,12 +60,10 @@ Lisp_Object Vcharset_korean_ksc5601;
 Lisp_Object Vcharset_japanese_jisx0212;
 Lisp_Object Vcharset_chinese_cns11643_1;
 Lisp_Object Vcharset_chinese_cns11643_2;
-#ifdef UNICODE_INTERNAL
-Lisp_Object Vcharset_chinese_big5;
-Lisp_Object Vcharset_japanese_shift_jis;
-#else
 Lisp_Object Vcharset_chinese_big5_1;
 Lisp_Object Vcharset_chinese_big5_2;
+#ifdef UNICODE_INTERNAL
+Lisp_Object Vcharset_japanese_shift_jis;
 #endif /* UNICODE_INTERNAL */
 Lisp_Object Vcharset_composite;
 
@@ -197,12 +195,10 @@ Lisp_Object
   Qjapanese_jisx0212,
   Qchinese_cns11643_1,
   Qchinese_cns11643_2,
-#ifdef UNICODE_INTERNAL
-  Qchinese_big5,
-  Qjapanese_shift_jis,
-#else /* not UNICODE_INTERNAL */
   Qchinese_big5_1,
   Qchinese_big5_2,
+#ifdef UNICODE_INTERNAL
+  Qjapanese_shift_jis,
 #endif /* UNICODE_INTERNAL */
   Qchinese_sisheng,
   Qcomposite;
@@ -1838,12 +1834,10 @@ syms_of_mule_charset (void)
   DEFSYMBOL (Qjapanese_jisx0212);
   DEFSYMBOL (Qchinese_cns11643_1);
   DEFSYMBOL (Qchinese_cns11643_2);
-#ifdef UNICODE_INTERNAL
-  DEFSYMBOL (Qchinese_big5);
-  DEFSYMBOL (Qjapanese_shift_jis);
-#else /* not UNICODE_INTERNAL */
   DEFSYMBOL (Qchinese_big5_1);
   DEFSYMBOL (Qchinese_big5_2);
+#ifdef UNICODE_INTERNAL
+  DEFSYMBOL (Qjapanese_shift_jis);
 #endif /* UNICODE_INTERNAL */
 
   DEFSYMBOL (Qcomposite);
@@ -2021,17 +2015,14 @@ complex_vars_of_mule_charset (void)
   Vcharset_chinese_cns11643_1 = Qnil;
   staticpro (&Vcharset_chinese_cns11643_2);
   Vcharset_chinese_cns11643_2 = Qnil;
-#ifdef UNICODE_INTERNAL
-  /* We can support Shift-JIS and Big5 directly.*/
-  staticpro (&Vcharset_japanese_shift_jis);
-  Vcharset_japanese_shift_jis = Qnil;
-  staticpro (&Vcharset_chinese_big5);
-  Vcharset_chinese_big5 = Qnil;
-#else
   staticpro (&Vcharset_chinese_big5_1);
   Vcharset_chinese_big5_1 = Qnil;
   staticpro (&Vcharset_chinese_big5_2);
   Vcharset_chinese_big5_2 = Qnil;
+#ifdef UNICODE_INTERNAL
+  /* We can support Shift-JIS directly.*/
+  staticpro (&Vcharset_japanese_shift_jis);
+  Vcharset_japanese_shift_jis = Qnil;
 #endif /* UNICODE_INTERNAL */
 
 #ifdef ENABLE_COMPOSITE_CHARS
@@ -2144,12 +2135,10 @@ init_mule_charset (void)
   Vcharset_japanese_jisx0212 = Fget_charset (Qjapanese_jisx0212);
   Vcharset_chinese_cns11643_1 = Fget_charset (Qchinese_cns11643_1);
   Vcharset_chinese_cns11643_2 = Fget_charset (Qchinese_cns11643_2);
-#ifdef UNICODE_INTERNAL
-  /* We can support Shift-JIS and Big5 directly.*/
-  Vcharset_japanese_shift_jis = Fget_charset (Qjapanese_shift_jis);
-  Vcharset_chinese_big5 = Fget_charset (Qchinese_big5);
-#else
   Vcharset_chinese_big5_1 = Fget_charset (Qchinese_big5_1);
   Vcharset_chinese_big5_2 = Fget_charset (Qchinese_big5_2);
+#ifdef UNICODE_INTERNAL
+  /* We can support Shift-JIS directly.*/
+  Vcharset_japanese_shift_jis = Fget_charset (Qjapanese_shift_jis);
 #endif /* UNICODE_INTERNAL */
 }
