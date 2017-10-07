@@ -3899,10 +3899,9 @@ Evaluate FORM and return its value.
  retry:
   /* Optimise for no indirection.  */
   fun = original_fun;
-  if (SYMBOLP (fun) && !EQ (fun, Qunbound)
-      && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
+  if (SYMBOLP (fun) && (fun = XSYMBOL (fun)->function, SYMBOLP (fun)))
     {
-      fun = indirect_function(original_fun, 1);
+      fun = indirect_function (original_fun, 1);
     }
 
   if (SUBRP (fun))
