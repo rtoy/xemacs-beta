@@ -1703,7 +1703,8 @@ int
 old_mule_ichar_to_unicode (Ichar chr, enum converr fail)
 {
   ASSERT_VALID_ICHAR (chr);
-  text_checking_assert (chr < 256);
+  text_checking_assert (chr >= 256); /* The inline function should handle
+                                        ASCII, control-1, Latin 1. */
   {
     int c1, c2;
     Lisp_Object charset;

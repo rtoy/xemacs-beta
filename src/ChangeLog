@@ -4,6 +4,11 @@
 	Qunbound isn't a symbol, don't check for it once we've verified
 	ORIGINAL_FUN is a symbol.
 
+2017-10-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* text.c (old_mule_ichar_to_unicode):
+	Correct the sense of an assertion here, thank you Mike Sperber!
+
 2017-10-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h:
