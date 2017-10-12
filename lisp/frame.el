@@ -1913,81 +1913,76 @@ is normally set to `get-frame-for-buffer' (which see)."
 ;; new functions like this can be added without requiring C
 ;; additions.
 
-(defun frame-utmost-window-2 (window position left-right-p major-end-p
-				     minor-end-p)
-  ;; LEFT-RIGHT-P means we're looking for the leftmost or rightmost
-  ;; window, instead of the highest or lowest.  In this case, we
-  ;; say that the "major axis" goes left-to-right instead of top-to-
-  ;; bottom.  The "minor axis" always goes perpendicularly.
-  ;;
-  ;; If MAJOR-END-P is t, we're looking for a windows that abut the
-  ;; end (i.e. right or bottom) of the major axis, instead of the
-  ;; start.
-  ;;
-  ;; If MINOR-END-P is t, then we want to start counting from the
-  ;; end of the minor axis instead of the beginning.
-  ;;
-  ;; Here's the general idea: Imagine we're trying to count the number
-  ;; of windows that abut the top; call this function foo().  So, we
-  ;; start with the root window.  If this is a vertical combination
-  ;; window, then foo() applied to the root window is the same as
-  ;; foo() applied to the first child.  If the root is a horizontal
-  ;; combination window, then foo() applied to the root is the
-  ;; same as the sum of foo() applied to each of the children.
-  ;; Otherwise, the root window is a leaf window, and foo() is 1.
-  ;; Now it's clear that, each time foo() encounters a leaf window,
-  ;; it's encountering a different window that abuts the top.
-  ;; With a little examining, you can see that foo encounters the
-  ;; top-abutting windows in order from left to right.  We can
-  ;; modify foo() to return the nth top-abutting window by simply
-  ;; keeping a global variable that is decremented each time
-  ;; foo() encounters a leaf window and would return 1.  If the
-  ;; global counter gets to zero, we've encountered the window
-  ;; we were looking for, so we exit right away using a `throw'.
-  ;; Otherwise, we make sure that all normal paths return nil.
-
-  (let (child)
-    (cond ((setq child (if left-right-p
-			   (window-first-hchild window)
-			 (window-first-vchild window)))
-	   (if major-end-p
-	       (while (window-next-child child)
-		 (setq child (window-next-child child))))
-	   (frame-utmost-window-2 child position left-right-p major-end-p
-				  minor-end-p))
-	  ((setq child (if left-right-p
-			   (window-first-vchild window)
-			 (window-first-hchild window)))
-	   (if minor-end-p
-	       (while (window-next-child child)
-		 (setq child (window-next-child child))))
-	   (while child
-	     (frame-utmost-window-2 child position left-right-p major-end-p
-				    minor-end-p)
-	     (setq child (if minor-end-p
-			     (window-previous-child child)
-			   (window-next-child child))))
-	   nil)
-	  (t
-	   (setcar position (1- (car position)))
-	   (if (= (car position) 0)
-	       (throw 'fhw-exit window)
-	     nil)))))
-
-(defun frame-utmost-window-1 (frame position left-right-p major-end-p)
-  (let (minor-end-p)
-    (or frame (setq frame (selected-frame)))
-    (or position (setq position 0))
-    (if (>= position 0)
-	(setq position (1+ position))
-      (setq minor-end-p t)
-      (setq position (- position)))
-    (catch 'fhw-exit
+(defun* frame-utmost-window-1 (frame position left-right-p major-end-p)
+  (labels
+      ((frame-utmost-window-2 (window position left-right-p major-end-p
+                                      minor-end-p)
+         ;; LEFT-RIGHT-P means we're looking for the leftmost or rightmost
+         ;; window, instead of the highest or lowest.  In this case, we say
+         ;; that the "major axis" goes left-to-right instead of top-to-
+         ;; bottom.  The "minor axis" always goes perpendicularly.
+         ;;
+         ;; If MAJOR-END-P is t, we're looking for a windows that abut the end
+         ;; (i.e. right or bottom) of the major axis, instead of the start.
+         ;;
+         ;; If MINOR-END-P is t, then we want to start counting from the end
+         ;; of the minor axis instead of the beginning.
+         ;;
+         ;; Here's the general idea: Imagine we're trying to count the number
+         ;; of windows that abut the top; call this function foo().  So, we
+         ;; start with the root window.  If this is a vertical combination
+         ;; window, then foo() applied to the root window is the same as foo()
+         ;; applied to the first child.  If the root is a horizontal
+         ;; combination window, then foo() applied to the root is the same as
+         ;; the sum of foo() applied to each of the children.  Otherwise, the
+         ;; root window is a leaf window, and foo() is 1.  Now it's clear
+         ;; that, each time foo() encounters a leaf window, it's encountering
+         ;; a different window that abuts the top.  With a little examining,
+         ;; you can see that foo encounters the top-abutting windows in order
+         ;; from left to right.  We can modify foo() to return the nth
+         ;; top-abutting window by simply keeping a global variable that is
+         ;; decremented each time foo() encounters a leaf window and would
+         ;; return 1.  If the global counter gets to zero, we've encountered
+         ;; the window we were looking for, so we exit right away using a
+         ;; `return-from'.  Otherwise, we make sure that all normal paths
+         ;; return nil.
+         (let (child)
+           (cond ((setq child (if left-right-p
+                                  (window-first-hchild window)
+                                (window-first-vchild window)))
+                  (if major-end-p
+                      (while (window-next-child child)
+                        (setq child (window-next-child child))))
+                  (frame-utmost-window-2 child position left-right-p
+                                         major-end-p minor-end-p))
+                 ((setq child (if left-right-p
+                                  (window-first-vchild window)
+                                (window-first-hchild window)))
+                  (if minor-end-p
+                      (while (window-next-child child)
+                        (setq child (window-next-child child))))
+                  (while child
+                    (frame-utmost-window-2 child position left-right-p
+                                           major-end-p minor-end-p)
+                    (setq child (if minor-end-p
+                                    (window-previous-child child)
+                                  (window-next-child child))))
+                  nil)
+                 (t
+                  (setcar position (1- (car position)))
+                  (if (eql (car position) 0)
+                      (return-from frame-utmost-window-1 window)))))))
+    (let (minor-end-p)
+      (or frame (setq frame (selected-frame)))
+      (or position (setq position 0))
+      (if (>= position 0)
+          (setq position (1+ position))
+        (setq minor-end-p t)
+        (setq position (- position)))
       ;; we use a cons here as a simple form of call-by-reference.
       ;; scheme has "boxes" for the same purpose.
       (frame-utmost-window-2 (frame-root-window frame) (list position)
-			     left-right-p major-end-p minor-end-p))))
-
+                             left-right-p major-end-p minor-end-p))))
 
 (defun frame-highest-window (&optional frame position)
   "Return the highest window on FRAME which is at POSITION.
@@ -2036,7 +2031,6 @@ POSITION is used to distinguish between multiple windows that abut
 If omitted, POSITION defaults to 0, i.e. the highest rightmost window.
 If there is no window at the given POSITION, return nil."
   (frame-utmost-window-1 frame position t t))
-
 
 
 ;; frame properties.
