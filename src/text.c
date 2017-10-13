@@ -1370,7 +1370,7 @@ int firstbyte_mask[7] = {0, 0, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC};
 Lisp_Object QSin_char_byte_conversion, QSin_byte_char_conversion;
 Lisp_Object QSin_internal_external_conversion, QSin_external_internal_conversion;
 
-Lisp_Object /* Qfail, Qsubstitute, */ Qsubstitute_negated, Quse_private;
+Lisp_Object /* Qfail, Qsubstitute, */ Quse_private;
 
 Fixnum Vchar_code_limit;
 
@@ -6116,7 +6116,6 @@ syms_of_text (void)
   DEFSUBR (Fchar_width);
 
   /* Qfail, Qsubstitute, Qsucceed in general.c */
-  DEFSYMBOL (Qsubstitute_negated); /* #### what's this used for? */
   DEFSYMBOL (Quse_private);
 
 #ifdef ENABLE_COMPOSITE_CHARS

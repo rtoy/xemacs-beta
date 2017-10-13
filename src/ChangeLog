@@ -1,3 +1,12 @@
+2017-10-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c:
+	* doc.c (vars_of_doc):
+	* text.c:
+	* text.c (syms_of_text):
+	Removed unused file-local C variables QSsubstitute,
+	Qsubstitute_negated from these files.
+
 2017-10-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Feval):
