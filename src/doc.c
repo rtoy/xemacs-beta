@@ -36,10 +36,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "elhash.h"
 
 Lisp_Object Vinternal_doc_file_name;
-
-Lisp_Object QSsubstitute, Qdefvar;
-
-Lisp_Object Qfunction_documentation;
+Lisp_Object Qdefvar, Qfunction_documentation;
 
 /* Work out what source file a function or variable came from, taking the
    information from the documentation file. */
@@ -1399,7 +1396,4 @@ vars_of_doc (void)
 Name of file containing documentation strings of built-in symbols.
 */ );
   Vinternal_doc_file_name = Qnil;
-
-  QSsubstitute = build_ascstring (" *substitute*");
-  staticpro (&QSsubstitute);
 }
