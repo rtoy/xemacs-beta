@@ -2802,7 +2802,7 @@ DEFINE_DUMPABLE_FROB_BLOCK_LISP_OBJECT ("string", string,
 
 #ifdef NEW_GC
 #define STRING_FULLSIZE(size) \
-  ALIGN_SIZE (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_String_Direct_Data, Lisp_Object, data, (size) + 1), sizeof (Lisp_Object *));
+  ALIGN_SIZE (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_String_Direct_Data, Lisp_Object, data, (size) + 1), sizeof (Lisp_Object *))
 #else /* not NEW_GC */
 /* String blocks contain this many useful bytes. */
 #define STRING_CHARS_BLOCK_SIZE					\

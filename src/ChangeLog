@@ -7,6 +7,13 @@
 	Removed unused file-local C variables QSsubstitute,
 	Qsubstitute_negated from these files.
 
+2017-10-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloc.c (STRING_FULLSIZE):
+	Correct the definition of this macro under NEW_GC, get the NEW_GC
+	build working again.
+	Incidentally wake up the buildbot with this commit.
+
 2017-10-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Feval):
