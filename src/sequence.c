@@ -1681,9 +1681,15 @@ position (Lisp_Object *object_out, Lisp_Object item, Lisp_Object sequence,
     }
   else if (STRINGP (sequence))
     {
-      Ibyte *startp = XSTRING_DATA (sequence), *cursor = startp;
-      Bytecount byte_len = XSTRING_LENGTH (sequence), cursor_offset = 0;
+      Ibyte *startp = XSTRING_DATA (sequence), *cursor;
+      Bytecount byte_len = XSTRING_LENGTH (sequence), cursor_offset;
       Lisp_Object character = Qnil;
+
+      cursor_offset = ii = (Bytecount) (min (XSTRING_ASCII_BEGIN (sequence),
+					     starting));
+      cursor = startp + cursor_offset;
+      /* It's probably worth making this even faster for the
+	 non-variable-width-string case. Not now, though.  */
 
       while (cursor_offset < byte_len && ii < ending)
 	{

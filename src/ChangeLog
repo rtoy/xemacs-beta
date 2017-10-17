@@ -1,3 +1,10 @@
+2017-10-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* sequence.c (position):
+	Handle START a bit better, use XSTRING_ASCII_BEGIN() so we don't
+	have to step through each character for the constant-byte-length
+	part of the string.
+
 2017-10-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doc.c:
