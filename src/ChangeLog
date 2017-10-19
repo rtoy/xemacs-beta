@@ -1,3 +1,9 @@
+2017-10-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* symbols.c (Fapropos_internal):
+	PREDICATE can call Lisp, use elisp_maphash() instead of
+	elisp_maphash_unsafe() in this function.
+
 2017-10-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* sequence.c (position):
