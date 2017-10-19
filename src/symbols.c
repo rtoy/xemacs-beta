@@ -195,7 +195,7 @@ defaults to the value of `obarray'.
   closure.predicate = predicate;
   closure.accumulation = Qnil;
   GCPRO1 (closure.accumulation);
-  elisp_maphash_unsafe (apropos_mapper, package, &closure);
+  elisp_maphash (apropos_mapper, package, &closure);
   closure.accumulation = list_sort (closure.accumulation,
 				    check_string_lessp_nokey, Qnil, Qnil);
   UNGCPRO;
