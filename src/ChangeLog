@@ -1,3 +1,28 @@
+2017-10-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-coding.c (iso2022_encode):
+	Pass the new ALLOW_PRIVATE argument to encode_unicode_to_dynarr().
+	* unicode.c:
+	* unicode.c (struct unicode_coding_system):
+	Add a new allow_private field here, respected on encoding and
+	decoding.
+	* unicode.c (CODING_SYSTEM_UNICODE_ALLOW_PRIVATE):
+	New macro.
+	* unicode.c (decode_utf_8):
+	Make ALLOW_PRIVATE a Boolint in this function.
+	* unicode.c (encode_unicode_to_dynarr):
+	Take a new ALLOW_PRIVATE argument.
+	* unicode.c (unicode_decode):
+	* unicode.c (unicode_encode):
+	Use the ALLOW_PRIVATE coding system property in these two functions.
+	* unicode.c (unicode_putprop):
+	Implement the ALLOW_PRIVATE property.
+	* unicode.c (syms_of_unicode):
+	Make Qallow_private available.
+	* unicode.h:
+	Declare encode_unicode_to_dynarr() as having an ALLOW_PRIVATE
+	argument.
+
 2017-10-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* symbols.c (Fapropos_internal):
