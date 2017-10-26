@@ -3102,7 +3102,8 @@ iso2022_encode (struct coding_stream *str, const Ibyte *src,
 		int code = ichar_to_unicode (ich, CONVERR_FAIL);
 		if (encode_unicode_to_dynarr
 		    (code, str, src, dst, UNICODE_UTF_8, 0,
-		     XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys)) < 0)
+		     XCODING_SYSTEM_ISO2022_ESCAPE_QUOTED (codesys),
+                     1) < 0)
 		  {
 		    ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 		  }

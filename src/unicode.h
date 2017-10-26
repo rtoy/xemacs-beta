@@ -94,10 +94,11 @@ int encode_unicode_to_dynarr (int code, struct coding_stream *str,
 			      unsigned_char_dynarr *dst,
 			      enum unicode_encoding_type type,
 			      int little_endian,
-			      int preserve_error_characters);
+			      Boolint preserve_error_characters,
+                              Boolint allow_private);
 void decode_utf_8 (struct unicode_coding_stream *data,
 		   unsigned_char_dynarr *dst, UExtbyte c, int ignore_bom,
-		   int allow_private);
+		   Boolint allow_private);
 void decode_unicode_to_dynarr (int ucs, unsigned_char_dynarr *dst);
 
 

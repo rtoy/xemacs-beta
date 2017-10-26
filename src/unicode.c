@@ -202,7 +202,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 Lisp_Object Qunicode;
 Lisp_Object Qutf_16, Qutf_8, Qucs_4, Qutf_7, Qutf_32;
-Lisp_Object Qneed_bom;
+Lisp_Object Qneed_bom, Qallow_private;
 
 Lisp_Object Qutf_16_little_endian, Qutf_16_bom;
 Lisp_Object Qutf_16_little_endian_bom;
@@ -2705,6 +2705,7 @@ struct unicode_coding_system
   enum unicode_encoding_type type;
   unsigned int little_endian :1;
   unsigned int need_bom :1;
+  unsigned int allow_private :1;
 };
 
 #define CODING_SYSTEM_UNICODE_TYPE(codesys) \
@@ -2719,6 +2720,10 @@ struct unicode_coding_system
   (CODING_SYSTEM_TYPE_DATA (codesys, unicode)->need_bom)
 #define XCODING_SYSTEM_UNICODE_NEED_BOM(codesys) \
   CODING_SYSTEM_UNICODE_NEED_BOM (XCODING_SYSTEM (codesys))
+#define CODING_SYSTEM_UNICODE_ALLOW_PRIVATE(codesys) \
+  (CODING_SYSTEM_TYPE_DATA (codesys, unicode)->allow_private)
+#define XCODING_SYSTEM_UNICODE_ALLOW_PRIVATE(codesys) \
+  CODING_SYSTEM_UNICODE_ALLOW_PRIVATE (XCODING_SYSTEM (codesys))
 
 static const struct memory_description unicode_coding_system_description[] = {
   { XD_END }
@@ -2777,7 +2782,7 @@ decode_unicode_to_dynarr_0 (int ucs, unsigned_char_dynarr *dst,
 
 void
 decode_utf_8 (struct unicode_coding_stream *data, unsigned_char_dynarr *dst,
-	      UExtbyte c, int ignore_bom, int allow_private)
+	      UExtbyte c, int ignore_bom, Boolint allow_private)
 {
   if (0 == data->counter)
     {
@@ -2942,7 +2947,8 @@ encode_unicode_to_dynarr (int code, struct coding_stream *str,
 			  unsigned_char_dynarr *dst,
 			  enum unicode_encoding_type type,
 			  int little_endian,
-			  int preserve_error_characters)
+			  Boolint preserve_error_characters,
+                          Boolint allow_private)
 {
   int err = 0;
   if (code == -1)
@@ -3024,11 +3030,25 @@ encode_unicode_to_dynarr (int code, struct coding_stream *str,
 	    register int bytes;
 	    register unsigned char *dstp;
 
+          reconsider_length:
 	    if (code <= 0x7ff) bytes = 2;
 	    else if (code <= 0xffff) bytes = 3;
-	    else if (code <= 0x1fffff) bytes = 4;
-	    else if (code <= 0x3ffffff) bytes = 5;
-	    else bytes = 6;
+            else if (code <= UNICODE_OFFICIAL_MAX) bytes = 4;
+            else if (allow_private)
+              {
+                if (code <= 0x1fffff) bytes = 4;
+                else if (code <= 0x3ffffff) bytes = 5;
+                else bytes = 6;
+              }
+            else
+              {
+                /* Not valid Unicode. Pass the replacement char (U+FFFD). */
+                handle_encoding_error_before_output (str, src, dst, 1,
+                                                     CODING_UNENCODABLE);
+                err = -1;
+                code = CANT_CONVERT_CHAR_WHEN_ENCODING_UNICODE;
+                goto reconsider_length;
+              }
 
 	    Dynarr_add_many (dst, 0, bytes);
 	    dstp = Dynarr_past_lastp (dst);
@@ -3091,6 +3111,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
   int little_endian =
     XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (str->codesys);
   int ignore_bom = XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys);
+  Boolint allow_private = XCODING_SYSTEM_UNICODE_ALLOW_PRIVATE (str->codesys);
   Bytecount orign = n;
 
   int counter = data->counter;
@@ -3103,7 +3124,7 @@ unicode_decode (struct coding_stream *str, const UExtbyte *src,
       while (n--)
 	{
 	  UExtbyte c = *src++;
-	  decode_utf_8 (data, dst, c, ignore_bom, 0);
+	  decode_utf_8 (data, dst, c, ignore_bom, allow_private);
 	}
       counter = data->counter;
       ch = data->ch;
@@ -3339,6 +3360,8 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
     XCODING_SYSTEM_UNICODE_TYPE (str->codesys);
   int little_endian =
     XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (str->codesys);
+  const Boolint allow_private
+    = XCODING_SYSTEM_UNICODE_ALLOW_PRIVATE (str->codesys);
   const Ibyte *srcend = src + n;
 
 #ifdef ENABLE_COMPOSITE_CHARS
@@ -3353,8 +3376,9 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
 
   if (XCODING_SYSTEM_UNICODE_NEED_BOM (str->codesys) && !data->wrote_bom)
     {
-      assert (encode_unicode_to_dynarr (0xFEFF, str, src, dst, type,
-					little_endian, 0) >= 0);
+      text_checking_assert (encode_unicode_to_dynarr (0xFEFF, str, src, dst,
+                                                      type, little_endian,
+                                                      0, allow_private) >= 0);
       data->wrote_bom = 1;
     }
 
@@ -3366,8 +3390,10 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
       if (byte_ascii_p (c))
 #endif /* MULE */
 	{
-	  assert (encode_unicode_to_dynarr (c, str, src, dst, type,
-					    little_endian, 0) >= 0);
+	  text_checking_assert (encode_unicode_to_dynarr (c, str, src, dst,
+                                                          type, little_endian,
+                                                          0, allow_private)
+                                >= 0);
 	  src++;
 	}
 #ifdef MULE
@@ -3383,7 +3409,7 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
 
 #ifdef UNICODE_INTERNAL
 	  if (encode_unicode_to_dynarr (ich, str, src, dst, type,
-					little_endian, 0) < 0)
+					little_endian, 0, allow_private) < 0)
 	    {
 	      ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 	    }
@@ -3398,7 +3424,8 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
 		  /* #### Bother! We don't know how to
 		     handle this yet. */
 		  encode_unicode_to_dynarr (-1, str, src, dst,
-					    type, little_endian, 0);
+					    type, little_endian, 0,
+                                            allow_private);
 		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 		}
 	      else
@@ -3423,7 +3450,8 @@ unicode_encode (struct coding_stream *str, const Ibyte *src,
 		charset_codepoint_to_unicode
 		(charset, c1, c2, CONVERR_FAIL);
 	      if (encode_unicode_to_dynarr (code, str, src, dst, type,
-					    little_endian, 0) < 0)
+					    little_endian, 0,
+                                            allow_private) < 0)
 		{
 		  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 		}
@@ -3807,6 +3835,8 @@ unicode_putprop (Lisp_Object codesys, Lisp_Object key, Lisp_Object value)
     XCODING_SYSTEM_UNICODE_LITTLE_ENDIAN (codesys) = !NILP (value);
   else if (EQ (key, Qneed_bom))
     XCODING_SYSTEM_UNICODE_NEED_BOM (codesys) = !NILP (value);
+  else if (EQ (key, Qallow_private))
+    XCODING_SYSTEM_UNICODE_ALLOW_PRIVATE (codesys) = !NILP (value);
   else
     return 0;
   return 1;
@@ -3844,6 +3874,8 @@ unicode_print (Lisp_Object cs, Lisp_Object printcharfun,
     write_ascstring (printcharfun, ", little-endian");
   if (XCODING_SYSTEM_UNICODE_NEED_BOM (cs))
     write_ascstring (printcharfun, ", need-bom");
+  if (XCODING_SYSTEM_UNICODE_ALLOW_PRIVATE (cs))
+    write_ascstring (printcharfun, ", allow-private");
   write_ascstring (printcharfun, ")");
 }
 
@@ -3918,6 +3950,7 @@ syms_of_unicode (void)
   DEFSYMBOL (Qutf_7);
 
   DEFSYMBOL (Qneed_bom);
+  DEFSYMBOL (Qallow_private);
 
   DEFSYMBOL (Qutf_16);
   DEFSYMBOL (Qutf_16_little_endian);
