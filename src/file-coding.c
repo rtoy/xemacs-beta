@@ -2989,7 +2989,7 @@ handle_possible_error_octet (Ichar ich,
 			     struct coding_stream *str, const UExtbyte *src,
 			     unsigned_char_dynarr *dst, int *code_out)
 {
-  int code = ichar_to_unicode (ich, CONVERR_FAIL);
+  int code = ichar_to_unicode (ich, CONVERR_USE_PRIVATE);
   if (code >= 0)
     {
       if (code_out)

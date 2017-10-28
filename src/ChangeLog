@@ -1,3 +1,12 @@
+2017-10-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* file-coding.c (handle_possible_error_octet):
+	Pass CONVERR_USE_PRIVATE to ichar_to_unicode(), allowing it to
+	return an error octet, and allowing us to preserve error octets
+	seen in external data.
+	* mule-coding.c (multibyte_encode): 
+	Document a consideration about which error octets to pass through.
+
 2017-10-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-coding.c (iso2022_encode):
