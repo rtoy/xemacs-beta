@@ -297,6 +297,9 @@ multibyte_encode (struct coding_stream *str, const Ibyte *src,
 
       if (handle_possible_error_octet (ich, str, src, dst, NULL))
 	{
+          /* #### This should behave differently depending on whether this
+             error octet can be produced by multibyte_decode() with this
+             coding system, or not.  */
 	  ENCODING_ERROR_RETURN_OR_CONTINUE (str, src);
 	}
 
