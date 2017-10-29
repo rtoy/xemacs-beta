@@ -74,9 +74,14 @@ the Assert macro checks for correctness."
 	(insert string)
 	(assert (equal (buffer-string) string))))))
 
-;; Run #'test-chars in byte-compiled mode only.
-(when (compiled-function-p (symbol-function 'test-chars))
-  (test-chars t))
+(Skip-Test-Unless
+ ;; unicode-internal has a value of #x40000000, (expt 2 30), for
+ ;; char-code-limit and even re-writing the above to avoid allocating the list
+ ;; and the string means I run out of memory when I attempt to run this.
+ (<= char-code-limit #x200000) 
+ "CHAR-CODE-LIMIT is impractically large"
+ ;; Run #'test-chars in byte-compiled mode only.
+ (and (compiled-function-p (symbol-function 'test-chars)) (test-chars t)))
 
 (defun unicode-code-point-to-utf-8-string (code-point)
   "Convert a Unicode code point to the equivalent UTF-8 string. 

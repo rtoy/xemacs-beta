@@ -1,3 +1,10 @@
+2017-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Don't run #'test-chars on unicode-internal, the time and memory
+	demands for inserting #x40000000 characters, then comparing them
+	to a string constructed separately make it impractical.
+
 2017-09-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/extent-tests.el:
