@@ -523,7 +523,7 @@ This also does some trivial optimizations to make the form prettier."
                                       (push `(,eq-hash . nil) env)
                                     ;; `let'; delay until all bindings
                                     ;; processed.
-                                    (push `(,eq-hash . nil) env))
+                                    (push `(,eq-hash . nil) shadows))
                                 ;; Don't shadow it.
                                 (setq symbol (car acons))
                                 (unless (symbolp symbol) (setq letf t)))

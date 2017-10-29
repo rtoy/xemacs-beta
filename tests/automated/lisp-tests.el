@@ -3034,6 +3034,21 @@ via the hepatic alpha-tocopherol transfer protein")))
   (Assert (equal '([symbol expansion] [copy expansion] [third expansion])
 		 (test-symbol-macrolet))))
 
+;; And test it with the SHADOW argument.
+
+(Assert (eql (let ((hello 20) (everyone 5))
+               (symbol-macrolet ((hello everyone))
+                 (let ((hello (+ hello 5)))
+                   hello)))
+             10))
+
+(Assert (eql (let ((hello 20) (everyone 5))
+               (symbol-macrolet ((hello everyone t))
+                 (let ((hello (+ hello 5))
+                       (there (+ hello 10)))
+                   (+ hello there))))
+             25))
+
 ;; Basic tests of #'apply-partially.
 (let* ((four 4)
        (times-four (apply-partially '* four))
