@@ -1,5 +1,10 @@
 2017-10-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el:
+	Test the SHADOW argument to symbol-macrolet.
+
+2017-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* automated/mule-tests.el:
 	Don't run #'test-chars on unicode-internal, the time and memory
 	demands for inserting #x40000000 characters, then comparing them
