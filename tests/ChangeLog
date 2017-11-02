@@ -1,3 +1,10 @@
+2017-11-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/os-tests.el:
+	We've reverted to returning a list, not a cons, in
+	#'encode-time. Update tests to reflect this, thank you Raymond
+	Toy.
+
 2017-10-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

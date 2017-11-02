@@ -1,3 +1,9 @@
+2017-11-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (make_time):
+	Revert part of 417c790fd731, have this function return a list,
+	never a cons. Thank you Raymond Toy!
+
 2017-10-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (handle_possible_error_octet):

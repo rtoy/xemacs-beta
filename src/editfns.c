@@ -1182,7 +1182,7 @@ static void set_time_zone_rule (Extbyte *tzstring);
 Lisp_Object
 make_time (time_t tiempo)
 {
-  return Fcons (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
+  return list2 (make_fixnum (tiempo < 0 ? tiempo / 0x10000 : tiempo >> 16),
 		make_fixnum (tiempo & 0xFFFF));
 }
 
