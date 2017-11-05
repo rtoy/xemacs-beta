@@ -5792,12 +5792,10 @@ extern Lisp_Object Vcharset_korean_ksc5601;
 extern Lisp_Object Vcharset_japanese_jisx0212;
 extern Lisp_Object Vcharset_chinese_cns11643_1;
 extern Lisp_Object Vcharset_chinese_cns11643_2;
-#ifdef UNICODE_INTERNAL
-extern Lisp_Object Vcharset_chinese_big5;
-extern Lisp_Object Vcharset_japanese_shift_jis;
-#else
 extern Lisp_Object Vcharset_chinese_big5_1;
 extern Lisp_Object Vcharset_chinese_big5_2;
+#ifdef UNICODE_INTERNAL
+extern Lisp_Object Vcharset_japanese_shift_jis;
 #endif /* UNICODE_INTERNAL */
 extern Lisp_Object Vcharset_composite;
 #endif /* MULE */
