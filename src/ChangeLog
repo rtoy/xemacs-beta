@@ -4,6 +4,14 @@
 	Revert part of 417c790fd731, have this function return a list,
 	never a cons. Thank you Raymond Toy!
 
+2017-11-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h: 
+	* fontcolor-xlike-inc.c: 
+	Remove the last references to the unified Vcharset_chinese_big5
+	charset, especially relevant with XFT. Thank you Stephen Turnbull
+	and Raymond Toy!
+
 2017-10-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* file-coding.c (handle_possible_error_octet):
