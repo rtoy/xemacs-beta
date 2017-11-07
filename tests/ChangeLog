@@ -1,3 +1,27 @@
+2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el:
+	Create a ratio at runtime, not load time, on a build without ratio
+	support.
+	* automated/format-tests.el (slow-integer-to-string):
+	Fix the classical C cannot-make-most-negative-fixnum-positive bug
+	in this function, since we expect it to run on non-bignum builds
+	too.
+	* automated/format-tests.el:
+	(format "%n" pi) can give either wrong-type-argument (if we have
+	bignum support) or syntax-error (if we don't). Check for both.
+	* automated/lisp-tests.el:
+	Operations on not-a-number (the square route of -1, (expt -1 0.5))
+	can legitimately fail with either range errors or domain
+	errors. We don't really care which, accept both in Check-Error.
+	* automated/lisp-tests.el (with-digits):
+	We can get a useful result for (parse-integer "100000000" :radix
+	16) without bignum support on 64-bit builds, correct a check for
+	this.
+	* automated/syntax-tests.el (fboundp):
+	Non-DEBUG_XEMACS builds don't have #'syntax-cache-info available,
+	use Skip-Test-Unless to handle this.
+
 2017-11-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/os-tests.el:

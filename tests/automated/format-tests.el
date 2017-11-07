@@ -218,7 +218,7 @@
 (Check-Error 'syntax-error (format "%c" char-code-limit))
 (Check-Error 'syntax-error (format "%c" 'a))
 (Check-Error 'syntax-error (format "%c" pi)) ;; Newly fails
-(Check-Error 'syntax-error (format "%c" '7/5))
+(if (featurep 'ratio) (Check-Error 'syntax-error (format "%c" (read "7/5"))))
 (Check-Error 'syntax-error (format "%c" (1+ most-positive-fixnum)))
 (Check-Error 'syntax-error (format "%.20c" ?a)) ;; Newly fails.
 (Check-Error 'syntax-error (format "%.*c" 20 ?a)) ;; Newly fails.
@@ -227,23 +227,27 @@
   (check-type integer integer)
   (check-type radix (integer 2 16))
   (loop with minusp = (if (< integer 0)
-                          (prog1 t (setq integer (- integer))))
+			  "-" 
+			;; Operate on the negative integer, to avoid the
+			;; classical C most-negative-fixnum bug on
+			;; non-bignum builds.
+			(setq integer (- integer))
+			nil)
         with result = nil
         until (eql integer 0)
-        do (setf result (cons (cdr (assoc* (mod integer radix)
-                                           '((0 . ?0) (1 . ?1)
-                                             (2 . ?2) (3 . ?3)
-                                             (4 . ?4) (5 . ?5)
-                                             (6 . ?6) (7 . ?7)
-                                             (8 . ?8) (9 . ?9)
-                                             (10 . ?A) (11 . ?B) 
-                                             (12 . ?C) (13 . ?D) 
-                                             (14 . ?E) (14 . ?E) 
-                                             (15 . ?F) (15 . ?F))))
+        do (setf result (cons (cdr (assoc* (% integer radix)
+                                           '((0 . ?0) (-1 . ?1)
+                                             (-2 . ?2) (-3 . ?3)
+                                             (-4 . ?4) (-5 . ?5)
+                                             (-6 . ?6) (-7 . ?7)
+                                             (-8 . ?8) (-9 . ?9)
+                                             (-10 . ?A) (-11 . ?B) 
+                                             (-12 . ?C) (-13 . ?D) 
+                                             (-14 . ?E) (-14 . ?E) 
+                                             (-15 . ?F) (-15 . ?F))))
                               result)
                  integer (/ integer radix))
-        finally return (concatenate 'string (if minusp "-")
-                                    result)))
+        finally return (concatenate 'string minusp result)))
 
 (defun* slow-ratio-to-string (ratio &optional (radix 10))
   (check-type ratio ratio)
@@ -690,7 +694,7 @@
 (Check-Error syntax-error (format "%I32d" 1))
 
 ;; This used to crash with bignum builds.
-(Check-Error wrong-type-argument (format "%n" pi)) 
+(Check-Error (wrong-type-argument syntax-error) (format "%n" pi))
 
 (Check-Error args-out-of-range (format (concat "%" (number-to-string
                                                     most-positive-fixnum)
