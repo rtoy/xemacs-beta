@@ -28,8 +28,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
+#ifdef WITH_TLS
 static Lisp_Object prompt;
 static Lisp_Object Qread_passwd;
+#endif
 Lisp_Object Qtls_error;
 
 #ifdef HAVE_NSS

@@ -1,5 +1,18 @@
 2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Quieten some compiler warnings:
+	* data.c (uint32_t_to_lisp):
+	Add a check for sizeof (ITEM), which quietens the
+	tautological-constant-compare warning on clang.
+	* linuxplay.c (linux_play_data_or_file):
+	Declare a ssize_t variable to take the result of read(). There are
+	a lot of issues with the types used for bytecounts for the sound
+	code, but I'm not going to fix them all today.
+	* tls.c:
+	Wrap a couple of declarations of Lisp variables in #ifdef WITH_TLS.
+
+2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
 	valid_ichar_p() needs an EMACS_INT argument, not an Ichar
 	argument, since it is usually used to examine values extracted
 	from a Lisp_Object, and such values will be truncated giving
