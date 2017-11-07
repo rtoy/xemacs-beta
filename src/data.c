@@ -1153,7 +1153,8 @@ Return t if NUMBER is zero.
 Lisp_Object
 uint32_t_to_lisp (UINT_32_BIT item)
 {
-  if (item <= MOST_POSITIVE_FIXNUM_UNSIGNED) /* Fits in a positive fixnum? */
+  if (sizeof (item) < sizeof (EMACS_INT) /* Fits in a positive fixnum? */
+      || item <= MOST_POSITIVE_FIXNUM_UNSIGNED)
     {
       return make_fixnum (item);
     }

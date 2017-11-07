@@ -338,8 +338,14 @@ linux_play_data_or_file(int fd, Binbyte *data,
 	  sound_warn(buf);
 	  goto END_OF_PLAY; } }
     if (fd >= 0) {
-      if ((rrtn = read(fd,sndbuf,SNDBUFSZ)) < 0) {
-	sound_perror("read"); goto END_OF_PLAY; } }
+      ssize_t gelesen;
+      if ((gelesen = read(fd,sndbuf,SNDBUFSZ)) < 0)
+	{
+	  sound_perror("read");
+	  goto END_OF_PLAY;
+	}
+      rrtn = (size_t) gelesen;
+    }
     else
       break;
   } while (rrtn > 0);
