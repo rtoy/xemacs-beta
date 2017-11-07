@@ -953,8 +953,8 @@ while (0)
 #ifdef CCL_DEBUG
 /* Currently enabled when DEBUG_XEMACS, i.e. configure --with-debug */
 #define CCL_DEBUG_BACKTRACE_LEN 256
-int ccl_backtrace_table[CCL_DEBUG_BACKTRACE_LEN];
-int ccl_backtrace_idx;
+EMACS_INT ccl_backtrace_table[CCL_DEBUG_BACKTRACE_LEN];
+EMACS_INT ccl_backtrace_idx;
 #endif
 
 struct ccl_prog_stack
@@ -976,18 +976,18 @@ ccl_driver (struct ccl_program *ccl,
 	    int *consumed,
 	    int conversion_mode)
 {
-  register int *reg = ccl->reg;
-  register int ic = ccl->ic;
-  register int code = -1;
-  register int field1, field2;
+  register EMACS_INT *reg = ccl->reg;
+  register EMACS_INT ic = ccl->ic;
+  register EMACS_INT code = -1;
+  register EMACS_INT field1, field2;
   register Lisp_Object *ccl_prog = ccl->prog;
   const unsigned char *src = source, *src_end = src + src_bytes;
   int jump_address;
   int stack_idx = ccl->stack_idx;
   /* Instruction counter of the current CCL code. */
-  int this_ic = 0;
-  int eof_ic = ccl->eof_ic;
-  int eof_hit = 0;
+  EMACS_INT this_ic = 0;
+  EMACS_INT eof_ic = ccl->eof_ic;
+  Boolint eof_hit = 0;
 
   if (ic >= eof_ic)
     ic = CCL_HEADER_MAIN;
@@ -1004,7 +1004,7 @@ ccl_driver (struct ccl_program *ccl,
 
   for (;;)
     {
-      int i, j, op;
+      EMACS_INT i, j, op;
 
     ccl_repeat:
 #ifdef CCL_DEBUG
@@ -1057,7 +1057,7 @@ ccl_driver (struct ccl_program *ccl,
 	  /* #### it's non-obvious to me that we need these casts,
 	     but the left one was already there so clearly the intention
 	     was an unsigned comparison. --ben */
-	  if ((unsigned int) i < (unsigned int) j)
+	  if ((EMACS_UINT) i < (EMACS_UINT) j)
 	    reg[rrr] = XCHAR_OR_FIXNUM (ccl_prog[ic + i]);
 	  ic += j;
 	  break;
@@ -1110,7 +1110,7 @@ ccl_driver (struct ccl_program *ccl,
 	  i = reg[rrr];
 	  j = XCHAR_OR_FIXNUM (ccl_prog[ic]);
 	  /* #### see comment at CCL_SetArray */
-	  if ((unsigned int) i < (unsigned int) j)
+	  if ((EMACS_UINT) i < (EMACS_UINT) j)
 	    {
 	      i = XCHAR_OR_FIXNUM (ccl_prog[ic + 1 + i]);
 	      CCL_WRITE_CHAR (i);
@@ -1130,7 +1130,7 @@ ccl_driver (struct ccl_program *ccl,
 	  /* fall through ... */
 	case CCL_Branch:	/* CCCCCCCCCCCCCCCCCCCCrrrXXXXX */
 	  /* #### see comment at CCL_SetArray */
-	  if ((unsigned int) reg[rrr] < (unsigned int) field1)
+	  if ((EMACS_UINT) reg[rrr] < (EMACS_UINT) field1)
 	    ic += XCHAR_OR_FIXNUM (ccl_prog[ic + reg[rrr]]);
 	  else
 	    ic += XCHAR_OR_FIXNUM (ccl_prog[ic + field1]);
@@ -1178,7 +1178,7 @@ ccl_driver (struct ccl_program *ccl,
 	case CCL_Call:		/* 1:CCCCCCCCCCCCCCCCCCCCFFFXXXXX */
 	  {
 	    Lisp_Object slot;
-	    int prog_id;
+	    EMACS_INT prog_id;
 
 	    /* If FFF is nonzero, the CCL program ID is in the
                following code.  */
@@ -1229,7 +1229,7 @@ ccl_driver (struct ccl_program *ccl,
 	case CCL_WriteArray:	/* CCCCCCCCCCCCCCCCCCCCrrrXXXXX */
 	  i = reg[rrr];
 	  /* #### see comment at CCL_SetArray */
-	  if ((unsigned int) i < (unsigned int) field1)
+	  if ((EMACS_UINT) i < (EMACS_UINT) field1)
 	    {
 	      j = XCHAR_OR_FIXNUM (ccl_prog[ic + i]);
 	      CCL_WRITE_CHAR (j);
@@ -1492,20 +1492,21 @@ ccl_driver (struct ccl_program *ccl,
 	      op = translate_char (GET_TRANSLATION_TABLE (op), i, -1, 0, 0);
 	      {
 		Lisp_Object charset;
+		int ii = -1, jj = -1;
 	
 		/* @@#### Get rid of 7-bit stuff */
 		buffer_filtered_ichar_to_charset_codepoint (op, buf,
 							    charset_7bit_p,
-							    &charset, &i, &j,
+							    &charset, &ii, &jj,
 							    CONVERR_FAIL);
 		if (NILP (charset))
 		  CCL_CONVERSION_ERROR;
 		reg[RRR] = XCHARSET_ID (charset);
 	      }
-	      if (j != -1)
-		i = (i << 7) | j;
+	      if (jj != -1)
+		ii = (ii << 7) | jj;
 
-	      reg[rrr] = i;
+	      reg[rrr] = ii;
 #endif
 	      break;
 
@@ -1517,7 +1518,8 @@ ccl_driver (struct ccl_program *ccl,
 		int ucs;
 
 		CCL_MAKE_CHAR (reg[rrr], reg[RRR], ich);
-		/* @@#### Is USE_PRIVATE correct? or should I fail? */
+		/* [@@#### Is USE_PRIVATE correct? or should I fail?] 
+		    I should fail. */
 		ucs = ichar_to_unicode (ich, CONVERR_USE_PRIVATE);
 		reg[rrr] = ucs;
 		break;
@@ -1527,26 +1529,28 @@ ccl_driver (struct ccl_program *ccl,
 	      {
 		int error = 0;
 
-		/* @@#### Is UNICODE_OFFICIAL_ONLY correct? */
+		/* [@@#### Is UNICODE_OFFICIAL_ONLY correct?]
+		   Yes. */
 		if (!valid_unicode_codepoint_p (reg[rrr],
 						UNICODE_OFFICIAL_ONLY))
 		  error = 1;
 		else
 		  {
 		    Lisp_Object charset;
+		    int ii = -1, jj = -1;
 
 		    /* @@#### This 7-bit stuff is awful, change it */
 		    buffer_filtered_unicode_to_charset_codepoint
-		      (reg[rrr], buf, charset_7bit_p, &charset, &i, &j,
+		      (reg[rrr], buf, charset_7bit_p, &charset, &ii, &jj,
 		       CONVERR_FAIL);
 		    if (NILP (charset))
 		      error = 1;
 		    else
 		      {
 			reg[RRR] = XCHARSET_ID (charset);
-			i &= 0x7f;
-			j &= 0x7f;
-			reg[rrr] = (i << 7) | j;
+			ii &= 0x7f;
+			jj &= 0x7f;
+			reg[rrr] = (ii << 7) | jj;
 		      }
 		  }
 
@@ -1568,22 +1572,23 @@ ccl_driver (struct ccl_program *ccl,
 
                 if (!HTENTRY_CLEAR_P (e))
 		  {
+		    int ii = -1, jj = -1;
                     op = XCHARVAL (e->value);
 		    if (!valid_ichar_p (op))
 		      CCL_INVALID_CMD;
 
 		    /* @@#### Get rid of 7-bit stuff */
 		    buffer_filtered_ichar_to_charset_codepoint
-		      (op, buf, charset_7bit_p, &charset, &i, &j,
+		      (op, buf, charset_7bit_p, &charset, &ii, &jj,
 		       CONVERR_FAIL);
 		    if (NILP (charset))
 		      CCL_CONVERSION_ERROR;
 		    reg[RRR] = XCHARSET_ID (charset);
-		    if (j != 0)
+		    if (jj != 0)
                       {
-                        i = (i << 7) | j;
+                        ii = (ii << 7) | jj;
                       }
-		    reg[rrr] = i;
+		    reg[rrr] = ii;
 		    reg[7] = 1; /* r7 true for success */
 		  }
 		else
@@ -1615,7 +1620,7 @@ ccl_driver (struct ccl_program *ccl,
 	    case CCL_IterateMultipleMap:
 	      {
 		Lisp_Object map, content, attrib, value;
-		int point, size, fin_ic;
+		EMACS_INT point, size, fin_ic;
 
 		j = XCHAR_OR_FIXNUM (ccl_prog[ic++]); /* number of maps. */
 		fin_ic = ic + j;
@@ -1713,9 +1718,9 @@ ccl_driver (struct ccl_program *ccl,
 	    case CCL_MapMultiple:
 	      {
 		Lisp_Object map, content, attrib, value;
-		int point, size, map_vector_size;
-		int map_set_rest_length, fin_ic;
-		int current_ic = this_ic;
+		EMACS_INT point, size, map_vector_size;
+		EMACS_INT map_set_rest_length, fin_ic;
+		EMACS_INT current_ic = this_ic;
 
 		/* inhibit recursive call on MapMultiple. */
 		if (stack_idx_of_map_multiple > 0)
@@ -1987,30 +1992,33 @@ ccl_driver (struct ccl_program *ccl,
       /* We can insert an error message only if DESTINATION is
          specified and we still have a room to store the message
          there.  */
-      char msg[256];
+      Ibyte msg[256];
 
       switch (ccl->status)
 	{
 	case CCL_STAT_INVALID_CMD:
-	  sprintf (msg, "\nCCL: Invalid command %x (ccl_code = %x) at %d.",
-		  code & 0x1F, code, this_ic);
+	  emacs_snprintf (msg, sizeof (msg),
+			  "\nCCL: Invalid command %lx (ccl_code = %lx) at %ld.",
+			  code & 0x1F, code, this_ic);
 	  goto ccl_error_continue;
 
 	case CCL_STAT_INVALID_CHARSET:
-	  sprintf (msg, "\nCCL: Invalid charset (command %x, ccl_code = %x) at %d.",
-		  code & 0x1F, code, this_ic);
+	  emacs_snprintf (msg, sizeof (msg),
+			  "\nCCL: Invalid charset (command %lx, ccl_code = %lx) at %ld.",
+			  (code & 0x1F), code, this_ic);
 	  goto ccl_error_continue;
 
 	case CCL_STAT_CONVERSION_ERROR:
-	  sprintf (msg, "\nCCL: Conversion error (command %x, ccl_code = %x) at %d.",
-		  code & 0x1F, code, this_ic);
+	  emacs_snprintf (msg, sizeof (msg),
+			  "\nCCL: Conversion error (command %lx, ccl_code = %lx) at %ld.",
+			  code & 0x1F, code, this_ic);
 	  goto ccl_error_continue;
 
 	ccl_error_continue:
 #ifdef CCL_DEBUG
 	  {
-	    int i = ccl_backtrace_idx - 1;
-	    int j;
+	    EMACS_INT i = ccl_backtrace_idx - 1;
+	    EMACS_INT j;
 
 	    Dynarr_add_many (destination, (unsigned char *) msg, strlen (msg));
 
@@ -2019,8 +2027,9 @@ ccl_driver (struct ccl_program *ccl,
 		if (i < 0) i = CCL_DEBUG_BACKTRACE_LEN - 1;
 		if (ccl_backtrace_table[i] == 0)
 		  break;
-		sprintf (msg, " %d", ccl_backtrace_table[i]);
-		Dynarr_add_many (destination, (unsigned char *) msg, strlen (msg));
+		Dynarr_add_many (destination, msg,
+				 emacs_snprintf (msg, sizeof (msg),
+						 " %ld", ccl_backtrace_table[i]))
 	      }
 	    goto ccl_finish;
 	  }
@@ -2028,14 +2037,16 @@ ccl_driver (struct ccl_program *ccl,
 	  break;
 
 	case CCL_STAT_QUIT:
-	  sprintf(msg, "\nCCL: Exited.");
+	  emacs_snprintf (msg, sizeof (msg), "\nCCL: Exited.");
 	  break;
 
 	default:
-	  sprintf(msg, "\nCCL: Unknown error type (%d).", ccl->status);
+	  emacs_snprintf (msg, sizeof (msg),
+			  "\nCCL: Unknown error type (%d).", ccl->status);
 	}
 
-      Dynarr_add_many (destination, (unsigned char *) msg, strlen (msg));
+      Dynarr_add_many (destination, (unsigned char *) msg,
+		       qxestrlen (msg));
     }
 
  ccl_finish:
@@ -2340,7 +2351,7 @@ See the documentation of `define-ccl-program' for the detail of CCL program.
 {
   Lisp_Object val;
   struct ccl_program ccl;
-  int i, produced;
+  EMACS_INT i, produced;
   unsigned_char_dynarr *outbuf;
   struct gcpro gcpro1, gcpro2, gcpro3;
 

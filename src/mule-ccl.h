@@ -38,44 +38,49 @@ enum ccl_status
 				   7-bit charset is wanted, etc.). */
   };
 
+enum ccl_coding_eol
+  {
+    CCL_CODING_EOL_LF,		/* Line-feed only, same as Emacs' */
+    CCL_CODING_EOL_CRLF,	/* Sequence of carriage-return and
+				   line-feed.  */
+    CCL_CODING_EOL_CR,		/* Carriage-return only.  */
+  };
+
 /* Structure to hold information about running CCL code.  Read
    comments in the file ccl.c for the detail of each field.  */
 struct ccl_program {
   Elemcount size;		/* Size of the compiled code.  */
   Lisp_Object *prog;		/* Pointer into the compiled code.  */
-  int ic;			/* Instruction Counter (index for PROG).  */
-  int eof_ic;			/* Instruction Counter for end-of-file
+  EMACS_INT ic;			/* Instruction Counter (index for PROG).  */
+  EMACS_INT eof_ic;		/* Instruction Counter for end-of-file
 				   processing code.  */
-  int reg[8];			/* CCL registers, reg[7] is used for
+  EMACS_INT reg[8];		/* CCL registers, reg[7] is used for
 				   condition flag of relational
 				   operations.  */
-  int private_state;            /* CCL instruction may use this
+  /* Not used in XEmacs: */
+  /* int private_state; */      /* CCL instruction may use this
 				   for private use, mainly for saving
 				   internal states on suspending.
 				   This variable is set to 0 when ccl is 
 				   set up.  */
-  int last_block;		/* Set to 1 while processing the last
+
+  Boolint last_block;		/* Set to 1 while processing the last
 				   block. */
-  int status;			/* Exit status of the CCL program.  */
-  int buf_magnification;	/* Output buffer magnification.  How
+  enum ccl_status status;	/* Exit status of the CCL program.  */
+  EMACS_INT buf_magnification;	/* Output buffer magnification.  How
 				   many times bigger the output buffer
 				   should be than the input buffer.  */
   int stack_idx;		/* How deep the call of CCL_Call is nested.  */
-  int eol_type;			/* When the CCL program is used for
+  enum ccl_coding_eol eol_type; /* When the CCL program is used for
 				   encoding by a coding system, set to
 				   the eol_type of the coding
 				   system.  */
-  int multibyte;		/* 1 if the source text is multibyte.  */
+  /* Not used in XEmacs: */
+  /* int multibyte; */		/* 1 if the source text is multibyte.  */
 };
 
 #define CCL_MODE_ENCODING 0
 #define CCL_MODE_DECODING 1
-
-#define CCL_CODING_EOL_LF	0	/* Line-feed only, same as Emacs'
-					   internal format.  */
-#define CCL_CODING_EOL_CRLF	1	/* Sequence of carriage-return and
-					   line-feed.  */
-#define CCL_CODING_EOL_CR	2	/* Carriage-return only.  */
 
 #ifdef DEBUG_XEMACS
 #define CCL_DEBUG

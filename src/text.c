@@ -1498,11 +1498,11 @@ non_ascii_charset_codepoint_to_itext (Lisp_Object charset, int c1, int c2,
 
 #ifndef UNICODE_INTERNAL
 
-/* Return whether CH is a valid Ichar, assuming it's >= 0x100.
-   Do not call this directly.  Use the macro valid_ichar_p() instead. */
+/* Return whether CH corresponds to a valid Ichar. Do not call this
+   directly.  Use the macro valid_ichar_p() instead. */
 
-int
-old_mule_non_ascii_valid_ichar_p (Ichar ch)
+Boolint
+old_mule_non_ascii_valid_ichar_p (EMACS_INT ch)
 {
   int f1, f2, f3;
 

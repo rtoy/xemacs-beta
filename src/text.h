@@ -242,7 +242,7 @@ enum unicode_allow
 #define UNICODE_OFFICIAL_MAX 0x10FFFF
 
 DECLARE_INLINE_HEADER (
-int
+Boolint
 valid_unicode_codepoint_p (EMACS_INT ch, enum unicode_allow allow)
 )
 {
@@ -527,13 +527,13 @@ MODULE_API INT_32_BIT unicode_internal_handle_bad_ichar_to_unicode (Ichar,
                                                                     enum
                                                                     converr);
 #elif defined (MULE)
-MODULE_API INT_32_BIT old_mule_non_ascii_valid_ichar_p (Ichar ch);
+MODULE_API Boolint old_mule_non_ascii_valid_ichar_p (EMACS_INT ch);
 #endif
 
-/* Return whether the given Ichar is valid. */
+/* Return whether the given EMACS_INT can be made into a valid Ichar. */
 DECLARE_INLINE_HEADER (
 Boolint
-valid_ichar_p (Ichar ch)
+valid_ichar_p (EMACS_INT ch)
 )
 {
 #ifdef UNICODE_INTERNAL

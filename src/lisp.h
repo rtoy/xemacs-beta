@@ -3170,11 +3170,11 @@ Ichar
 XCHAR_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
-  Ichar ch;
+  EMACS_INT ch;
   assert_at_line (CHARP (obj), file, line);
   ch = XCHARVAL (obj);
   assert_at_line (valid_ichar_p (ch), file, line);
-  return ch;
+  return (Ichar) ch;
 }
 
 #define XCHAR(x) XCHAR_1 (x, __FILE__, __LINE__) 

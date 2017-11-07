@@ -1984,12 +1984,13 @@ emacs_doprnt (Lisp_Object stream,
               }
             else if (FIXNUMP (obj))
               {
-                a = XREALFIXNUM (obj);
-                if (!valid_ichar_p (a))
+		EMACS_INT fa = XREALFIXNUM (obj);
+                if (!valid_ichar_p (fa))
                   {
                     UNGCPRO;
                     syntax_error ("Invalid integer value for %c spec", obj);
                   }
+		a = (Ichar) fa;
               }
             else
               {
