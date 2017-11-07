@@ -1,3 +1,37 @@
+2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	valid_ichar_p() needs an EMACS_INT argument, not an Ichar
+	argument, since it is usually used to examine values extracted
+	from a Lisp_Object, and such values will be truncated giving
+	incorrect values on a 64-bit build.
+	Correct this, update associated C code.
+
+	* doprnt.c (emacs_doprnt):
+	Check whether the EMACS_INT value of OBJ is a valid Ichar, rather
+	than truncating and giving incorrect values.
+
+	* lisp.h (XCHAR_1):
+	Ditto.
+	* mule-ccl.c:
+	* mule-ccl.c (ccl_driver):
+	* mule-ccl.h:
+	Most integer values in mule-ccl.{c,h} are stored to using XFIXNUM()
+	or XCHAR_OR_FIXNUM(), and so declaring them as int will lead to
+	truncation and errors down the line.
+	Update their declaration to EMACS_INT, which will always have
+	enough bits to handle the result of XFIXNUM().
+	Use emacs_snprintf() when debug-printing these values, since we
+	have %lx and %ld which fits the width of an EMACS_INT explicitly.
+	Make STATUS in struct ccl_program{} into an enum.
+	Make EOL_TYPE into an enum.
+	Comment out a couple of fields not used in XEmacs.
+	* symbols.c (store_symval_forwarding):
+	#if HAVE_BIGNUM => #ifdef HAVE_BIGNUM.
+	* text.c:
+	* text.c (old_mule_non_ascii_valid_ichar_p):
+	* text.h (valid_unicode_codepoint_p):
+	Make these two functions return Boolints.
+
 2017-11-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* editfns.c (make_time):

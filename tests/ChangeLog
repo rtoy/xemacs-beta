@@ -1,5 +1,8 @@
 2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/mule-tests.el:
+	Check that (int-char most-negative-fixnum) gives nil.
+
 	* automated/format-tests.el:
 	Create a ratio at runtime, not load time, on a build without ratio
 	support.

@@ -35,6 +35,11 @@
 
 (require 'bytecomp)
 
+;; This would give ?\x00 for a while on 64-bit XEmacs.
+
+(Assert (eq (int-char most-negative-fixnum) nil)
+	"checking for a bug with valid_ichar_p() on 64-bit builds")
+
 ;;-----------------------------------------------------------------
 ;; Test whether all legal chars may be safely inserted to a buffer.
 ;;-----------------------------------------------------------------

@@ -1048,7 +1048,7 @@ store_symval_forwarding (Lisp_Object sym, Lisp_Object ovalue,
 	  CHECK_INTEGER (newval);
 	  if (magicfun)
 	    magicfun (sym, &newval, Qnil, 0);
-#if HAVE_BIGNUM
+#ifdef HAVE_BIGNUM
           if (BIGNUMP (newval))
             {
               if (bignum_fits_emacs_int_p (XBIGNUM_DATA (newval)))
