@@ -824,6 +824,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1110,6 +1111,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1362,6 +1364,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1499,7 +1510,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1652,6 +1663,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1960,8 +1972,7 @@ Memory allocation options
 
   --with-rel-alloc        Enable the relocating allocator.
   --with-dlmalloc         Use Doug Lea's malloc implementation.
-  --with-system-malloc    Use the system malloc, not the one distributed with
-                          XEmacs.
+  --with-system-malloc    Use the system malloc, (default).
   --with-debug-malloc     Use a debugging malloc.
   --with-pdump            Enable portable LISP preloader.
   --with-dump-in-exec     Enable dumping into executable (enabled by default
@@ -10266,33 +10277,20 @@ fi
 
 
 
-case "$opsys" in
-  darwin )
-    if test "$with_system_malloc" = "default"; then
-      system_malloc=yes
-      with_system_malloc=yes
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Forcing system malloc on Darwin." >&5
-$as_echo "$as_me: WARNING: Forcing system malloc on Darwin." >&2;}
-    fi ;;
-esac
 
-GNU_MALLOC=yes
-if test "$with_dlmalloc" != "no"; then
-	doug_lea_malloc=yes
-else
-	doug_lea_malloc=no
-fi
-after_morecore_hook_exists=yes
-ac_fn_c_check_func "$LINENO" "malloc_set_state" "ac_cv_func_malloc_set_state"
+if test "$with_dlmalloc" = "yes"; then
+  ac_fn_c_check_func "$LINENO" "malloc_set_state" "ac_cv_func_malloc_set_state"
 if test "x$ac_cv_func_malloc_set_state" = xyes; then :
-
+  doug_lea_malloc=yes
 else
   doug_lea_malloc=no
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether __after_morecore_hook exists" >&5
+  if test "$doug_lea_malloc" = "yes"; then
+    system_malloc=no
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether __after_morecore_hook exists" >&5
 $as_echo_n "checking whether __after_morecore_hook exists... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 extern void (* __after_morecore_hook)();
 int
@@ -10306,38 +10304,45 @@ _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+     after_morecore_hook_exists=yes
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-   after_morecore_hook_exists=no
+     after_morecore_hook_exists=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-if test "$system_malloc" = "yes" ; then
-  GNU_MALLOC=no
-  GNU_MALLOC_reason="
-    - The GNU allocators don't work with this system configuration."
-elif test "$with_system_malloc" = "yes" ; then
-  GNU_MALLOC=no
-  GNU_MALLOC_reason="
-    - User chose not to use GNU allocators."
+    GNU_MALLOC=yes
+    $as_echo "#define DOUG_LEA_MALLOC 1" >>confdefs.h
+
+    if test "$after_morecore_hook_exists" = "no" ; then
+      GNU_MALLOC_reason="
+    - Using Doug Lea's new malloc from the Linux C Library."
+      $as_echo "#define _NO_MALLOC_WARNING_ 1" >>confdefs.h
+
+    else
+      GNU_MALLOC_reason="
+    - Using Doug Lea's new malloc from the GNU C Library."
+    fi
+  else
+    system_malloc=yes
+  fi
 elif test "$with_debug_malloc" = "yes" ; then
+  debug_malloc=yes
+  system_malloc=yes
   GNU_MALLOC=no
   GNU_MALLOC_reason="
     - User chose to use Debugging Malloc."
-fi
-
-if test "$doug_lea_malloc" = "yes" -a "$GNU_MALLOC" = "yes" ; then
+elif test "$with_system_malloc" = "no" ; then
+  GNU_MALLOC=yes
   GNU_MALLOC_reason="
-    - Using Doug Lea's new malloc from the GNU C Library."
-  $as_echo "#define DOUG_LEA_MALLOC 1" >>confdefs.h
-
-  if test "$after_morecore_hook_exists" = "no" ; then
-    GNU_MALLOC_reason="
-    - Using Doug Lea's new malloc from the Linux C Library."
-    $as_echo "#define _NO_MALLOC_WARNING_ 1" >>confdefs.h
-
-  fi
+    - System malloc explicitly overridden."
+  system_malloc=no
+else
+  GNU_MALLOC=no
+  GNU_MALLOC_reason="
+    - Defaulting to system malloc."
+  system_malloc=yes
 fi
 
 
@@ -11821,7 +11826,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11867,7 +11872,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11891,7 +11896,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11936,7 +11941,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11960,7 +11965,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -22069,11 +22074,11 @@ _ACEOF
 
 
 
-if   test "$with_system_malloc" = "yes"; then $as_echo "#define USE_SYSTEM_MALLOC 1" >>confdefs.h
+if test "$debug_malloc"  = "yes"; then $as_echo "#define USE_DEBUG_MALLOC 1" >>confdefs.h
 
-elif test "$with_debug_malloc"  = "yes"; then $as_echo "#define USE_DEBUG_MALLOC 1" >>confdefs.h
+                                       $as_echo "#define USE_SYSTEM_MALLOC 1" >>confdefs.h
 
-					      $as_echo "#define USE_SYSTEM_MALLOC 1" >>confdefs.h
+elif test "$system_malloc" = "yes"; then $as_echo "#define USE_SYSTEM_MALLOC 1" >>confdefs.h
 
 fi
 test "$GCC"                  = "yes" && $as_echo "#define USE_GCC 1" >>confdefs.h
@@ -22182,7 +22187,7 @@ if test "$CC" != "$XEMACS_CC"; then
 fi
 echo "  libc version:                      $libc_version"
 echo "  Relocating allocator for buffers:  $with_rel_alloc"
-echo "  GNU version of malloc:             ${GNU_MALLOC}${GNU_MALLOC_reason}"
+echo "  Using gmalloc.c from XEmacs:       ${GNU_MALLOC}${GNU_MALLOC_reason}"
 case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;

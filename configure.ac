@@ -973,7 +973,7 @@ XE_MERGED_ARG([dlmalloc],
 	AS_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
 	[], [with_dlmalloc='default'])
 XE_MERGED_ARG([system-malloc],
-	AS_HELP_STRING([--with-system-malloc],[Use the system malloc, not the one distributed with XEmacs.]),
+	AS_HELP_STRING([--with-system-malloc],[Use the system malloc, (default).]),
 	[], [with_system_malloc='default'])
 XE_MERGED_ARG([debug-malloc],
 	AS_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
@@ -2533,56 +2533,51 @@ dnl -----------------------------------
 dnl Do some misc autoconf-special tests
 dnl -----------------------------------
 
-dnl Can we use GNU malloc on this system?
-dnl First, configure based-checks.
-case "$opsys" in
-  darwin )
-    if test "$with_system_malloc" = "default"; then
-      system_malloc=yes
-      with_system_malloc=yes
-      AC_MSG_WARN([Forcing system malloc on Darwin.])
-    fi ;;
-esac
+dnl Default to the system malloc. The right thing here is to remove
+dnl src/gmalloc.c entirely, and just autoconfiscate and use malloc_set_state
+dnl and __after_morecore_hook and if they are available, otherwise no. But
+dnl this is a reasonable first step.
 
-dnl Do the opsystem or machine files prohibit the use of the GNU malloc?
-dnl Assume not, until told otherwise.
-GNU_MALLOC=yes
-if test "$with_dlmalloc" != "no"; then
-	doug_lea_malloc=yes
-else
-	doug_lea_malloc=no
-fi
-after_morecore_hook_exists=yes
-AC_CHECK_FUNC(malloc_set_state, ,doug_lea_malloc=no)
-AC_MSG_CHECKING(whether __after_morecore_hook exists)
-AC_LINK_IFELSE([AC_LANG_PROGRAM([extern void (* __after_morecore_hook)();],
-  [__after_morecore_hook = 0])],
-  [AC_MSG_RESULT(yes)],
-  [AC_MSG_RESULT(no)
-   after_morecore_hook_exists=no])
-if test "$system_malloc" = "yes" ; then
-  GNU_MALLOC=no
-  GNU_MALLOC_reason="
-    - The GNU allocators don't work with this system configuration."
-elif test "$with_system_malloc" = "yes" ; then
-  GNU_MALLOC=no
-  GNU_MALLOC_reason="
-    - User chose not to use GNU allocators."
+if test "$with_dlmalloc" = "yes"; then
+  AC_CHECK_FUNC(malloc_set_state, doug_lea_malloc=yes,doug_lea_malloc=no)
+  if test "$doug_lea_malloc" = "yes"; then
+    system_malloc=no
+    AC_MSG_CHECKING(whether __after_morecore_hook exists)
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([extern void (* __after_morecore_hook)();],
+    [__after_morecore_hook = 0])],
+    [AC_MSG_RESULT(yes)
+     after_morecore_hook_exists=yes],
+    [AC_MSG_RESULT(no)
+     after_morecore_hook_exists=no])
+    GNU_MALLOC=yes
+    AC_DEFINE(DOUG_LEA_MALLOC)
+    if test "$after_morecore_hook_exists" = "no" ; then
+      GNU_MALLOC_reason="
+    - Using Doug Lea's new malloc from the Linux C Library."
+      AC_DEFINE(_NO_MALLOC_WARNING_)
+    else
+      GNU_MALLOC_reason="
+    - Using Doug Lea's new malloc from the GNU C Library."
+    fi
+  else
+    system_malloc=yes
+  fi
 elif test "$with_debug_malloc" = "yes" ; then
+  debug_malloc=yes
+  system_malloc=yes
   GNU_MALLOC=no
   GNU_MALLOC_reason="
     - User chose to use Debugging Malloc."
-fi
-
-if test "$doug_lea_malloc" = "yes" -a "$GNU_MALLOC" = "yes" ; then
+elif test "$with_system_malloc" = "no" ; then
+  GNU_MALLOC=yes
   GNU_MALLOC_reason="
-    - Using Doug Lea's new malloc from the GNU C Library."
-  AC_DEFINE(DOUG_LEA_MALLOC)
-  if test "$after_morecore_hook_exists" = "no" ; then
-    GNU_MALLOC_reason="
-    - Using Doug Lea's new malloc from the Linux C Library."
-    AC_DEFINE(_NO_MALLOC_WARNING_)
-  fi
+    - System malloc explicitly overridden."
+  system_malloc=no
+else
+  GNU_MALLOC=no
+  GNU_MALLOC_reason="
+    - Defaulting to system malloc."
+  system_malloc=yes
 fi
 
 dnl #### mcheck is broken in all versions of Linux libc and glibc.
@@ -5830,9 +5825,9 @@ dnl at the point where the autodetection occurs or would occur,
 dnl so that the user gets immediate feedback on the results of the
 dnl autodetection.
 
-if   test "$with_system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
-elif test "$with_debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
-					      AC_DEFINE(USE_SYSTEM_MALLOC)
+if test "$debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
+                                       AC_DEFINE(USE_SYSTEM_MALLOC)
+elif test "$system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
 fi
 test "$GCC"                  = "yes" && AC_DEFINE(USE_GCC)
 test "$XEMACS_CC_GPP"        = "yes" && AC_DEFINE(USE_GPLUSPLUS)
@@ -5931,7 +5926,7 @@ if test "$CC" != "$XEMACS_CC"; then
 fi
 echo "  libc version:                      $libc_version"
 echo "  Relocating allocator for buffers:  $with_rel_alloc"
-echo "  GNU version of malloc:             ${GNU_MALLOC}${GNU_MALLOC_reason}"
+echo "  Using gmalloc.c from XEmacs:       ${GNU_MALLOC}${GNU_MALLOC_reason}"
 case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;

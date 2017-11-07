@@ -1,3 +1,16 @@
+2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac (XE_COMPLEX_ARG):
+	Document that we default to the system malloc.
+	* configure.ac:
+	Implement this. Use src/gmalloc.c if --with-system-malloc=no was
+	supplied, otherwise use the system malloc.
+	Document that the right next step is to remove src/gmalloc.c, and
+	to use __after_morecore_hook and malloc_set_state if those are
+	available in the system malloc, not otherwise.
+	* configure:
+	Regenerate.
+
 2017-03-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* ChangeLog:
