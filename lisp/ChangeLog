@@ -1,3 +1,17 @@
+2017-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Ben's approach in lib-src/make-case-conv.el didn't work, there are
+	107 entries in CaseFolding.txt as of today where the first column
+	is a lowercase letter, not an uppercase one. Parse UnicodeData.txt
+	instead.
+
+	* mule/make-case-conv.el: New.
+	Replacement for lib-src/make-case-conv.py, parsing UnicodeData.txt
+	instead.
+	* mule/uni-case-conv.el:
+	Update this file to reflect output from make-case-conv.el with
+	recent UnicodeData.txt instead.
+
 2017-10-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-extra.el (cl-macroexpand-all):
