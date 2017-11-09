@@ -1,3 +1,8 @@
+2017-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-case-conv.py:
+	Document why this file's approach didn't work. Slot it for deletion.
+
 2017-09-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* b2m.c (main):

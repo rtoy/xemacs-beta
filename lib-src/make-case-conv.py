@@ -35,6 +35,12 @@
 # (or whatever else you have named it according to the variable
 # `output_filename').
 
+# #### Aidan Kehoe, Do 9 Nov 2017 21:32:14 GMT; this approach doesn't work,
+# since CaseFolding folds both upper and lower case characters to lower case,
+# without marking which is which. We need to parse UnicodeData.txt instead; I
+# do this in lisp/mule/make-case-conv.el. I will remove make-case-conv.py down
+# the line.
+
 ### Code:
 
 import urllib2, re, sys
