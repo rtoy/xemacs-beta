@@ -2020,7 +2020,7 @@ ccl_driver (struct ccl_program *ccl,
 	    EMACS_INT i = ccl_backtrace_idx - 1;
 	    EMACS_INT j;
 
-	    Dynarr_add_many (destination, (unsigned char *) msg, strlen (msg));
+	    Dynarr_add_many (destination, (unsigned char *) msg, qxestrlen (msg));
 
 	    for (j = 0; j < CCL_DEBUG_BACKTRACE_LEN; j++, i--)
 	      {
@@ -2029,7 +2029,7 @@ ccl_driver (struct ccl_program *ccl,
 		  break;
 		Dynarr_add_many (destination, msg,
 				 emacs_snprintf (msg, sizeof (msg),
-						 " %ld", ccl_backtrace_table[i]))
+						 " %ld", ccl_backtrace_table[i]));
 	      }
 	    goto ccl_finish;
 	  }

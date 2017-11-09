@@ -1,3 +1,8 @@
+2017-11-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* mule-ccl.c (ccl_driver):
+	Fix the build #ifdef CCL_DEBUG.
+
 2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Quieten some compiler warnings:
