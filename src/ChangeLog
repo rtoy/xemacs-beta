@@ -1,3 +1,18 @@
+2017-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c:
+	* data.c (rem_two_fixnum): New.
+	Return the result of the % operator on two EMACS_INTs. Standardise
+	on the sign so we don't have to put up with the quirks of the
+	local C implementation.
+	* data.c (Frem):
+	Document the meaning of %, cross reference to the C standard;
+	document that the result will have the sign of NUMBER1.
+	* lisp.h (EMACS_INT_ABS): New.
+	Make a version of abs() available appropriate for an EMACS_INT.
+	* doprnt.c (doprnt_1):
+	Use this version of abs().
+
 2017-11-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule-ccl.c (ccl_driver):

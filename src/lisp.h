@@ -503,6 +503,15 @@ typedef unsigned long uintptr_t;
 
 #define BITS_PER_EMACS_INT (SIZEOF_EMACS_INT * BITS_PER_CHAR)
 
+/* Make a version of abs() available appropriate for an EMACS_INT. */
+#if   SIZEOF_EMACS_INT == SIZEOF_INT
+# define EMACS_INT_ABS abs
+#elif SIZEOF_EMACS_INT == SIZEOF_LONG
+# define EMACS_INT_ABS labs
+#elif SIZEOF_EMACS_INT == SIZEOF_LONG_LONG
+# define EMACS_INT_ABS llabs
+#endif
+
 /* -------------------------- basic byte typedefs --------------------- */
 
 /* The definitions we put here and in the next section use typedefs to
