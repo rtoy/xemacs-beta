@@ -757,7 +757,22 @@ will be used to make debugging easier."
     (= (% big (1+ most-positive-fixnum)) most-positive-fixnum)
     (= (% negbig (1- most-negative-fixnum)) most-negative-fixnum)
     (= (mod big (1+ most-positive-fixnum)) most-positive-fixnum)
-    (= (mod negbig (1- most-negative-fixnum)) most-negative-fixnum)))
+    (= (mod negbig (1- most-negative-fixnum)) most-negative-fixnum))
+
+  (macrolet
+      ((check-%-for-value (value denominator)
+         `(Assert (eql ,value
+                   (+ (* (/ ,value ,denominator) ,denominator)
+                      (% ,value ,denominator))))))
+    (let ((limit (* most-positive-fixnum 2)) random-value random-denominator)
+      (dotimes (i 10) ;; Increase these COUNTs to reassure.
+        (dotimes (j 4)
+	  (setq random-value (random limit)
+		random-denominator (random limit))
+          (check-%-for-value random-value random-denominator)
+          (check-%-for-value (- random-value) random-denominator)
+          (check-%-for-value random-value (- random-denominator))
+          (check-%-for-value (- random-value) (- random-denominator)))))))
 
 ;;-----------------------------------------------------
 ;; Arithmetic comparison operations

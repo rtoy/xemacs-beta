@@ -1,3 +1,9 @@
+2017-11-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Check for the %-equivalence documented in the C standard for
+	bignums too.
+
 2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:

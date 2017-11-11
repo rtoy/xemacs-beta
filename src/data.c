@@ -2900,9 +2900,43 @@ NUMBER may be an integer, marker or character converted to integer.
   return make_fixnum (~ fixnum_char_or_marker_to_int (number));
 }
 
+static Lisp_Object
+rem_two_fixnum (EMACS_INT number1, EMACS_INT number2)
+{
+  EMACS_UINT val1, val2;
+  EMACS_INT sign;
+  
+  if (0 == number2)
+    {
+      Fsignal (Qarith_error, Qnil);
+    }
+
+  if (number1 < 0)
+    {
+      sign = -1;
+      val1 = -number1;
+    }
+  else
+    {
+      sign = 1;
+      val1 = number1;
+    }
+
+  val2 = EMACS_INT_ABS (number2);
+      
+  return make_fixnum ((EMACS_INT)((val1 % val2) * sign));
+}
+
 DEFUN ("%", Frem, 2, 2, 0, /*
-Return remainder of first arg divided by second.
-Both must be integers, characters or markers.
+Return remainder of NUMBER1 divided by NUMBER2.
+
+Both must be integers, characters or markers.  This is the remainder in the C
+sense, so the following equivalence (from the C standard) holds:
+
+\(eql NUMBER1 (+ (* (/ NUMBER1 NUMBER2) NUMBER2) (% NUMBER1 NUMBER2)))
+
+In this implementation, the result will have the sign of NUMBER1, something
+not standardized in C.
 */
        (number1, number2))
 {
@@ -2914,26 +2948,34 @@ Both must be integers, characters or markers.
 
   if (promote_args (&number1, &number2) == FIXNUM_T)
     {
-      if (XREALFIXNUM (number2) == 0)
-	Fsignal (Qarith_error, Qnil);
-      return make_fixnum (XREALFIXNUM (number1) % XREALFIXNUM (number2));
+      return rem_two_fixnum (XREALFIXNUM (number1), XREALFIXNUM (number2));
     }
   else
     {
       if (bignum_sign (XBIGNUM_DATA (number2)) == 0)
-	Fsignal (Qarith_error, Qnil);
-      bignum_mod (scratch_bignum, XBIGNUM_DATA (number1),
-		  XBIGNUM_DATA (number2));
+        {
+          Fsignal (Qarith_error, Qnil);
+        }
+      if (bignum_sign (XBIGNUM_DATA (number1)) > -1)
+        {
+          bignum_mod (scratch_bignum, XBIGNUM_DATA (number1),
+                      XBIGNUM_DATA (number2));
+        }
+      else
+        {
+          bignum_neg (scratch_bignum, XBIGNUM_DATA (number1));
+          bignum_mod (scratch_bignum2, scratch_bignum,
+                      XBIGNUM_DATA (number2));
+          bignum_neg (scratch_bignum, scratch_bignum2);
+        }
+
       return Fcanonicalize_number (make_bignum_bg (scratch_bignum));
     }
 #else /* !HAVE_BIGNUM */
   EMACS_INT ival1 = fixnum_char_or_marker_to_int (number1);
   EMACS_INT ival2 = fixnum_char_or_marker_to_int (number2);
 
-  if (ival2 == 0)
-    Fsignal (Qarith_error, Qnil);
-
-  return make_fixnum (ival1 % ival2);
+  return rem_two_fixnum (ival1, ival2);
 #endif /* HAVE_BIGNUM */
 }
 

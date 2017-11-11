@@ -926,7 +926,7 @@ doprnt_1 (Lisp_Object stream,
             }
         }
       filllen = (max (zeros_to_add, 0) + 1 /* sign flag */
-                 + 2 /* number flag */ + labs (padding_to_add))
+                 + 2 /* number flag */ + EMACS_INT_ABS (padding_to_add))
         * MAX_ICHAR_LEN;
       filling = fill_cursor = alloca_ibytes (filllen);
 
