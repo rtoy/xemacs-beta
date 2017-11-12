@@ -1,3 +1,9 @@
+2017-11-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lwlib-internal.h:
+	Make min(), max() available as macros to lwlib as well as to the
+	core code. Thank you Mats Lidell and the buildbot.
+
 2016-12-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lwlib-Xlw.c (xlw_update_one_widget):
