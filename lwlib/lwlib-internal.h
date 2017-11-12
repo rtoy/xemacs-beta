@@ -37,6 +37,17 @@ EXTERN_C void assert_failed (const char *, int, const char *);
 # endif
 #endif
 
+/* Define min() and max(). (Some compilers put them in strange places that
+   won't be referenced by include files used by XEmacs, such as `macros.h'
+   under Solaris.) */
+
+#ifndef min
+# define min(a,b) (((a) <= (b)) ? (a) : (b))
+#endif
+#ifndef max
+# define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
 /* This represents a single widget within a widget tree.  All the
    widgets in a widget tree are chained through the `next' field.
    `info' is a back pointer to the widget tree. */
