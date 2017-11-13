@@ -1,3 +1,10 @@
+2017-11-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.el (decode-char):
+	Return nil instead of erroring when CODE cannot be encoded, as did
+	this function pre-unicode-internal and as does (did) GNU's
+	version.
+
 2017-11-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Ben's approach in lib-src/make-case-conv.el didn't work, there are

@@ -652,7 +652,8 @@
   (Assert (eql (extent-end-position pEE) (1- (length (seventh split)))))
 
   (let ((TOCHTER (upcase (fifth split))) MEINE
-        (env current-language-environment))
+        (env (and (boundp 'current-language-environment)
+                  current-language-environment)))
     (Assert (extentp (setf pE (car (extent-list TOCHTER nil nil nil
                                                 property-name))))
             "checking extent copied, \"TOCHTER\"")
