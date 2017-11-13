@@ -1,3 +1,12 @@
+2017-11-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (bytecode_arithcompare):
+	Rename a couple of local variables to quieten the compiler about
+	shadowing.
+	* doprnt.c (rewrite_floating_spec):
+	Mark OBJ as used if HAVE_BIGFLOAT is not defined, to quieten the
+	compiler.
+
 2017-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:

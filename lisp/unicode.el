@@ -87,7 +87,7 @@ The second argument must be 'ucs, the third argument is ignored.  "
   (check-argument-range code #x0 #x10FFFF)
   (assert (eq quote-ucs 'ucs) t
 	  "Sorry, decode-char doesn't yet support anything but the UCS.  ")
-  (unicode-to-char code))
+  (unicode-to-char code nil 'fail))
 
 (defun encode-char (char quote-ucs &optional restriction)
   "FSF compatibility--return the Unicode code point of CHAR.

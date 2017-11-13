@@ -1,3 +1,23 @@
+2017-11-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/case-tests.el:
+	Change the encoding of this to iso-8859-1, so non-mule doesn't
+	choke on old-format case tables.
+	* automated/case-tests.el (downcase1):
+	Create strings using non-Latin-1 using (format "...%c..."
+	(decode-char 'ucs CODE) at runtime, rather than simply confusing a
+	non-mule build at read time.
+	* automated/case-tests.el (uni-mappings):
+	Use #'decode-char at runtime, don't assume non-Mule can read a
+	long list of mostly non-ASCII characters.
+	* automated/extent-tests.el (string):
+	Check whether CURRENT-LANGUAGE-ENVIRONMENT is bound (only if Mule)
+	before dereferencing it.
+	* automated/format-tests.el (Assert):
+	Be better about not expecting the Lisp reader to understand
+	non-Latin-1, use decode-char at runtime.
+	Mark a few tests with Implementation-Incomplete-Expect-Failure.
+
 2017-11-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:

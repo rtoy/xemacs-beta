@@ -1768,6 +1768,8 @@ rewrite_floating_spec (struct printf_spec *spec, Lisp_Object obj)
       /* Leave obj alone. */
       return ch;
     }
+#else
+  USED (obj);
 #endif
 
   /* The float spec code calls extract_float(), this is a far less complex

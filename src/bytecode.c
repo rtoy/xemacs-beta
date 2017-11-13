@@ -333,9 +333,9 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 	if (MARKERP (obj2)
 	    && (XMARKER (obj1)->buffer == XMARKER (obj2)->buffer))
 	  {
-	    Bytebpos ival1 = byte_marker_position (obj1);
-	    Bytebpos ival2 = byte_marker_position (obj2);
-	    return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
+	    Bytebpos bpval1 = byte_marker_position (obj1);
+	    Bytebpos bpval2 = byte_marker_position (obj2);
+	    return bpval1 < bpval2 ? -1 : bpval1 > bpval2 ? 1 : 0;
 	  }
 
 	ival1 = marker_position (obj1);

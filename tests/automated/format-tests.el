@@ -174,16 +174,22 @@
 
 (when (featurep 'mule)
   ;; Same tests, but for a very non-ASCII character.
-  (Assert (equal (format "%c" (aref "\u0627" 0)) "\u0627"))
-  (Assert (equal (format "%c" (char-int (aref "\u0627" 0))) "\u0627"))
-  (Assert (equal (format "%20c" (aref "\u0627" 0))
-                 (concatenate 'string (make-string 19 ?\x20) "\u0627")))
-  (Assert (equal (format "%020c" (aref "\u0627" 0))
-                 (concatenate 'string (make-string 19 ?0) "\u0627")))
-  (Assert (equal (format "%-20c" (aref "\u0627" 0))
-                 (concatenate 'string "\u0627" (make-string 19 ?\x20))))
-  (Assert (equal (format "%-020c" (aref "\u0627" 0))
-                 (concatenate 'string "\u0627" (make-string 19 ?0))))
+  (Assert (equal (format "%c" (decode-char 'ucs #x0627))
+                 (decode-coding-string "\xd8\xa7" 'utf-8)))
+  (Assert (equal (format "%c" (char-int (decode-char 'ucs #x0627)))
+                 (decode-coding-string "\xd8\xa7" 'utf-8)))
+  (Assert (equal (format "%20c" (decode-char 'ucs #x0627))
+                 (concatenate 'string (make-string 19 ?\x20)
+                              (decode-coding-string "\xd8\xa7" 'utf-8))))
+  (Assert (equal (format "%020c" (decode-char 'ucs #x0627))
+                 (concatenate 'string (make-string 19 ?0)
+                              (decode-coding-string "\xd8\xa7" 'utf-8))))
+  (Assert (equal (format "%-20c" (decode-char 'ucs #x0627))
+                 (concatenate 'string (decode-coding-string "\xd8\xa7" 'utf-8)
+                              (make-string 19 ?\x20))))
+  (Assert (equal (format "%-020c" (decode-char 'ucs #x0627))
+                 (concatenate 'string (decode-coding-string "\xd8\xa7" 'utf-8)
+                              (make-string 19 ?0))))
 
   ;; And the pad char.
   (macrolet
@@ -194,24 +200,27 @@
               for ucs in expressions
               collect
               (let* ((character (decode-char 'ucs ucs))
-                     (string (string character)))
-              `(progn
-                (Assert (equal (format ,(concat "%!" string "*d") 4 10)
+                     ;; Macroexpanded, but not run, if CHARACTER is nil
+                     (string (string (or character ?a)))) 
+                (if character
+                    `(progn
+                      (Assert (equal (format ,(concat "%!" string "*d") 4 10)
                                ,(concat string string "10")))
-                (Assert (equal (format ,(concat "%!" string "*d") 4 -10)
+                      (Assert (equal (format ,(concat "%!" string "*d") 4 -10)
                                ,(concat string "-10")))
-                (Assert (equal (format ,(concat "%!" string "4d") 10)
+                      (Assert (equal (format ,(concat "%!" string "4d") 10)
                                ,(concat string string "10")))
-                (Assert (equal (format ,(concat "%!" string "04d") 10)
+                      (Assert (equal (format ,(concat "%!" string "04d") 10)
                                "0010"))
-                (Assert (equal (format ,(concat "%!" string "-04d") 10)
+                      (Assert (equal (format ,(concat "%!" string "-04d") 10)
                                ;; Zero flag ignored for trailing padding.
                                ,(concat "10" string string)))
-                (Assert (equal (format ,(concat "%!" string "*d") 22 10)
+                      (Assert (equal (format ,(concat "%!" string "*d") 22 10)
                                ,(concat (make-string 20 character)  "10")))
-                (Assert (equal (format ,(concat "%!" string "*d") 23 -10)
+                      (Assert (equal (format ,(concat "%!" string "*d") 23 -10)
                                ,(concat (make-string 20 character)
-                                        "-10")))))))))
+                                        "-10"))))))))))
+                  
     (checking-pad-chars
      #xa0 #xff #x4e00 #x2194 #x2122 #x0e9e #xd55c)))
 
@@ -511,9 +520,10 @@
 ;; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 ;; 
 
-(Assert (equal (format "%+#23.15e" 789456123) "+7.894561230000000e+08"))
-(Assert (equal (format "%-#23.15e" 789456123) "7.894561230000000e+08 "))
-(Assert (equal (format "%#23.15e" 789456123) " 7.894561230000000e+08"))
+(Implementation-Incomplete-Expect-Failure
+ (Assert (equal (format "%+#23.15e" 789456123) "+7.894561230000000e+08"))
+ (Assert (equal (format "%-#23.15e" 789456123) "7.894561230000000e+08 "))
+ (Assert (equal (format "%#23.15e" 789456123) " 7.894561230000000e+08")))
 (Assert (equal (format "%#1.1g" 789456123) "8.e+08") "checking #1.1g")
 (Assert
  (equal
@@ -560,7 +570,8 @@
 (Assert (equal (format "%.0f" 0.6) "1"))
 (Assert (equal (format "%2.4e" 8.6) "8.6000e+00"))
 (Assert (equal (format "% 2.4e" 8.6) " 8.6000e+00"))
-(Assert (equal (format "% 014.4e" 8.6) " 008.6000e+000"))
+(Implementation-Incomplete-Expect-Failure
+ (Assert (equal (format "% 014.4e" 8.6) " 008.6000e+000")))
 (Assert (equal (format "% 2.4e" -8.6) "-8.6000e+00"))
 (Assert (equal (format "%+2.4e" 8.6) "+8.6000e+00"))
 (Assert (equal (format "%2.4g" 8.6) "8.6"))
@@ -696,8 +707,12 @@
 ;; This used to crash with bignum builds.
 (Check-Error (wrong-type-argument syntax-error) (format "%n" pi))
 
-(Check-Error args-out-of-range (format (concat "%" (number-to-string
-                                                    most-positive-fixnum)
-                                               "d") 1))
+(unless (featurep 'mule)
+  ;; This might work (not error) on a non-mule build. On my 11 year old 32
+  ;; bit machine, I don't have enough RAM for it to succeed, whence the
+  ;; conditional. It's unlikely to work on a 64 bit build.
+  (Check-Error args-out-of-range (format (concat "%" (number-to-string
+                                                      most-positive-fixnum)
+                                                 "d") 1)))
 
 ;; end of format-tests.el
