@@ -268,8 +268,7 @@ Optional FORCE-SELECTION makes the currently selected window first in list."
     ;; context buffer before they get run.
     (let* ((buffers (delete-if 
 		     buffers-tab-omit-function (buffer-list frame)))
-	   (first-buf (car buffers))
-	   tail)
+	   (first-buf (car buffers)))
       ;; maybe force the selected window
       (when (and force-selection
 		 (not in-deletion)
@@ -290,16 +289,16 @@ Optional FORCE-SELECTION makes the currently selected window first in list."
                                buffers-tab-filter-functions)
                         (list buffer)))
                buffers)))
-      ;; maybe shorten list of buffers
-      (let ((n (1- 
-                ;; Error on non-number, non-nil buffers-tab-max-size
-                (or buffers-tab-max-size most-positive-fixnum))))
-        (and (> n 0)
-             (setf tail (nthcdr n buffers)) ;; Length greater than (1+ n)?
-             (setf (cdr tail) nil)))
       ;; sort buffers in group (default is most-recently-selected)
       (when buffers-tab-sort-function
 	(setq buffers (funcall buffers-tab-sort-function buffers)))
+      ;; maybe shorten list of buffers
+      (when (fixnump buffers-tab-max-size)
+	(let ((n (1- buffers-tab-max-size))
+	      tail)
+	  (and (> n 0)
+	       (setf tail (nthcdr n buffers)) ;; Length greater than (1+ n)?
+	       (setf (cdr tail) nil)))
       (labels
           ((build-buffers-tab-internal (buffers)
              "Convert BUFFERS to a list of structures used by the tab widget."
