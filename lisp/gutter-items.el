@@ -69,18 +69,18 @@ a large number or nil will slow down tab responsiveness."
   :group 'buffers-tab)
 
 (defcustom buffers-tab-omit-function 'buffers-tab-omit-some-buffers
-  "*If non-nil, a function specifying the buffers to omit from the buffers tab.
+  "*If non-nil, a predicate matching buffers to omit from the buffers tab.
 This is passed a buffer and should return non-nil if the buffer should be
 omitted.  The default value `buffers-tab-omit-some-buffers' omits
-buffers based on the value of `buffers-tab-omit-list'."
+buffers with names matched by any regexp in `buffers-tab-omit-list'."
   :type '(choice (const :tag "None" nil)
   		 function)
   :group 'buffers-tab)
 
 (defcustom buffers-tab-omit-list '("\\` ")
-  "*A list of types of buffers to omit from the buffers tab.
-This is only used if `buffers-tab-omit-function' is set to
-`buffers-tab-omit-some-buffers', its default value."
+  "*A list of regexps matching names of buffers to omit from the buffers tab.
+This is used by `buffers-tab-omit-some-buffers' \(the default value of
+`buffers-tab-omit-function')."
   :type '(checklist
 	  :greedy t
 	  :format "%{Omit List%}: \n%v"
@@ -102,8 +102,9 @@ This is only used if `buffers-tab-omit-function' is set to
   :group 'buffers-tab)
 
 (defvar buffers-tab-selection-function 'select-buffers-tab-buffers-by-mode
-  "*If non-nil, a function specifying the buffers to select in the
-buffers tab.  This is passed two buffers and should return non-nil if
+  "*If non-nil, a predicate selecting buffers eligible for the buffers tab.
+
+This is passed a buffer to test and a comparison buffer, returning non-nil if
 the first buffer should be selected.  The default value
 `select-buffers-tab-buffers-by-mode' groups buffers by major mode and
 by `buffers-tab-grouping-regexp'.")
@@ -112,12 +113,12 @@ by `buffers-tab-grouping-regexp'.")
 			"Set `buffers-tab-filter-functions' instead.")
 
 (defcustom buffers-tab-filter-functions (list 'select-buffers-tab-buffers-by-mode)
-  "*A list of functions specifying buffers to display in the buffers tab.
+  "*A list of predicates selecting buffers eligible for the buffers tab.
 
 If nil, all buffers are kept, up to `buffers-tab-max-size', in usual order.
 Otherwise, each function in the list must take arguments (BUF1 BUF2).
-BUF1 is the candidate, and BUF2 is the current buffer (first in the buffers
-list).  The function should return non-nil if BUF1 should be added to the
+BUF1 is the candidate, and BUF2 is a comparison buffer \(usually the current
+buffer).  The function returns non-nil to request that BUF1 be added to the
 buffers tab.  BUF1 will be omitted if any of the functions returns nil.
 
 Defaults to `select-buffers-tab-buffers-by-mode', which adds BUF1 if BUF1 and
@@ -127,10 +128,11 @@ BUF2 have the same major mode, or both match `buffers-tab-grouping-regexp'."
   :group 'buffers-tab)
 
 (defcustom buffers-tab-sort-function nil
-  "*If non-nil, a function specifying the buffers to select from the
-buffers tab.  This is passed the buffer list and returns the list in the
-order desired for the tab widget.  The default value `nil' leaves the
-list in `buffer-list' order (usual most-recently-selected-first)."
+  "*If non-nil, a function specifying precedence of buffers in the buffers tab.
+
+This is passed the buffer list and returns the list in the order desired for
+the tab widget.  The default value `nil' leaves the list in `buffer-list'
+order (usual most-recently-selected-first)."
 
   :type '(choice (const :tag "None" nil)
 		 function)
@@ -148,21 +150,20 @@ list in `buffer-list' order (usual most-recently-selected-first)."
   '("^\\(gnus-\\|message-mode\\|mime/viewer-mode\\)"
     "^\\(emacs-lisp-\\|lisp-\\)")
   "*If non-nil, a list of regular expressions for buffer grouping.
-Each regular expression is applied to the current major-mode symbol
-name and mode-name, if it matches then any other buffers that match
-the same regular expression be added to the current group."
+
+If two buffers' modes or mode names both are matched by any regular expression
+in the list, they are considered equivalent when selecting buffers by major
+mode."
   :type '(choice (const :tag "None" nil)
 		 sexp)
   :group 'buffers-tab)
 
 (defcustom buffers-tab-format-buffer-line-function 'format-buffers-tab-line
-  "*The function to call to return a string to represent a buffer in the
-buffers tab.  The function is passed a buffer and should return a
-string.  The default value `format-buffers-tab-line' just returns the
-name of the buffer, optionally truncated to
-`buffers-tab-max-buffer-line-length'.  Also check out
-`slow-format-buffers-menu-line' which returns a whole bunch of info
-about a buffer."
+  "*A function returning a string representing the buffer passed.
+
+The default value `format-buffers-tab-line' returns the name of the buffer,
+truncated to `buffers-tab-max-buffer-line-length'.  An alternative is
+`slow-format-buffers-menu-line' which returns more info about the buffer."
   :type 'function
   :group 'buffers-tab)
 
@@ -228,8 +229,9 @@ This selects buffers by major mode `buffers-tab-grouping-regexp'."
 	  (t nil))))
 
 (defun format-buffers-tab-line (buffer)
-  "For use as a value of `buffers-tab-format-buffer-line-function'.
-This just returns the buffer's name, optionally truncated."
+  "Return BUFFER's name, truncated to `buffers-tab-default-buffer-line-length'.
+For use as a value of `buffers-tab-format-buffer-line-function'."
+
   (let* ((len (specifier-instance buffers-tab-default-buffer-line-length))
          (buffer-name (buffer-name buffer))
          (length (length buffer-name)))
@@ -247,21 +249,27 @@ This just returns the buffer's name, optionally truncated."
 ;;; cumulative --andyp.
 (defun buffers-tab-items (&optional in-deletion frame force-selection)
   "Return a list of tab instantiators based on the current buffers list.
-This function is used as the tab filter for the top-level buffers
-\"Buffers\" tab.  It dynamically creates a list of tab instantiators
-to use as the contents of the tab.  The contents and order of the list
-is controlled by `buffers-tab-filter-functions' which by default
-groups buffers according to major mode and removes invisible buffers.
-You can control how many buffers will be shown by setting
-`buffers-tab-max-size'.  You can control the text of the tab items by
-redefining the function `format-buffers-menu-line'."
+
+This is the tab filter for the top-level buffers \"Buffers\" tab.
+It dynamically creates a list of tab instantiators to use as the contents of
+the tab.  The contents and order of the list is controlled by
+`buffers-tab-filter-functions' which by default groups buffers according to
+major mode and removes invisible buffers.  At most `buffers-tab-max-size'
+tabs will be added to the control.  The label for each tab is produced by
+`format-buffers-menu-line'.
+
+Optional IN-DELETION is an internal flag indicating a buffer is being deleted.
+Optional FRAME is the frame whose buffer list is used, defaulting to the
+selected frame.
+Optional FORCE-SELECTION makes the currently selected window first in list."
   (save-match-data
     ;; NB it is too late if we run the omit function as part of the
     ;; filter functions because we need to know which buffer is the
     ;; context buffer before they get run.
     (let* ((buffers (delete-if 
 		     buffers-tab-omit-function (buffer-list frame)))
-	   (first-buf (car buffers)) tail)
+	   (first-buf (car buffers))
+	   tail)
       ;; maybe force the selected window
       (when (and force-selection
 		 (not in-deletion)
@@ -309,7 +317,7 @@ redefining the function `format-buffers-menu-line'."
 	(build-buffers-tab-internal buffers)))))
 
 (defun add-tab-to-gutter ()
-  "Put a tab control in the gutter area to hold the most recent buffers."
+  "Put a tab control in the gutter area to select buffers."
   (setq gutter-buffers-tab-orientation (default-gutter-position))
   (let* ((gutter-string (copy-sequence "\n"))
 	 (gutter-buffers-tab-extent (make-extent 0 1 gutter-string)))
@@ -344,8 +352,8 @@ redefining the function `format-buffers-menu-line'."
 			       x)))))))
 
 (defun update-tab-in-gutter (frame &optional force-selection)
-  "Update the tab control in the gutter area."
-    ;; dedicated frames don't get tabs
+  "Update the tab control in the gutter area.
+Optional FORCE-SELECTION makes the currently selected window first in list."    ;; dedicated frames don't get tabs
   (unless (or (window-dedicated-p (frame-selected-window frame))
 	      (frame-property frame 'popup))
     (when (specifier-instance default-gutter-visible-p frame)
