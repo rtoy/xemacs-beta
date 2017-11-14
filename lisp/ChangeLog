@@ -28,6 +28,10 @@
 
 2017-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
 
+	* mule/japanese.el (shift_jis): Correct comment.
+
+2017-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
 	* gutter-items.el (buffers-tab-omit-function):
 	(buffers-tab-omit-list):
 	(buffers-tab-selection-function):
