@@ -1,3 +1,7 @@
+2017-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lispref/faces.texi (Face Properties): Add items to itemize.
+
 2017-04-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lispref/buffers.texi (Buffer Names):
