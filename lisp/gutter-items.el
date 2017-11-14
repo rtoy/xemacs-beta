@@ -298,7 +298,7 @@ Optional FORCE-SELECTION makes the currently selected window first in list."
 	      tail)
 	  (and (> n 0)
 	       (setf tail (nthcdr n buffers)) ;; Length greater than (1+ n)?
-	       (setf (cdr tail) nil)))
+	       (setf (cdr tail) nil))))
       (labels
           ((build-buffers-tab-internal (buffers)
              "Convert BUFFERS to a list of structures used by the tab widget."

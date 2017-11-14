@@ -1,3 +1,9 @@
+2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gutter-items.el (buffers-tab-items):
+	Add a missing parenthesis after Stephen's last change, get things
+	building again.
+
 2017-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* gutter-items.el (buffers-tab-items):
