@@ -26,6 +26,21 @@
 	the same symbol name as the let binding, delay shadowing until all
 	bindings are processed.	
 
+2017-10-26  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* gutter-items.el (buffers-tab-omit-function):
+	(buffers-tab-omit-list):
+	(buffers-tab-selection-function):
+	(buffers-tab-filter-functions):
+	(buffers-tab-sort-function):
+	(buffers-tab-grouping-regexp):
+	(buffers-tab-format-buffer-line-function):
+	(format-buffers-tab-line):
+	(buffers-tab-items):
+	(add-tab-to-gutter):
+	(update-tab-in-gutter):
+	Clarify docstrings.
+
 2017-10-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* frame.el (frame-utmost-window-2): Made into a label.
