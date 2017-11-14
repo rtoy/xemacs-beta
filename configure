@@ -12265,10 +12265,53 @@ case `uname -s`:`uname -r` in
 		    Darwin:1[123456].*)
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-	LDFLAGS="$LDFLAGS -Wl,-no_pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-Wl,-no_pie\" to \$LDFLAGS"; fi
+	start_flags="$start_flags -Wl,-no_pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-Wl,-no_pie\" to \$start_flags"; fi
 	;;
-    *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; } ;;
+    *)
+	 if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main () {
+#if defined __GNUC__ && defined __pie__
+	return __pie__;
+#else
+	return 0;
+#endif
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  __pie__="$?";
+case "$__pie__" in
+  2)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling -fPIE" >&5
+$as_echo "yes, disabling -fPIE" >&6; }
+				start_flags="$start_flags -no-pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-no-pie\" to \$start_flags"; fi
+	;;
+  1)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling -fpie" >&5
+$as_echo "yes, disabling -fpie" >&6; }
+	start_flags="$start_flags -no-pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-no-pie\" to \$start_flags"; fi
+	;;
+  *)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized __pie__ define $__pie__, attempting to disable ASLR with -no-pie" >&5
+$as_echo "$as_me: WARNING: unrecognized __pie__ define $__pie__, attempting to disable ASLR with -no-pie" >&2;}
+	start_flags="$start_flags -no-pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-no-pie\" to \$start_flags"; fi
+	;;
+esac
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+	;;
 esac
 
 

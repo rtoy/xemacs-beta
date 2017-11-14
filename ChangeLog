@@ -1,3 +1,12 @@
+2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure: Regenerate.
+	* configure.ac:
+	Detect and disable ASLR on Linux as well as on Darwin, it doesn't
+	work with our approach to dumping.
+	Limit this to the main xemacs binary, not movemail, gnuclient and so
+	on.
+
 2017-11-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac (XE_COMPLEX_ARG):

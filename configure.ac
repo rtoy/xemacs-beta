@@ -2839,16 +2839,44 @@ if test "$opsys" = "sol2"; then
   fi
 fi
 
-dnl Disable ASLR on systems where it breaks pdump.
+dnl Disable ASLR on systems where it breaks pdump. Use $start_flags for this
+dnl rather than $LDFLAGS, so it's only done for the XEmacs binary, and
+dnl gnuclient, movemail and so on get ASLR if the system defaults to it.
 AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
 case `uname -s`:`uname -r` in
 	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion, 10.9 Mavericks,
 	dnl 10.10 Yosemite, 10.11 El Capitan, 10.12 Sierra
     Darwin:1[[123456]].*)
 	AC_MSG_RESULT(yes)
-	XE_APPEND([-Wl,-no_pie], LDFLAGS) 
+	XE_APPEND([-Wl,-no_pie], start_flags)
 	;;
-    *) AC_MSG_RESULT(no) ;;
+    *)
+	 AC_RUN_IFELSE([AC_LANG_SOURCE([int main () {
+#if defined __GNUC__ && defined __pie__
+	return __pie__;
+#else
+	return 0;
+#endif
+}])], [AC_MSG_RESULT(no)],
+[__pie__="$?";
+case "$__pie__" in
+  2)
+	AC_MSG_RESULT([yes, disabling -fPIE])
+	dnl We need to do this after the XE_PROTECT_LINKER_FLAGS() call,
+	dnl above. On Debian 9.2 Stretch the linker does not recognise
+	dnl -no-pie, it needs to be handled by the GCC invocation.
+	XE_APPEND([-no-pie], start_flags) 
+	;;
+  1)
+	AC_MSG_RESULT([yes, disabling -fpie])
+	XE_APPEND([-no-pie], start_flags) 
+	;;
+  *)
+	AC_MSG_WARN([unrecognized __pie__ define $__pie__, attempting to disable ASLR with -no-pie])
+	XE_APPEND([-no-pie], start_flags)
+	;;
+esac])
+	;;
 esac
 
 dnl ----------------------
