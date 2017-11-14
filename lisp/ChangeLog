@@ -1,5 +1,16 @@
 2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* mule/cyrillic.el ("Cyrillic-ISO"):
+	* mule/cyrillic.el ("Russian"):
+	* mule/cyrillic.el ("Cyrillic-ALT"):
+	Remove cyril-util from the features list of these language
+	environments; `standard-display-cyrillic-translit' is the only
+	function in that file, and it has an autoload entry
+	already. Removing it from the features list is helpful in buildbot
+	tests without installed packages.
+
+2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* gutter-items.el (buffers-tab-items):
 	Add a missing parenthesis after Stephen's last change, get things
 	building again.
