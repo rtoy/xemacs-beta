@@ -292,7 +292,7 @@ Uses high bytes for half-width katakana."
    documentation "The standard Japanese encoding in MS Windows."
 ))
 
-;; A former name?
+;; The registered MIME name uses an underscore.
 (define-coding-system-alias 'shift_jis 'shift-jis)
 
 ;; FSF:
