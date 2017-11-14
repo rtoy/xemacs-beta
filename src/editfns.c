@@ -394,7 +394,7 @@ save_current_buffer_restore (Lisp_Object buffer)
 
 DEFUN ("save-current-buffer", Fsave_current_buffer, 0, UNEVALLED, 0, /*
 Save the current buffer; execute BODY; restore the current buffer.
-Executes BODY just like `progn'.
+Returns value of last expression of BODY, like `progn'.
 
 arguments: (&rest BODY)
 */
