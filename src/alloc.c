@@ -3499,7 +3499,7 @@ build_msg_cistring (const CIbyte *str)
 /* Build a string whose content is a translatable message, and translate
    the message according to the current language environment.
    String must be pure-ASCII, and when compiled with error-checking,
-   an abort will have if not pure-ASCII. */
+   an abort will happen if not pure-ASCII. */
 
 Lisp_Object
 build_msg_ascstring (const Ascbyte *str)
