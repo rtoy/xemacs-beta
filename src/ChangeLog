@@ -3010,6 +3010,10 @@
 	Small bugfix, recognise that a trailing sign excludes a symbol
 	from potentially having number syntax.
 
+2016-01-19  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* editfns.c (Fsave_current_buffer): Improve docstring.
+
 2015-06-22  Michael Sperber  <mike@xemacs.org>
 
 	* redisplay-xlike-inc.c (XFT_FROB_LISP_COLOR): Use
