@@ -1040,7 +1040,7 @@ class Memxpos;
   DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Membpos)		\
   DECLARE_BAD_INTCLASS_ARITH_COMPARE (bytecl, Memxpos)
 
-/* Declare the "bad" or disallowed arithmetic and comparion operations
+/* Declare the "bad" or disallowed arithmetic and comparison operations
    between class BYTECL (a mem class) and various non-mem classes.
    Meant to go inside the private section of class GOOD. */
 
@@ -1798,6 +1798,7 @@ enum Lisp_Type
 
 #define FIXNUM_VALBITS (BITS_PER_EMACS_INT - FIXNUM_GCBITS)
 #define VALBITS (BITS_PER_EMACS_INT - GCBITS)
+/* #### Does this actually work? EMACS_INT might be "long long"! */
 #define MOST_POSITIVE_FIXNUM_UNSIGNED ((1UL << (FIXNUM_VALBITS - 1)) -1UL)
 #define MOST_POSITIVE_FIXNUM ((EMACS_INT) MOST_POSITIVE_FIXNUM_UNSIGNED)
 #define MOST_NEGATIVE_FIXNUM (-(MOST_POSITIVE_FIXNUM) - 1)
