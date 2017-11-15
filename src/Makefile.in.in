@@ -544,7 +544,7 @@ dump-id.c: $(LIB_SRC)/make-dump-id $(link_deps)
 
 #if !defined(PDUMP) || !defined(DUMP_IN_EXEC) || defined(WIN32_NATIVE)
 $(RAW_EXE): $(link_deps) $(DUMP_ID)
-	$(LD) $(start_flags) $(ldflags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) $(LIBES)
+	$(LD) $(ldflags) $(start_flags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) $(LIBES)
 #else
 $(RAW_EXE): $(link_deps) $(DUMP_ID)
 	if test -f dump-size ; then \
@@ -552,7 +552,7 @@ $(RAW_EXE): $(link_deps) $(DUMP_ID)
 	else \
 		$(CC) -c $(cflags) -DMAX_SIZE=0 $(SRC)/dump-data.c ;\
 	fi
-	$(LD) $(start_flags) $(ldflags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) dump-data.o $(LIBES)
+	$(LD) $(ldflags) $(start_flags) -o $@ $(start_files) $(objs) $(otherobjs) $(DUMP_ID) dump-data.o $(LIBES)
 #endif
 
 ## (3) Update the .elc's needed for dumping

@@ -1,3 +1,15 @@
+2017-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure: Regenerate.
+	* configure.ac:
+	Take a more general approach to checking for ASLR; check for the
+	technique itself initially, don't just examine the operating
+	system or the compile-time #defines. Then to work around it try a
+	list of techniques, using the first one that compiles.
+
+	This may bring an end to the XEmacs tradition of a single-line
+	configure.ac commit every time a new Mac OS version is released.
+
 2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: Regenerate.

@@ -2839,45 +2839,43 @@ if test "$opsys" = "sol2"; then
   fi
 fi
 
-dnl Disable ASLR on systems where it breaks pdump. Use $start_flags for this
-dnl rather than $LDFLAGS, so it's only done for the XEmacs binary, and
+dnl Disable ASLR on systems where it breaks pdump. Use start_flags for this
+dnl rather than LDFLAGS, so it's only done for the XEmacs binary, and
 dnl gnuclient, movemail and so on get ASLR if the system defaults to it.
-AC_MSG_CHECKING([whether ASLR needs to be disabled]) 
-case `uname -s`:`uname -r` in
-	dnl Mac OS X 10.7 Lion, 10.8 Mountain Lion, 10.9 Mavericks,
-	dnl 10.10 Yosemite, 10.11 El Capitan, 10.12 Sierra
-    Darwin:1[[123456]].*)
-	AC_MSG_RESULT(yes)
-	XE_APPEND([-Wl,-no_pie], start_flags)
-	;;
-    *)
-	 AC_RUN_IFELSE([AC_LANG_SOURCE([int main () {
-#if defined __GNUC__ && defined __pie__
-	return __pie__;
-#else
-	return 0;
-#endif
-}])], [AC_MSG_RESULT(no)],
-[__pie__="$?";
-case "$__pie__" in
-  2)
-	AC_MSG_RESULT([yes, disabling -fPIE])
-	dnl We need to do this after the XE_PROTECT_LINKER_FLAGS() call,
-	dnl above. On Debian 9.2 Stretch the linker does not recognise
-	dnl -no-pie, it needs to be handled by the GCC invocation.
-	XE_APPEND([-no-pie], start_flags) 
-	;;
-  1)
-	AC_MSG_RESULT([yes, disabling -fpie])
-	XE_APPEND([-no-pie], start_flags) 
-	;;
-  *)
-	AC_MSG_WARN([unrecognized __pie__ define $__pie__, attempting to disable ASLR with -no-pie])
-	XE_APPEND([-no-pie], start_flags)
-	;;
-esac])
-	;;
-esac
+AC_MSG_CHECKING([whether ASLR needs to be disabled])
+AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
+static int test_func(void) { return 42; }
+int main (int c, char **v) { if (--c) { printf ("%p", &test_func); } return 0; }])],
+[test_func_address=`./conftest t`
+if test "$test_func_address" = `./conftest t`    \
+        -a "$test_func_address" = `./conftest t` \
+        -a "$test_func_address" = `./conftest t` \
+        -a "$test_func_address" = `./conftest t`; then
+   dnl If your implementation of ASLR gives the same address for the same
+   dnl function five times in a row within the lifetime of the universe, 
+   dnl your implementation of ASLR needs significant revision.
+   dnl (Yes, yes, if someone sat down and ran ./configure a huge number of
+   dnl times on XEmacs code with the intention of making this give the wrong
+   dnl answer, they might manage it, but there is no payoff for doing this.)
+   AC_MSG_RESULT(no)
+ else
+   for try_no_pie in "-no-pie" "-Wl,-no_pie" "-nopie"; do
+     xe_check_libs="${try_no_pie}"
+     AC_LINK_IFELSE([], no_pie="${try_no_pie}")
+     xe_check_libs=""
+     if test -n "$no_pie"; then 
+       dnl Don't be tempted to apply XE_PROTECT_LINKER_FLAGS() to this.
+       dnl On Debian 9.2 Stretch the linker does not recognise -no-pie, it
+       dnl needs to be handled by the GCC invocation.
+       XE_APPEND($no_pie, start_flags)
+       break;
+     fi
+   done
+   if test -z "$no_pie"; then
+     AC_MSG_ERROR([don't know how to disable ASLR on $ac_cv_build])
+   fi
+   AC_MSG_RESULT([yes, disabling address space layout randomization, xemacs binary])
+ fi])
 
 dnl ----------------------
 dnl Choose a window system

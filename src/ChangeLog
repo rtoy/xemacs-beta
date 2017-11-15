@@ -1,5 +1,12 @@
 2017-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* Makefile.in.in ($(RAW_EXE)):
+	Place $start_flags after $ldflags in this make target, for that
+	minority of cases where the user has specified LDFLAGS and,
+	e.g. -no-pie in $start_flags is necessary to build.
+
+2017-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* specifier.c (print_specifier):
 	Cons less when printing the spec-list of a specifier, avoiding
 	stack overflow with recursive specifiers due to the COPY_TREE_P
