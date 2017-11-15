@@ -1,3 +1,12 @@
+2017-11-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (print_specifier):
+	Cons less when printing the spec-list of a specifier, avoiding
+	stack overflow with recursive specifiers due to the COPY_TREE_P
+	argument passed by #'specifier-specs to
+	specifier_get_external_inst_list().
+	Thank you for the bug report, Raymond Toy!
+
 2017-11-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecode.c (bytecode_arithcompare):
