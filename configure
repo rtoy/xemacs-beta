@@ -824,7 +824,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1111,7 +1110,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1364,15 +1362,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1510,7 +1499,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1663,7 +1652,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -11826,7 +11814,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11872,7 +11860,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11896,7 +11884,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11941,7 +11929,7 @@ else
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -11965,7 +11953,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     We can't simply define LARGE_OFF_T to be 9223372036854775807,
     since some C++ compilers masquerading as C compilers
     incorrectly reject 9223372036854775807.  */
-#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
 		       && LARGE_OFF_T % 2147483647 == 1)
 		      ? 1 : -1];
@@ -12261,14 +12249,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ASLR needs to be disabled" >&5
 $as_echo_n "checking whether ASLR needs to be disabled... " >&6; }
-case `uname -s`:`uname -r` in
-		    Darwin:1[123456].*)
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	start_flags="$start_flags -Wl,-no_pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-Wl,-no_pie\" to \$start_flags"; fi
-	;;
-    *)
-	 if test "$cross_compiling" = yes; then :
+if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "cannot run test program while cross compiling
@@ -12276,43 +12257,43 @@ See \`config.log' for more details" "$LINENO" 5; }
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int main () {
-#if defined __GNUC__ && defined __pie__
-	return __pie__;
-#else
-	return 0;
-#endif
-}
+#include <stdio.h>
+static int test_func(void) { return 42; }
+int main (int c, char **v) { if (--c) { printf ("%p", &test_func); } return 0; }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+  test_func_address=`./conftest t`
+if test "$test_func_address" = `./conftest t`    \
+        -a "$test_func_address" = `./conftest t` \
+        -a "$test_func_address" = `./conftest t` \
+        -a "$test_func_address" = `./conftest t`; then
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-else
-  __pie__="$?";
-case "$__pie__" in
-  2)
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling -fPIE" >&5
-$as_echo "yes, disabling -fPIE" >&6; }
-				start_flags="$start_flags -no-pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-no-pie\" to \$start_flags"; fi
-	;;
-  1)
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling -fpie" >&5
-$as_echo "yes, disabling -fpie" >&6; }
-	start_flags="$start_flags -no-pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-no-pie\" to \$start_flags"; fi
-	;;
-  *)
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized __pie__ define $__pie__, attempting to disable ASLR with -no-pie" >&5
-$as_echo "$as_me: WARNING: unrecognized __pie__ define $__pie__, attempting to disable ASLR with -no-pie" >&2;}
-	start_flags="$start_flags -no-pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"-no-pie\" to \$start_flags"; fi
-	;;
-esac
+ else
+   for try_no_pie in "-no-pie" "-Wl,-no_pie" "-nopie"; do
+     xe_check_libs="${try_no_pie}"
+     if ac_fn_c_try_link "$LINENO"; then :
+  no_pie="${try_no_pie}"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+     xe_check_libs=""
+     if test -n "$no_pie"; then
+                            start_flags="$start_flags $no_pie" &&  if test "$verbose" = "yes"; then echo "    Appending \"$no_pie\" to \$start_flags"; fi
+       break;
+     fi
+   done
+   if test -z "$no_pie"; then
+     as_fn_error $? "don't know how to disable ASLR on $ac_cv_build" "$LINENO" 5
+   fi
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling address space layout randomization, xemacs binary" >&5
+$as_echo "yes, disabling address space layout randomization, xemacs binary" >&6; }
+ fi
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-	;;
-esac
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specified window system" >&5
