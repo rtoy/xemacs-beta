@@ -269,12 +269,18 @@ prune_specifiers (void)
     }
 }
 
+static Lisp_Object specifier_get_external_inst_list (Lisp_Object specifier,
+                                                     Lisp_Object locale,
+                                                     enum spec_locale_type,
+                                                     Lisp_Object tag_set,
+                                                     int exact_p,
+                                                     int short_p,
+                                                     int copy_tree_p);
+
 static void
-print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
-		 int UNUSED (escapeflag))
+print_specifier (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
 {
   Lisp_Specifier *sp = XSPECIFIER (obj);
-  int count = specpdl_depth ();
   Lisp_Object the_specs;
 
   if (print_readably)
@@ -289,17 +295,36 @@ print_specifier (Lisp_Object obj, Lisp_Object printcharfun,
   specbind (Qprint_string_length, make_fixnum (100));
   specbind (Qprint_length, make_fixnum (5));
 #endif
-  the_specs = Fspecifier_specs (obj, Qglobal, Qnil, Qnil);
+
+  /* This is preferable to calling Fspecifier_specs() because we can specify
+     COPY_TREE_P as zero, avoiding copying possibly-recursive structures. See
+     Raymond Toye's bug report of
+     https://mid.xemacs.org/CAG14z1F7b90rt22P-XXjk+0qT42DrS6E=OAcUSekqoPsQnD9aw@mail.gmail.com
+
+     specifier_get_external_inst_list() does cons, even with a zero
+     COPY_TREE_P, but that's OK, in exchange for that we get the short form
+     when appropriate, and the instance list has been checked for circularity
+     when it was specified initially, we won't blow the stack with it. */
+  the_specs = specifier_get_external_inst_list (obj, Qglobal, LOCALE_GLOBAL,
+                                                Qnil, 0, 1, 0);
   if (NILP (the_specs))
-    /* there are no global specs */
-    write_ascstring (printcharfun, "<unspecified>");
+    {
+      /* there are no global specs */
+      write_ascstring (printcharfun, "<unspecified>");
+    }
   else
-    print_internal (the_specs, printcharfun, 1);
+    {
+      /* print_internal() does its own circularity checking, we don't have
+         to. */
+      print_internal (the_specs, printcharfun, escapeflag);
+    }
+
   if (!NILP (sp->fallback))
     {
-      write_fmt_string_lisp (printcharfun, " fallback=%S", sp->fallback);
+      write_ascstring (printcharfun, " fallback=");
+      print_internal (sp->fallback, printcharfun, escapeflag);
     }
-  unbind_to (count);
+
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
