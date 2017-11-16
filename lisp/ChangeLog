@@ -1,3 +1,12 @@
+2017-11-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-faces.el (x-library-search-path):
+	Update this variable to include share/ subdirectories of all the
+	potential prefixes, since rgb.txt is usually now in share/X11.
+	* x-faces.el (x-color-list-internal):
+	Use #'canoncase, not #'downcase when adding completion for the
+	lowercase form, avoiding problems with Turkish locales.
+
 2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* mule/cyrillic.el ("Cyrillic-ISO"):

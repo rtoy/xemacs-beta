@@ -575,28 +575,36 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;; Ben wanted all of the possibilities from the `configure' script used
 ;; here, but I think this is way too many.  I already trimmed the R4 variants
 ;; and a few obvious losers from the list.  --Stig
-(defvar x-library-search-path '("/usr/X11R6/lib/X11/"
-				"/usr/X11R5/lib/X11/"
-				"/usr/lib/X11R6/X11/"
-				"/usr/lib/X11R5/X11/"
-				"/usr/local/X11R6/lib/X11/"
-				"/usr/local/X11R5/lib/X11/"
-				"/usr/local/lib/X11R6/X11/"
-				"/usr/local/lib/X11R5/X11/"
-				"/usr/X11/lib/X11/"
-				"/usr/lib/X11/"
-				"/usr/share/X11/"
-				"/usr/local/lib/X11/"
-				"/usr/local/share/X11/"
-				"/usr/X386/lib/X11/"
-				"/usr/x386/lib/X11/"
-				"/usr/XFree86/lib/X11/"
-				"/usr/unsupported/lib/X11/"
-				"/usr/athena/lib/X11/"
-				"/usr/local/x11r5/lib/X11/"
-				"/usr/lpp/Xamples/lib/X11/"
-				"/usr/openwin/lib/X11/"
-				"/usr/openwin/share/lib/X11/")
+(defvar x-library-search-path
+  (mapcan #'(lambda (path)
+              (let (search)
+                (list* path (when (setq search (search "/lib/" path))
+                              `(,(concat (subseq path 0 search)
+                                         ;; Newer X11 stores rgb.txt in
+                                         ;; share/, not lib/.
+                                         "/share/"
+                                         (subseq path
+                                                 (+ search
+                                                    (length "/lib/")))))))))
+          '("/usr/X11R6/lib/X11/"
+            "/usr/X11R5/lib/X11/"
+            "/usr/lib/X11R6/X11/"
+            "/usr/lib/X11R5/X11/"
+            "/usr/local/X11R6/lib/X11/"
+            "/usr/local/X11R5/lib/X11/"
+            "/usr/local/lib/X11R6/X11/"
+            "/usr/local/lib/X11R5/X11/"
+            "/usr/X11/lib/X11/"
+            "/usr/lib/X11/"
+            "/usr/local/lib/X11/"
+            "/usr/X386/lib/X11/"
+            "/usr/x386/lib/X11/"
+            "/usr/XFree86/lib/X11/"
+            "/usr/unsupported/lib/X11/"
+            "/usr/athena/lib/X11/"
+            "/usr/local/x11r5/lib/X11/"
+            "/usr/lpp/Xamples/lib/X11/"
+            "/usr/openwin/lib/X11/"))
   "Search path used by `x-color-list-internal' to find rgb.txt.")
 
 (defvar x-color-list-internal-cache)
@@ -607,6 +615,13 @@ Otherwise, it returns the next larger version of this font that is defined."
 ;; already does this wrapping.  So I'm changing this to return a list of
 ;; strings as the TTY code does, and as expected by r-c-c-t.
 ;; -- sjt 2007-10-06
+
+;; Our completion no longer requires a list of lists, a list of strings is
+;; fine, and #'read-color just uses the output of #'color-list, which on X11
+;; becomes the value of the variable
+;; `x-color-list-internal-cache'. #'read-color-completion-table is still
+;; around for compatibility with facemenu.el in the packages, which needs that
+;; approach to be compatible with 21.4. Aidan Kehoe, 20171116.
 
 ;; This function is probably also used by the GTK platform.  Cf.
 ;; gtk_color_list in src/fontcolor-gtk.c.
@@ -633,7 +648,7 @@ Otherwise, it returns the next larger version of this font that is defined."
 		  clist (cons color clist))
 	    ;; Ugh.  If we want to be able to complete the lowercase form
 	    ;; of the color name, we need to add it twice!  Yuck.
-	    (let ((dcase (downcase color)))
+	    (let ((dcase (canoncase color)))
 	      (or (string= dcase color)
 		  (push dcase clist)))
 	    (forward-char 1))
