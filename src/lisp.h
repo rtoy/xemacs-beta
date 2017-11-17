@@ -6043,6 +6043,10 @@ extern Lisp_Object Qsound_error;
 extern Lisp_Object Vsynchronous_sounds;
 
 /* Defined in specifier.c */
+DECLARE_DOESNT_RETURN (error_or_quit_failed_instantiator_in_domain
+                       (const Ascbyte *, Lisp_Object instantiator,
+                        Lisp_Object domain));
+
 EXFUN (Fadd_spec_to_specifier, 5);
 EXFUN (Fspecifier_spec_list, 4);
 

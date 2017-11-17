@@ -936,13 +936,19 @@ init_image_instance_from_x_image (Lisp_Image_Instance *ii,
   pixmap = XCreatePixmap (dpy, d, ximage->width,
 			  ximage->height, ximage->depth);
   if (!pixmap)
-    gui_error ("Unable to create pixmap", instantiator);
+    {
+      error_or_quit_failed_instantiator_in_domain ("Unable to create pixmap",
+                                                   instantiator,
+                                                   IMAGE_INSTANCE_DOMAIN (ii));
+    }
 
   gc = XCreateGC (dpy, pixmap, 0, NULL);
   if (!gc)
     {
       XFreePixmap (dpy, pixmap);
-      gui_error ("Unable to create GC", instantiator);
+      error_or_quit_failed_instantiator_in_domain ("Unable to create GC",
+                                                   instantiator,
+                                                   IMAGE_INSTANCE_DOMAIN (ii));
     }
 
   XPutImage (dpy, pixmap, gc, ximage, 0, 0, 0, 0,
@@ -989,13 +995,19 @@ image_instance_add_x_image (Lisp_Image_Instance *ii,
   pixmap = XCreatePixmap (dpy, d, ximage->width,
 			  ximage->height, ximage->depth);
   if (!pixmap)
-    gui_error ("Unable to create pixmap", instantiator);
+    {
+      error_or_quit_failed_instantiator_in_domain ("Unable to create pixmap",
+                                                   instantiator,
+                                                   IMAGE_INSTANCE_DOMAIN (ii));
+    }
 
   gc = XCreateGC (dpy, pixmap, 0, NULL);
   if (!gc)
     {
       XFreePixmap (dpy, pixmap);
-      gui_error ("Unable to create GC", instantiator);
+      error_or_quit_failed_instantiator_in_domain ("Unable to create GC",
+                                                   instantiator,
+                                                   IMAGE_INSTANCE_DOMAIN (ii));
     }
 
   XPutImage (dpy, pixmap, gc, ximage, 0, 0, 0, 0,
@@ -1494,13 +1506,21 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	if (force_mono)
 	  {
 	    /* second time; blow out. */
-	    gui_error ("XPM color allocation failed", data);
+            error_or_quit_failed_instantiator_in_domain ("XPM color allocation"
+                                                         " failed",
+                                                         instantiator,
+                                                         IMAGE_INSTANCE_DOMAIN
+                                                         (ii));
 	  }
 	else
 	  {
 	    /* second time; blow out. */
 	    if (! (dest_mask & IMAGE_MONO_PIXMAP_MASK))
-	      gui_error ("XPM color allocation failed", data);
+              {
+                error_or_quit_failed_instantiator_in_domain
+                  ("XPM color allocation failed", instantiator,
+                   IMAGE_INSTANCE_DOMAIN (ii));
+              }
 	    force_mono = 1;
 	    IMAGE_INSTANCE_TYPE (ii) = IMAGE_MONO_PIXMAP;
 	    goto retry;
@@ -1513,10 +1533,18 @@ x_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
       }
     default:
       {
+        Ascbyte errbuf[sizeof ("Parsing pixmap data: unknown error code: %d")
+                     + DECIMAL_PRINT_SIZE (result) + 1];
+
 	xpm_free (&xpmattrs);
-	signal_error_2 (Qgui_error,
-			"Parsing pixmap data: unknown error code",
-			make_fixnum (result), data);
+
+        emacs_snprintf ((Ibyte *) errbuf, sizeof (errbuf),
+                        "Parsing pixmap data: unknown error code: %d",
+                        result);
+        error_or_quit_failed_instantiator_in_domain (errbuf,
+                                                     instantiator,
+                                                     IMAGE_INSTANCE_DOMAIN
+                                                     (ii));
       }
     }
 

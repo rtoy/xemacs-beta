@@ -387,15 +387,18 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
        */
 
       {
-	Lisp_Object errstring;
 	Extbyte buffer[JMSG_LENGTH_MAX];
+        Ibyte *ibuffer;
 
 	/* Create the message */
 	(*cinfo.err->format_message) ((j_common_ptr) &cinfo, buffer);
-	errstring = build_extstring (buffer, Qjpeg_error_message_encoding);
 
-	signal_image_error_2 ("JPEG decoding error",
-			      errstring, instantiator);
+        TO_INTERNAL_FORMAT (C_STRING, buffer, C_STRING_ALLOCA, ibuffer,
+                            Qjpeg_error_message_encoding);
+        error_or_quit_failed_instantiator_in_domain ((const Ascbyte *) ibuffer,
+                                                     instantiator,
+                                                     IMAGE_INSTANCE_DOMAIN
+                                                     (ii));
       }
     }
 
@@ -453,12 +456,23 @@ jpeg_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
     pixels_sq =
       (UINT_64_BIT) cinfo.output_width * (UINT_64_BIT) cinfo.output_height;
     if (pixels_sq > ((size_t) -1) / 3)
-      signal_image_error ("JPEG image too large to instantiate", instantiator);
+      {
+        error_or_quit_failed_instantiator_in_domain ("JPEG image too large to"
+                                                     " instantiate",
+                                                     instantiator,
+                                                     IMAGE_INSTANCE_DOMAIN
+                                                     (ii));
+      }
     unwind.eimage =
       xnew_binbytes (cinfo.output_width * cinfo.output_height * 3);
     if (!unwind.eimage)
-      signal_image_error("Unable to allocate enough memory for image", instantiator);
-
+      {
+        error_or_quit_failed_instantiator_in_domain ("Unable to allocate "
+                                                     "enough memory for image",
+                                                     instantiator,
+                                                     IMAGE_INSTANCE_DOMAIN
+                                                     (ii));
+      }
     {
       JSAMPARRAY row_buffer;	/* Output row buffer */
       JSAMPLE *jp;
