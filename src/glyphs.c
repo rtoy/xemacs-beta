@@ -3422,7 +3422,12 @@ image_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 #endif
 	}
       else if (NILP (instance))
-	gui_error ("Can't instantiate image (probably cached)", instantiator);
+        {
+          error_or_quit_failed_instantiator_in_domain ("Can't instantiate "
+                                                       "image (probably "
+                                                       "cached)", instantiator,
+                                                       domain);
+        }
 
       /* We found an instance. However, because we are using the glyph
 	 as the hash key instead of the instantiator, the current

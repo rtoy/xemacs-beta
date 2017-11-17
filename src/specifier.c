@@ -111,7 +111,53 @@ static void recompute_cached_specifier_everywhere (Lisp_Object specifier);
 
 EXFUN (Fspecifier_specs, 4);
 EXFUN (Fremove_specifier, 4);
+
+static Lisp_Object Vfailed_instantiator_domain_warned_list;
+extern Lisp_Object Vcatch_everything_tag;
 
+/* Give a GUI error that INSTANTIATOR could not be instantiated in DOMAIN. If
+   a corresponding error was already signaled for the same INSTANTIATOR,
+   DOMAIN pair, signal Qquit, which will be silent for the likely wrapping
+   call_trapping_errors().  Without this--when we called gui_error()
+   directly--we would get an error and a backtrace in the message area on each
+   redisplay, which is not practical for getting work done. */
+
+DOESNT_RETURN
+error_or_quit_failed_instantiator_in_domain (const Ascbyte *reason,
+                                             Lisp_Object instantiator,
+                                             Lisp_Object domain)
+{
+  Lisp_Object instantiator_domains = 
+    assq_no_quit (instantiator,
+                  XWEAK_LIST_LIST (Vfailed_instantiator_domain_warned_list));
+  Lisp_Object found_domain = Qnil;
+
+  if (!NILP (instantiator_domains)
+      &&
+      !NILP ((found_domain
+              = memq_no_quit (domain,
+                              XWEAK_LIST_LIST (XCDR (instantiator_domains))))))
+    {
+      Fsignal (Qquit, Qnil); /* Not displayed by call_trapping_errors(). */
+    }
+
+  if (NILP (instantiator_domains))
+    {
+      instantiator_domains = make_weak_list (WEAK_LIST_SIMPLE);
+      XWEAK_LIST_LIST (Vfailed_instantiator_domain_warned_list)
+          = Facons (instantiator, instantiator_domains,
+                    XWEAK_LIST_LIST (Vfailed_instantiator_domain_warned_list));
+      XWEAK_LIST_LIST (instantiator_domains) = list1 (domain);
+    }
+  else
+    {
+      instantiator_domains = XCDR (instantiator_domains);
+      XWEAK_LIST_LIST (instantiator_domains)
+        = Fcons (domain, XWEAK_LIST_LIST (instantiator_domains));
+    }
+
+  signal_error_2 (Qgui_error, reason, instantiator, domain);
+}
 
 /************************************************************************/
 /*                       Specifier object methods                       */
@@ -3983,4 +4029,7 @@ vars_of_specifier (void)
   Vcharset_tag_lists =
     make_lisp_hash_table (50, HASH_TABLE_NON_WEAK, Qeq);
   staticpro (&Vcharset_tag_lists);
+
+  Vfailed_instantiator_domain_warned_list = make_weak_list (WEAK_LIST_ASSOC);
+  staticpro (&Vfailed_instantiator_domain_warned_list);
 }

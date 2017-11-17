@@ -1,3 +1,20 @@
+2017-11-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* specifier.c (error_or_quit_failed_instantiator_in_domain): New.
+	The first time instantiation has failed for INSTANTIATOR in
+	DOMAIN, throw an error. Otherwise, quit. Helpful for stopping an
+	error message on every redisplay for an invalid instantiator.
+	* fontcolor.c (color_instantiate): Use it.
+	* glyphs-eimage.c (jpeg_instantiate): Use it.
+	* glyphs-x.c (init_image_instance_from_x_image): Use it.
+	* glyphs-x.c (image_instance_add_x_image): Use it.
+	* glyphs-x.c (x_xpm_instantiate): Use it.
+	* glyphs.c (image_instantiate): Use it.
+	* lisp.h: Declare it.
+	* specifier.c (vars_of_specifier):
+	Make the weak alist that the function uses available at dump
+	time.
+
 2017-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* Makefile.in.in ($(RAW_EXE)):

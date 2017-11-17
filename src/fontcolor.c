@@ -639,13 +639,16 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
 	  if (DEVICE_TTY_P (d))
 	    return Vthe_null_color_instance;
 	  else
-	    gui_error ("Color instantiator [] only valid on TTY's",
-				 device);
-
+            error_or_quit_failed_instantiator_in_domain
+              ("Color instantiator [] only valid on TTYs", instantiator,
+               domain);
 	case 1:
 	  if (NILP (COLOR_SPECIFIER_FACE (XCOLOR_SPECIFIER (specifier))))
-	    gui_error ("Color specifier not attached to a face",
-				 instantiator);
+            {
+              error_or_quit_failed_instantiator_in_domain
+                ("Color specifier not attached to a face", instantiator,
+                 domain);
+            }
 	  return (FACE_PROPERTY_INSTANCE_1
 		  (Fget_face (XVECTOR_DATA (instantiator)[0]),
 		   COLOR_SPECIFIER_FACE_PROPERTY
@@ -667,8 +670,8 @@ color_instantiate (Lisp_Object specifier, Lisp_Object UNUSED (matchspec),
       if (DEVICE_TTY_P (d))
 	return Vthe_null_color_instance;
       else
-	gui_error ("Color instantiator [] only valid on TTY's",
-			     device);
+        error_or_quit_failed_instantiator_in_domain
+          ("Color instantiator [] only valid on TTYs", instantiator, domain);
     }
   else
     ABORT ();	/* The spec validation routines are screwed up. */
