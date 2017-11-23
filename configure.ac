@@ -1673,7 +1673,13 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <features.h>],[
 AC_MSG_RESULT($have_glibc)
 dnl I'm tired of pop being broken with GLIBC -slb
 dnl Well. then why not fix fucking pop?
-test "$have_glibc" = "yes" && AC_DEFINE(_GNU_SOURCE)
+if test "$have_glibc" = "yes"; then
+  dnl Defining _GNU_SOURCE on its own isn't helpful, since autoconf is very
+  dnl enthusiastic about defining it on non-GNU systems. Make a separate
+  dnl HAVE_GLIBC available.
+  AC_DEFINE(HAVE_GLIBC)
+  AC_DEFINE(_GNU_SOURCE)
+fi
 
 dnl We'd like to use vendor extensions, where available.
 dnl We'd like to use functions from the latest Unix98 standards.

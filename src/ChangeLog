@@ -1,5 +1,20 @@
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* config.h.in:
+	Provide HAVE_GLIBC, since _GNU_SOURCE isn't specific enough to
+	glibc.
+	* alloc.c:
+	* alloc.c (malloced_storage_size):
+	* alloc.c (common_init_alloc_early):
+	* emacs.c:
+	* emacs.c (main):
+	* gc.h:
+	* ralloc.c:
+	* ralloc.c (init_ralloc):
+	Use the new HAVE_GLIBC define in these files, instead of _GNU_SOURCE.
+
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* gmalloc.c: Removed. Use the system malloc all the time instead.
 	* config.h.in:
 	Remove DOUG_LEA_MALLOC, USE_SYSTEM_MALLOC, USE_DEBUG_MALLOC from

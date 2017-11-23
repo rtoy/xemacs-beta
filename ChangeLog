@@ -1,6 +1,14 @@
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac (XE_COMPLEX_ARG):
+	Make a HAVE_GLIBC #define available, turns out autoconf is too
+	enthusiastic about _GNU_SOURCE, #defining it even on non-glibc
+	systems.
+	* configure: Regenerate.
+
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac (XE_COMPLEX_ARG):
 	Remove gmalloc.c, remove the configure line options
 	--with-dlmalloc, --with-system-malloc, --with-debug-malloc. Always
 	use the system malloc. Autodetect __after_morecore_hook, use it

@@ -51,7 +51,7 @@ typedef unsigned char *POINTER;
 /* Unconditionally use unsigned char * for this.  */
 typedef unsigned char *POINTER;
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
 #define M_TOP_PAD -2
 #include <malloc.h>
 #endif
@@ -1122,7 +1122,7 @@ init_ralloc (void)
   page_size = PAGE;
   extra_bytes = ROUNDUP (50000);
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
     mallopt (M_TOP_PAD, 64 * 4096);
 #else
 #if 0 /* Hasn't been synched yet */

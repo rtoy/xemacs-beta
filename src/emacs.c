@@ -476,9 +476,9 @@ Lisp_Object Vcommand_line_args;
   on subsequent starts.  */
 int initialized;
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
 # include <malloc.h>
-#endif /* _GNU_SOURCE */
+#endif /* HAVE_GLIBC */
 
 /* Variable whose value is symbol giving operating system type. */
 Lisp_Object Vsystem_type;
@@ -3189,7 +3189,7 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
 
   if (!initialized)
     {
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
       mallopt (M_MMAP_MAX, 0);
 #endif
       run_temacs_argc = 0;
@@ -3229,7 +3229,7 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
     run_time_remap (argv[0]);
 #endif
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
   if (initialized)
     {
       /* mmap works in glibc-2.1, glibc-2.0 (Non-Mule only) and Linux libc5 */
@@ -3239,7 +3239,7 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
       mallopt (M_MMAP_MAX, 64);
 #endif
     }
-#endif /* _GNU_SOURCE */
+#endif /* HAVE_GLIBC */
 
   run_temacs_argc = -2;
 
