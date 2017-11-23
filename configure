@@ -12245,8 +12245,8 @@ rm -f core conftest.err conftest.$ac_objext \
    if test -z "$no_pie"; then
      as_fn_error $? "don't know how to disable ASLR on $ac_cv_build" "$LINENO" 5
    fi
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling address space layout randomization, xemacs binary" >&5
-$as_echo "yes, disabling address space layout randomization, xemacs binary" >&6; }
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, disabling address space layout randomization with $no_pie, xemacs binary" >&5
+$as_echo "yes, disabling address space layout randomization with $no_pie, xemacs binary" >&6; }
  fi
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \

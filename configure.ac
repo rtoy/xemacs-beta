@@ -2830,7 +2830,7 @@ if test "$test_func_address" = `./conftest t`    \
    if test -z "$no_pie"; then
      AC_MSG_ERROR([don't know how to disable ASLR on $ac_cv_build])
    fi
-   AC_MSG_RESULT([yes, disabling address space layout randomization, xemacs binary])
+   AC_MSG_RESULT([yes, disabling address space layout randomization with $no_pie, xemacs binary])
  fi])
 
 dnl ----------------------

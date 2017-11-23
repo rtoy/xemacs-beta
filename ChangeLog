@@ -1,3 +1,8 @@
+2017-11-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* configure.ac (Disable ASLR): Output $no_pie in AC_MSG_RESULT.
+	* configure: Regenerate.
+
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure.ac (XE_COMPLEX_ARG):
