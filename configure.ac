@@ -2817,7 +2817,16 @@ if test "$test_func_address" = `./conftest t`    \
  else
    for try_no_pie in "-no-pie" "-Wl,-no_pie" "-nopie"; do
      xe_check_libs="${try_no_pie}"
-     AC_LINK_IFELSE([], no_pie="${try_no_pie}")
+     AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
+static int test_func(void) { return 42; }
+int main (int c, char **v) { if (--c) { printf ("%p", &test_func); } return 0; }])],
+       [test_func_address=`./conftest t`
+        if test "$test_func_address" = `./conftest t`  \
+          -a "$test_func_address" = `./conftest t`     \
+          -a "$test_func_address" = `./conftest t`     \
+          -a "$test_func_address" = `./conftest t`; then
+          no_pie="${try_no_pie}"
+        fi])
      xe_check_libs=""
      if test -n "$no_pie"; then 
        dnl Don't be tempted to apply XE_PROTECT_LINKER_FLAGS() to this.

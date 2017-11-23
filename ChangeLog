@@ -1,3 +1,12 @@
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac:
+	Don't just take the first link-time option to disable ASLR that
+	links, check that it actually disables ASLR (in the same way we
+	checked for ASLR in the first place) before choosing it. Thank
+	you for the bug report, Stephen Turnbull.
+	* configure: Regenerate.
+
 2017-11-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* configure.ac (Disable ASLR): Output $no_pie in AC_MSG_RESULT.
