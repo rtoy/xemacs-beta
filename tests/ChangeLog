@@ -1,3 +1,10 @@
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/format-tests.el (args-out-of-range):
+	We can give out-of-memory errors too with
+	(format (concat "%" (number-to-string most-positive-fixnum) "d"),
+	and that's appropriate.
+
 2017-11-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/case-tests.el (downcase1):
