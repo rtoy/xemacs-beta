@@ -4831,7 +4831,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
 int main (int argc, char **argv)
 {
   int fd = -1;
-#ifdef MAP_ANON
+#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 #ifndef MAP_ANONYMOUS
