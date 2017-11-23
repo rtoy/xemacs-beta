@@ -12,6 +12,12 @@
 	* ralloc.c:
 	* ralloc.c (init_ralloc):
 	Use the new HAVE_GLIBC define in these files, instead of _GNU_SOURCE.
+	* ralloc.c:
+	* ralloc.c (MAP_FLAGS):
+	* unexelf.c (unexec):
+	caddr_t is long deprecated, use void * instead when calling
+	mmap().
+	Accept MAP_ANON, an old BSDism, as an alias for MAP_ANONYMOUS.
 
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
