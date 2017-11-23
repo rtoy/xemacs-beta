@@ -1,3 +1,2621 @@
+2017-02-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Set widget name for CSS access.
+	* fontcolor-gtk.c (Fgtk_select_font): Ditto.
+	* glyphs-gtk.c (gtk_button_instantiate): Ditto.
+	(gtk_progress_gauge_instantiate): Ditto.
+	(gtk_add_tab_item): Ditto.
+	(gtk_tab_control_instantiate): Ditto.
+	(gtk_label_instantiate): Ditto.
+	(gtk_edit_field_instantiate): Ditto.
+	* gtk-xemacs.c (gtk_xemacs_new): Ditto.
+	* menubar-gtk.c (gtk_xemacs_menubar_new): Ditto.
+	(menu_convert): Ditto.
+	(menu_descriptor_to_widget_1): Ditto.
+	(menu_create_menubar): Ditto.
+	(create_menubar_widget): Ditto.
+	(gtk_popup_menu): Ditto.
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Ditto.
+	* toolbar-gtk.c (gtk_output_toolbar): Ditto.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Name all buttons "button"
+	for CSS purposes instead of individual names.
+	(gtk_output_toolbar): Remove old test code.
+
+2017-02-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar.h (GTK_DEFAULT_TOOLBAR_HEIGHT): New define.
+	* toolbar.c (specifier_vars_of_toolbar): Use it.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add toolbar height and width
+	to checksum so it's redrawn when size changes.
+
+2017-01-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_region): GDK drawing context
+	regquires a region.
+	(XLIKE_clear_frame): Ditto.
+	(XLIKE_bevel_area): Ditto.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+	(XLIKE_flash): Ditto.
+	(XLIKE_output_eol_cursor): Ditto.
+	(XLIKE_output_blank): Ditto.
+	(XLIKE_output_string): Ditto.
+	(XLIKE_output_xlike_pixmap): Ditto.
+
+2017-01-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_region): use new 3.22 drawing
+	context here.
+	(XLIKE_clear_frame): Ditto.
+	(XLIKE_bevel_area): Ditto.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+	(XLIKE_flash): Ditto.
+	(XLIKE_output_eol_cursor): Ditto.
+	(XLIKE_output_blank): Ditto.
+	(XLIKE_output_string): Ditto.
+	(XLIKE_output_xlike_pixmap): Ditto.
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Use drawing context
+	post GTK 3.22.  Fix a memory leak in older GTK.
+
+	* device-gtk.c (gtk_init_device): The macro to use is GTK_CHECK_VERSION.
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): No need
+	to manually signal change since Gtk 3.18.
+	(scrollbar_cb): Ditto.
+
+2017-01-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Get RGBA visual for newer GTK.
+
+2017-01-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_children): Intialize GType * array with NULL
+	instead of G_TYPE_INVALID.
+	(Fg_type_interfaces): Ditto.
+
+	* fontcolor-gtk.c (Fgtk_select_font)  Add cast for stricter gcc.
+	(monospace_only): Cast away const.
+
+2016-01-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (run_menubar_hook): Separate into GTK2 and GTK3
+	versions.
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Renamed for
+	consistency.
+
+2016-01-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Remove extraneous
+	semi-colon.
+	(monospace_only): Define for font load filtering.
+	(Fgtk_select_font): Define.  Select a font using GTK dialog.
+	(syms_of_fontcolor_gtk): Add gtk-select-font.
+
+	* device-gtk.c (Fgtk_load_css): This function can do nothing in
+	GTK 2.X.
+
+2015-12-29  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_font_describe_face): Define.  Describe font details like Bold, Italic, etc. along with sizes of bitmapped fonts.
+	(gtk_font_list): Call it to better describe fonts in font-list.
+
+2015-12-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-eimage.c (png_instantiate): Handle non-GTK case.
+
+2015-12-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_unmap_subwindow): Only unmap mapped widgets.
+	(gtk_map_subwindow): Only map unmapped widgets.
+	(gtk_widget_instantiate_1): No widgets are instantiated in lisp
+	anymore, so no point in warning about it.
+
+2015-12-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Avoid infinite loops
+	when shifting by zero.
+	(gtk_button_instantiate): A button descriptor can be just a label
+	string as well.
+
+2015-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (syms_of_glyphs_gtk): Remove two unused symbols,
+	gtk_widget_property_internal, gtk_widget_redisplay_internal.
+
+	* redisplay-gtk.c (XLIKE_clear_region): Use gtk_render_background
+	to avoid using obsolete gtk_style_context_get_background_color.
+	(XLIKE_clear_region): Fix logic around background pixmap.
+
+2015-12-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_button_instantiate): Define, ported from lisp.
+	Callback code is incomplete.
+	(gtk_button_instantiate): Handle non-vector descriptor.
+
+	* general-slots.h: Add new symbols for widget button actions.
+
+	* glyphs-gtk.c (gtk_redisplay_widget): Remove call to
+	gtk_widget_map, it can cause crashes.
+
+2015-12-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_edit_field_instantiate): Ported to here from
+	widgets-gtk.el
+
+	* lisp.h (do): Declare EXFUN(Fmapconcat).
+
+	* glyphs-gtk.c (gtk_button_redisplay): Avoid crash with null widget.
+	(gtk_label_instantiate): Fix comment.
+
+2015-12-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Remove extra calls, only map
+	widget is required.
+	(gtk_redisplay_widget): Map widget during redisplay as well.
+
+2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_progress_gauge_instantiate): Move here from
+	lisp.
+	(gtk_progress_gauge_instantiate): Scale fraction by percent if
+	it's larger than 1.0.
+
+2015-12-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_label_instantiate): Define to create label
+	widget instead of lisp.
+
+2015-11-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_tab_control_instantiate): Create notebook
+	control here instead of in lisp when we compiled without GObject
+	Introspection.
+
+2015-11-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_update_frame_external_traits): Use state flag
+	instead of normal flag.  Add node about gtk 3.16 deprecation (not
+	handled yet).
+
+2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_vertical_divider): Pass args to
+	gtk_render_line in correct order.
+	(XLIKE_output_horizontal_line): Ditto.
+
+	* device-gtk.c (Fgtk_load_css): Define.
+	(syms_of_device_gtk): DEFSUBR gtk-load-css.
+
+2015-01-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Scale the pixmap if
+	requested.
+
+2014-12-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Set first time tag on parent item
+	as well.
+
+2014-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_size_request): Don't add the scrollbar
+	width here, it was a mistake.
+	(gtk_xemacs_size_allocate): Call the parent class function to do
+	the allocation.  This is okay now since all children are widgets.
+
+2014-12-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Remove call to obsolete
+	gdk_imlib_init.
+
+2014-12-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_clear_toolbar): Make static.
+	(gtk_clear_frame_toolbars): Ditto.
+	(gtk_output_frame_toolbars): Ditto.
+	(init_gtk_toolbar_stock_icons): Make static. Change to use default
+	icon theme names for 3.10+.
+	(gtk_output_toolbar): Free previous toolbar. Set icon name for
+	3.10+ icon themes.  Move variables to shorten code layout.
+
+2014-12-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_widget_add_css_style): Define.
+	* fontcolor-gtk.h: Define.
+
+2014-12-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area): Use gtk_render_frame instead
+	of gtk_paint_shadow for Gtk.3.0
+
+2014-12-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Use new 3.10+ API to make
+	toolbar buttons.
+	(init_gtk_toolbar_stock_icons): Stock icons are now obsolete.  Use
+	the standard icon set names instead.
+
+	* glyphs-gtk.c (xbm_instantiate_1): Meant HAVE_GTK2.
+
+2014-11-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (run_menubar_hook): Use run_hook_trapping_problems.
+
+2014-11-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-xlike-inc.h: Use GdkRGBA instead of GdkColor for Gtk 3
+	* fontcolor-gtk-impl.h (g): Ditto.
+	* fontcolor-gtk.c (gtk_parse_nearest_color): Ditto.
+	(gtk_initialize_color_instance): Ditto.
+	(gtk_print_color_instance): Ditto.
+	(gtk_color_instance_equal): Ditto.
+	(gtk_color_instance_hash): Ditto.
+	(gtk_color_instance_rbg_components): Ditto.
+	(gtk_valid_color_name_p): Ditto.
+	* fontcolor-gtk.h: Ditto.
+	* frame-gtk.c (gtk_update_frame_external_traits): Ditto.
+	* glyphs-gtk.c (generate_cursor_fg_bg): Ditto.
+	(maybe_recolor_cursor): Ditto.
+	(pixbuf_from_xbm_inline): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+	(gtk_xpm_instantiate): Ditto.
+	* redisplay-gtk.c (XLIKE_clear_frame): Ditto.
+	(gtk_text_attributes): Ditto.
+
+	* device-gtk.c (Fgtk_init): Disable Ubuntu Unity titlebar menu.
+	Our menus don't work with it.
+
+2014-11-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_update_frame_external_traits): Avoid deprecated
+	function in 3.X.
+
+2014-11-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_new): Missing a cast.
+
+2013-12-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_new): Request button release events,
+	although it doesn't seem to work.
+
+	* frame-gtk.c (gtk_create_widgets): Request all events from the
+	shell as a workaround for missing button release events.
+
+2013-12-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_size_request): Get preferred height and
+	width using current widget class, not parent.
+
+2013-12-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Remove unused variable.
+
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Initialize variable.
+
+	* frame-gtk.c (gtk_cant_notify_wm_error): Remove unused function.
+
+	* device-gtk.c (Fgtk_grab_pointer): Initialize result variable to
+	invalid value.  Add asserts for several calls.
+
+2013-11-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_mouse_position): Accidentally moved screen
+	variable inside HAVE_GTK2.  It is use by both flavours of GTK.
+
+2013-11-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-xlike-inc.c (emacs_gtk_event_pending_p): Process only GDK
+	events here.
+
+	* frame-gtk.c (gtk_widget_get_device): Move function to here, make
+	it global.
+	(gtk_set_frame_size): Use preferred size for GTK 3.
+	(gtk_set_mouse_position): Use gdk_device_warp in GTK 3.
+	(gtk_get_mouse_position): Use GdkDevice based code in GTK 3.
+
+	* device-gtk.c: Remove gtk_widget_get_device()..
+	* console-gtk.h: Declare here.
+
+	* ui-byhand.c (Fgtk_label_get): Don't discard const here; some
+	version of gcc thinks it's an error.
+
+2013-11-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Unconditionally map widget.
+	It's harmless to make redundant calls.
+
+	* menubar-gtk.c (menu_convert): Set the label for the menu in GTK
+	3.
+
+2013-11-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_properties): Change default height to
+	24 lines.
+	(gtk_initialize_frame_size): Ditto.
+
+	* gtk-xemacs.h: gtk_xemacs_get_type now returns GType.
+	* gtk-xemacs.c (gtk_xemacs_get_type): Use GType instead of guint,
+	patch from Stephen Turnbull.
+	* ui-gtk.c (Fg_type_from_name): Use GType.
+
+	* event-gtk.c (emacs_gtk_drain_queue): Use gdk_events_pending.  I
+	did not read the comment that told me not to change it.
+
+2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_widget_query_geometry): Get preferred size for
+	Gtk 3.  Make sure width and height are greater than 0.
+
+	* event-gtk.c (gtk_what_callback): Cast gpointer when assigning.
+	(select_filedesc): Cast flag combination to GIOCondition.
+	(init_event_gtk_late): Ditto.
+
+2013-11-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_toolbar_plist): Handle without HAVE_TOOLBARS.
+	(gtk_frame_property): Ditto.
+	(gtk_frame_properties): Ditto.
+
+2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (Fgtk_display_visual_class):
+	gdk_visual_get_visual_type was added in 2.22.
+	(gtk_init_device_class): Ditto.
+	(gtk_device_system_metrics): Function to determine colormap size
+	was added in 2.22.
+
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Ditto.
+
+	* ui-gtk.c (g_type_to_lisp): g_value_get_schar only exists in more
+	recent glib.
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Use GdkRectangle to support
+	older GTK 2.
+
+2013-11-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (IS_MODIFIER_KEY): Use old key definitions for Gtk 2.
+	(keysym_obeys_caps_lock_p): Ditto.
+
+2013-11-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_event_to_emacs_event): Ifdef window lookup for
+	versions previous to 2.24.
+
+	* device-gtk.c (Fgtk_init): Turn ubuntu unity overlay scrollbars
+	off.  They were accidentally re-enabled.
+
+2013-11-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image): Advance past the last
+	item drawn.
+
+2013-11-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_draw): Convert cairo_rectangle_t to
+	cairo_rectangle_int_t to indicate area to be redrawn.
+
+2013-11-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (emacs_gtk_drain_queue): Use non-blocking gtk
+	iteration, just in case.
+
+2013-11-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_icon): Update to include Gtk 3.
+
+	* gtk-xemacs.c (gtk_xemacs_class_init): Call gtk_xemacs_draw.
+	(gtk_xemacs_draw): Implement for Gtk 3.
+
+2013-11-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_initial_frame_size): Remove debugging code.
+	(gtk_create_widgets): Use Gtk 3 method to create boxes.
+
+	* ui-byhand.c (Fgtk_color_selection_get_color): Gtk 2 only.
+	(Fgtk_label_get): Use correct accessor function.
+	(Fgtk_notebook_query_tab_label_packing): Gtk 2 only.
+	(Fgtk_widget_size_request): Add Gtk 3 implementation.
+	(syms_of_ui_byhand): ifdef Gtk 2 only symbols.
+
+	* gtk-xemacs.c (gtk_xemacs_class_init): Some class functions are
+	different for Gtk 3.
+	(gtk_xemacs_new): Use GObject allocator.
+	(__nuke_background_items): This workaround is for Gtk 2 only.
+	(smash_scrollbar_specifiers): Scrollbar style info is apparently
+	no longer available in Gtk 3.
+	(gtk_xemacs_size_request): Use preferred height/width for Gtk 3.
+	(gtk_xemacs_get_preferred_height): Define for Gtk 3 only.
+	(gtk_xemacs_get_preferred_width): Ditto.
+	(gtk_xemacs_size_allocate): Implement for Gtk 3.
+	(gtk_xemacs_paint): Implement for Gtk 3.
+	(gtk_xemacs_draw): Use function to access children.  Now returns a
+	boolean.
+	(gtk_xemacs_expose): ifdef for Gtk 2 only.
+
+	* device-gtk.c (gtk_init_device): Only explicitly read rc files on
+	Gtk 2.
+	(gtk_event_name): No expose event is only in Gtk 2.
+	(gtk_widget_get_device): Define for Gtk 3.
+	(Fgtk_grab_pointer): Implement for Gtk 3.
+	(Fgtk_ungrab_pointer): Ditto.
+	(Fgtk_grab_keyboard): Ditto.
+	(Fgtk_ungrab_keyboard): Ditto.
+	(Fgtk_style_info): Only for Gtk 2 at the moment.
+	(vars_of_device_gtk): Use unsigned integers for GTK version numbers.
+
+	* frame-gtk.c (gtk_set_initial_frame_size): Move window instead of
+	setting geometry hints.
+	(gtk_create_widgets): Make shell resizable.  No client events in
+	Gtk 3.
+	(Fgtk_window_id): X11 specific windows are different in Gtk 3.
+	(gtk_iconify_frame): Use Gtk function instead of Xlib.
+
+2013-11-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (vars_of_device_gtk): Define Gtk version variables.
+	They are implemented differently between Gtk 2 and 3.  We can no
+	longer directly import than, we need wrappers.
+
+2013-10-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_position): Replace deprecated function.
+	(gtk_set_frame_size): Ditto.
+
+2013-10-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (get_accelerator): Define for Gtk 3.
+	(menu_convert): Use it to implement menu accelerators for Gtk 3.
+
+	* event-gtk.c (gtk_what_callback): Remove obsolete comment and
+	check for NULL channel.
+
+2013-10-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (gtk_to_emacs_keysym): Use "modern" name
+	GDK_KEY_Mode_switch.
+	(emacs_shell_event_handler): No more client event in Gdk 3 event
+	structure.  Use ABORT placeholder for Gtk 3 for now.
+	(init_event_gtk_late): Use GIO for input.  (This fixes the menubar
+	display.)
+	(register_event_name): Use internal functions xstrdup and xfree.
+	GDK_NO_EXPOSE event gone in Gtk 3.
+
+2013-10-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Attempt to implement for
+	Gtk 3.X; it's probably wrong.
+
+	* event-gtk.c (gtk_what_callback): Try to remove watch with
+	invalid channel by returning FALSE.
+	(mark_what_as_being_ready): Update comment to indicate current
+	state.
+	(select_filedesc): Add HUP notification to watch.  This turns out
+	to be necessary for shell-mode for unknown reasons.
+
+2013-10-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (g_type_to_lisp): Use schar, char is deprecated.
+	(lisp_to_g_value): Ditto.
+
+	* redisplay-gtk.c (XLIKE_bevel_area): Restore accidentally deleted
+	variable for Gtk 2.
+
+	* event-gtk.c (handle_client_message): GdkEventClient was removed
+	in Gtk 3.
+	(gtk_event_to_emacs_event): Add Gtk 3 code to get current window
+	and pointer coordinates.
+	(handle_client_message): Fix Gtk 2 compile error.
+
+2013-10-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Port to Gtk 3.
+	(XLIKE_bevel_area): Ditto.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+
+2013-10-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_event_name): Add missing event GDK_NO_EXPOSE.
+	(gtk_device_system_metrics): Use non-deprecated function to get
+	colormap size.
+
+2013-10-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (w): Add GIOChannel to closure struct.
+	(gtk_what_callback): Change to a GIO callback function.  Ignore
+	callbacks with empty channels.
+	(select_filedesc): Use GIO for input callback. Initialize channel.
+	(unselect_filedesc): Cancel GIO callback, delete channel.
+
+2013-10-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (gtk_update_frame_menubars): Fix unused warning.
+
+2013-10-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Gtk 3 removed accelerator code.
+	It should be replaced.
+	(menu_descriptor_to_widget_1): Use Gtk 3 box constructor.
+	(menu_create_menubar): Menu entries can't be right justified in
+	Gtk 3.
+	(run_menubar_hook): Can not tell if menubar is active in Gtk 3.
+	(gtk_update_frame_menubars): Ditto.
+
+	* config.h.in: Add HAVE_GTK3
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use Gtk 3
+	constructors.
+
+2013-10-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: Add HAVE_GTK3.
+
+	* glyphs-gtk.c: We don't have support for making cursors from
+	individual font glyphs in Gtk, so ifdef related code out.
+
+2013-10-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Fix Gtk 2 function.
+	(font_instantiate): ifdef out.  Not used, and obsolete in Gtk 3.
+
+2013-10-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_add_tab_item): Use gtk_box_new instead of
+	deprecated gtk_hbox_new for Gtk 3.
+	(gtk_widget_query_geometry): Use Gtk 3 methods here when required.
+	(gtk_redisplay_widget): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+
+2013-10-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk-impl.h (g): Remove gray_pixmap from gtk_device.
+	* device-gtk.c (gtk_init_device): No more gray_pixmap.
+	* redisplay-gtk.c (XLIKE_output_string): Ditto.
+
+2013-10-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (__kill_stupid_gtk_timer): GtkMenuItem timers are
+	obsolete; remove this function.
+	(menu_convert): Don't call deleted function.
+	* Makefile.in.in (gtk_objs): Remove gccache-gtk from list.
+
+	* device-gtk.c: Remove include GC cache header.
+	(gtk_init_device): No longer have GC cache.
+	(gtk_delete_device): Ditto.
+
+	* console-xlike-inc.h: Remove include of GC cache header.
+
+	* console-gtk.h: Remove declaration of gtk_get_gc.
+
+	* console-gtk-impl.h (gtk_device): Remove gc-cache from gtk_device
+	structure.
+
+	* frame-gtk.c (gtk_popup_frame): Replace gtk_widget_hide_all with
+	gtk_widget_hide.
+	* menubar-gtk.c (__maybe_destroy): Ditto.
+	(gtk_update_frame_menubar_internal): Ditto.
+	(__kill_stupid_gtk_timer): Remove; timer is obsolete.
+	(menu_convert): Remove reference to above.
+
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Replace
+	gtk_widget_hide_all.
+	(gtk_release_scrollbar_instance): Ditto.
+
+2013-09-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-xlike-inc.c (emacs_gtk_event_pending_p): Gtk 2.0 can check
+	for pending events.
+
+2013-09-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_update_frame_external_traits): Set the
+	background on widget, not on its window.
+
+2013-09-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_parse_nearest_color): Unused parameter.
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_redisplay): Cleaner method to
+	remove all notebook pages.
+
+	* select-gtk.c (emacs_gtk_selection_handle): Use access function
+	for GtkSelectionData.
+	(emacs_gtk_selection_received): Ditto.
+
+	* glyphs-gtk.c (gtk_map_subwindow): Get size allocation via access
+	function and use it.
+	(gtk_redisplay_widget): Ditto.
+	(convert_EImage_to_GDKPixbuf): Get visual type via access function
+	and use it.
+
+	* gccache-gtk.c (make_gc_cache): Use gtk_widget_get_window.
+
+	* menubar-gtk.c (menu_convert): Use menu types access functions
+	instead of widget fields.
+	(menu_can_reuse_widget): Ditto.
+	(menu_create_menubar): Ditto.
+	(gtk_popup_menu): Ditto.
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use
+	GtkAdjustment access functions instead of using the fields
+	directly.
+	(gtk_update_scrollbar_instance_status): Ditto.
+	(scrollbar_cb): Ditto.
+
+	* redisplay-gtk.c (XLIKE_bevel_area): Use gtk_widget_get_style
+	instead of directly accessing the field.
+	(XLIKE_output_vertical_divider): Ditto.
+	(XLIKE_output_horizontal_line): Ditto.
+
+	* frame-gtk.c (gtk_set_icon_name_from_ibyte): Use
+	gtk_widget_get_window() instead of directly accessing the field.
+	(gtk_update_frame_external_traits): Ditto.
+	(gtk_frame_property): Ditto.
+
+	* device-gtk.c (gtk_init_device_class): Use access functions
+	instead of directly accessing GdkVisual fields.
+ 	(gtk_init_device): Ditto.
+	(Fgtk_display_visual_class): Ditto.
+
+	* console-gtk-impl.h: Delete GET_GTK_WIDGET_WINDOW.
+	* console-xlike-inc.h (GET_XLIKE_WINDOW): Use
+	gtk_widget_get_window() instead of GET_GTK_WIDGET_WINDOW.
+	* device-gtk.c (Fgtk_grab_pointer): Ditto.
+	(Fgtk_grab_keyboard): Ditto.
+	(Fgtk_style_info): Ditto.
+	* event-gtk.c (emacs_gtk_handle_magic_event): Ditto.
+	* frame-gtk.c (gtk_window_to_frame): Ditto.
+	(gtk_any_window_to_frame): Ditto.
+	(gtk_any_widget_or_parent_to_frame): Ditto.
+	(gtk_frame_property): Ditto.
+	(gtk_frame_properties): Ditto.
+	(gtk_set_initial_frame_size): Ditto.
+	(gtk_set_frame_properties): Ditto.
+	(gtk_set_frame_icon): Ditto.
+	(gtk_set_frame_pointer): Ditto.
+	(Fgtk_window_id): Ditto.
+	(gtk_get_mouse_position): Ditto.
+	(gtk_raise_frame_1): Ditto.
+	(gtk_lower_frame): Ditto.
+	(gtk_iconify_frame): Ditto.
+	(gtk_focus_on_frame): Ditto.
+	* glyphs-gtk.c (init_image_instance_from_gdk_pixbuf): Ditto.
+	(init_image_instance_from_xbm_inline): Ditto.
+	* redisplay-gtk.c (XLIKE_bevel_area): Ditto.
+	* scrollbar-gtk.c (update_one_widget_scrollbar_pointer): Ditto.
+	(gtk_scrollbar_loop): Ditto.
+
+	* frame-gtk.c (gtk_widget_to_frame): Use gtk_widget_get_parent
+	instead of accessing the parent field directly.
+	* menubar-gtk.c (__activate_menu): Ditto.
+	(menu_create_menubar): Ditto.
+
+2013-09-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* emacs.c (main_1): Call syms and complex_vars for event-gtk.c
+
+	* event-gtk.c (complex_vars_of_event_gtk): New function.
+	(register_event_names): New function.
+	(register_event_name): New function.
+	(vars_of_event_gtk): Add gdk-event-names.
+
+	* symsinit.h: Add complex_vars_of_event_gtk.
+
+2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (scrollbar_cb): Remove unused variable.
+
+	* gtk-glue.c (xemacs_init_gtk_classes): g_type_init() no longer
+	needs to be called as of glib 2.35.
+
+	* frame-gtk.c (gtk_create_widgets): Remove GNOME_IS_APP macro,
+	which dates from Gnome 1.
+
+	* menubar-gtk.c (menu_convert): Comment out unused variable.
+	(menu_create_menubar): Remove unused variable.
+
+	* event-gtk.c (emacs_gtk_unselect_console): Remove unused
+	variable.
+	(gtk_reset_modifier_mapping): Comment out unused warning variable.
+
+2013-09-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_create_menubar): Cast current child pointer
+	as GTK_WIDGET at declaration. Remove unused variable.
+
+2013-09-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Use GdkPixbuf
+	for cursor.
+
+2013-03-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk-impl.h (g): Remove colormap from gtk_device. Remove
+	access macro. No longer required since cairo handles colors.
+
+	* device-gtk.c (gtk_init_device): Avoid use of GdkColormap.
+
+	* glyphs-gtk.c (init_image_instance_from_xbm_inline): Avoid
+	deprecated gdk_color_black, gdk_color_white.
+	(xbm_instantiate_1): Ditto.
+
+	* fontcolor-gtk-impl.h (g): Remove dealloc flag from
+	gtk_color_instance_data; colors are never allocated now.
+
+	* fontcolor-gtk.h: Remove declaration for allocate_nearest_color.
+
+	* fontcolor-gtk.c (gtk_parse_nearest_color): No longer call
+	allocate_nearest_color, which has been deleted.  No need to
+	allocate colors, cairo handles it.
+	(gtk_initialize_color_instance): No dealloc flag to set.
+	(gtk_finalize_color_instance): No color to deallocate.
+
+	* glyphs-gtk.c (gtk_colorize_image_instance): Update to work on
+	GdkPixbufs.
+	(console_type_create_glyphs_gtk): Register colorize_image_instance
+	device method.
+	(gtk_colorize_image_instance): Fix loop error.
+	(convert_EImage_to_GDKPixbuf): Don't quantize the colors on pseudo
+	color displays.  Rely on cairo to handle it for us.
+	(gtk_init_image_instance_from_eimage): No need to keep track of
+	allocated colors because none are.
+
+2013-03-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_properties): Set default frame height
+	to 40 to match Xt version.
+	(gtk_initialize_frame_size): Ditto.
+
+2013-02-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_set_frame_properties): Make left and top
+	aliases for x and y.
+
+2013-02-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Remove unused variable
+	tooltip.
+
+	* scrollbar-gtk.c (scrollbar_drag_hack_cb): ifdefed out.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Cast args to GTK_WIDGET.
+	Remove extraneous whitespace.
+
+	* scrollbar-gtk.c (scrollbar_cb): Remove unused variable.
+
+	* glyphs-gtk.c (gtk_image_instance_equal): Mark parameters as
+	unused.
+	(init_image_instance_from_gdk_pixbuf): Remove unused parameters.
+	(gtk_init_image_instance_from_eimage): Remove params from call.
+	Remove unused variable.
+	(pixbuf_from_xbm_inline): Remove unused variable.  Wrap parameter
+	list.
+	(gtk_xpm_instantiate): Remove unused variables.
+
+	* event-gtk.c (emacs_gtk_unselect_console): Remove unused variable.
+
+	* fontcolor-gtk.c (font_description_from_string): Use size_t to
+	avoid compiler warning.
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Move a line of X
+	code inside the right ifdef.
+
+	* console-xlike-inc.h (XLIKE_DRAW_LINE): Remove XLIKE_GC and
+	related macros.
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Avoid XLIKE_GC when
+	THIS_IS_GTK.
+	(XLIKE_get_gc): Ifdef for THIS_IS_X only.
+	Add prototypes for several GTK functions.
+
+2013-02-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Remove unused
+	variable.  Mark unused parameters.
+	(XLIKE_output_string): Wrong parameter for XLIKE_text_width.
+
+	* glyphs-gtk.h (g): Remove Gtk colormap and associated fields from
+	struct gtk_image_instance_data.  Also remove access macros.
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Remove references
+	Gtk colormap.
+	(gtk_image_instance_hash): Ditto.
+	(gtk_init_image_instance_from_eimage): Ditto.
+	(gtk_xpm_instantiate): Ditto.
+
+2013-02-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Draw without using
+	only cairo calls.  Avoid GdkGC.
+	(XLIKE_output_xlike_pixmap): Add x and y offsets to pixmap.
+	(XLIKE_output_blank): Paint the background pattern.  Currently
+	does not repeat the pattern.
+	(XLIKE_output_string): Ditto.
+
+2013-02-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_blank): Set background pixmap.
+	(XLIKE_output_string): Set background pixmap.
+
+	* frame-gtk.c (gtk_create_widgets): Get events from the shell
+	widget as well.
+
+2013-02-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add test code to show that
+	toolbar is built correctly.
+
+2013-02-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Set image to 0 after
+	freeing it.
+
+2013-02-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_create_menubar): Be careful when deleting
+	menubar children to avoid runtime warnings.
+
+	* fontcolor-gtk.c: Define debug_gtk_fonts; use it to separate font
+	debugging between Gtk and X.
+	(gtk_initialize_font_instance): Use it.
+	(Fgtk_make_font_bold): Ditto.
+	(Fgtk_make_font_unbold): Ditto.
+	(Fgtk_make_font_italic): Ditto.
+	(Fgtk_make_font_bold_italic): Ditto.
+	(vars_of_fontcolor_gtk): Defvar debug-gtk-fonts.  It defaults to
+	false.
+
+2013-02-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Replace casts with Gtk type
+	conversion macros.
+
+	* glyphs-gtk.c (gtk_finalize_image_instance): Unref/free image
+	pixbuf.
+
+2013-01-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (pixbuf_from_xbm_inline): Add foreground and
+	background color parameters.
+	(init_image_instance_from_xbm_inline): Use black and white as
+	foreground and background.
+	(xbm_instantiate_1): Ditto.
+
+	* device-gtk.c (Fgtk_init): Turn ubuntu overlay scrollbars off.
+
+	* scrollbar-gtk.c (update_one_widget_scrollbar_pointer): Don't
+	access widget field directly.
+
+	* event-gtk.c (gtk_keysym_to_emacs_keysym): Map page-up, page-down
+	to prior and next.
+
+2013-01-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Switch to GdkPixbuf for
+	toolbar image.
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Both output cases
+	have the same code.
+
+2013-01-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (get_bit): Extracted from below.
+	(pixbuf_from_xbm_inline): Use it.
+
+2013-01-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_xlike_pixmap): Last argument was
+	always NULL, so it was removed.
+
+	* redisplay-xlike-inc.c (XLIKE_output_pixmap): Ditto.
+
+	* redisplay-x.c (XLIKE_output_xlike_pixmap): Ditto.
+
+	* redisplay-gtk.c (XLIKE_text_width): Text width functions take
+	frame arguments
+
+	* redisplay-x.c (XLIKE_text_width): Text width functions take
+	frame arguments.
+
+	* redisplay-xlike-inc.c: Text width functions take frame arguments.
+	(XLIKE_output_string): Ditto.
+
+	* console-gtk.h: Remove unneeded function prototype.
+
+	* redisplay-xlike-inc.c: Add forward declaration for
+	XLIKE_output_xlike_pixmap.
+	(XLIKE_output_pixmap): Adjust indentation.
+
+	* redisplay-x.c (XLIKE_output_xlike_pixmap): Move here from
+	redisplay-xlike-inc.c.  Remove Gtk code.
+
+	* redisplay-gtk.c: Delete XLIKE_output_pixmap; use common version
+	in redisplay-xlike-inc.c with no Gtk changes required.
+
+2013-01-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk.h: Declare gtk_draw_pixbuf.
+
+	* frame-gtk.c (gtk_set_frame_icon): Use GdkPixbuf.
+	(gtk_update_frame_external_traits): Comment out unused code.
+
+	* glyphs-gtk.h (g): Use GdkPixbuf in image instance.
+
+	* glyphs-gtk.c (convert_EImage_to_GDKPixbuf): Return GdkPixbuf, not GdkPixmap
+	(gtk_finalize_image_instance): Unref GdkPixbuf correctly.
+	(gtk_initialize_pixmap_image_instance): Allocate GdkPixbuf* now.
+	(image_instance_convert_to_pointer): Use GdkPixbuf.
+	(init_image_instance_from_gdk_pixbuf): Use GdkPixbuf.
+	(image_instance_add_gdk_pixbuf): Use GdkPixbuf.
+	(gtk_init_image_instance_from_eimage): Use GdkPixbuf.
+	(pixbuf_from_xbm_inline): Define.
+	(init_image_instance_from_xbm_inline): Use GdkPixbuf. (Needs more work.)
+	(gtk_xpm_instantiate): Use GdkPixbuf.
+
+	* redisplay-gtk.c (XLIKE_clear_region): bcolor parameter is used.
+	(XLIKE_clear_frame): Use just gdk_clear_window.
+	(gtk_draw_pixbuf): Renamed from our_draw_bitmap. Use gdk_draw_pixbuf.
+	(XLIKE_text_width): Only call pango for proportional fonts.
+	(XLIKE_output_string): Call XLIKE_text_width the proper args.
+	(XLIKE_output_xlike_pixmap): Define.
+	(XLIKE_output_pixmap): Define.
+
+	* redisplay-xlike-inc.c: Fix declaration of XLIKE_text_width.  Add
+	declaration for XLIKE_output_pixmap.
+	(XLIKE_get_gc): GdkGC can't use GdkPixbuf for background.
+	(XLIKE_output_xlike_pixmap): This version is for X only.
+	(XLIKE_output_pixmap): This version is for X only.
+
+2012-12-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c:
+	* event-Xt.c (x_keysym_to_character):
+	Move this here, from events-xlike-inc.c.
+	* event-gtk.c (gtk_keysym_to_emacs_keysym):
+	Mule-ize this. Use gdk_keyval_to_unicode(), it's always available
+	on GTK 2.
+	* event-xlike-inc.c:
+	Remove xlike_keysym_to_character.
+	* events.h (KEYSYM_MASSAGING_NAME):
+	New. Keysym equivalent of intern_massaging_name.
+
+2012-05-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (handle_scroll_event): Define.
+	(emacs_gtk_handle_magic_event): Add scroll event.
+	(set_last_server_timestamp): Handle scroll event.
+	(emacs_shell_event_handler): Add scroll event.
+
+	* frame-gtk.c (gtk_create_widgets): Add scroll-events to requested
+	events.
+
+2012-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_event_name): Get event names by
+	stringification of constants.
+
+2012-05-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_clear_frame_windows): Accidentally
+	moved to redisplay-x.c, move it back.
+
+2012-05-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_clear_frame): Copy to here and convert to
+	cairo.
+
+	* redisplay-x.c (XLIKE_clear_frame): Move here.
+
+2012-05-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Remove unused Xlib
+	related code.
+
+	* redisplay-x.c (XLIKE_text_width): Move here.
+
+	* redisplay-gtk.c (XLIKE_output_blank): Copy here, convert to
+	cairo.
+	(XLIKE_output_blank): Fill bar cursor rectangle.  Use
+	cairo_destroy.
+	(XLIKE_output_vertical_divider): Restore XLIKE prefix for
+	consistency.
+
+	* redisplay-x.c (XLIKE_output_blank): Move here from
+	redisplay-xlike-inc.c.
+
+	* redisplay-gtk.c (XLIKE_clear_region): Use cairo clear operator.
+	Fix unused parameters.
+
+2012-05-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay.c (vars_of_redisplay): Document that Gtk supports
+	special values for visible-bell as well.
+
+	* redisplay-gtk.c (XLIKE_flash): Copy from redisplay-xlike-inc.c,
+	convert to cairo.
+
+	* redisplay-x.c (XLIKE_flash): Copy from redisplay-xlike-inc.c
+
+2012-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_horizontal_line): Use a Gtk style
+	to draw the line.
+	(XLIKE_output_horizontal_line): Add cairo_destroy().
+
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Remove.
+
+2012-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_horizontal_line): Copied to here,
+	fixed and updated for cairo.
+
+	* redisplay-x.c (XLIKE_output_horizontal_line): Copied to here and
+	fixed.
+
+	* redisplay-xlike-inc.c (XLIKE_output_horizontal_line): Copied for
+	X and gtk redisplay.
+
+	* ui-gtk.c (__notice_object_destruction): GtkWidget has the
+	destroy signal for Gtk 3.X.
+
+	* menubar-gtk.c (__kill_stupid_gtk_timer): Use GObject instead of
+	GtkObject.
+
+	* ui-gtk.c: Use GObject instead of GtkObject.
+
+2012-04-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-x.c (XLIKE_clear_region): Copied here.
+
+	* redisplay-gtk.c (XLIKE_clear_region): Copied here, converted to
+	cairo.
+
+	* redisplay-x.c (XLIKE_clear_region): Copied to X and Gtk.
+
+	* fontcolor-gtk.c (valid_font_name_p): Unused, so ifdef it out.
+
+	* redisplay-xlike-inc.c (XLIKE_clear_frame_windows): Wrap a couple
+	more XLIKE functions.
+
+	* redisplay-gtk.c (XLIKE_output_eol_cursor): Copy here.  Convert
+	to use cairo methods.
+	(XLIKE_output_string): Remove unused variables.
+
+	* redisplay-x.c (XLIKE_output_eol_cursor): Copy here.
+
+	* redisplay-xlike-inc.c (XLIKE_output_eol_cursor): Copied to x and
+	gtk versions.
+
+2012-04-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (cr_set_foreground): Define.
+	(gtk_output_vertical_divider): Use new function.
+	(XLIKE_output_string): Use it.
+	(gtk_output_vertical_divider): Add cairo_destroy.
+
+2012-03-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: Add HAVE_GTK2
+
+2012-03-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (import_gtk_object_internal): Ifdef out unreachable
+	code with compile errors.
+	(emacs_gtk_object_getprop): Cast allocated value.
+	(flag_to_symbol): Cast to correct class.  Remove trailing whitespace.
+
+	* glyphs-gtk.c (gtk_button_property): Add cast to GTK_WIDGET.
+
+2012-03-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Cast function pointer to gpointer to
+	avoid gcc 4.7 error.  Use G_OBJECT.
+
+2012-02-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (import_gtk_enumeration_internal): Protect against
+	invalid enumerations.
+
+2012-01-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Return FALSE so
+	that scrollbar updates correctly.  Disable button handling
+	callbacks; let the scrollbar deal with events itself.
+
+2011-12-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-x.c (XLIKE_output_vertical_divider): Move function
+	here.  Remove Gtk code.
+
+	* redisplay-xlike-inc.c (XLIKE_output_vertical_divider): Move this
+	function.
+
+2011-12-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c: Add declaration.
+	(XLIKE_output_vertical_divider): #ifndef THIS_IS_GTK.
+
+	* redisplay-gtk.c: Declare function prototypes.
+	(gtk_output_vertical_divider): New function that uses cairo to
+	draw the divider.
+	(gtk_fill_rectangle): Enable.
+	(XLIKE_output_string): Fix compile error from previous changeset.
+
+	* gccache-gtk.c (free_gc_cache): Replace obsolete
+	gdk_gc_destroy().
+	(gc_cache_lookup): Ditto.
+
+	* glyphs-gtk.c (init_image_instance_from_gdk_image): Replace
+	obsolete gdk_gc_destroy().
+	(image_instance_add_gdk_image): Ditto.
+	(gtk_colorize_image_instance): Ditto.
+
+	* redisplay-gtk.c (XLIKE_output_string): Remove unused X11
+	variables.  Remove XLIKE code.
+
+2011-12-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_already_imported_p): Replace deprecated
+	GTK_FUNDAMENTAL_TYPE.
+	(CONVERT_RETVAL): Ditto.
+	(build_gtk_boxed): Ditto.
+	(Fgtk_fundamental_type): Ditto, rename lisp function to match.
+	(describe_gtk_arg): Ditto.
+
+	* ui-byhand.c (Fgtk_pixmap_get): Comment out unused code.
+	(syms_of_ui_byhand): Ditto.
+
+2011-12-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_frame_properties): Remove unused variable.
+	(delete_event_cb): Unused argument.
+	(gtk_create_widgets): Set the frame widget name.
+
+	* menubar-gtk.c (menu_convert): Cast to GTK_MENU_SHELL.
+	(__activate_menu): Ditto.
+
+	* ui-gtk.c (Fg_object_properties): Move declaration before code.
+	(__allocate_object_storage): Remove.
+
+	* ui-byhand.c: Remove GtkCurve related functions.
+
+	* ui-gtk.c: Remove Fgtk_object_type.
+	(emacs_gtk_object_printer): Use G_OBJECT_TYPE.
+	(Fg_object_type): Ditto.
+	(describe_gtk_arg): Ditto.
+
+	* glyphs-gtk.c (gtk_button_redisplay): Use G_OBJECT_TYPE.
+	(gtk_tab_control_instantiate): Use gtk_notebook_set_current_page.
+	(gtk_progress_gauge_redisplay): Use GTK_PROGRESS_BAR cast and
+	gtk_progress_bar_set_fraction.
+
+	* gtk-xemacs.c (gtk_xemacs_size_allocate): Use G_OBJECT_TYPE.
+	Use gtk_widget_is_drawable.
+	(gtk_xemacs_draw): Ditto.
+	(gtk_xemacs_paint): Ditto.
+	(gtk_xemacs_expose): Ditto.
+
+	* menubar-gtk.c (menu_can_reuse_widget): Use non-deprecated
+	function gtk_container_get_children.
+	(__activate_menu): Ditto.
+	(menu_convert): Use gtk_menu_shell_append.
+	(__activate_menu): Ditto.
+	(menu_convert): Replace deprecated signal function.
+	(menu_create_menubar): Gtk 3.0 no longer supports right
+	justification.
+	(menu_descriptor_to_widget_1): Use gtk_radio_menu_item_get_group.
+
+2011-12-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Use G_CALLBACK instead of
+	obsolete GTK_SIGNAL_FUNC.
+
+	* frame-gtk.c (gtk_create_widgets): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_instantiate): Ditto.
+	* menubar-gtk.c (menu_convert): Ditto.
+	(menu_descriptor_to_widget_1): Ditto.
+	(create_menubar_widget): Ditto.
+	(gtk_popup_menu): Ditto
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Ditto.
+
+	* ui-gtk.c (build_gtk_object): Ditto.
+
+2011-12-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
+	GTK_WIDGET_MAPPED is obsolete.
+	(gtk_scrollbar_loop): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_callback): Remove reference to
+	obsolete class GtkNotebookPage.
+
+	* event-gtk.c (handle_focus_event_1): Remove obsolete widget focus
+	flags.
+
+	* ui-byhand.c: Remove deprecated GtkCList related functions.
+
+	* toolbar-xlike.c (__INTERNAL_MAPPED_P): Replace GTK_WIDGET_REALIZED.
+
+	* gtk-xemacs.c (gtk_xemacs_init): Replace GTK_WIDGET_SET_FLAGS.
+	(gtk_xemacs_size_allocate): Replace GTK_WIDGET_REALIZED.
+
+	* menubar-gtk.c (gtk_update_frame_menubar_internal): Fix undefined
+	function call.
+
+	* ui-gtk.c (flag_to_symbol): Added missing }.
+
+2011-12-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (__maybe_destroy): Replace obsolete
+	GTK_WIDGET_VISIBLE. 
+	(gtk_update_frame_menubar_internal): Ditto.
+
+	* gtk-xemacs.c (gtk_xemacs_size_allocate): Replace obsolete
+	GTK_WIDGET_VISIBLE. 
+
+	* ui-gtk.c (import_gtk_enumeration_internal): Replace obsolete
+	GtkEnumValue code.
+	(import_gtk_flags_internal): Replace obsolete GtkFlagValue.
+	(Fg_flag): Unref type class.
+	(Fg_enumeration): Ditto.
+	(Fg_object_class_list_properties): Don't just peek, reference the
+	type class to ensure it is instantiated.  Unref when done.
+	(flag_to_symbol): Ditto.
+
+2011-12-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_flags): Define.
+	(syms_of_ui_gtk): Add g-flags.
+	(flag_to_symbol): Return list of symbols for flags that are set.
+
+	* event-gtk.c (emacs_gtk_drain_queue): Replace obsolete function
+	GDK_DISPLAY. 
+	(gtk_reset_key_mapping): Ditto.
+	(gtk_reset_modifier_mapping): Ditto.
+
+	* device-gtk.c (gtk_device_init_x_specific_cruft): Replace
+	obsolete function.
+
+	* gtk-glue.c (xemacs_type_register): Ifdef out unused function.
+	(xemacs_list_to_gtklist): Ditto.
+	(__make_gtk_object_mapper): Ditto.
+	(__make_string_mapper): Ditto.
+	(xemacs_gtklist_to_list): Ditto.
+	(xemacs_list_to_array): Ditto.
+	(face_to_gc): Ditto.
+	(face_to_style): Ditto.
+	(gdk_event_to_emacs_event): Ditto.
+
+2011-11-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (emacs_gtk_drain_queue): Replace deprecated
+	GDK_DISPLAY with gdk_display_get_default.
+
+2011-11-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_enumeration): Throw an invalid argument if given
+	type is not an enumeration.  Use invalid_argument instead of
+	invalid_state for other type errors as well.
+	(enum_to_symbol): Don't prepend the enum type to the enum name.
+	(import_gtk_object_internal): Implement importing types of any
+	parameters as well.  Move declarations into blocks, closer to use.
+	(list_flags): Define.  Return an alist of flag names and values.
+	(Fg_flag): Define.  Return integer value of flag name.
+
+2011-11-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fgtk_fundamental_type): Return type as symbol.
+	(Fgtk_object_type): Ditto.
+	(Fg_object_type): Ditto.
+	(Fg_object_class_list_properties): Return property names as symbols.
+	(Fg_object_properties): Define.
+	(syms_of_ui_gtk): Defsubr g-object-properties.
+	(flag_to_symbol): Return symbol name of flag for now.
+	(enum_to_symbol): Return symbol based on enumeration name in C.
+
+	* gui-gtk.c (vars_of_gui_gtk): Add var g-object-registry for
+	debugging.  It probably needs a better name.
+
+2011-11-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (emacs_gtk_object_getprop): Convert return value to
+	lisp properly.  Remove obsolete code.
+	(Fg_object_class_list_properties): Update documentation.
+
+2011-11-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Remove Gtk code.
+	Separating textual runs is not done by for Gtk, so ifdef those
+	functions out.
+
+2011-11-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Hoist cairo_t up in
+	cursor drawing code.  Use cairo to draw bar cursor as well.
+	(XLIKE_output_string): Move bar cursor width calculation closer to
+	use.
+
+	* redisplay-xlike-inc.c: Remove unused prototype declaration of
+	gtk_output_string.
+
+	* redisplay-gtk.c (gdk_draw_text_image): Take a cairo_t argument
+	instead of GdkGC.
+	(XLIKE_output_string): Use a cairo_t to store graphics information
+	instead of a GdkGC.
+
+2011-11-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Hoist widget variable up
+	to function scope.
+
+2011-11-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Fix logic so that block
+	cursor displays.
+	(gdk_draw_text_image): Use pango_itemize to break text into LTR
+	and RTL segments, and display RTL better.
+	(gtk_text_attributes): Extract from gdk_draw_text_image.
+	(gdk_draw_text_image): Use pango cairo backend instead of Gdk.
+	(gtk_set_source_rgb): Define, to handle GdkColor to cairo.
+	(gtk_fill_rectangle): Update to smaller code.
+	(gtk_draw_rectangle): Define, use cairo to draw.
+	(XLIKE_output_string): Use cairo code to draw non-focus cursor.
+
+2011-11-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Comment out rectangle
+	clearing code that I think is unneeded for Gtk.
+
+	* gtk-xemacs.c (gtk_xemacs_get_type): Cast a 0 to GTypeFlags to make
+	g++ happy.
+
+2011-11-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Remove THIS_IS_X code. 
+	(XLIKE_output_string): Add a block to localize declaration.
+	(XLIKE_output_string): Replace cursor_cachel checks with assert to
+	simplify logic.
+
+	* gtk-xemacs.c (gtk_xemacs_init): Gtk 2.0 instance init also has
+	class argument.
+	(gtk_xemacs_new): Use GTK_TYPE_XEMACS.
+	(gtk_xemacs_new): Use type check cast for GtkXEmacs.
+	(gtk_xemacs_get_type): Use g_type_register_static_simple instead
+	of obsolete gtk_type_unique.
+
+	* gtk-xemacs.h (GTK_XEMACS_CLASS): Define standard set of macros
+	for Gtk 2.0 classes.
+
+2011-11-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_output_string): Copied from
+	redisplay-xlike-inc.c to allow better adaptation to Gtk.
+	(XLIKE_output_string): Remove USE_XFT code.
+	(XLIKE_output_string): Remove underline and strikethrough font code.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Only use if not Gtk.
+
+2011-11-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_enumeration): Define new function.
+	(syms_of_ui_gtk): DEFSUBR for it.
+	(list_enumeration): Define.
+	(Fg_enumeration): Single type argument means return an alist of
+	enumerations for that type.
+	(list_enumeration): Return value nicknames as well.
+
+	* sysgtk.h: Include glib-object.h for enum functions.
+
+	* ui-gtk.c (Fg_type_from_name): Return type name as symbol.
+	(Fg_type_name): Ditto.
+
+2011-11-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_from_name): Allow symbol as argument.
+	(Fg_type_name): Ditto.
+
+2011-11-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Use gtk_widget_hide/show
+	instead of using obsolete GTK_WIDGET_FLAGS.
+	(gtk_map_subwindow): Accidental hide instead of show.
+	(register_cursor_name): Take a const char * arg to avoid warnings.
+	(gtk_map_subwindow): Remove unused variable old_flags.
+	(gtk_image_instance_hash): ifdef out unused function.
+	(__downcase): Remove unused function.
+
+	* frame-gtk.c (gtk_frame_visible_p): Use FRAME_VISIBLE_P instead
+	of f->visible.
+	(gtk_popup_frame): Ditto.
+	(gtk_frame_visible_p): Ditto.
+	(gtk_frame_visible_p): Use gtk_widget_get_visible() instead of
+	obsolete GTK_OBJECT_FLAGS.
+
+	* console-gtk-impl.h (struct gtk_frame): Remove unused field
+	visible_p and accessor macro for it.
+
+2011-10-31  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_font_list): Check font pattern for
+	"monospace" using utf-8 encoding.
+
+	* device-x.c (x_delete_device): Remove DEVICE_X_XFTDRAW, remnants
+	of an experimental change that had nothing to do with Gtk.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Use FRAME_X_XFTDRAW
+	instead of incorrect DEVICE_X_XFTDRAW.
+
+2011-09-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar-gtk.c (remove_underscores):
+        Oops, got a variable name wrong here; correct it, fix the compile.
+
+2011-09-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	* fontcolor-gtk.c (gtk_parse_nearest_color):
+	* fontcolor-gtk.c (gtk_valid_color_name_p):
+	* fontcolor-gtk.c (gtk_font_list):
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_initialize_frame_size):
+	* frame-gtk.c (dragndrop_get_drag):
+	* frame-gtk.c (Fgtk_start_drag_internal):
+	* gtk-glue.c (xemacs_list_to_gtklist):
+	* menubar-gtk.c:
+	* menubar-gtk.c (convert_underscores):
+	* menubar-gtk.c (remove_underscores):
+	* menubar-gtk.c (menu_convert):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* menubar-gtk.c (menu_can_reuse_widget):
+	* select-gtk.c (symbol_to_gtk_atom):
+	* select-gtk.c (atom_to_symbol):
+	* ui-gtk.c (emacs_gtk_object_getprop):
+	* ui-gtk.c (Fg_type_from_name):
+	* ui-gtk.c (Fg_type_name):
+	* ui-gtk.c (Fg_object_class_list_properties):
+	* ui-gtk.c (lisp_to_g_value):
+        And it's everything, not just the widget functions that takes UTF-8
+        in GTK-2; e.g. they've gone and implemented a separate namespace for
+        server atoms, and that encoding is UTF-8, not CTEXT.
+        Implement this, in passing removing the code that worked around the
+        absence of gdk_keyval_from_name on GTK1, not assuming that
+        g_object_get_property has useful behaviour when a property doesn't
+        exist, and making the code that converts XEmacs menu item
+        specification to GTK menu item specifications less dependent on our
+        internal encoding.
+
+2011-09-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* frame-gtk.c (gtk_set_frame_text_value):
+	* frame-gtk.c (gtk_create_widgets):
+	* glyphs-gtk.c (gtk_add_tab_item):
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	* toolbar-gtk.c (gtk_output_toolbar):
+	* ui-gtk.c (Fgtk_import_function_internal):
+        The various GTK widget functions now take their text encoded in
+        UTF-8, not CTEXT. Change our code to pass UTF-8, avoiding some
+        errors from Pango, especially with buffer names in the gutter.
+
+2011-08-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* select-gtk.c:
+	* select-gtk.c (emacs_gtk_selection_handle):
+	* select-gtk.c (syms_of_select_gtk):
+        va_run_hook_with_args needs to be called with the symbol name of the
+        hook, not its value. Make it so.
+
+2011-08-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-gtk.c:
+	* device-gtk.c (Fgtk_init):
+	Call setlocale (LC_NUMERIC, "C") after gtk_init(); the latter
+	stomps on LC_NUMERIC, taking the value from the environment, which
+	we explicitly don't want, because we use the C library functions
+	to parse Lisp floats and so on.
+
+2011-08-26  Aidan Kehoe	 <kehoea@parhasard.net>
+
+	* frame-gtk.c:
+	* frame-gtk.c (gtk_mark_frame):
+	For the sake of KKCC, add information on the various weak hash
+	tables in gtk_frame to the data description. Otherwise they get
+	garbage collected, which is less than optimal.
+	Reorder the mark_object calls in gtk_mark_frame() to reflect the
+	order of the Lisp_Objects in the structure, to make omitting things
+	a little harder to forget.
+
+2011-08-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-gtk.c:
+	* device-gtk.c (gtk_init_device):
+	* device-gtk.c (vars_of_device_gtk):
+	At startup, tell GTK that we're capable of and interested in
+	passing selections for all those selection types in
+	selection-converter-out-alist. This means that we now support
+	non-Latin-1 data when copying and pasting, which previously wasn't
+	the case on GTK.
+	Call va_run_hook_with_args, don't reimplement it ourselves.
+	Remove Qgtk_seen_characters in passing, nothing was using it.
+	* select-gtk.c (emacs_gtk_selection_handle):
+	Fix a bug in this function; because of X11, the fifth argument to
+	lisp_data_to_selection_data is not the number of octets at the
+	address DATA, rather the number of elements, each of size FORMAT
+	bits, in the array at that address. 
+	* select.h:
+	device-gtk.c now needs to see selection-converter-out-alist.
+
+2011-07-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* event-gtk.c (emacs_gtk_add_timeout): Use glib timeout instead of
+	deprecated gtk timeout.
+	(emacs_gtk_remove_timeout): Use glib method as well.
+
+	* menubar-gtk.c (__kill_stupid_gtk_timer): Use glib timeout cancel.
+
+2011-06-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-gtk.c (gtk_to_emacs_keysym):
+        Don't attempt to synthesise events appropriate for input methods,
+        that's wrong for GTK2 and leads to duplicated characters when AltGr
+        is used.
+
+2011-05-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (Fgtk_set_font_weight): Define.
+	(syms_of_fontcolor_gtk): Register.
+
+	* glyphs-gtk.c (register_cursor_name): Define.
+	(register_cursor_names): Renamed from check_cursor_names.
+	(cursor_name_to_index): Updated to use alist.
+	(vars_of_glyphs_gtk): Update gtk-cursor-names doc.
+	(complex_vars_of_glyphs_gtk): Register cursor names here.
+
+2011-05-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c (syms_of_ui_byhand): Remove toolbar item insertion
+	functions.
+
+	* ui-gtk.c (syms_of_ui_gtk): Register g-object-type.
+
+2011-05-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_parent): Accept type as symbol, return type as
+	symbol.
+	(Fg_type_children): Ditto.
+	(Fg_object_class_list_properties): Ditto.
+	(Fg_type_interfaces): Define.
+	(syms_of_ui_gtk): Add g-type-interfaces.
+
+	* ui-byhand.c (Fgtk_widget_size_request): Define.
+	(syms_of_ui_byhand): Add above function.
+
+	* frame-gtk.c (gtk_toolbar_plist): Rename, return a plist, not
+	an alist. 
+	(gtk_frame_property): Call gtk_toolbar_plist.
+	(gtk_frame_properties): Ditto.
+
+2011-05-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_toolbar_alist): Define.
+	(gtk_frame_property): Define menubar and toolbar properties.
+	(gtk_internal_frame_property_p): Ditto.
+	(gtk_frame_properties): Ditto.
+
+	* ui-gtk.c (build_gtk_object): Handle NULL argument.
+	
+2011-05-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (cleanup_deleted_frame): Match GWeakNotify.
+	(gtk_create_widgets): Use g_object_weak_ref.
+	(gtk_create_widgets): Use G_OBJECT.
+	(gtk_popup_frame): Remove GTK_OBJECT cast.
+	(gtk_get_frame_parent): Ditto.
+	(gtk_set_initial_frame_size): Replace/delete several deprecated
+	functions.
+
+2011-05-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Use gtk_menu_item_get_submenu.
+	(__activate_menu): Ditto.
+	(gtk_xemacs_menubar_new): Make static to avoid prototype warning.
+	(__remove_gcpro_by_id): Match GWeakNotify signature.
+	(__destroy_notify): Define.
+	(menu_convert): Use gtk_menu_item_get_submenu.
+	(menu_create_menubar): Use 2.0 gtk_menu_shell_insert.
+	(create_menubar_widget): Use preferred g_object_weak_ref.
+	(__maybe_destroy): Match GtkCallback signature.
+	(__activate_menu): Avoid cast.
+
+	* frame-gtk.c (gtk_create_widgets): Use g_object_weak_ref.
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Ditto.
+	(create_menubar_widget): Ditto.
+
+	* frame-gtk.c (gtk_init_frame_1): Use GPOINTER_TO_GUINT
+	consistently for GUI_ID.
+
+	* scrollbar-gtk.c (scrollbar_drag_hack_cb): Ditto.
+	(gtk_create_scrollbar_instance): Ditto.
+
+	* menubar-gtk.c (__activate_menu): Ditto.
+	(__remove_gcpro_by_id): Ditto.
+	(menu_convert): Ditto.
+	(create_menubar_widget): Ditto.
+
+2011-04-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c: Remove custom menubar class.
+
+2011-04-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fgtk_describe_type): Use G_TYPE_IS_OBJECT.
+
+2011-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_already_imported_p): Return car of assq result.
+	(get_enumeration): Type symbol is car of result.
+	(lisp_to_gtk_enum): Int value is cdr of result.
+	(lisp_to_gtk_flag): Ditto.
+	(flag_to_symbol): Symbol is car.
+	(enum_to_symbol): Ditto.
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use type
+	conversion macros for data.
+	(scrollbar_cb): Mark unused args. Fix several warnings.
+
+	* ui-byhand.c (generic_toolbar_insert_item): Use type conversion.
+
+	* ui-gtk.c (build_gtk_object): Use regular data, not qdata.
+	(flag_to_symbol): Fix undeclared variable.
+	(enum_to_symbol): Fix undeclared variable.
+	(build_gtk_object): Use glib type conversion macros.
+	(lisp_to_g_value): Fix ifdef.
+	(flag_to_symbol): Get flags value correctly.
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Use regular
+	data, not qdata to save id.
+
+	* glyphs-gtk.c (resource_name_to_resource): Update for renamed
+	lisp_to_gtk_enum.
+
+	* ui-gtk.c: Enumerations and flags are now stored in an alist.
+	GType is represented as a symbol in lisp because an unsigned int
+	might be too large.
+	(type_as_symbol): Define.
+	(type_already_imported_p): Return imported type as symbol. Look up
+	type in alist. Enumeration and flags need to be imported.
+	(mark_type_as_imported): Add to Vgtk_types alist.  Return symbol.
+	(mark_type_as_imported): Handle type as symbol. Return symbol
+	(import_gtk_flags_internal): Use Vgtk_flags alist.
+	(import_gtk_enumeration_internal): Use Vgtk_enumerations alist.
+	(import_gtk_type): Handle type as symbol.
+	(Fgtk_import_function_internal): Invalid argument, not sf error.
+	(vars_of_ui_gtk): Add Vgtk_flags, rename to Vgtk_enumerations,
+	update doc of Vgtk_type for alist.
+	(g_type_to_lisp): Handle flags correctly.
+	(lisp_to_g_value): Handle enums and flags correctly.
+	(get_enumeration): Update for alist.
+	(lisp_to_gtk_flag): Update called function args.
+	(lisp_to_gtk_enum): Rename from symbol_to_gtk_enum. Update for
+	alist. Error if unknown enum.
+	(lisp_to_gtk_flag): Update for alist. Error if unknown flag.
+
+	* ui-byhand.c (__remove_gcpro_by_id): Mark argument unused.
+
+	* emacs-marshals.c: Regenerate for INT__INT.
+
+2011-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-glue.c (face_to_style): Comment out unused variable.
+
+2011-04-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_from_name): Update doc string.
+	(Fg_type_parent): Define.
+	(Fg_type_children): Define.
+
+2011-04-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* faces.c (complex_vars_of_faces): Use 10 pt fonts for Gtk.
+	* fontcolor-gtk.c (vars_of_fontcolor_gtk): Set default font size
+	to 10 pt.  Xft 12 pt is much larger than Xft 12.
+
+2011-04-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_type_name): Return type name for an int or string
+	type name.
+	(Fg_object_class_list_properties): Use it here.  Return class
+	properties as a alist of propname and typename.
+	(lisp_to_g_value): Group declarations C style.
+
+2011-04-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_font_list): Add a "Monospace" filter
+	pattern.
+	(font_description_from_string): Build a font description from a
+	fontconfig name.
+
+2011-04-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* faces.c (complex_vars_of_faces): Set default fonts for Gtk.
+	Avoid XLFD specifications.
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Use GTK_LABEL.
+
+	* gtk-glue.c (face_to_style): Can't use a PangoFont to set a
+	style.  NB, this code will be obsolete in Gtk 3.0 anyway.
+
+	* redisplay-gtk.c (our_draw_bitmap): ifdef out.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Remove obsolete
+	  comments about Gtk 8/16 bit text display.
+	(XLIKE_output_string): Move ifdef outside of if statements for
+	underline and strikthru handling.  Gtk does it differently.
+	(): Remove prototype for unimplemented XLIKE_output_cursor().
+
+	* fontcolor-gtk.c: Define gtk-fallback-font-name and
+	gtk-fallback-font-size as "Monospace Normal 10" and 10.0
+	respectively.
+	(font_description_from_string): Use fallback font if given an XLFD
+	name or fontconfig (temporarily).
+	(gtk_initialize_font_instance): Use fallback size if size was
+	unspecified.
+	(vars_of_fontcolor_gtk): DEFVAR fallback variables.
+	(gtk_font_list): Implement font list for pango fonts.
+	(vars_of_fontcolor_gtk): Make fallback font size same as
+	defaults: 12.
+
+2011-04-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image): Assert the text input is
+	single byte.  UTF-8, not UTF-16.
+	(XLIKE_text_width_single_run): We always have to layout the text
+	to account for combining marks, etc.
+
+	* redisplay-xlike-inc.c (separate_textual_runs_utf8): Define for
+	Gtk.
+	(separate_textual_runs): Use it here.
+
+2011-04-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (gtk_find_charset_font): Define empty function
+	here. Enough to get display running.
+
+	* fontcolor-xlike-inc.c (XFUN): find_charset_font uses XLFD, so
+	it's not appropriate for Gtk.
+
+2011-04-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (font_description_from_string): Define function
+	to Convert font name to pango font name.  Just substitute
+	"Monospace" for now; intended to handle fontconfig fonts.
+	(gtk_initialize_font_instance): Use.
+	(Fgtk_make_font_bold): Use.
+	(Fgtk_make_font_unbold): Use.
+	(Fgtk_make_font_italic): Use.
+	(Fgtk_make_font_unitalic): Use.
+	(Fgtk_make_font_bold_italic): Use.
+
+2011-04-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* device-gtk.c (gtk_init_device): Use recommend pango
+	initialization sequence.
+
+2011-04-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-gtk.c (Fgtk_make_font_bold): Define.
+	(Fgtk_make_font_unbold): Define.
+	(Fgtk_make_font_italic): Define.
+	(Fgtk_make_font_unitalic): Define.
+	(Fgtk_make_font_bold_italic): Define.
+	(syms_of_fontcolor_gtk): Add new functions.
+
+2011-04-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Remove Gtk
+	implementation of strikethru and underline.  Now done with pango.
+
+	* redisplay-gtk.c (gdk_draw_text_image): Take a face_cachel as an
+	argument which eliminates the fg, bg and bgc arguments.  Also take
+	a textual_run to get access to charset information for the text.
+	Set text foreground and background at pango attributes.  No need
+	to fill background rectangle now.
+	(gdk_draw_text_image): Implement strikethrough and underline as
+	pango text attributes.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update callers.
+
+2011-03-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk-impl.h (struct gtk_device): Add PangoFontMap.
+	(DEVICE_GTK_FONT_MAP): Add accessor macro.
+
+	* device-gtk.c (gtk_init_device): Remove ifdef around pango setup.
+
+	* faces.c (complex_vars_of_faces): Define default faces for
+	Gtk/Pango. Monospace, unifont and a CJK one, based on Ubuntu
+        ttf fonts.
+
+	* fontcolor-gtk-impl.h (struct gtk_font_instance_data): No longer
+	ifdefed.
+
+	* fontcolor-gtk.c (gtk_initialize_font_instance): Initialize a
+	pango font, also looking up the font description and font metrics.
+	(gtk_print_font_instance): gdk_font_id isn't valid for a PangoFont.
+	(gtk_finalize_font_instance): free pango font resources.
+	(__get_gtk_font_truename): Return name from pango font
+	description. This may be insufficient.
+
+	* redisplay-gtk.c (gdk_draw_text_image): Draw the text using pango
+	layout. Take foreground and background color arguments for cairo
+	instead of a GdkGc.
+	(XLIKE_text_width_single_run): Implement pango based version.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Use pango font
+	metrics for underline and strikethrough positions.
+	(XLIKE_output_string): Pass foreground and background colors to
+	gdk instead of a background Gc.
+	(XLIKE_get_gc): No longer need to copy the font; now a PangoFont
+	is used instead.
+	(XLIKE_text_width_single_run): Don't use this one for Gtk, use the
+	one in redisplay-gtk.c.
+
+	* sysgtk.h (include): Always include pango.h and pangoxft.h
+
+2011-03-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Cursor offset must
+	include descent for Gtk.
+
+2011-03-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+        * redisplay-gtk.c (gdk_draw_text_image): Now takes a GtkWidget
+        instead of a GdkDrawable.
+	* redisplay-xlike-inc.c (XLIKE_output_string): Update callers.
+
+2011-03-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image): GDK draws text relative to
+	the baseline, so offset by the descent.
+
+2011-03-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: Add HAVE_PANGOXFT flag.
+
+	* event-gtk.c (IS_MODIFIER_KEY): Use GDK_KEY_XX instead of obsolete
+	GDK_XX style constants.
+	(keysym_obeys_caps_lock_p): ditto
+	(gtk_keysym_to_emacs_keysym): ditto
+
+	* sysgtk.h: gtkfixed.h no longer needed in Gtk 2.0; will be removed
+	in Gtk 3.0
+
+2010-11-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gtk_fill_rectangle): New function to fill a
+	rectangle using cairo.
+	(gdk_draw_text_image): Use it here.
+
+2010-11-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status): Remove
+	old code to avoid flickering.  It actually causes flickering in
+	gtk 2.28.
+
+2010-11-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h (FRAME_REAL_TOP_TOOLBAR_BOUNDS): Remove HAVE_GNOME
+	code, which only worked for the top toolbar using GnomeApp.
+
+2010-11-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: libgnome and libgnomeui will be deprecated in GNOME
+	3.0; remove HAVE_GNOME.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Remove HAVE_GNOME code.
+
+	* sysgtk.h: Remove HAVE_GNOME code.
+
+	* menubar-gtk.c (create_menubar_widget): Remove HAVE_GNOME code.
+
+	* frame-gtk.c (gtk_create_widgets): Remove HAVE_GNOME code.
+
+	* device-gtk.c (Fgtk_init): Remove gnome_init().
+
+2010-10-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c (Fgtk_notebook_query_tab_label_packing): Wrong type
+	in error message.
+
+2010-10-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Initialize
+	gtk_accel variable.
+	(menu_descriptor_to_widget_1): Fix GTK type warnings.
+	(create_menubar_widget): Remove unused variable.
+
+	* ui-gtk.h: Marshalling functions now use GValue, not GtkArg.
+
+	* gui.c (gui_item_value): Disable error check to avoid errors.
+	There is still a problem here to be fixed.
+
+	* gtk-glue.c (xemacs_list_to_gtklist): memset local GValue
+	variable to zero to reset the type.
+	(xemacs_list_to_array): Ditto.
+
+	* ui-gtk.c: Ditto.  (Two DEFUNs)
+
+2010-10-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* symsinit.h: Add vars_of_toolbar_gtk () prototype.
+
+	* toolbar-gtk.c (gtk_clear_toolbar): Set cleared toolbar widget to
+	NULL.
+
+2010-10-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Don't try to use an
+	invalid accelerator key.
+
+	* menubar-gtk.c: Remove GtkXEmacsAccelLabel now that an easier
+	method to set the menu item accelerator labels is used.
+	(menu_convert): Use GtkLabel instead.
+
+2010-10-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (emacs_gtk_object_printer): Use %0x instead of %p to
+	print pointers.
+	(emacs_gtk_boxed_printer): Ditto.
+	(describe_gtk_arg): Ditto.
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Add second label
+	containing the accelerator to the menu item.
+
+2010-09-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_create_widgets): Use GTK_SIGNAL_CONNECT instead
+	of obsolete G_SIGNAL_CONNECT.
+
+2010-08-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (gtk_xemacs_menubar_size_request): Remove comment
+	about detached menus since we longer do that.
+
+2010-08-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar.c (update_frame_toolbars_geometry):  Use
+	FRAME_CURRENT_TOOLBAR_SIZE accessor macro.
+	(init_frame_toolbars): Ditto.
+
+2010-08-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fgtk_call_function): Initialize arg array to NULLs
+	before proceeding.
+
+2010-08-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (Fg_object_class_list_properties): Initialize GValue
+	with memset.  Using only g_value_init causes an error.
+
+2010-08-06  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-byhand.c: remove deprecated gtk-button-box functions that
+	returned more than one value.  Use properties instead.
+	
+2010-08-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_already_imported_p): Remove unused temp debug
+	variable "key".
+	(Fg_type_from_name): Return nil for invalid types.
+
+2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* emacs-marshals.c (emacs_gtk_marshal_BOOL__OBJECT_INT):
+	Regenerate with return type initialization.
+
+	* ui-gtk.c (ffi_object_printer): Add 0x prefix to FFI pointer print.
+	(Fgtk_import_variable_internal): Remove extraneous call to g_type_init().
+	(Fgtk_import_function_internal): Ditto.
+
+	* emacs-marshals.c: Generate with new GType variable instead of
+	using deprecated GtkArg.
+
+2010-08-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_output_toolbar): Use small toolbar icons.
+
+2010-07-29  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c: Remove dockable_menubar and tear_off_menus
+	variables. Remove TEAR_OFF_MENUS ifdefed code.
+	(__maybe_destroy): Remove tear off menus check.
+	(__activate_menu): Remove tear off menu initialization.  Remove
+	dockable menu initialization.
+	(reinit_vars_of_menubar_gtk): No variables to initialize.
+	(vars_of_menubar_gtk):  Remove DEFVAR of
+	menubar-dockable-p and menubar-tearable-p.
+
+2010-07-28  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance): Remove
+	workaround for setting scrollbar size. Gtk 2.21.2 actively warns
+	when resizing to current size.
+
+2010-07-27  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.h (FFI_RETURN_TYPE): Define accessor macros for FFI types.
+
+	* ui-gtk.c (Fgtk_signal_connect): Use new accesor macros.
+
+	* gtk-glue.c (xemacs_list_to_gtklist): Initialize variable to
+	fix warning.
+
+2010-07-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_descriptor_to_widget_1): Use activate signal
+	instead of activate-item when add an accelerator or else Gtk gives
+	a warning.
+
+2010-07-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (init_gtk_toolbar_stock_icons): Build a hash table
+	of toolbar function to gtk stock icon name.
+	(gtk_output_toolbar): Look in the hash table for the stock icon
+	name, and try to load it. If loading fails, fall back to default
+	toolbar icon.
+	(vars_of_toolbar_gtk): Declare and initialize stock icon hash map
+	variable. 
+	(gtk_initialize_frame_toolbars): Remove trace message.
+	(gtk_free_frame_toolbars): Remove trace message.
+
+	* emacs.c (main_1): Call vars_of_toolbar_gtk when appropriate.
+
+	* toolbar-gtk.c (gtk_output_toolbar): Add gtk stock icons for
+	those toolbar buttons that match clearly.
+
+2010-07-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h: If HAVE_GNOME, the top toolbar is outside the text
+	widget.  All measurements of the top toolbar size are returned as
+	zero.   (Now there is an extra line at the bottom of the modeline
+	instead of the top of the text pane.)
+
+2010-07-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* config.h.in: Add HAVE_PANGO.
+	
+	* toolbar-gtk.c (gtk_output_toolbar): Hardwire first four toolbar
+	icons to be the correct gtk stock icons.  This is for demo
+	purposes; this should be done in lisp.
+
+	* menubar-gtk.c (__activate_menu): Use NULL accelerator until I
+	figure out Gtk 2.0 accelerators.  Refactor loop code to avoid continue.
+	(menu_descriptor_to_widget_1): Actually set the label on
+	individual menu items.
+	(menu_descriptor_to_widget_1): Use an explicit separator where required.
+
+2010-07-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (menu_convert): Check g_signal_connect with assert.
+	(menu_convert):  Ditto.  Use GINT_TO_POINTER for callback data.
+	(menu_descriptor_to_widget_1): Ditto.
+	(create_menubar_widget): Ditto.
+	(gtk_popup_menu): Ditto.  Fix indentation.
+
+2010-06-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (gtk_xemacs_menubar_size_request):
+	Remove debug message.
+
+	* frame-gtk.c (gtk_create_widgets):
+	Ensure that the container is a box before trying to pack it.
+	This may not be true when using GnomeApp.
+
+	* emacs-marshals.c (emacs_gtk_marshal_POINTER__BOOL_INT): New
+	marshaller.	
+	(emacs_gtk_marshal_POINTER__POINTER_POINTER): New marshaller.
+
+	* ui-gtk.c (import_gtk_flags_internal): Added debug output for gtk
+	flag import.
+	(import_gtk_enumeration_internal): Added debug output for gtk enum
+	import.
+	(Fgtk_import_function_internal): Added debug message on function
+	import success.
+	(Fgtk_import_function_internal): Added debug message about
+	marshaller being used.
+	(Fgtk_call_function): Convert internal arguments to gtk types correctly.
+	(lisp_to_g_value): Convert lisp value to the base fundamental type
+	of requested arguments.  Rename arg to val for better looking code.
+
+	* gtk-xemacs.c (gtk_xemacs_new): Make the xemacs widget require a
+	GdkWindow.  This fixes the shrinking window problem for both menus
+	and toolbars.
+
+2010-06-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (size_allocate_cb): Rename from resize_event_cb.
+	(gtk_create_widgets): Pass new name to signal callback.  Validate
+	g_signal_connect().
+	(size_allocate_cb): Use FRAME_PIXWIDTH and FRAME_PIXHEIGHT.
+
+	* glyphs-gtk.c (gtk_tab_control_instantiate): Validate
+	g_signal_connect(). 
+	(gtk_tab_control_redisplay): Use gtk_notebook_set_current_page()
+	instead of deprecated gtk_notebook_set_page().
+	(gtk_tab_control_redisplay): Remove notebook pages from end.
+
+	* frame-gtk.c (gtk_create_widgets): Assert return value of
+	g_signal_connect to validate.
+
+	* scrollbar-gtk.c (gtk_free_scrollbar_instance): Set the widget to
+	zero.  Set the scrollbar_data to zero.
+
+	* lisp.h (XFREE): A macro that frees a pointer and then sets it to
+	zero.
+
+2010-06-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* fontcolor-impl.h (FONT_INSTANCE_PROPORTIONAL): Define accessor.
+	(XFONT_INSTANCE_PROPORTIONAL): Define accessor.
+
+2010-06-09  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* toolbar-gtk.c (gtk_clear_toolbar): Uncomment.
+	(gtk_output_toolbar): Name toolbar.  Clean up formatting.
+	(console_type_create_toolbar_gtk): Re-enable gtk_clear_toolbar.
+	(gtk_output_toolbar): Set toolbar name based on pattern used in
+	frame-gtk.c.
+
+	* toolbar-gtk.c (gtk_output_toolbar): If HAVE_GNOME, put the
+	TOP_EDGE toolbar into the GnomeApp toolbar slot.  Create captioned
+	buttons if specified.  Create the button using the toolbar
+	glyphs in the specifier and set the tooltip.  Connect the click
+	callback action.
+
+2010-06-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (XEMACS_MENU_DESCR_TAG): Convert GQuark defintions
+	back into #define constants.
+	(create_menubar_widget): Use cleaner logic when setting the
+	gnome app menubar.
+
+	* sysgtk.h: Include libgnomeui if we HAVE_GNOME.
+
+	* menubar-gtk.c: Remove include libgnomeui.
+
+	* frame-gtk.c: Remove include libgnomeui.
+
+	* device-gtk.c: Remove include libgnomeui.
+
+2010-06-05  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_already_imported_p): Mark G_TYPE_NONE as
+	imported.  Was mistakenly using G_VALUE_TYPE where just the type
+	was required.
+	(lisp_to_g_value): Ignore G_TYPE_INVALID.
+
+	* emacs-marshals.c (emacs_gtk_marshal_NONE__POINTER_BOOL): Newly
+	added marshaller.
+
+2010-06-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-gtk.c (gtk_any_window_to_device): Fix indentation.
+	(gtk_set_frame_properties): Replace deprecated
+	gdk_window_get_deskrelative_origin with gdk_window_get_origin.
+	(gtk_frame_property): Ditto.
+	(gtk_frame_properties): Ditto
+	(gtk_set_mouse_position): Gdk now has a function to warp the
+	cursor position.
+
+2010-06-03  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* emacs-marshals.c (emacs_gtk_marshal_POINTER__STRING): Added new
+	marshaller, needed by gtk-label-new.
+
+	* ui-gtk.c (type_to_marshaller_type): Had omitted G_OBJECT_TYPE.
+
+2010-06-02  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area): style and stype variable
+	names are hard to distinguish.
+
+2010-06-01  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_already_imported_p): Uncomment special treatment
+	of fundamental types.  Treat them as already imported.
+	(import_gtk_type): Use G_TYPE_IS_OBJECT, not G_IS_OBJECT on a type.
+	(Fgtk_call_function): Don't set the type of a GValue before using
+	it to hold a converted Lisp_Object, the type cannot be changed.
+	(Fgtk_fundamental_type): Fix documentation string.
+
+	* frame.h (EDGE_HORIZONTAL_P): It is already being using in
+	toolbar-gtk.c due to out of order commits.
+
+2010-05-31  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* frame-impl.h (struct frame): Add gtk_toolbars here.  This is the
+	wrong place, but it's used for now.  Add a checksum slot.
+	(FRAME_GTK_TOOLBAR_WIDGET): Define accessor.
+	(FRAME_GTK_TOOLBAR_CHECKSUM): Define accessor.
+
+	* toolbar-gtk.c (gtk_toolbar_callback): Link to lisp callback.
+	(gtk_clear_toolbar): Delete toolbar widgets.  Disabled.
+	(gtk_clear_frame_toolbars): Clear all toolbars on frame.
+	(gtk_output_toolbar): Create Gtk toolbar and buttons.
+	(gtk_output_frame_toolbars): Loop and create visible toolbars.
+	(console_type_create_toolbar_gtk): Define output, initialize and
+	free methods.
+	(vars_of_toolbar_gtk): Provide 'toolbar-gtk.
+
+2010-05-30  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* glyphs-gtk.c (gtk_map_subwindow): Replace deprecated code with
+	gtk_widget_queue_draw().
+
+2010-05-24  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (type_to_marshaller_type): Always check fundamental
+	types first.  Next check for GObjects and then enums or flags.
+
+2010-05-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-glue.c (xemacs_list_to_gtklist): Move all declarations
+	before code. (Bad C++ habits)
+	(xemacs_list_to_gtklist): Ditto.
+	(xemacs_list_to_array): Ditto.
+	redisplay-gtk.c (our_draw_bitmap): Ditto.
+	ui-gtk.c (mark_type_as_imported): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_callback): Use GLib type
+	conversion macros for attached data.
+	(gtk_tab_control_callback): Ditto.  GNoteBookPage no longer has a
+	child, so attach the data to the widget itself.
+
+	* console-gtk-impl.h (GTK_DATA_TAB_HASHCODE_IDENTIFIER): Correctly
+	define as a GQuark.
+
+	* glyphs-gtk.c (check_cursor_names): Use (void) instead of () as
+	argument list.
+
+	* ui-gtk.c (check_enumeration_hashtable): Ditto
+
+2010-05-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (import_gtk_flags_internal): Use acons to build alist.
+	(import_gtk_enumeration_internal): Ditto.
+	(import_gtk_type): Check for enum and flag derived types.
+
+2010-05-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area): Commented out use of shadow
+	enums until they're updated to 2.X values.
+
+	* ui-gtk.c: Use g_type* functions instead of deprecated gtk_type*
+	ones. Rename lisp_to_gtk_type to lisp_to_g_value.
+	Remove lisp_to_gtk_ret_type, lisp_to_gvalue now does that job.
+	(type_already_imported_p): Make internal type hash table visible
+	as gtk-types so it's viewable in lisp.
+	(mark_type_as_imported): Use Vgtk_types.
+	(vars_of_ui_gtk): DEFVAR Vgtk_types.
+
+	* gtk-glue.c: use renamed function.
+
+	* menubar-gtk.c: Use GQuarks instead of text keys for attaching
+	data to widgets.
+
+2010-05-18  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
+	Set continuous update flag to try to fix scrollbar drag.
+
+	* glyphs.c (image_instance_hash):
+	Remove duplicate hash functions.
+
+	* fontcolor-gtk.c (gtk_initialize_font_instance):
+	Add USE_PANGO code.
+
+	* device-gtk.c (Fgtk_style_info): Can only determine font
+	name using pango.
+
+	* console-gtk-impl.h (struct gtk_device):
+	Add pango context slot to device and accessor macro.
+
+	* device-gtk.c (gtk_init_device):
+	Set up pango context for device ifdef HAVE_PANGO.  Using a pango
+	xft context.
+
+2010-05-17  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_xlike_pixmap):
+	Enable gdk_draw_pixmap, it tests okay.  Drawing a bitmap
+	still needs work.
+
+2010-05-16  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Force outline cursor to be used for block mode cursor display,
+	since I can't make the regular one work correctly. Remove
+	gdk_draw_text_char.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Shrink the cursor rectangle to avoid left over lines.  Remove
+	gdk_draw_text_char.
+
+2010-05-14  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_cursor):
+	New function that displays the cursor, but unfortunately not the
+	character underneath.  Still, it's a display improvement.
+	(XLIKE_output_blank):
+	Use same args for XLIKE_DRAW_RECTANGLE in Gtk and non-Gtk cases.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	gdk_draw_rectangle starts from top left corner.
+	(gdk_draw_text_char): Ditto.
+
+2010-05-13  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* menubar-gtk.c (gtk_xemacs_menubar_get_type):
+	Update to 2.0 so that it compiles.
+	(gtk_xemacs_accel_label_get_type, menu_convert): Add parsing of
+	label accelerator back so that it gets added to the menu correctly.
+
+2010-05-12  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Use min() to clarify some math.
+
+	* redisplay-gtk.c (gdk_draw_text_char): 
+	Rename gdk_draw_text_char to gdk_draw_text_char and take
+	a character argument.
+	
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	Rename gdk_draw_text_char to gdk_draw_text_char and pass
+	a space as the character argument.
+
+2010-05-11  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	Use new gdk draw blank function.
+
+	* redisplay-gtk.c (gdk_draw_text_blank):
+	Extract a new function.
+
+	* redisplay-xlike-inc.c (XLIKE_output_blank):
+	Display a text space instead of a rectangle for an
+	onscreen blank.
+	
+2010-05-10  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Take a struct textual run* argument and handle the wide char
+	case ourselves.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Call gdk_draw_text_image directly with a struct textual_run *.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Put back plain Gdk text rendering, pango not complete.
+	(gdk_draw_text_image_wc):
+	Wide char version of text display.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Call wide char version of text image draw where required.
+
+	* ui-gtk.c (IS_XEMACS_GTK_FUNDAMENTAL_TYPE):
+	Use GType, not GtkType.
+
+	* ui-gtk.h: build_gtk_boxed now takes a GType arg, not GtkType
+
+	* console-gtk-impl.h (struct gtk_device):
+	Add pango context inside ifdef USE_PANGO.  (We don't want to
+	use HAVE_PANGO because the pango code isn't ready.)
+
+	* console-xlike-inc.h (XLIKE_TEXT_WIDTH_WIDE):
+	Use USE_PANGO instead of HAVE_PANGO.
+
+	* device-gtk.c:
+	Add pango font name lookup functions.
+	(gtk_init_device):
+	Initialize PangoContext for device.
+
+	* fontcolor-gtk.c (gtk_initialize_font_instance):
+	Add ifdef'd code for initializing pango fonts.
+
+	* fontcolor-gtk-impl.h (struct gtk_font_instance_data):
+	Add pango information to font instance data.
+
+	* sysgtk.h:
+	Include pango headers.
+
+	* faces.c (complex_vars_of_faces):
+	Set the fallback font to a monospaced lucidatypewriter.  Without
+	the -m-, gdk loads a proportiional font.
+
+	* scrollbar-gtk.c (gtk_update_scrollbar_instance_status):
+	Replace deprecated code. Notify the scrollbar when the slider
+	value changes.  Update the scrollbar when the buffer changes.
+
+2010-05-08  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Use pango_layout_get_pixel_size to get the true size of the text
+	rectangle.  Fill that rectangle with the given background GC.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Don't erase the background here because the true text width can't
+	be calculated without pango.  Create a background GC if it doesn't
+	exist.
+
+2010-05-07  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-xlike-inc.c (XLIKE_output_string):
+	Remove obsolete workarounds for clearing rectangle mismatches.
+
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Calculate size with pango_layout_get_pixel_size.  This also needs
+	to be changed in XLIKE_TEXT_WIDTH somehow. Works best with a
+	monospaced font.
+
+	* scrollbar-gtk.c (scrollbar_cb):
+	Callback now gets GtkRange* and GtkScrollType arguments.
+
+	* scrollbar-gtk.c (gtk_create_scrollbar_instance):
+	Connect to signal from scrollbar to get 1.X like behaviour
+	from the scrollbar.  Assert check the signal connect calls.
+	(scrollbar_cb): Handle all GtkScrollType enum values.
+	
+	* scrollbar-gtk.c (scrollbar_cb):
+	Callback now gets GtkRange* and GtkScrollType arguments.
+
+	* ui-gtk.c (build_gtk_object): 
+	Use g_object_get_qdata now that key is a GQuark.
+
+	* menubar-gtk.c (XEMACS_MENU_DESCR_TAG, XEMACS_MENU_FILTER_TAG,
+	XEMACS_MENU_GUIID_TAG, XEMACS_MENU_FIRSTTIME_TAG):
+	Use GQuark instead of string for GObject data key.
+	(__activate_menu):
+	Use g_object_get_qdata now that key is a GQuark.
+	(menu_convert): Ditto.
+	(menu_create_menubar): Ditto.
+	(gtk_popup_menu): Ditto.
+
+	* glyphs-gtk.c (gtk_tab_control_callback):
+	Use g_object_get_qdata now that key is a GQuark.
+
+	* frame-gtk.c (gtk_widget_to_frame):
+	Use g_object_get_qdata now that key is a GQuark.
+	(gtk_popup_frame): Ditto.
+	(gtk_get_frame_parent):
+	get_data is now a g_object method, not gtk_object.
+
+	* console-gtk-impl.h (GTK_DATA_FRAME_IDENTIFIER,
+	GTK_DATA_TAB_HASHCODE_IDENTIFIER, GTK_DATA_GUI_IDENTIFIER):
+	Use GQuark instead of string for GObject data key.
+
+
+2010-05-06  Jeff Sparkes  <jsparkes@gmail.com>
+        * redisplay-xlike-inc.c (XLIKE_output_string):
+          Draw the filled rectangle with the background before drawing the text.
+
+        * redisplay-gtk.c (gdk_draw_text_image):
+          Remove unused X specific text drawing now that we use pango.
+
+        * redisplay-xlike-inc.c (XLIKE_output_string):
+          For pango, y is top to bottom.
+          (XLIKE_output_string): 
+
+        * redisplay-gtk.c (gdk_draw_text_image):
+          Use a simple pango layout to draw text.  It does not erase the
+          background.
+
+        * fontcolor-gtk-impl.h (struct gtk_font_instance_data):
+        Add pango font data.
+        (FONT_INSTANCE_GTK_FONT_DESC):
+        Add macros for pango font data access.
+
+        * fontcolor-gtk.c (gtk_initialize_font_instance):
+        Add pango font size initialization.
+        (gtk_finalize_font_instance):
+        Add pango font finalization.
+        (__get_gtk_font_truename): 
+	Add pango font truename function.
+
+	* device-gtk.c:
+	Add pango font truename function.
+	(gtk_init_device):
+	Add pango initialization.
+
+	* console-xlike-inc.h:
+	Add pango text width.
+
+2010-05-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-gtk-impl.h (struct gtk_device):
+	* device-gtk.c (gtk_init_device):
+	Add a PangoContext to gtk device.
+
+XXXXXX - too many changes in one big commit to document.
+
+2010-04-26  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* ui-gtk.c (emacs_gtk_object_getprop):
+	Started conversion to 2.X.
+	(Fgtk_describe_type):
+	Converted to 2.X.
+
+	* config.h.in:
+	We don't need WORDS_BIGENDIAN.
+
+	* glyphs-gtk.c (convert_EImage_to_GDKImage):
+	Use G_BIG_ENDIAN instead of WORDS_BIGENDIAN
+	(convert_EImage_to_GDKImage):
+	Ditto.
+
+2010-04-23  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* gtk-xemacs.c (gtk_xemacs_class_init):
+	Don't use gtk_xemacs_draw.
+	(smash_scrollbar_specifiers):
+	Use fixed slider width for now.
+
+2010-04-22  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* redisplay-gtk.c (XLIKE_bevel_area):
+	Cast GtkShadowStyle to edge_style for C++ compile.
+	(our_draw_bitmap):
+	Implement using GDK, not XLib.
+
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	Update hash function to match usage in fontcolor-x.c.
+
+	* event-gtk.c (handle_focus_event_1):
+	Extend X focus timestamp klduge to Gtk.
+
+	* console-xlike-inc.h:
+	Fix GET_XLIKE_DISPLAY for gtk.
+
+	* frame-gtk.c (gtk_create_widgets):
+	Declare array const to avoid C++ warning.
+	(get_number, gnome_parse_geometry):
+	Re-enable local geometry parsing temporarily.
+
+	* config.h.in:
+	Add WORDS_BIGENDIAN check back.  It's used in src/glyphs-gtk.h.
+
+	* gtk-xemacs.c (smash_scrollbar_specifiers, smash_toolbar_specifiers):
+	Slider width is now in GtkStyle instance, not class.
+
+	* device-gtk.c (gtk_delete_device):
+	NEW_GC doesn't allow/require freeing device directly.
+
+2010-04-21  Jeff Sparkes  <jsparkes@gmail
+  .com>
+
+	* fontcolor-gtk.c (gtk_color_instance_hash):
+	Remove gtk_color_instance_hash equalp argument.
+
+	* gtk-glue.c (xemacs_type_register):
+	Change arg to const to avoid C++ warning.
+
+	* gtk-xemacs.c (gtk_xemacs_get_type):
+	Cast to avoid C++ const warning.
+
+	* frame-gtk.c (gtk_initialize_frame_size):
+	Remove ifndef HAVE_GNOME around gnome-parse-geometry and get_number.
+	Use gtk geometry functions.
+	Include gutter.h for frame size calculations.
+
 2000-10-03  William M. Perry  <wmperry@aventail.com>
 
 	* objects-gtk.c (gtk_font_instance_truename): Make sure we get the
@@ -286,7 +2904,8 @@
 	* ui-gtk.c (lisp_to_gtk_type): Know how to deal with
 	GTK_TYPE_GDK_GC.
 
-	* gtk-glue.c: Need to defien a GTK type for GdkGC so that we can
+	* gtk-glue.c: Need to define a GTK type for 
+	GdkGC so that we can
 	import all the GDK drawing primitives.
 	(face_to_gc): New function to convert a face object to a GC.
 

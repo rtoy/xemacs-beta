@@ -10,6 +10,10 @@
 	* unicode/unicode-consortium/EASTASIA/OBSOLETE/BIG5.TXT:
 	Update mid.gmane.org to mid.xemacs.org. We miss you, Gmane.
 
+2015-01-25  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* xemacs.css: CSS styling file for Gtk 3.0.
+
 2014-12-05  Jerry James  <james@xemacs.org>
 
 	* xemacs.appdata.xml:

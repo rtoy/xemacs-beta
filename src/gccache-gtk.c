@@ -119,7 +119,7 @@ struct gc_cache *
 make_gc_cache (GtkWidget *widget)
 {
   struct gc_cache *cache = xnew (struct gc_cache);
-  cache->window = widget->window;
+  cache->window = gtk_widget_get_window (widget);
   cache->size = 0;
   cache->head = cache->tail = 0;
   cache->create_count = cache->delete_count = 0;
@@ -137,7 +137,7 @@ free_gc_cache (struct gc_cache *cache)
   rest = cache->head;
   while (rest)
     {
-      gdk_gc_destroy(rest->gc);
+      g_object_unref (rest->gc);
       next = rest->next;
       xfree (rest);
       rest = next;
@@ -228,7 +228,7 @@ gc_cache_lookup (struct gc_cache *cache, GdkGCValues *gcv, unsigned long mask)
       cache->head = cell->next;
       cache->head->prev = 0;
       if (cache->tail == cell) cache->tail = 0; /* only one */
-      gdk_gc_destroy (cell->gc);
+      g_object_unref (cell->gc);
       cache->delete_count++;
 #ifdef GCCACHE_HASH
       remhash (&cell->gcvm, cache->table);

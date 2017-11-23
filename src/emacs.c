@@ -1598,6 +1598,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #ifdef HAVE_GTK
       syms_of_device_gtk ();
+      syms_of_event_gtk ();
       syms_of_frame_gtk ();
       syms_of_glyphs_gtk ();
       syms_of_fontcolor_gtk ();
@@ -2227,6 +2228,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #ifdef HAVE_SCROLLBARS
       vars_of_scrollbar_gtk ();
 #endif
+#ifdef HAVE_TOOLBARS
+      vars_of_toolbar_gtk();
+#endif
 #if defined (HAVE_MENUBARS) || defined (HAVE_SCROLLBARS) || defined (HAVE_DIALOGS) || defined (HAVE_TOOLBARS)
       vars_of_gui_gtk ();
 #endif
@@ -2370,7 +2374,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
 #ifdef HAVE_GTK
       reinit_vars_of_event_gtk ();
+#ifdef HAVE_MENUBARS
       reinit_vars_of_menubar_gtk ();
+#endif
 #endif
 
 #ifdef HAVE_X_WINDOWS
@@ -2482,6 +2488,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 variables initialized above. */
 #ifdef HAVE_GTK
       complex_vars_of_glyphs_gtk ();
+      complex_vars_of_event_gtk ();
 #endif
 #ifdef HAVE_X_WINDOWS
       complex_vars_of_glyphs_x ();

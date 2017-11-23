@@ -1979,7 +1979,7 @@ x_popup_frame (struct frame *f)
       /* We may have set f->visible to 1 in x_init_frame(), so undo
 	 that now. */
       FRAME_X_TOTALLY_VISIBLE_P (f) = 0;
-      f->visible = 0;
+      FRAME_VISIBLE_P (f) = 0;
     }
 
 #ifdef EXTERNAL_WIDGET
@@ -2093,7 +2093,7 @@ x_init_frame_1 (struct frame *f, Lisp_Object props,
    * initially-unmapped property is found to be non-nil in the
    * frame properties.
    */
-  f->visible = 1;
+  FRAME_VISIBLE_P (f) = 1;
 
   allocate_x_frame_struct (f);
   x_create_widgets (f, lisp_window_id, popup, overridep);
@@ -2506,11 +2506,11 @@ x_frame_visible_p (struct frame *f)
   /* In this implementation it should at least be != IsUnmapped
      JV */
 
-  f->visible = result;
+  FRAME_VISIBLE_p (f) = result;
   return result;
 #endif /* 0 */
 
-  return f->visible;
+  return FRAME_VISIBLE_P (f);
 }
 
 static int
@@ -2567,7 +2567,7 @@ x_focus_on_frame (struct frame *f)
        moment, at least change_frame_visibility should be called
        Note also that under fvwm a frame can be Viewable (and thus Mapped)
        but still X-invisible
-    f->visible = xwa.map_state == IsViewable; */
+    FRAME_VISIBLE_p (f) = xwa.map_state == IsViewable; */
     viewable = xwa.map_state == IsViewable;
 
 

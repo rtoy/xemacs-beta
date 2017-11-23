@@ -155,7 +155,7 @@ tty_objs=console-tty.o device-tty.o event-tty.o frame-tty.o fontcolor-tty.o \
 
 #ifdef HAVE_GTK
 gtk_objs=console-gtk.o device-gtk.o event-gtk.o frame-gtk.o \
- fontcolor-gtk.o redisplay-gtk.o glyphs-gtk.o select-gtk.o gccache-gtk.o \
+ fontcolor-gtk.o redisplay-gtk.o glyphs-gtk.o select-gtk.o \
  gtk-xemacs.o ui-gtk.o
 gtk_gui_objs=$(gui_objs:.o=-gtk.o)
 #ifdef HAVE_TOOLBARS

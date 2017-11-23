@@ -852,6 +852,31 @@
 
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Merge further after hg's automatic merging of recent trunk
+	changes. Some of my redisplay changes were invasive and change the
+	approach we should take with GTK.
+	
+	* console-gtk.h:
+	Remove gtk_get_gc(), restored by hg fetch.
+
+	* redisplay-gtk.c:
+	No need for the separate_textual_runs approach of the X11 code,
+	pango should do all the fishing-for-appropriate-fonts work.
+	
+	* redisplay-gtk.c (gdk_draw_text_image):
+	Adjust this function's signature now we no longer use textual runs.
+	* redisplay-gtk.c (gtk_text_width):
+	Adjust this function's signature to take an array of Ibytes,
+	rather than an Ichar_dynarr.
+	* redisplay-gtk.c (gtk_output_string):
+	Ditto.
+	Don't use the textual runs, Pango's responsibility will be (is)
+	working out character coverage and so on.
+	* redisplay-xlike-inc.c (XLIKE_output_display_block):
+	Remove an errant merged Dynarr_reset().
+
+2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Implement GNU's #'looking-at-p, #'string-match-p in C, the regexp
 	code already provides for them on the C level.
 	Don't provide GNU's 'inhibit-changing-match-data, *adding* special
@@ -871,6 +896,7 @@
 	but do not modify the match data on success.
 	* search.c (syms_of_search):
 	Make Fstring_match_p, Flooking_at_p available here.
+>>>>>>> other
 
 2017-01-15  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -1075,6 +1101,56 @@
 	* menubar.c (Fnormalize_menu_text):
 	Use the correct offset when writing the slack between the %% or %_
 	sequences encountered to our resizing output stream.
+
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fontcolor-gtk.c:
+	* fontcolor-gtk.c (gtk_font_describe_face):
+	Build up the list of faces in a more reasonable way, don't try to
+	merge sequences by using a string as the last argument to
+	#'append.
+	* fontcolor-gtk.c (gtk_font_list):
+	Be a little more efficient here, don't traverse the entire
+	constructed list of results with every face added.
+
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Tidy up GTK keysym handling.
+
+	* event-gtk.c (gtk_keysym_to_emacs_keysym):
+	* event-gtk.c (gtk_to_emacs_keysym):
+	Remove the SIMPLE_P argument to these, nothing uses it.
+	* event-gtk.c:
+	* event-gtk.c (keysym_obeys_caps_lock_p):
+	Simplify and generalise this, use gdk_keyval_convert_case(), cf. the
+	X11 change using XConvertCase().
+	* event-gtk.c (gtk_event_to_emacs_event):
+	Clarify and comment on Bill Perry's approach to whether shift
+	should be stripped from graphic keysyms. His approach works quite
+	well and is cheaper than the X11 approach, happily.
+	* event-gtk.c (gtk_reset_key_mapping):
+	Don't use the second argument to gtk_keysym_to_emacs_keysym().
+
+2016-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* device-gtk.c (gtk_device_init_x_specific_cruft):
+	Use the X Display *, not the GdkDisplay *, when telling the IO
+	code to pay attention to the SIGIO signals associated with this
+	Display.
+
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Some by-hand tweaks to get the GTK branch building with recent
+	changes.
+	* glyphs-gtk.c (register_cursor_name):
+	intern_istring()'s calling convention has changed, use the new
+	one.
+	* lisp.h:
+	Declare Fmapconcat here.
+	* select-xlike-inc.c (selection_data_to_lisp_data):
+	Be more careful about using DEVICE_XATOM_TIMESTAMP().
+	* ui-byhand.c (Fgtk_label_get):
+	Correct some bad merging here.
 
 2016-12-19  Aidan Kehoe  <kehoea@parhasard.net>
 
@@ -5036,6 +5112,34 @@
 	versions, calling FdeleteX from C with the appropriate arguments
 	is ungainly.
 
+2011-11-04  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console.c (Fsuspend_console): Use FRAME_VISIBLE_P instead of
+	f->visible.
+
+	* console-stream.c (stream_init_frame_1): Ditto.
+
+	* device-x.c (x_error_handler): Ditto.
+
+	* frame.c (delete_frame_internal): Ditto.
+	(Fframe_visible_p): Ditto.
+	(Fframe_totally_visible_p): Ditto.
+	(Fframe_iconified_p): Ditto.
+
+	* frame-msw.c (mswindows_make_frame_visible): Ditto.
+	(mswindows_make_frame_invisible): Ditto.
+	(mswindows_iconify_frame): Ditto.
+
+	* frame-tty.c (tty_make_frame_visible): Ditto.
+	(tty_make_frame_invisible): Ditto.
+	(tty_make_frame_hidden): Ditto.
+	(tty_make_frame_unhidden): Ditto.
+
+	* frame-x.c (x_frame_visible_p): Ditto.
+	(x_focus_on_frame): Ditto.
+	(x_popup_frame): Ditto.
+	(x_init_frame_1): Ditto.
+
 2011-10-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Do a couple of non-mechanical things that would otherwise have
@@ -7341,6 +7445,21 @@
 	* device-gtk.c (Fgtk_init):
 	* config.h.in:
 	Remove all checks for InfoDock.
+
+2010-06-21  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* console-x-impl.h (DEVICE_X_XFTDRAW): Define, instead of
+	FRAME_X_FTDRAW.
+	(struct x_device): Add XftDraw field.
+	(struct x_frame): Remove XftDraw field.
+
+	* device-x.c (x_delete_device): Free XftDraw here.
+
+	* frame-x.c (x_delete_frame): Remove freeing of XftDraw.
+
+	* redisplay-xlike-inc.c (XLIKE_output_string): Use
+	DEVICE_X_XFTDRAW instead of FRAME_X_XFTDRAW when lazily creating
+	XftDraw structure.
 
 2010-06-01  Aidan Kehoe  <kehoea@parhasard.net>
 

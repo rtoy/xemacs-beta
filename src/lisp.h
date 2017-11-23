@@ -1362,6 +1362,13 @@ MODULE_API void xfree_1 (void *);
 #define xfree(lvalue) xfree_1 (lvalue)
 #endif /* ERROR_CHECK_MALLOC */
 
+#define XFREE(lvalue) do                        \
+    {                                           \
+      xfree (lvalue);                           \
+      lvalue = 0;                               \
+    } while (0)
+
+
 /* ------------------------ stack allocation -------------------------- */
 
 /* Allocating excessively large blocks on the stack can cause crashes.
@@ -6026,6 +6033,7 @@ EXFUN (Ffill, MANY);
 EXFUN (Fclear_string, 1);
 EXFUN (Freplace, MANY);
 EXFUN (Fposition, MANY);
+EXFUN (Fmapconcat, MANY);
 
 Lisp_Object concatenate (int nsequences, Lisp_Object *sequences,
                          Lisp_Object result_type, Boolint reuse_last_listp);
