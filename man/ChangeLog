@@ -1,3 +1,11 @@
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* internals/internals.texi (A Summary of the Various XEmacs Modules):
+	* internals/internals.texi (Low-Level Modules):
+	* internals/internals.texi (Modules for Allocation):
+	* internals/internals.texi (Low-level allocation):
+	Remove mention of malloc.c (long gone) and gmalloc.c (gone today).
+
 2017-11-14  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* lispref/faces.texi (Face Properties): Add items to itemize.

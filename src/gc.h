@@ -84,7 +84,7 @@ extern int allow_incremental_gc;
 /************************************************************************/
 
 #ifndef MALLOC_OVERHEAD
-#ifndef SYSTEM_MALLOC
+#ifdef _GNU_SOURCE
 #define MALLOC_OVERHEAD 0
 #elif defined (rcheck)
 #define MALLOC_OVERHEAD 20

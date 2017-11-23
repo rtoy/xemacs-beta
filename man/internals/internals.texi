@@ -3057,7 +3057,6 @@ The following table contains cross-references from each module in XEmacs
 @item @file{glyphs-x.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{glyphs.c} @tab @ref{Modules for other Display-Related Lisp Objects}.
 @item @file{glyphs.h} @tab @ref{Modules for other Display-Related Lisp Objects}.
-@item @file{gmalloc.c} @tab @ref{Low-Level Modules}.
 @item @file{gpmevent.c} @tab @ref{Editor-Level Control Flow Modules}.
 @item @file{gpmevent.h} @tab @ref{Editor-Level Control Flow Modules}.
 @item @file{gtk-glue.c} @tab
@@ -3445,7 +3444,7 @@ process works properly; @file{crt0.c} provides this.
 very last file linked, respectively. (Actually, this is not really true.
 @file{lastfile.c} should be after all Emacs modules whose initialized
 data should be made constant, and before all other Emacs files and all
-libraries.  In particular, the allocation modules @file{gmalloc.c},
+libraries.  In particular, the allocation modules
 @file{alloca.c}, etc. are normally placed past @file{lastfile.c}, and
 all of the files that implement Xt widget classes @emph{must} be placed
 after @file{lastfile.c} because they contain various structures that
@@ -7980,8 +7979,6 @@ Blocktype_delete(b)
 @file{alloca.c}
 @file{free-hook.c}
 @file{getpagesize.h}
-@file{gmalloc.c}
-@file{malloc.c}
 @file{mem-limits.h}
 @file{ralloc.c}
 @file{vm-limit.c}
@@ -7990,16 +7987,6 @@ Blocktype_delete(b)
 These handle basic C allocation of memory.  @file{alloca.c} is an emulation of
 the stack allocation function @code{alloca()} on machines that lack
 this. (XEmacs makes extensive use of @code{alloca()} in its code.)
-
-@file{gmalloc.c} and @file{malloc.c} are two implementations of the standard C
-functions @code{malloc()}, @code{realloc()} and @code{free()}.  They are
-often used in place of the standard system-provided @code{malloc()}
-because they usually provide a much faster implementation, at the
-expense of additional memory use.  @file{gmalloc.c} is a newer implementation
-that is much more memory-efficient for large allocations than @file{malloc.c},
-and should always be preferred if it works. (At one point, @file{gmalloc.c}
-didn't work on some systems where @file{malloc.c} worked; but this should be
-fixed now.)
 
 @cindex relocating allocator
 @file{ralloc.c} is the @dfn{relocating allocator}.  It provides
@@ -9644,37 +9631,11 @@ you should strive to make your function handle this OK.  However, it's
 difficult in the general circumstance, perhaps requiring extra
 unwind-protects and such.)
 
-  Note that XEmacs provides two separate replacements for the standard
-@code{malloc()} library function.  These are called @dfn{old GNU malloc}
-(@file{malloc.c}) and @dfn{new GNU malloc} (@file{gmalloc.c}),
-respectively.  New GNU malloc is better in pretty much every way than
-old GNU malloc, and should be used if possible.  (It used to be that on
-some systems, the old one worked but the new one didn't.  I think this
-was due specifically to a bug in SunOS, which the new one now works
-around; so I don't think the old one ever has to be used any more.) The
-primary difference between both of these mallocs and the standard system
-malloc is that they are much faster, at the expense of increased space.
-The basic idea is that memory is allocated in fixed chunks of powers of
-two.  This allows for basically constant malloc time, since the various
-chunks can just be kept on a number of free lists. (The standard system
-malloc typically allocates arbitrary-sized chunks and has to spend some
-time, sometimes a significant amount of time, walking the heap looking
-for a free block to use and cleaning things up.)  The new GNU malloc
-improves on things by allocating large objects in chunks of 4096 bytes
-rather than in ever larger powers of two, which results in ever larger
-wastage.  There is a slight speed loss here, but it's of doubtful
-significance.
-
-  NOTE: Apparently there is a third-generation GNU malloc that is
-significantly better than the new GNU malloc, and should probably
-be included in XEmacs.
-
   There is also the relocating allocator, @file{ralloc.c}.  This actually
 moves blocks of memory around so that the @code{sbrk()} pointer shrunk
 and virtual memory released back to the system.  On some systems,
 this is a big win.  On all systems, it causes a noticeable (and
 sometimes huge) speed penalty, so I turn it off by default.
-@file{ralloc.c} only works with the new GNU malloc in @file{gmalloc.c}.
 There are also two versions of @file{ralloc.c}, one that uses @code{mmap()}
 rather than block copies to move data around.  This purports to
 be faster, although that depends on the amount of data that would

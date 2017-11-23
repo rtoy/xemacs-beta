@@ -51,7 +51,7 @@ typedef unsigned char *POINTER;
 /* Unconditionally use unsigned char * for this.  */
 typedef unsigned char *POINTER;
 
-#ifdef DOUG_LEA_MALLOC
+#ifdef _GNU_SOURCE
 #define M_TOP_PAD -2
 #include <malloc.h>
 #endif
@@ -82,8 +82,7 @@ void init_ralloc (void);
 #define NIL ((POINTER) 0)
 
 
-#if !defined(HAVE_MMAP) || defined(DOUG_LEA_MALLOC)
-
+#if !defined(HAVE_MMAP)
 /* A flag to indicate whether we have initialized ralloc yet.  For
    Emacs's sake, please do not make this local to malloc_init; on some
    machines, the dumping procedure makes all static variables
@@ -1104,12 +1103,6 @@ r_alloc_thaw (void)
 }
 
 
-/* The hook `malloc' uses for the function which gets more space
-   from the system.  */
-#ifndef DOUG_LEA_MALLOC
-extern POINTER (*__morecore) (ptrdiff_t size);
-#endif
-
 /* Initialize various things for memory allocation. */
 
 void
@@ -1119,12 +1112,6 @@ init_ralloc (void)
     return;
 
   r_alloc_initialized = 1;
-  real_morecore = (POINTER (*) (ptrdiff_t)) __morecore;
-  __morecore =
-#ifdef TYPEOF
-    (TYPEOF (__morecore))
-#endif
-    r_alloc_sbrk;
 
   first_heap = last_heap = &heap_base;
   first_heap->next = first_heap->prev = NIL_HEAP;
@@ -1135,7 +1122,7 @@ init_ralloc (void)
   page_size = PAGE;
   extra_bytes = ROUNDUP (50000);
 
-#ifdef DOUG_LEA_MALLOC
+#ifdef _GNU_SOURCE
     mallopt (M_TOP_PAD, 64 * 4096);
 #else
 #if 0 /* Hasn't been synched yet */
@@ -1163,121 +1150,6 @@ init_ralloc (void)
   virtual_break_value = break_value = first_heap->bloc_start = first_heap->end;
   use_relocatable_buffers = 1;
 }
-
-#if defined (emacs) && defined (DOUG_LEA_MALLOC)
-
-/* Reinitialize the morecore hook variables after restarting a dumped
-   Emacs.  This is needed when using Doug Lea's malloc from GNU libc.  */
-void r_alloc_reinit (void);
-void
-r_alloc_reinit (void)
-{
-  /* Only do this if the hook has been reset, so that we don't get an
-     infinite loop, in case Emacs was linked statically.  */
-  if ( (POINTER (*) (ptrdiff_t)) __morecore !=  r_alloc_sbrk)
-    {
-      real_morecore = (POINTER (*) (ptrdiff_t)) __morecore;
-      __morecore =
-#ifdef TYPEOF
-	(TYPEOF (__morecore))
-#endif
-	r_alloc_sbrk;
-    }
-}
-#if 0
-#ifdef DEBUG
-
-void
-r_alloc_check (void)
-{
-  int found = 0;
-  heap_ptr h, ph = 0;
-  bloc_ptr b, pb = 0;
-
-  if (!r_alloc_initialized)
-    return;
-
-  assert (first_heap);
-  assert (last_heap->end <= (POINTER) sbrk (0));
-  assert ((POINTER) first_heap < first_heap->start);
-  assert (first_heap->start <= virtual_break_value);
-  assert (virtual_break_value <= first_heap->end);
-
-  for (h = first_heap; h; h = h->next)
-    {
-      assert (h->prev == ph);
-      assert ((POINTER) ROUNDUP (h->end) == h->end);
-#if 0 /* ??? The code in ralloc.c does not really try to ensure
-	 the heap start has any sort of alignment.
-	 Perhaps it should.  */
-      assert ((POINTER) MEM_ROUNDUP (h->start) == h->start);
-#endif
-      assert ((POINTER) MEM_ROUNDUP (h->bloc_start) == h->bloc_start);
-      assert (h->start <= h->bloc_start && h->bloc_start <= h->end);
-
-      if (ph)
-	{
-	  assert (ph->end < h->start);
-	  assert (h->start <= (POINTER)h && (POINTER)(h+1) <= h->bloc_start);
-	}
-
-      if (h->bloc_start <= break_value && break_value <= h->end)
-	found = 1;
-
-      ph = h;
-    }
-
-  assert (found);
-  assert (last_heap == ph);
-
-  for (b = first_bloc; b; b = b->next)
-    {
-      assert (b->prev == pb);
-      assert ((POINTER) MEM_ROUNDUP (b->data) == b->data);
-      assert ((size_t) MEM_ROUNDUP (b->size) == b->size);
-
-      ph = 0;
-      for (h = first_heap; h; h = h->next)
-	{
-	  if (h->bloc_start <= b->data && b->data + b->size <= h->end)
-	    break;
-	  ph = h;
-	}
-
-      assert (h);
-
-      if (pb && pb->data + pb->size != b->data)
-	{
-	  assert (ph && b->data == h->bloc_start);
-	  while (ph)
-	    {
-	      if (ph->bloc_start <= pb->data
-		  && pb->data + pb->size <= ph->end)
-		{
-		  assert (pb->data + pb->size + b->size > ph->end);
-		  break;
-		}
-	      else
-		{
-		  assert (ph->bloc_start + b->size > ph->end);
-		}
-	      ph = ph->prev;
-	    }
-	}
-      pb = b;
-    }
-
-  assert (last_bloc == pb);
-
-  if (last_bloc)
-    assert (last_bloc->data + last_bloc->size == break_value);
-  else
-    assert (first_heap->bloc_start == break_value);
-}
-#endif /* DEBUG */
-#endif /* 0 */
-
-#endif
 
 #else /* HAVE_MMAP */
 

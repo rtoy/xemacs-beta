@@ -969,15 +969,6 @@ XE_HELP_SUBSECTION([Memory allocation options])
 XE_MERGED_ARG([rel-alloc],
 	AS_HELP_STRING([--with-rel-alloc],[Enable the relocating allocator.]),
 	[], [with_rel_alloc='default'])
-XE_MERGED_ARG([dlmalloc],
-	AS_HELP_STRING([--with-dlmalloc],[Use Doug Lea's malloc implementation.]),
-	[], [with_dlmalloc='default'])
-XE_MERGED_ARG([system-malloc],
-	AS_HELP_STRING([--with-system-malloc],[Use the system malloc, (default).]),
-	[], [with_system_malloc='default'])
-XE_MERGED_ARG([debug-malloc],
-	AS_HELP_STRING([--with-debug-malloc],[Use a debugging malloc.]),
-	[], [])
 XE_MERGED_ARG([pdump],
 	AS_HELP_STRING([--with-pdump],[Enable portable LISP preloader.]),
 	[], [])
@@ -1097,11 +1088,6 @@ XE_MERGED_ARG([valgrind],
 	[], [])
 dnl -------------------------------------------------------------------------
 dnl Final command line argument checks.
-
-dnl --with-quantify or --with-purify imply --with-system-malloc
-if test "$with_purify" = "yes" -o "$with_quantify" = "yes"; then
-  test "$with_system_malloc" = "default" && with_system_malloc=yes
-fi
 
 dnl CDE requires tooltalk
 XE_CHECK_FEATURE_DEPENDENCY(cde, tooltalk)
@@ -1818,7 +1804,6 @@ CPP_to_sh(LD_TEXT_START_ADDR, ld_text_start_addr)
 configure___ start_files=START_FILES
 
 CPP_boolean_to_sh(ORDINARY_LINK, ordinary_link)
-CPP_boolean_to_sh(SYSTEM_MALLOC, system_malloc)
 CPP_boolean_to_sh(TERMINFO, have_terminfo)
 dnl The MAIL_USE_xxx variables come from the s&m headers
 CPP_boolean_to_sh(MAIL_USE_FLOCK, mail_use_flock)
@@ -2533,69 +2518,34 @@ dnl -----------------------------------
 dnl Do some misc autoconf-special tests
 dnl -----------------------------------
 
-dnl Default to the system malloc. The right thing here is to remove
-dnl src/gmalloc.c entirely, and just autoconfiscate and use malloc_set_state
-dnl and __after_morecore_hook and if they are available, otherwise no. But
-dnl this is a reasonable first step.
+dnl We used to include a copy of gmalloc.c, and would usually use that. Now
+dnl that most Linuxes have gmalloc, and now that that's more maintained than
+dnl is our copy, use the system malloc() instead, even on non-Linux
+dnl platforms.
 
-if test "$with_dlmalloc" = "yes"; then
-  AC_CHECK_FUNC(malloc_set_state, doug_lea_malloc=yes,doug_lea_malloc=no)
-  if test "$doug_lea_malloc" = "yes"; then
-    system_malloc=no
-    AC_MSG_CHECKING(whether __after_morecore_hook exists)
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([extern void (* __after_morecore_hook)();],
-    [__after_morecore_hook = 0])],
-    [AC_MSG_RESULT(yes)
-     after_morecore_hook_exists=yes],
-    [AC_MSG_RESULT(no)
-     after_morecore_hook_exists=no])
-    GNU_MALLOC=yes
-    AC_DEFINE(DOUG_LEA_MALLOC)
-    if test "$after_morecore_hook_exists" = "no" ; then
-      GNU_MALLOC_reason="
-    - Using Doug Lea's new malloc from the Linux C Library."
-      AC_DEFINE(_NO_MALLOC_WARNING_)
-    else
-      GNU_MALLOC_reason="
-    - Using Doug Lea's new malloc from the GNU C Library."
-    fi
-  else
-    system_malloc=yes
-  fi
-elif test "$with_debug_malloc" = "yes" ; then
-  debug_malloc=yes
-  system_malloc=yes
-  GNU_MALLOC=no
-  GNU_MALLOC_reason="
-    - User chose to use Debugging Malloc."
-elif test "$with_system_malloc" = "no" ; then
-  GNU_MALLOC=yes
-  GNU_MALLOC_reason="
-    - System malloc explicitly overridden."
-  system_malloc=no
-else
-  GNU_MALLOC=no
-  GNU_MALLOC_reason="
-    - Defaulting to system malloc."
-  system_malloc=yes
+AC_MSG_CHECKING(whether __after_morecore_hook exists)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([extern void (* __after_morecore_hook)();],
+[__after_morecore_hook = 0])],
+[AC_MSG_RESULT(yes)
+ after_morecore_hook_exists=yes],
+[AC_MSG_RESULT(no)
+ after_morecore_hook_exists=no])
+if test "$after_morecore_hook_exists" = "yes" ; then
+  AC_DEFINE(HAVE_MALLOC_WARNING)
 fi
 
-dnl #### mcheck is broken in all versions of Linux libc and glibc.
-dnl Try this again when 2.1 hits the streets.
-dnl Avoid using free-hook.c if support exists for malloc debugging in libc
-dnl have_libmcheck=no
-dnl if test "$with_error_checking_malloc" = "yes" -a \
-dnl    "$have_glibc" = "yes" -a \
-dnl    "$doug_lea_malloc" = "yes"; then
-dnl   AC_CHECK_HEADERS(mcheck.h)
-dnl   AC_CHECK_LIB(mcheck, mcheck, have_libmcheck=yes, have_libmcheck=no)
-dnl fi
+dnl Use the support for for malloc debugging in libc if available.
+have_libmcheck=no
+if test "$with_error_checking_malloc" = "yes" -a "$have_glibc" = "yes" ; then
+  AC_CHECK_HEADERS(mcheck.h)
+  AC_CHECK_LIB(mcheck, mcheck, have_libmcheck=yes, have_libmcheck=no)
+fi
 
-dnl if test "$have_libmcheck" = "yes"; then
-dnl   AC_DEFINE(HAVE_LIBMCHECK)
-dnl   libmcheck=-lmcheck
-dnl   AC_SUBST(libmcheck)
-dnl fi
+if test "$have_libmcheck" = "yes"; then
+  AC_DEFINE(HAVE_LIBMCHECK)
+  libmcheck=-lmcheck
+  AC_SUBST(libmcheck)
+fi
 
 dnl Some other nice autoconf tests.  If you add a test here which
 dnl should make an entry in src/config.h, do not forget to add an
@@ -4896,23 +4846,20 @@ dnl By default we switch off rel-alloc on cygwin as it generally causes us grief
 case "$opsys" in cygwin*)
 	test "$with_rel_alloc" = "default" && with_rel_alloc=no ;;
 esac
-dnl rel_alloc requires either GNU malloc or system malloc with mmap
-dnl We only turn rel_alloc on by default if mmap is available.
-test "$GNU_MALLOC" != "yes" -a "$have_mmap" != "yes" && with_rel_alloc=no
+
+dnl rel_alloc requires system malloc with mmap. We only turn rel_alloc on by
+dnl default if mmap is available.
+test "$have_mmap" != "yes" && with_rel_alloc=no
 if test "$with_rel_alloc $have_mmap" = "default yes"; then
-  if test "$doug_lea_malloc" = "yes"; then
-    dnl Check if malloc() calls mmap(), making rel_alloc pointless.
-    AC_MSG_CHECKING(for M_MMAP_THRESHOLD)
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <malloc.h>],[
+  dnl Check if malloc() calls mmap(), making rel_alloc pointless.
+  AC_MSG_CHECKING(for M_MMAP_THRESHOLD)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <malloc.h>],[
 #ifndef M_MMAP_THRESHOLD
 #error No M_MMAP_THRESHOLD :-(
 !@+$%^&*_)(_ - unlikely to compile...
 #endif
 ])], [with_rel_alloc=no; AC_MSG_RESULT(yes);],
-     [with_rel_alloc=yes; AC_MSG_RESULT(no);])
-  else
-    with_rel_alloc=yes
-  fi
+  [with_rel_alloc=yes; AC_MSG_RESULT(no);])
 fi
 test "$with_rel_alloc" = "yes" && AC_DEFINE(REL_ALLOC)
 
@@ -5851,10 +5798,6 @@ dnl at the point where the autodetection occurs or would occur,
 dnl so that the user gets immediate feedback on the results of the
 dnl autodetection.
 
-if test "$debug_malloc"  = "yes"; then AC_DEFINE(USE_DEBUG_MALLOC)
-                                       AC_DEFINE(USE_SYSTEM_MALLOC)
-elif test "$system_malloc" = "yes"; then AC_DEFINE(USE_SYSTEM_MALLOC)
-fi
 test "$GCC"                  = "yes" && AC_DEFINE(USE_GCC)
 test "$XEMACS_CC_GPP"        = "yes" && AC_DEFINE(USE_GPLUSPLUS)
 test "$with_external_widget" = "yes" && AC_DEFINE(EXTERNAL_WIDGET)
@@ -5952,7 +5895,6 @@ if test "$CC" != "$XEMACS_CC"; then
 fi
 echo "  libc version:                      $libc_version"
 echo "  Relocating allocator for buffers:  $with_rel_alloc"
-echo "  Using gmalloc.c from XEmacs:       ${GNU_MALLOC}${GNU_MALLOC_reason}"
 case "$ld_switch_site" in
   *nocombreloc*) echo "  Linking with \`-z nocombreloc'.
     - Consider configuring with --with-pdump." ;;

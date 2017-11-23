@@ -468,12 +468,6 @@ Epoch 4.0 released August 27, 1990.
 void report_sheap_usage (int die_if_pure_storage_exceeded);
 #endif
 
-#if !defined (SYSTEM_MALLOC) && !defined (DOUG_LEA_MALLOC)
-extern void *(*__malloc_hook)(size_t);
-extern void *(*__realloc_hook)(void *, size_t);
-extern void (*__free_hook)(void *);
-#endif  /* not SYSTEM_MALLOC && not DOUG_LEA_MALLOC */
-
 /* Command line args from shell, as list of strings */
 Lisp_Object Vcommand_line_args;
 
@@ -482,16 +476,9 @@ Lisp_Object Vcommand_line_args;
   on subsequent starts.  */
 int initialized;
 
-#ifdef DOUG_LEA_MALLOC
+#ifdef _GNU_SOURCE
 # include <malloc.h>
-/* Preserves a pointer to the memory allocated that copies that
-   static data inside glibc's malloc.  */
-static void *malloc_state_ptr;
-#endif /* DOUG_LEA_MALLOC */
-
-# ifdef REL_ALLOC
-void r_alloc_reinit (void);
-# endif
+#endif /* _GNU_SOURCE */
 
 /* Variable whose value is symbol giving operating system type. */
 Lisp_Object Vsystem_type;
@@ -895,17 +882,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
   int skip_args = 0;
   Lisp_Object load_me;
 
-#if (!defined (SYSTEM_MALLOC) && !defined (HAVE_LIBMCHECK)	\
-     && !defined (DOUG_LEA_MALLOC))
-  /* Make sure that any libraries we link against haven't installed a
-     hook for a gmalloc of a potentially incompatible version. */
-  /* If we're using libmcheck, the hooks have already been initialized, */
-  /* don't touch them. -slb */
-  __malloc_hook = NULL;
-  __realloc_hook = NULL;
-  __free_hook = NULL;
-#endif /* not SYSTEM_MALLOC or HAVE_LIBMCHECK or DOUG_LEA_MALLOC */
-
   noninteractive = 0;
   display_use = NULL;
   inhibit_non_essential_conversion_operations = 1;
@@ -987,12 +963,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 
   clearerr (stdin);
 
-#if defined (HAVE_MMAP) && defined (REL_ALLOC)
-  /* ralloc can only be used if using the GNU memory allocator. */
+#if defined (REL_ALLOC)
   init_ralloc ();
-#elif defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
-  if (initialized)
-    init_ralloc ();
 #endif
 
 #ifdef HAVE_SOCKS
@@ -1000,11 +972,11 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
     SOCKSinit (argv[0]);
 #endif /* HAVE_SOCKS */
 
-#ifndef SYSTEM_MALLOC
+#ifdef HAVE_MALLOC_WARNING
   if (!initialized)
     /* Arrange to get warning messages as memory fills up.  */
     memory_warnings (0, malloc_warning);
-#endif	/* not SYSTEM_MALLOC */
+#endif	/* HAVE_MALLOC_WARNING */
 
 #ifdef SET_EMACS_PRIORITY
   if (emacs_priority != 0)
@@ -1591,7 +1563,7 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       syms_of_process_nt ();
 #endif
       syms_of_profile ();
-#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
+#ifdef REL_ALLOC
       syms_of_ralloc ();
 #endif /* HAVE_MMAP && REL_ALLOC */
       syms_of_rangetab ();
@@ -2205,9 +2177,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 #endif
 
       vars_of_profile ();
-#if defined (HAVE_MMAP) && defined (REL_ALLOC) && !defined (DOUG_LEA_MALLOC)
+#ifdef REL_ALLOC
       vars_of_ralloc ();
-#endif /* HAVE_MMAP && REL_ALLOC */
+#endif 
       vars_of_realpath ();
       vars_of_redisplay ();
       vars_of_regex ();
@@ -3217,7 +3189,7 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
 
   if (!initialized)
     {
-#ifdef DOUG_LEA_MALLOC
+#ifdef _GNU_SOURCE
       mallopt (M_MMAP_MAX, 0);
 #endif
       run_temacs_argc = 0;
@@ -3257,30 +3229,17 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
     run_time_remap (argv[0]);
 #endif
 
-#ifdef DOUG_LEA_MALLOC
-  if (initialized && (malloc_state_ptr != NULL))
+#ifdef _GNU_SOURCE
+  if (initialized)
     {
-      int rc = malloc_set_state (malloc_state_ptr);
-      if (rc != 0)
-	{
-	  stderr_out ("malloc_set_state failed, rc = %d\n", rc);
-	  ABORT ();
-	}
-#if 0
-      free (malloc_state_ptr);
-#endif
       /* mmap works in glibc-2.1, glibc-2.0 (Non-Mule only) and Linux libc5 */
 #if (defined (__GLIBC__) && __GLIBC_MINOR__ >= 1) || \
-    defined (_NO_MALLOC_WARNING_) || \
-    (defined (__GLIBC__) && __GLIBC_MINOR__ < 1 && !defined (MULE)) || \
-    defined (DEBUG_DOUG_LEA_MALLOC)
+    defined (HAVE_MALLOC_WARNING) || \
+    (defined (__GLIBC__) && __GLIBC_MINOR__ < 1 && !defined (MULE))
       mallopt (M_MMAP_MAX, 64);
 #endif
-#ifdef REL_ALLOC
-      r_alloc_reinit ();
-#endif
     }
-#endif /* DOUG_LEA_MALLOC */
+#endif /* _GNU_SOURCE */
 
   run_temacs_argc = -2;
 
@@ -3301,7 +3260,7 @@ main (int argc, Extbyte **argv, Extbyte **UNUSED (envp))
 /*                 dumping XEmacs (to a new EXE file)                   */
 /************************************************************************/
 
-#if !defined (PDUMP) || !defined (SYSTEM_MALLOC)
+#if !defined (PDUMP) || defined (HAVE_MALLOC_WARNING)
 extern Rawbyte my_edata[];
 #endif
 
@@ -3361,7 +3320,7 @@ and announce itself normally when it is run.
 
   /* Tell malloc where start of impure now is */
   /* Also arrange for warnings when nearly out of space.  */
-#ifndef SYSTEM_MALLOC
+#ifdef HAVE_MALLOC_WARNING
   memory_warnings (my_edata, malloc_warning);
 #endif
 
@@ -3389,9 +3348,6 @@ and announce itself normally when it is run.
     else
       symfile_ext = 0;
 
-# ifdef DOUG_LEA_MALLOC
-    malloc_state_ptr = malloc_get_state ();
-# endif
   /* here we break our rule that the filename conversion should
      be performed at the actual time that the system call is made.
      It's a whole lot easier to do the conversion here than to
@@ -3399,9 +3355,6 @@ and announce itself normally when it is run.
      conversion is applied everywhere.  Don't worry about memory
      leakage because this call only happens once. */
     unexec (filename_ext, symfile_ext, (uintptr_t) my_edata, 0, 0);
-# ifdef DOUG_LEA_MALLOC
-    free (malloc_state_ptr);
-# endif
   }
 #endif /* not PDUMP, not WIN32_NATIVE */
 
@@ -3741,25 +3694,6 @@ shut_down_emacs (int sig, Lisp_Object stuff, int no_auto_save)
 #endif /* TOOLTALK */
 }
 
-/* Dumping apparently isn't supported by versions of GCC >= 2.8. */
-/* The following needs conditionalization on whether either XEmacs or */
-/* various system shared libraries have been built and linked with */
-/* GCC >= 2.8.  -slb */
-#ifndef SYSTEM_MALLOC
-static void
-voodoo_free_hook (void *UNUSED (mem))
-{
-  /* Disable all calls to free() when XEmacs is exiting and it doesn't */
-  /* matter. */
-  __free_hook =
-#if defined (TYPEOF) && !defined (UNO)
-    /* prototype of __free_hook varies with glibc version */
-    (TYPEOF (__free_hook))
-#endif
-    voodoo_free_hook;
-}
-#endif /* SYSTEM_MALLOC */
-
 DEFUN_NORETURN ("kill-emacs", Fkill_emacs, 0, 1, "P", /*
 Exit the XEmacs job and kill it.  Ask for confirmation, without argument.
 If ARG is an integer, return ARG as the exit program code.
@@ -3815,15 +3749,6 @@ all of which are called before XEmacs is actually killed.
 #endif
 
   shut_down_emacs (0, STRINGP (arg) ? arg : Qnil, 0);
-
-#ifndef SYSTEM_MALLOC
-  __free_hook =
-#if defined (TYPEOF) && !defined (UNO)
-    /* prototype of __free_hook varies with glibc version */
-    (TYPEOF (__free_hook))
-#endif
-    voodoo_free_hook;
-#endif
 
   exit (FIXNUMP (arg) ? XFIXNUM (arg) : 0);
   RETURN_NOT_REACHED (Qnil);
