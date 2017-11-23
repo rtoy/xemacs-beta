@@ -66,7 +66,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #endif /* NEW_GC */
 #include "console-stream.h"
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
 #include <malloc.h>
 #endif
 #ifdef USE_VALGRIND
@@ -220,7 +220,7 @@ release_breathing_space (void)
     }
 }
 
-#if !defined(HAVE_MMAP) || defined(_GNU_SOURCE)
+#if !defined(HAVE_MMAP) || defined(HAVE_GLIBC)
 /* If we released our reserve (due to running out of memory),
    and we have a fair amount free once again,
    try to set aside another reserve in case we run out once more.
@@ -233,7 +233,7 @@ refill_memory_reserve (void)
   if (breathing_space == 0)
     breathing_space = (char *) malloc (4096 - MALLOC_OVERHEAD);
 }
-#endif /* !defined(HAVE_MMAP) || defined(_GNU_SOURCE) */
+#endif /* !defined(HAVE_MMAP) || defined(HAVE_GLIBC) */
 
 #endif /* not NEW_GC */
 
@@ -4051,7 +4051,7 @@ malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
 {
   Bytecount orig_claimed_size = claimed_size;
 
-#ifdef _GNU_SOURCE 
+#ifdef HAVE_GLIBC 
   /* The following actually reflects the old gmalloc.c that we included with
      XEmacs. The malloc implementation included in glibc has likely diverged
      from this, but this answer is still going to be better than the
@@ -5960,7 +5960,7 @@ common_init_alloc_early (void)
   all_lcrecords = 0;
 #endif /* not NEW_GC */
   ignore_malloc_warnings = 1;
-#ifdef _GNU_SOURCE
+#ifdef HAVE_GLIBC
   mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
   mallopt (M_MMAP_THRESHOLD, 64*1024); /* mmap threshold */
 #if 0 /* Moved to emacs.c */

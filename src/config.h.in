@@ -151,6 +151,9 @@ things are arranged in config.h.in.  In particular:
 /* Undefine on systems which don't have processes */
 #undef HAVE_UNIX_PROCESSES
 
+/* Use this define to actually check if this is a glibc system. */
+#undef HAVE_GLIBC
+
 /* Define if you are using libmcheck.a from the GNU C Library. */
 #undef HAVE_LIBMCHECK
 
