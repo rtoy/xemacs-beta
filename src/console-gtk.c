@@ -1,4 +1,4 @@
-/* Console functions for X windows.
+/* Console functions for Gtk windows.
    Copyright (C) 1996 Ben Wing.
 
 This file is part of XEmacs.
@@ -126,20 +126,7 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
 
   if (SYMBOLP(key))
     {
-      gchar *symbol_name;
-      DECLARE_EISTRING(ei_symname);
-      
-      eicpy_rawz(ei_symname, XSTRING_DATA(symbol_name(XSYMBOL(key))));
-
-      /* No information on the coding system of the string key names in GDK,
-	 to my knowledge. Defaulting to binary, */
-      eito_external(ei_symname, Qbinary);
-      symbol_name = eiextdata(ei_symname);
-
-/* GTK 2.0 has an API we can use, and makes this available in gdkkeys.h
-
-   This has yet to be compiled, because XEmacs' GTK support hasn't yet moved
-   to 2.0. So if you're porting XEmacs to GTK 2.0, bear that in mind. */
+      gchar *symbol_name = LISP_STRING_TO_EXTERNAL (XSYMBOL_NAME (key), Qutf_8);
       char_to_associate 
 #ifdef __GDK_KEYS_H__ 
 	= make_char (buffer_unicode_to_ichar

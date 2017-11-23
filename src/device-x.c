@@ -1130,7 +1130,7 @@ x_error_handler (Display *disp, XErrorEvent *event)
 				     frame, x_error_handler_error, Qnil)))
 	  {
 	    f->being_deleted = 1;
-	    f->visible = 0;
+	    FRAME_VISIBLE_P (f) = 0;
 	  }
 	return 0;
       }

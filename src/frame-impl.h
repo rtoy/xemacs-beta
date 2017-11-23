@@ -99,6 +99,12 @@ struct frame
      whether to re-layout windows by a call to change_frame_size early
      in redisplay_frame. */
   int current_toolbar_size[NUM_EDGES];
+
+#ifdef HAVE_GTK
+  void *gtk_toolbars[NUM_EDGES];
+  unsigned int gtk_toolbar_checksum[NUM_EDGES];
+#endif
+  
 #endif
 
   /* Size of gutters as seen by redisplay. This is used to determine
@@ -590,7 +596,7 @@ extern int frame_changed;
    ? FRAME_RAW_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, pos)	\
    : 0)
 
-#define FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
+#define FRAME_THEORETICAL_TOP_TOOLBAR_BORDER_WIDTH(f)   \
   FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, TOP_EDGE)
 #define FRAME_THEORETICAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
   FRAME_THEORETICAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_EDGE)
@@ -665,7 +671,7 @@ extern int frame_changed;
   (FRAME_REAL_TOOLBAR_SIZE (f, pos) +			\
    2 * FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, pos))
 
-#define FRAME_REAL_TOP_TOOLBAR_HEIGHT(f) \
+#define FRAME_REAL_TOP_TOOLBAR_HEIGHT(f)        \
   FRAME_REAL_TOOLBAR_SIZE (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_HEIGHT(f) \
   FRAME_REAL_TOOLBAR_SIZE (f, BOTTOM_EDGE)
@@ -674,7 +680,7 @@ extern int frame_changed;
 #define FRAME_REAL_RIGHT_TOOLBAR_WIDTH(f) \
   FRAME_REAL_TOOLBAR_SIZE (f, RIGHT_EDGE)
 
-#define FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH(f) \
+#define FRAME_REAL_TOP_TOOLBAR_BORDER_WIDTH(f)  \
   FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_BORDER_WIDTH(f) \
   FRAME_REAL_TOOLBAR_BORDER_WIDTH (f, BOTTOM_EDGE)
@@ -692,7 +698,7 @@ extern int frame_changed;
 #define FRAME_REAL_RIGHT_TOOLBAR_VISIBLE(f) \
   FRAME_REAL_TOOLBAR_VISIBLE (f, RIGHT_EDGE)
 
-#define FRAME_REAL_TOP_TOOLBAR_BOUNDS(f) \
+#define FRAME_REAL_TOP_TOOLBAR_BOUNDS(f)        \
   FRAME_REAL_TOOLBAR_BOUNDS (f, TOP_EDGE)
 #define FRAME_REAL_BOTTOM_TOOLBAR_BOUNDS(f) \
   FRAME_REAL_TOOLBAR_BOUNDS (f, BOTTOM_EDGE)
@@ -781,6 +787,13 @@ extern int frame_changed;
 #define FRAME_NONPANED_SIZE(f, pos)					\
   (FRAME_REAL_TOOLBAR_BOUNDS (f, pos) + FRAME_INTERNAL_BORDER_SIZE (f, pos) + \
    FRAME_GUTTER_BOUNDS (f, pos))
+
+#ifdef HAVE_TOOLBARS
+#ifdef HAVE_GTK
+#define FRAME_GTK_TOOLBAR_WIDGET(f) f->gtk_toolbars
+#define FRAME_GTK_TOOLBAR_CHECKSUM(f, pos) f->gtk_toolbar_checksum[pos]
+#endif
+#endif
 
 
 

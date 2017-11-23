@@ -64,4 +64,6 @@ EXFUN (Favailable_selection_types, 2);
 EXFUN (Fselection_owner_p, 1);
 EXFUN (Fselection_exists_p, 3);
 
+extern Lisp_Object Vselection_converter_out_alist;
+
 #endif /* INCLUDED_select_h_ */

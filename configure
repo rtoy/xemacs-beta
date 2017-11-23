@@ -1798,7 +1798,8 @@ Window-system options
                           and fontconfig support. Default is `noemacs,
                           nomenubars, notabs, nogauges'. The default when
                           selected is `emacs, nomenubars, notabs, nogauges'.
-  --with-gtk              Support GTK on the X Window System. (EXPERIMENTAL)
+  --with-gtk              Support GTK on the X Window System. Can specify 2 or
+                          3. (EXPERIMENTAL)
   --with-gnome            Support GNOME on the X Window System. (EXPERIMENTAL)
   --with-msw              Support MS Windows as a window system (only under
                           Cygwin and MinGW). `--with-msw=no' may be needed on
@@ -12283,15 +12284,24 @@ $as_echo "" >&6; }
 
 GNOME_CONFIG=no
 GTK_CONFIG=no
+GTK_VERSION=""
+GTK_POSSIBLE="gtk+-3.0 gtk+-2.0"
+
+if test "$with_gtk" = "3"; then
+   GTK_POSSIBLE="gtk+-3.0"
+fi
+if test "$with_gtk" = "2"; then
+   GTK_POSSIBLE="gtk+-2.0"
+fi
 
 if test "$with_gnome" != "no"; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNOME configuration script" >&5
 $as_echo_n "checking for GNOME configuration script... " >&6; }
-   for possible in gnome-config
+   for possible in libgnome-2.0
    do
-      possible_version=`${possible} --version 2> /dev/null`
-      if test "x${possible_version}" != "x"; then
-              GNOME_CONFIG="${possible}"
+      pkg-config --exists $possible
+      if test $?; then
+              GNOME_CONFIG="pkg-config"
               with_gnome=yes
               with_gtk=yes
               break
@@ -12301,34 +12311,38 @@ $as_echo_n "checking for GNOME configuration script... " >&6; }
 $as_echo "${GNOME_CONFIG}" >&6; }
 fi
 
-if test "${GNOME_CONFIG}" != "no"; then
-      GNOME_LIBS=`${GNOME_CONFIG} --libs gnomeui`
-      GNOME_CFLAGS=`${GNOME_CONFIG} --cflags gnomeui`
-      $as_echo "#define HAVE_GNOME 1" >>confdefs.h
-
-      libs_gtk="$libs_gtk ${GNOME_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GNOME_LIBS}\" to \$libs_gtk"; fi
-      c_switch_gtk="$c_switch_gtk ${GNOME_CFLAGS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GNOME_CFLAGS}\" to \$c_switch_gtk"; fi
-fi
-
 if test "$with_gtk" != "no";then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK configuration script" >&5
 $as_echo_n "checking for GTK configuration script... " >&6; }
-   for possible in gtk12-config gtk14-config gtk-config
+   for possible in $GTK_POSSIBLE
    do
-      possible_version=`${possible} --version 2> /dev/null`
+      possible_version=`pkg-config --modversion ${possible} 2> /dev/null`
       if test "x${possible_version}" != "x"; then
-              GTK_CONFIG="${possible}"
+              GTK_CONFIG="pkg-config ${possible}"
+              GTK_VERSION=${possible_version}
 	      case "${possible_version}" in
-        	1.0.*) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GTK 1.2 is required, please upgrade your version of GTK." >&5
-$as_echo "$as_me: WARNING: GTK 1.2 is required, please upgrade your version of GTK." >&2;}; with_gtk=no;;
-	        1.3.*) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GTK 1.3 is not supported right now" >&5
-$as_echo "$as_me: WARNING: GTK 1.3 is not supported right now" >&2;}; with_gtk=no;;
-		1.2.*)
-			with_gtk=yes
-			break
-			;;
-	        *)     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $possible_version" >&5
-$as_echo "$as_me: WARNING: Found unsupported version of GTK: $possible_version" >&2;};;
+                                	        1.*)    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: GTK 1.X is not supported" >&5
+$as_echo "$as_me: WARNING: GTK 1.X is not supported" >&2;};
+                        with_gtk=no
+                        break
+                        ;;
+                2.*)
+                        with_gtk=yes
+                        $as_echo "#define HAVE_GTK2 1" >>confdefs.h
+
+                        break
+                        ;;
+                3.*)
+                        with_gtk=yes
+                        $as_echo "#define HAVE_GTK3 1" >>confdefs.h
+
+                        break
+                        ;;
+	        *)
+                        with_gtk=no
+                        { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&5
+$as_echo "$as_me: WARNING: Found unsupported version of GTK: $GTK_VERSION" >&2;}
+                        ;;
 	      esac
       fi
    done
@@ -12339,14 +12353,23 @@ fi
 if test "${GTK_CONFIG}" != "no"; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking gtk version" >&5
 $as_echo_n "checking gtk version... " >&6; }
-      GTK_VERSION=`${GTK_CONFIG} --version`
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GTK_VERSION}" >&5
 $as_echo "${GTK_VERSION}" >&6; }
+
+      $as_echo "#define HAVE_XPM 1" >>confdefs.h
+
+      $as_echo "#define HAVE_GTK 1" >>confdefs.h
+
+      $as_echo "#define HAVE_PANGO 1" >>confdefs.h
+
 
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking gtk libs" >&5
 $as_echo_n "checking gtk libs... " >&6; }
       GTK_LIBS=`${GTK_CONFIG} --libs`
       libs_gtk="$libs_gtk ${GTK_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GTK_LIBS}\" to \$libs_gtk"; fi
+
+                  libs_gtk="$libs_gtk "-lX11"" &&  if test "$verbose" = "yes"; then echo "    Appending \""-lX11"\" to \$libs_gtk"; fi
+
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GTK_LIBS}" >&5
 $as_echo "${GTK_LIBS}" >&6; }
 
@@ -12359,96 +12382,6 @@ $as_echo_n "checking gtk cflags... " >&6; }
       c_switch_gtk="$c_switch_gtk ${GTK_CFLAGS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GTK_CFLAGS}\" to \$c_switch_gtk"; fi
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GTK_CFLAGS}" >&5
 $as_echo "${GTK_CFLAGS}" >&6; }
-
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lgdk_imlib" >&5
-$as_echo_n "checking for main in -lgdk_imlib... " >&6; }
-if ${ac_cv_lib_gdk_imlib_main+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgdk_imlib  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-return main ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gdk_imlib_main=yes
-else
-  ac_cv_lib_gdk_imlib_main=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gdk_imlib_main" >&5
-$as_echo "$ac_cv_lib_gdk_imlib_main" >&6; }
-if test "x$ac_cv_lib_gdk_imlib_main" = xyes; then :
-  libs_gtk="-lgdk_imlib $libs_gtk" &&  if test "$verbose" = "yes"; then echo "    Prepending \"-lgdk_imlib\" to \$libs_gtk"; fi
-fi
-
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Imlib_init in -lImlib" >&5
-$as_echo_n "checking for Imlib_init in -lImlib... " >&6; }
-if ${ac_cv_lib_Imlib_Imlib_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lImlib  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char Imlib_init ();
-int
-main ()
-{
-return Imlib_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_Imlib_Imlib_init=yes
-else
-  ac_cv_lib_Imlib_Imlib_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Imlib_Imlib_init" >&5
-$as_echo "$ac_cv_lib_Imlib_Imlib_init" >&6; }
-if test "x$ac_cv_lib_Imlib_Imlib_init" = xyes; then :
-  libs_gtk="$libs_gtk -lImlib" &&  if test "$verbose" = "yes"; then echo "    Appending \"-lImlib\" to \$libs_gtk"; fi
-fi
-
-      for ac_func in gdk_imlib_init
-do :
-  ac_fn_c_check_func "$LINENO" "gdk_imlib_init" "ac_cv_func_gdk_imlib_init"
-if test "x$ac_cv_func_gdk_imlib_init" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_GDK_IMLIB_INIT 1
-_ACEOF
-
-fi
-done
-
-
-      $as_echo "#define HAVE_XPM 1" >>confdefs.h
-
-      $as_echo "#define HAVE_GTK 1" >>confdefs.h
 
 
 
@@ -12623,6 +12556,52 @@ rm -f conftest*
       CFLAGS="${OLD_CFLAGS}"
       CPPFLAGS="${OLD_CPPFLAGS}"
       LDFLAGS="${OLD_LDFLAGS}"
+fi
+
+if test "${GTK_CONFIG}" != "no"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pangoxft configuration" >&5
+$as_echo_n "checking for pangoxft configuration... " >&6; }
+   for possible in pangoxft
+   do
+      pkg-config --exists $possible
+      if test $?; then
+         PANGO_LIBS=`pkg-config --libs $possible`
+         PANGO_CFLAGS=`pkg-config --cflags $possible`
+         $as_echo "#define HAVE_PANGOXFT 1" >>confdefs.h
+
+         libs_gtk="$libs_gtk ${PANGO_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${PANGO_LIBS}\" to \$libs_gtk"; fi
+         c_switch_gtk="$c_switch_gtk ${PANGO_CFLAGS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${PANGO_CFLAGS}\" to \$c_switch_gtk"; fi
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      else
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      fi
+   done
+fi
+
+if test "${GTK_CONFIG}" != "no"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GNOME gobject introspection" >&5
+$as_echo_n "checking for GNOME gobject introspection... " >&6; }
+   for possible in gobject-introspection-1.0
+   do
+      pkg-config --exists $possible
+      if test $?; then
+         GIR_LIBS=`pkg-config --libs $possible`
+         GIR_CFLAGS=`pkg-config --cflags $possible`
+         $as_echo "#define HAVE_GIR 1" >>confdefs.h
+
+         $as_echo "#define HAVE_GIR_1_0 1" >>confdefs.h
+
+         libs_gtk="$libs_gtk ${GIR_LIBS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GIR_LIBS}\" to \$libs_gtk"; fi
+         c_switch_gtk="$c_switch_gtk ${GIR_CFLAGS}" &&  if test "$verbose" = "yes"; then echo "    Appending \"${GIR_CFLAGS}\" to \$c_switch_gtk"; fi
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      else
+         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      fi
+   done
 fi
 
 
@@ -22270,6 +22249,10 @@ if test "$with_x11" = "yes"; then
   if test "$with_xft_emacs" = "yes"; then
     echo "    - Compiling in support for Xft antialiased fonts (EXPERIMENTAL)."
   fi
+fi
+if test "$with_gtk" = "yes"; then
+  echo "  Compiling in support for GTK."
+  echo "    - GTK version:                                $GTK_VERSION"
 fi
 if test "$need_motif" = "yes" ; then
   echo "  Compiling in support for Motif."

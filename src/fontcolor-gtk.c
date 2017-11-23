@@ -32,7 +32,9 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "charset.h"
 #include "device-impl.h"
 #include "insdel.h"
+#include "text.h"
 
+#include "frame-impl.h"
 #include "console-gtk-impl.h"
 #include "fontcolor-gtk-impl.h"
 
@@ -43,103 +45,63 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
    XFree86 in 2005, at least. */
 #define MAX_FONT_COUNT INT_MAX
 
-#ifdef DEBUG_XEMACS 
-Fixnum debug_x_objects;
+#ifdef DEBUG_XEMACS
+Fixnum debug_gtk_fonts;
 #endif /* DEBUG_XEMACS */
+static Lisp_Object Vgtk_fallback_font_name;
+static Lisp_Object Vgtk_fallback_font_size;
 
 
 /************************************************************************/
 /*                          color instances                             */
 /************************************************************************/
 
-/* Replacement for XAllocColor() that tries to return the nearest
-   available color if the colormap is full.  Original was from FSFmacs,
-   but rewritten by Jareth Hein <jareth@camelot-soft.com> 97/11/25
-   Modified by Lee Kindness <lkindness@csl.co.uk> 31/08/99 to handle previous
-   total failure which was due to a read/write colorcell being the nearest
-   match - tries the next nearest...
-
-   Gdk takes care of all this behind the scenes, so we don't need to
-   worry about it.
-
-   Return value is 1 for normal success, 2 for nearest color success,
-   3 for Non-deallocable success. */
-int
-allocate_nearest_color (GdkColormap *colormap, GdkVisual *UNUSED (visual),
-		        GdkColor *color_def)
+gboolean
+gtk_parse_nearest_color (struct device * UNUSED (d), GDK_COLOR *color,
+			 Lisp_Object name, Error_Behavior errb)
 {
-  int rc;
-
-  rc = gdk_colormap_alloc_color (colormap, color_def, FALSE, TRUE);
-
-  if (rc == TRUE)
-      return (1);
-
-  return (0);
-}
-
-int
-gtk_parse_nearest_color (struct device *d, GdkColor *color, Ibyte *name,
-			 Bytecount len, Error_Behavior errb)
-{
-  GdkColormap *cmap;
-  GdkVisual *visual;
-  int result;
-
-  cmap = DEVICE_GTK_COLORMAP(d);
-  visual = DEVICE_GTK_VISUAL (d);
+  const Extbyte *extname;
+  gboolean result;
 
   xzero (*color);
-  {
-    const Extbyte *extname;
-    Bytecount extnamelen;
+  CHECK_STRING (name);
+  extname = LISP_STRING_TO_EXTERNAL (name, Qutf_8);
+#ifdef HAVE_GTK2
+  result = gdk_color_parse (extname, color);
+#else
+  result = gdk_rgba_parse (color, extname);
+#endif
 
-    TO_EXTERNAL_FORMAT (DATA, (name, len), ALLOCA, (extname, extnamelen), Qbinary);
-
-    result = gdk_color_parse (extname, color);
-  }
-  
   if (result == FALSE)
     {
-      maybe_invalid_argument ("unrecognized color", make_string (name, len),
-			  Qcolor, errb);
+      maybe_invalid_argument ("unrecognized color", name, Qcolor, errb);
       return 0;
     }
-  result = allocate_nearest_color (cmap, visual, color);
-  if (!result)
-    {
-      maybe_signal_error (Qgui_error, "couldn't allocate color",
-			  make_string (name, len), Qcolor, errb);
-      return 0;
-    }
-
   return result;
 }
 
-static int
+static gboolean
 gtk_initialize_color_instance (struct Lisp_Color_Instance *c, Lisp_Object name,
 			       Lisp_Object device, Error_Behavior errb)
 {
-  GdkColor color;
-  int result;
+  GDK_COLOR color;
+  gboolean result;
 
   result = gtk_parse_nearest_color (XDEVICE (device), &color,
-				    XSTRING_DATA   (name),
-				    XSTRING_LENGTH (name),
-				    errb);
+				    name, errb);
 
   if (!result)
-    return 0;
+    return FALSE;
 
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   c->data = xnew (struct gtk_color_instance_data);
-  if (result == 3)
-    COLOR_INSTANCE_GTK_DEALLOC (c) = 0;
-  else
-    COLOR_INSTANCE_GTK_DEALLOC (c) = 1;
+#ifdef HAVE_GTK2
   COLOR_INSTANCE_GTK_COLOR (c) = gdk_color_copy (&color);
-  return 1;
+#else
+  COLOR_INSTANCE_GTK_COLOR (c) = gdk_rgba_copy (&color);
+#endif
+  return TRUE;
 }
 
 static void
@@ -147,9 +109,15 @@ gtk_print_color_instance (struct Lisp_Color_Instance *c,
 			  Lisp_Object printcharfun,
 			  int UNUSED (escapeflag))
 {
+#ifdef HAVE_GTK2
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
   write_fmt_string (printcharfun, " %ld=(%X,%X,%X)",
 		    color->pixel, color->red, color->green, color->blue);
+#else
+  GdkRGBA *color = COLOR_INSTANCE_GTK_COLOR (c);
+  write_fmt_string (printcharfun, " (%0f,%0f,%0f,%0f)",
+		    color->red, color->green, color->blue, color->alpha);
+#endif
 }
 
 static void
@@ -159,59 +127,71 @@ gtk_finalize_color_instance (struct Lisp_Color_Instance *c)
     {
       if (DEVICE_LIVE_P (XDEVICE (c->device)))
 	{
-	  if (COLOR_INSTANCE_GTK_DEALLOC (c))
-	    {
-		gdk_colormap_free_colors (DEVICE_GTK_COLORMAP (XDEVICE (c->device)),
-					  COLOR_INSTANCE_GTK_COLOR (c), 1);
-	    }
-	    gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
+#ifdef HAVE_GTK2
+	  gdk_color_free (COLOR_INSTANCE_GTK_COLOR (c));
+#else
+	  gdk_rgba_free (COLOR_INSTANCE_GTK_COLOR (c));
+#endif
 	}
       xfree (c->data);
       c->data = 0;
     }
 }
 
-/* Color instances are equal if they resolve to the same color on the
-   screen (have the same RGB values).  I imagine that
-   "same RGB values" == "same cell in the colormap."  Arguably we should
-   be comparing their names or pixel values instead. */
-
 static int
 gtk_color_instance_equal (struct Lisp_Color_Instance *c1,
 			  struct Lisp_Color_Instance *c2,
 			  int UNUSED (depth))
 {
+#ifdef HAVE_GTK2
     return (gdk_color_equal (COLOR_INSTANCE_GTK_COLOR (c1),
 			     COLOR_INSTANCE_GTK_COLOR (c2)));
+#else
+    return (gdk_rgba_equal (COLOR_INSTANCE_GTK_COLOR (c1),
+			    COLOR_INSTANCE_GTK_COLOR (c2)));
+#endif
 }
 
 static Hashcode
-gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth),
-                         Boolint UNUSED (equalp))
+gtk_color_instance_hash (struct Lisp_Color_Instance *c, int UNUSED (depth))
 {
-    return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c), NULL));
+#ifdef HAVE_GTK2
+    return (gdk_color_hash (COLOR_INSTANCE_GTK_COLOR (c)));
+#else
+    return gdk_rgba_hash (COLOR_INSTANCE_GTK_COLOR (c));
+#endif
 }
 
 static Lisp_Object
 gtk_color_instance_rgb_components (struct Lisp_Color_Instance *c)
 {
+#ifdef HAVE_GTK2
   GdkColor *color = COLOR_INSTANCE_GTK_COLOR (c);
   return (list3 (make_fixnum (color->red),
 		 make_fixnum (color->green),
 		 make_fixnum (color->blue)));
+#else
+  GdkRGBA *color = COLOR_INSTANCE_GTK_COLOR (c);
+  return (list4 (make_float (color->red),
+		 make_float (color->green),
+		 make_float (color->blue),
+		 make_float (color->alpha)));
+#endif
 }
 
 static int
 gtk_valid_color_name_p (struct device *UNUSED (d), Lisp_Object color)
 {
-  GdkColor c;
+  GDK_COLOR c;
   const char *extname;
 
-  extname = LISP_STRING_TO_EXTERNAL (color, Qctext);
+  extname = LISP_STRING_TO_EXTERNAL (color, Qutf_8);
 
-  if (gdk_color_parse (extname, &c) != TRUE)
-      return(0);
-  return (1);
+#ifdef HAVE_GTK2
+  return gdk_color_parse (extname, &c);
+#else
+  return gdk_rgba_parse (&c, extname);
+#endif
 }
 
 static Lisp_Object
@@ -227,97 +207,100 @@ gtk_color_list (void)
 /*                           font instances                             */
 /************************************************************************/
 
+static PangoFontDescription *
+font_description_from_string (char *extname)
+{
+  PangoFontDescription *pfd;
+  char *p;
+  int count = 0;
+  size_t len = strlen (extname);
+
+  p = extname;
+  /* Current lisp code makes an XLFD, which we can't load. */
+  while (*p)
+    {
+      if (*p == '-')
+        count++;
+      ++p;
+    }
+  /* XLFD */
+  if (count >= 2 || strchr (extname, '*'))
+    {
+      CHECK_STRING (Vgtk_fallback_font_name);
+      extname = LISP_STRING_TO_EXTERNAL (Vgtk_fallback_font_name, Qutf_8);
+    }
+
+  /* FontConfig */
+  if (strcspn (extname, "-:=") != len)
+    {
+      FcPattern *pattern = FcNameParse ((const FcChar8 *)extname);
+      pfd = pango_fc_font_description_from_pattern (pattern, TRUE);
+    }
+  else
+    {
+      pfd = pango_font_description_from_string (extname);
+    }
+
+  return pfd;
+}
+
 static int
 gtk_initialize_font_instance (struct Lisp_Font_Instance *f,
 			      Lisp_Object UNUSED (name),
-			      Lisp_Object UNUSED (device), Error_Behavior errb)
+			      Lisp_Object device, Error_Behavior errb)
 {
-  GdkFont *gf;
-  XFontStruct *xf;
-  const char *extname;
+  struct device *d = XDEVICE (device);
+  Extbyte *extname;
+  PangoFontDescription *pfd;
+  PangoFontMetrics *pfm;
+  PangoFontMask mask;
+  PangoFont *pf;
+  char *nm;
+  
+  extname = LISP_STRING_TO_EXTERNAL (f->name, Qutf_8);
 
-  extname = LISP_STRING_TO_EXTERNAL (f->name, Qctext);
+  pfd = font_description_from_string (extname);
+  /* We can get 0 size fonts here, which will screw up the metrics.
+     So we force a size. */
+  mask = pango_font_description_get_set_fields (pfd);
+  if ((mask & PANGO_FONT_MASK_SIZE) == 0)
+    {
+      float pt_size;
+      CHECK_FIXNUM_OR_FLOAT (Vgtk_fallback_font_size);
+      pt_size = extract_float (Vgtk_fallback_font_size);
+      pango_font_description_set_size(pfd, pt_size * PANGO_SCALE);
+    }
+  
+  pf = pango_font_map_load_font (DEVICE_GTK_FONT_MAP (d),
+				 DEVICE_GTK_CONTEXT (d), pfd);
+  pfm = pango_font_get_metrics (pf, pango_language_from_string ("en"));
+  pfd = pango_font_describe (pf);
+  nm = pango_font_description_to_string (pfd);
 
-  gf = gdk_font_load (extname);
-
-  if (!gf)
+  if (!pf)
     {
       maybe_signal_error (Qgui_error, "couldn't load font", f->name,
 			  Qfont, errb);
       return 0;
     }
-
-  xf = (XFontStruct*) GDK_FONT_XFONT (gf);
-
+#ifdef DEBUG_XEMACS
+  if (debug_gtk_fonts)
+    debug_out ("font requested \"%s\" loaded \"%s\"\n", extname, nm);
+#endif
+  g_free (nm);
+  
   /* Don't allocate the data until we're sure that we will succeed,
      or the finalize method may get fucked. */
   f->data = xnew (struct gtk_font_instance_data);
-  FONT_INSTANCE_GTK_FONT (f) = gf;
-  f->ascent = gf->ascent;
-  f->descent = gf->descent;
-  f->height = gf->ascent + gf->descent;
+  FONT_INSTANCE_GTK_FONT (f) = pf;
+  FONT_INSTANCE_GTK_FONT_DESC (f) = pfd;
+  FONT_INSTANCE_GTK_FONT_METRICS (f) = pfm;
 
-  /* Now lets figure out the width of the font */
-  {
-    /* following change suggested by Ted Phelps <phelps@dstc.edu.au> */
-    unsigned int def_char = 'n'; /*xf->default_char;*/
-    unsigned int byte1, byte2;
-
-  once_more:
-    byte1 = def_char >> 8;
-    byte2 = def_char & 0xFF;
-
-    if (xf->per_char)
-      {
-	/* Old versions of the R5 font server have garbage (>63k) as
-	   def_char. 'n' might not be a valid character. */
-	if (byte1 < xf->min_byte1         ||
-	    byte1 > xf->max_byte1         ||
-	    byte2 < xf->min_char_or_byte2 ||
-	    byte2 > xf->max_char_or_byte2)
-	  f->width = 0;
-	else
-	  f->width = xf->per_char[(byte1 - xf->min_byte1) *
-				  (xf->max_char_or_byte2 -
-				   xf->min_char_or_byte2 + 1) +
-				  (byte2 - xf->min_char_or_byte2)].width;
-      }
-    else
-      f->width = xf->max_bounds.width;
-
-    /* Some fonts have a default char whose width is 0.  This is no good.
-       If that's the case, first try 'n' as the default char, and if n has
-       0 width too (unlikely) then just use the max width. */
-    if (f->width == 0)
-      {
-	if (def_char == xf->default_char)
-	  f->width = xf->max_bounds.width;
-	else
-	  {
-	    def_char = xf->default_char;
-	    goto once_more;
-	  }
-      }
-  }
-
-  /* If all characters don't exist then there could potentially be
-     0-width characters lurking out there.  Not setting this flag
-     trips an optimization that would make them appear to have width
-     to redisplay.  This is bad.  So we set it if not all characters
-     have the same width or if not all characters are defined.
-     */
-  /* #### This sucks.  There is a measurable performance increase
-     when using proportional width fonts if this flag is not set.
-     Unfortunately so many of the fucking X fonts are not fully
-     defined that we could almost just get rid of this damn flag and
-     make it an assertion. */
-  f->proportional_p = (xf->min_bounds.width != xf->max_bounds.width ||
-		       (/* x_handle_non_fully_specified_fonts */ 0 &&
-			!xf->all_chars_exist));
-#if 0
-  f->width = gdk_char_width (gf, 'n');
-  f->proportional_p = (gdk_char_width (gf, '|') != gdk_char_width (gf, 'W')) ? 1 : 0;
-#endif
+  f->ascent = pango_font_metrics_get_ascent (pfm) / PANGO_SCALE;
+  f->descent = pango_font_metrics_get_descent (pfm) / PANGO_SCALE;
+  f->height = f->ascent + f->descent;
+  f->width = pango_font_metrics_get_approximate_char_width (pfm) / PANGO_SCALE;
+  f->proportional_p = 0;
   return 1;
 }
 
@@ -327,7 +310,8 @@ gtk_print_font_instance (struct Lisp_Font_Instance *f,
 			 int UNUSED (escapeflag))
 {
   write_fmt_string (printcharfun, " 0x%lx",
-		    (unsigned long) gdk_font_id (FONT_INSTANCE_GTK_FONT (f)));
+		    (unsigned long) FONT_INSTANCE_GTK_FONT (f));
+  /* write_fmt_string (printcharfun, " %s", f->name); */
 }
 
 static void
@@ -337,7 +321,9 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
     {
       if (DEVICE_LIVE_P (XDEVICE (f->device)))
 	{
-	    gdk_font_unref (FONT_INSTANCE_GTK_FONT (f));
+	  pango_font_description_free (FONT_INSTANCE_GTK_FONT_DESC (f));
+	  pango_font_metrics_unref (FONT_INSTANCE_GTK_FONT_METRICS (f));
+	  g_object_unref (FONT_INSTANCE_GTK_FONT (f));
 	}
       xfree (f->data);
       f->data = 0;
@@ -345,8 +331,7 @@ gtk_finalize_font_instance (struct Lisp_Font_Instance *f)
 }
 
 /* Forward declarations for X specific functions at the end of the file */
-Lisp_Object __get_gtk_font_truename (GdkFont *gdk_font, int expandp);
-static Lisp_Object __gtk_font_list_internal (const char *pattern);
+Lisp_Object __get_gtk_font_truename (PangoFont *pf, int expandp);
 
 static Lisp_Object
 gtk_font_instance_truename (struct Lisp_Font_Instance *f,
@@ -376,21 +361,325 @@ gtk_font_instance_properties (struct Lisp_Font_Instance *UNUSED (f))
   return result;
 }
 
+/* Return a list of font instance strings for a given face.
+
+   The only documentation I could find of these strings is in the GNU
+   Emacs manual. */
 static Lisp_Object
-gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
-		Lisp_Object UNUSED (maxnumber))
+gtk_font_describe_face(const char *name, PangoFontFace *face)
 {
-  const char *patternext;
+  Lisp_Object result = Qnil;
+  DECLARE_EISTRING (full_name);
+  int *sizes, n_sizes, ii;
+  Ibyte *face_name;
+  Bytecount face_name_len;
 
-  patternext = LISP_STRING_TO_EXTERNAL (pattern, Qbinary);
+  eicpy_ext (full_name, name, Qutf_8);
+  eicat_ascii (full_name, " ");
+  TO_INTERNAL_FORMAT (C_STRING, pango_font_face_get_face_name (face),
+                      ALLOCA, (face_name, face_name_len),
+                      Qutf_8);
+  eicat_raw (full_name, face_name, face_name_len);
 
-  return (__gtk_font_list_internal (patternext));
+  pango_font_face_list_sizes (face, &sizes, &n_sizes);
+
+  if (sizes == 0)
+    {
+      return list1 (eimake_string (full_name));
+    }
+
+  for (ii = n_sizes - 1; ii >= 0; ii--)
+    {
+      result = Fcons (emacs_sprintf_string ("%s-%d", eidata (full_name), ii),
+                      result);
+    }
+
+  g_free (sizes);
+  return result;
+}
+
+static Lisp_Object
+gtk_font_list (Lisp_Object pattern, Lisp_Object device,
+               Lisp_Object UNUSED (maxnumber))
+{
+  struct device *d = XDEVICE (device);
+  Lisp_Object result = Qnil;
+  PangoFontMap *font_map = DEVICE_GTK_FONT_MAP (d);
+  PangoFontFamily **families = NULL;
+  int n_families, i;
+  int monospace_only = 0;
+
+  /* What to do with the pattern?  Add a single case for now. */
+  if (lisp_strcasecmp_i18n (pattern,
+			    build_extstring ("monospace", Qutf_8)) == 0)
+    monospace_only = 1;
+
+  /* Should we restrict to monospace somehow?  That can be done with
+     fontconfig fonts. */
+  pango_font_map_list_families (font_map, &families, &n_families);
+
+  for (i = n_families - 1; i >= 0 ; i--)
+    {
+      int j;
+      PangoFontFace **faces;
+      int n_faces;
+
+      if (monospace_only && !pango_font_family_is_monospace (families[i]))
+        continue;
+
+      pango_font_family_list_faces (families[i], &faces, &n_faces);
+      for (j = n_faces - 1 ; j >= 0; j--)
+	{
+	  Lisp_Object args[] = { Qnil, result };
+	  args[0]
+            = gtk_font_describe_face (pango_font_family_get_name (families[i]),
+                                      faces[j]),
+	  result = Fappend (countof (args), args);
+	}
+      g_free (faces);
+    }
+  g_free (families);
+  return result;
 }
 
 /* Include the charset support, shared, for the moment, with X11.  */
 #define THIS_IS_GTK
 #include "fontcolor-xlike-inc.c"
 
+/* find a font spec that matches font spec FONT and also matches
+   (the registry of) CHARSET. */
+static Lisp_Object
+gtk_find_charset_font (Lisp_Object UNUSED (device), Lisp_Object font,
+                       Lisp_Object UNUSED (charset),
+                       enum font_specifier_matchspec_stages UNUSED (stage))
+{
+  /* Pango doesn't understand charset.  Maybe PangoCoverage? */
+  return font;
+}
+
+DEFUN ("gtk-set-font-weight", Fgtk_set_font_weight, 2, 3, 0, /*
+Return a specificer for FONT with WEIGHT numeric value on DEVICE.
+*/
+       (font, weight, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  PangoWeight w;
+  Lisp_Object val;
+
+  CHECK_STRING (font);
+  /* Not sure if range should be 200-900 --jsparkes */
+  check_integer_range (weight, Qzero, make_integer (1000));
+
+  w = (PangoWeight) (XFIXNUM (weight));
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+  pango_font_description_set_weight (pfd, w);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-bold", Fgtk_make_font_bold, 1, 2, 0, /*
+Return a specifier for bold version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+
+  pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
+  new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_gtk_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-unbold", Fgtk_make_font_unbold, 1, 2, 0, /*
+Return a specifier for normal, non-bold version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+
+  pango_font_description_set_weight (pfd, PANGO_WEIGHT_MEDIUM);
+  new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_gtk_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-italic", Fgtk_make_font_italic, 1, 2, 0, /*
+Return a specifier for italic version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+
+  pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
+  new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_gtk_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-unitalic", Fgtk_make_font_unitalic, 1, 2, 0, /*
+Return a specifier for normal, non-italic version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+
+  pango_font_description_set_style (pfd, PANGO_STYLE_NORMAL);
+  new_name = pango_font_description_to_string (pfd);
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+DEFUN ("gtk-make-font-bold-italic", Fgtk_make_font_bold_italic, 1, 2, 0, /*
+Return a specifier for bold italic version of FONT on DEVICE.
+*/
+       (font, UNUSED (device)))
+{
+  PangoFontDescription *pfd;
+  char *extname, *new_name;
+  Lisp_Object val;
+  
+  CHECK_STRING (font);
+  extname = LISP_STRING_TO_EXTERNAL (font, Qutf_8);
+  pfd = font_description_from_string (extname);
+
+  pango_font_description_set_weight (pfd, PANGO_WEIGHT_BOLD);
+  pango_font_description_set_style (pfd, PANGO_STYLE_ITALIC);
+  new_name = pango_font_description_to_string (pfd);
+#ifdef DEBUG_XEMACS
+  if (debug_gtk_fonts)
+    debug_out ("%s -> %s\n", extname, new_name);
+#endif
+  val = build_cistring (new_name);
+  g_free (new_name);
+  pango_font_description_free (pfd);
+  return val;
+}
+
+
+#if GTK_CHECK_VERSION(3, 2, 0)
+static gboolean
+monospace_only (const PangoFontFamily *family,
+		const PangoFontFace * UNUSED (face),
+		gpointer UNUSED (data))
+{
+  /* const_cast */
+  if (pango_font_family_is_monospace ((PangoFontFamily *) family))
+    return TRUE;
+  return FALSE;
+}
+#endif
+
+DEFUN ("gtk-select-font", Fgtk_select_font, 0, 1, 0, /*
+Select a font using a GTK dialog, using FONTNAME as default.
+If FRAME is omitted, selected frame is used.
+Only selects monospace fonts.
+*/
+       (fontname))
+{
+#if GTK_CHECK_VERSION(3, 2, 0)
+  struct frame *f = decode_gtk_frame (Fselected_frame (Qnil));
+#endif
+  Lisp_Object value = Qnil;
+  GtkWidget *w = NULL;
+  gint result;
+
+  if (!NILP (fontname))
+    CHECK_STRING (fontname);
+
+#if GTK_CHECK_VERSION(3, 2, 0)
+  w = gtk_font_chooser_dialog_new ("Select font",
+				   GTK_WINDOW(FRAME_GTK_SHELL_WIDGET (f)));
+  gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w),
+				    monospace_only,
+				    NULL, NULL);
+  if (!NILP (fontname))
+    {
+      gtk_font_chooser_set_font (GTK_FONT_CHOOSER (w),
+				 LISP_STRING_TO_EXTERNAL (fontname, Qutf_8));
+    }
+#else
+  w = gtk_font_selection_dialog_new ("Select font");
+  if (!NILP (fontname))
+    {
+      gtk_font_selection_dialog_set_font_name (GTK_FONT_SELECTION_DIALOG (w),
+					       LISP_STRING_TO_EXTERNAL (fontname,
+									Qutf_8));
+    }
+#endif
+  gtk_widget_set_name (w, "fontchooser");
+  result = gtk_dialog_run (GTK_DIALOG (w));
+
+  switch (result)
+    {
+    case GTK_RESPONSE_ACCEPT:
+    case GTK_RESPONSE_OK:
+      {
+#if GTK_CHECK_VERSION(3, 2, 0)
+	gchar *name = gtk_font_chooser_get_font (GTK_FONT_CHOOSER (w));
+#else
+	gchar *name = gtk_font_selection_dialog_get_font_name
+	  (GTK_FONT_SELECTION_DIALOG (w));
+#endif
+	value = build_extstring (name, Qutf_8);
+	g_free (name);
+      }
+      break;
+    default:
+      break;
+    }
+
+  gtk_widget_destroy (w);
+  return value;
+}
 
 /************************************************************************/
 /*                            initialization                            */
@@ -399,6 +688,13 @@ gtk_font_list (Lisp_Object pattern, Lisp_Object UNUSED (device),
 void
 syms_of_fontcolor_gtk (void)
 {
+  DEFSUBR (Fgtk_set_font_weight);
+  DEFSUBR (Fgtk_make_font_bold);
+  DEFSUBR (Fgtk_make_font_unbold);
+  DEFSUBR (Fgtk_make_font_italic);
+  DEFSUBR (Fgtk_make_font_unitalic);
+  DEFSUBR (Fgtk_make_font_bold_italic);
+  DEFSUBR (Fgtk_select_font);
 }
 
 void
@@ -431,17 +727,28 @@ void
 vars_of_fontcolor_gtk (void)
 {
 #ifdef DEBUG_XEMACS
-  DEFVAR_INT ("debug-x-objects", &debug_x_objects /*
-If non-zero, display debug information about X objects
+  DEFVAR_INT ("debug-gtk-fonts", &debug_gtk_fonts /*
+If non-zero, display debug information about Gtk fonts.
 */ );
-  debug_x_objects = 0;
+  debug_gtk_fonts = 0;
 #endif
+  DEFVAR_LISP ("gtk-fallback-font-name", &Vgtk_fallback_font_name/*
+Name of font to be loaded instead of a failed font.
+*/);
+  Vgtk_fallback_font_name = build_cistring ("Monospace");
+  DEFVAR_LISP ("gtk-fallback-font-size", &Vgtk_fallback_font_size/*
+Point size to use for fonts if not otherwise specified.
+*/);
+  Vgtk_fallback_font_size = make_float (10.0);
 }
 
+#if 0
+/* It's difficult to validate font names in Gtk because the toolkit
+   does fallbacks for you. */
 static int
 valid_font_name_p (Display *dpy, char *name)
 {
-  /* Maybe this should be implemented by callign XLoadFont and trapping
+  /* Maybe this should be implemented by calling XLoadFont and trapping
      the error.  That would be a lot of work, and wasteful as hell, but
      might be more correct.
    */
@@ -454,57 +761,46 @@ valid_font_name_p (Display *dpy, char *name)
     XFreeFontNames (names);
   return (nnames != 0);
 }
+#endif
 
 Lisp_Object
-__get_gtk_font_truename (GdkFont *gdk_font, int expandp)
+__get_gtk_font_truename (PangoFont *pf, int UNUSED (expandp))
 {
-  Display *dpy = GDK_FONT_XDISPLAY (gdk_font);
-  GSList *names = ((GdkFontPrivate *) gdk_font)->names;
   Lisp_Object font_name = Qnil;
+  PangoFontDescription *pfd = pango_font_describe (pf);
 
-  while (names)
-    {
-      if (names->data)
-	{
-	  if (valid_font_name_p (dpy, (char*) names->data))
-	    {
-	      if (!expandp)
-		{
-		  /* They want the wildcarded version */
-		  font_name = build_cistring ((char*) names->data);
-		}
-	      else
-		{
-		  /* Need to expand out */
-		  int nnames = 0;
-		  char **x_font_names = 0;
+  /* This is insufficent. */
+  char *name = pango_font_description_to_string (pfd);
+  
+  if (name != NULL)
+    font_name = build_cistring (name);
 
-		  x_font_names = XListFonts (dpy, (char*) names->data, 1, &nnames);
-		  if (x_font_names)
-		    {
-		      font_name = build_cistring (x_font_names[0]);
-		      XFreeFontNames (x_font_names);
-		    }
-		}
-	      break;
-	    }
-	}
-      names = names->next;
-    }
-  return (font_name);
+  g_free (name);
+  return font_name;
 }
 
-static Lisp_Object __gtk_font_list_internal (const char *pattern)
+#ifdef HAVE_GTK2
+void
+gtk_widget_add_css_style(GtkWidget *UNUSED (widget), char *UNUSED (css))
 {
-  char **names;
-  int count = 0;
-  Lisp_Object result = Qnil;
-
-  names = XListFonts (GDK_DISPLAY (), pattern, MAX_FONT_COUNT, &count);
-  while (count--)
-    result = Fcons (build_extstring (names [count], Qbinary), result);
-  if (names)
-    XFreeFontNames (names);
-
-  return result;
+  /* No CSS support in Gtk 2.X */
 }
+#endif
+
+#ifdef HAVE_GTK3
+void
+gtk_widget_add_css_style(GtkWidget *widget, gchar *css)
+{
+  GtkStyleContext *style = gtk_widget_get_style_context (widget);
+  GtkCssProvider *css_prov = gtk_css_provider_new ();
+  GError *error;
+
+  gtk_css_provider_load_from_data (css_prov, css, -1, &error);
+
+  if (error != NULL)
+    gtk_style_context_add_provider (style,
+				    GTK_STYLE_PROVIDER (css_prov),
+				    GTK_STYLE_PROVIDER_PRIORITY_FALLBACK);
+  g_object_unref (css_prov);
+}
+#endif

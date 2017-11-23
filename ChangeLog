@@ -76,6 +76,11 @@
 	* ChangeLog:
 	Update mid.gmane.org to mid.xemacs.org. We miss you, Gmane.
 
+2016-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure:
+	Regenerate for the GTK branch.
+
 2017-01-23  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac (HAVE_XFACE): giflib 5.0 removed a function we
@@ -181,13 +186,17 @@
 	Test for "international" resource in SimpleWidgetClass in libXaw3d.
 	* configure: Rebuild.
 
+2014-12-20  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Remove obsolete gdk_imlib check.
+
 2014-11-09  Jeff Sparkes  <jsparkes@gmail.com>
 
 	* configure.ac (HAVE_GNUTLS): Add SSL/TLS libraries to $LIBS, not
 	$LDFLAGS.
 
 2014-10-10  Marcus Crestani  <crestani@xemacs.org>
-        
+
 	* configure.ac: Disable ASLR on Yosemite.
 	* configure: Rebuild.
 
@@ -203,10 +212,29 @@
 
 	* .hgignore: Add man/Makefile.
 
+2013-11-19  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Add support for --with-gtk=2 and --with-gtk=3 to
+	build with a specific major version.
+	* configure: Regenerate.
+
+2013-11-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Output exact GTK version.
+	Simplify version checking code.
+	Check for GTK 3.X first, then 2.X.
+	(HAVE_GTK2): Remove incorrect second setting.
+	* configure: Regenerate.
+
 2013-10-28  Marcus Crestani  <crestani@xemacs.org>
 
 	* configure.ac: Disable ASLR on Mavericks.
 	* configure: Rebuild.
+
+2013-09-15  Jeff Sparkes  <jsparkes@gmail.com>
+
+	* configure.ac: Force -lX11 for GTK to link XKeycodeToKeysym.
+	* configure: Regenerate.
 
 2013-09-08  Marcus Crestani  <crestani@xemacs.org>
 

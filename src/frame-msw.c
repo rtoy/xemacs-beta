@@ -410,7 +410,7 @@ mswindows_make_frame_visible (struct frame *f)
   else
     ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_SHOW);
   SetActiveWindow (FRAME_MSWINDOWS_HANDLE (f));
-  f->visible = 1;
+  FRAME_VISIBLE_P (f) = 1;
   f->iconified = 0;
 }
 
@@ -421,7 +421,7 @@ mswindows_make_frame_invisible (struct frame *f)
     return;
 
   ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_HIDE);
-  f->visible = 0;
+  FRAME_VISIBLE_P (f) = 0;
 }
 
 static int
@@ -466,7 +466,7 @@ static void
 mswindows_iconify_frame (struct frame *f)
 {
   ShowWindow (FRAME_MSWINDOWS_HANDLE (f), SW_MINIMIZE);
-  f->visible = 0;
+  FRAME_VISIBLE_P (f) = 0;
   f->iconified = 1;
 }
 
