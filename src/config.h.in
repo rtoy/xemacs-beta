@@ -151,20 +151,12 @@ things are arranged in config.h.in.  In particular:
 /* Undefine on systems which don't have processes */
 #undef HAVE_UNIX_PROCESSES
 
-/* Define if you are using the GNU C Library. -- experimental. */
-#undef DOUG_LEA_MALLOC
-
 /* Define if you are using libmcheck.a from the GNU C Library. */
 #undef HAVE_LIBMCHECK
 
-/* Define if you are using dlmalloc from the Linux C library. */
-#undef _NO_MALLOC_WARNING_
-
-/* Use the system malloc? */
-#undef USE_SYSTEM_MALLOC
-
-/* Use a debugging malloc? -- experimental */
-#undef USE_DEBUG_MALLOC
+/* Define if your malloc has an __after_morecore_hook(), as is
+   usual on Linux. */
+#undef HAVE_MALLOC_WARNING
 
 /* Use the relocating allocator for buffer space? */
 #undef REL_ALLOC

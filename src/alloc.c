@@ -66,7 +66,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #endif /* NEW_GC */
 #include "console-stream.h"
 
-#ifdef DOUG_LEA_MALLOC
+#ifdef _GNU_SOURCE
 #include <malloc.h>
 #endif
 #ifdef USE_VALGRIND
@@ -79,14 +79,6 @@ EXFUN (Fgarbage_collect, 0);
 #if defined(DEBUG_XEMACS) && defined(MULE)
 #define VERIFY_STRING_CHARS_INTEGRITY
 #endif
-#endif
-
-/* Define this to use malloc/free with no freelist for all datatypes,
-   the hope being that some debugging tools may help detect
-   freed memory references */
-#ifdef USE_DEBUG_MALLOC	/* Taking the above comment at face value -slb */
-#include <dmalloc.h>
-#define ALLOC_NO_POOLS
 #endif
 
 #ifdef DEBUG_XEMACS
@@ -228,7 +220,7 @@ release_breathing_space (void)
     }
 }
 
-#if !defined(HAVE_MMAP) || defined(DOUG_LEA_MALLOC)
+#if !defined(HAVE_MMAP) || defined(_GNU_SOURCE)
 /* If we released our reserve (due to running out of memory),
    and we have a fair amount free once again,
    try to set aside another reserve in case we run out once more.
@@ -241,7 +233,7 @@ refill_memory_reserve (void)
   if (breathing_space == 0)
     breathing_space = (char *) malloc (4096 - MALLOC_OVERHEAD);
 }
-#endif /* !defined(HAVE_MMAP) || defined(DOUG_LEA_MALLOC) */
+#endif /* !defined(HAVE_MMAP) || defined(_GNU_SOURCE) */
 
 #endif /* not NEW_GC */
 
@@ -4059,7 +4051,11 @@ malloced_storage_size (void * UNUSED (ptr), Bytecount claimed_size,
 {
   Bytecount orig_claimed_size = claimed_size;
 
-#ifndef SYSTEM_MALLOC
+#ifdef _GNU_SOURCE 
+  /* The following actually reflects the old gmalloc.c that we included with
+     XEmacs. The malloc implementation included in glibc has likely diverged
+     from this, but this answer is still going to be better than the
+     default.  */
   if (claimed_size < (Bytecount) (2 * sizeof (void *)))
     claimed_size = 2 * sizeof (void *);
 # ifdef SUNOS_LOCALTIME_BUG
@@ -5964,7 +5960,7 @@ common_init_alloc_early (void)
   all_lcrecords = 0;
 #endif /* not NEW_GC */
   ignore_malloc_warnings = 1;
-#ifdef DOUG_LEA_MALLOC
+#ifdef _GNU_SOURCE
   mallopt (M_TRIM_THRESHOLD, 128*1024); /* trim threshold */
   mallopt (M_MMAP_THRESHOLD, 64*1024); /* mmap threshold */
 #if 0 /* Moved to emacs.c */

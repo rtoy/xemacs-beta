@@ -1,3 +1,15 @@
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* configure.ac (XE_COMPLEX_ARG):
+	Remove gmalloc.c, remove the configure line options
+	--with-dlmalloc, --with-system-malloc, --with-debug-malloc. Always
+	use the system malloc. Autodetect __after_morecore_hook, use it
+	for our memory-full warning if available, otherwise ignore it.
+	Use mcheck.h if ERROR_CHECK_MALLOC is defined, as we had planned
+	for years pending its maturity.
+	* configure.ac (have_libmcheck): Make this available.
+	* configure: Regenerate.	
+
 2017-11-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* configure: Regenerate.

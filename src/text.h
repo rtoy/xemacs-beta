@@ -1548,9 +1548,9 @@ charcount_to_bytecount_fmt (const Ibyte *ptr, Charcount len,
 # define HIGH_BIT_MASK MAKE_32_BIT_UNSIGNED_CONSTANT (0x80808080)
 #endif
 
-#define ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
-#define ALIGN_MASK (~ ALIGN_BITS)
-#define ALIGNED(ptr) ((((EMACS_UINT) ptr) & ALIGN_BITS) == 0)
+#define STRIDE_ALIGN_BITS ((EMACS_UINT) (ALIGNOF (STRIDE_TYPE) - 1))
+#define STRIDE_ALIGN_MASK (~ STRIDE_ALIGN_BITS)
+#define STRIDE_ALIGNED(ptr) ((((EMACS_UINT) ptr) & STRIDE_ALIGN_BITS) == 0)
 #define STRIDE sizeof (STRIDE_TYPE)
 
 /* Skip as many ASCII bytes as possible in the memory block [PTR, END).
@@ -1565,7 +1565,7 @@ skip_ascii (const Ibyte *ptr, const Ibyte *end)
 
   /* Need to do in 3 sections -- before alignment start, aligned chunk,
      after alignment end. */
-  while (!ALIGNED (ptr))
+  while (!STRIDE_ALIGNED (ptr))
     {
       if (ptr == end || !byte_ascii_p (*ptr))
 	return ptr;
@@ -1595,7 +1595,7 @@ skip_ascii_down (const Ibyte *ptr, const Ibyte *end)
 
   /* Need to do in 3 sections -- before alignment start, aligned chunk,
      after alignment end. */
-  while (!ALIGNED (ptr))
+  while (!STRIDE_ALIGNED (ptr))
     {
       if (ptr == end || !byte_ascii_p (*(ptr - 1)))
 	return ptr;

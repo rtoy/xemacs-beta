@@ -1,5 +1,48 @@
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* gmalloc.c: Removed. Use the system malloc all the time instead.
+	* config.h.in:
+	Remove DOUG_LEA_MALLOC, USE_SYSTEM_MALLOC, USE_DEBUG_MALLOC from
+	this file.
+	Rename _NO_MALLOC_WARNING_ to HAVE_MALLOC_WARNING, invert its
+	sense.
+	* Makefile.in.in:
+	Take a different approach as to whether to include vm-limit.o or
+	free-hook.o.
+	* alloc.c:
+	* alloc.c (malloced_storage_size):
+	Now we always use the system malloc, update this to use the GNU
+	malloc accounting if we are on a glibc system.
+	* alloc.c (common_init_alloc_early):
+	Call mallopt() if we're on a glibc system.
+
+	* emacs.c:
+	* emacs.c (main_1):
+	* emacs.c (main):
+	* emacs.c (Fdump_emacs):
+	* emacs.c (Fkill_emacs):
+	Remove use of old glibc malloc hooks that are deprecated and
+	removed from more recent versions.
+	Call init_ralloc() early in every startup if we were built with
+	REL_ALLOC support.
+	Remove the use of malloc_set_state(), deprecated.
+	* free-hook.c:
+	Remove the debugging hooks for 
+	* gc.h:
+	* ralloc.c:
+	* ralloc.c (init_ralloc):
+	Avoid using the deprecated glibc malloc hooks in this file.
+	* sysdep.c:
+	SYSTEM_MALLOC is effectively always defined, don't check it.
+	* text.h:
+	* text.h (STRIDE_ALIGN_BITS):
+	Rename ALIGN_BIGS, ALIGN_MASK, they conflict with ralloc.c.
+	* vm-limit.c:
+	Rename _NO_MALLOC_WARNING to HAVE_MALLOC_WARNING, reverse its
+	sense.
+
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* alloca.c (xemacs_c_alloca):
 	If this is going to take an unsigned argument, as it always has,
 	that unsigned argument needs to have the bit width of a
