@@ -18,6 +18,7 @@
 	caddr_t is long deprecated, use void * instead when calling
 	mmap().
 	Accept MAP_ANON, an old BSDism, as an alias for MAP_ANONYMOUS.
+	Be careful not to redefine an existing definition for MAP_ANONYMOUS
 
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 

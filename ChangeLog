@@ -6,6 +6,7 @@
 	systems.
 
 	Accept MAP_ANON, a BSDism, as an alias for MAP_ANONYMOUS here.
+	Be careful not to redefine an existing definition for MAP_ANONYMOUS
 	Remove a caddr_t variable, this type is long obsolete and the
 	variable was unused.
 	* configure: Regenerate.

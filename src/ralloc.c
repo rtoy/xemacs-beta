@@ -1248,7 +1248,7 @@ static const VM_ADDR VM_FAILURE_ADDR = (VM_ADDR) -1; /* mmap returns this when i
 #  define MAP_ADDRCHOICE_FLAG 0
 #endif /* MAP_ADDRCHOICE_FLAG */
 
-#ifdef MAP_ANON
+#if defined(MAP_ANON) && !defined(MAP_ANONYMOUS)
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 
