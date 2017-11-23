@@ -1492,7 +1492,7 @@ we do two things:
   MULTIUSE_ALLOCA (size, sizeagain)
 #endif /* (not) BROKEN_ALLOCA_IN_FUNCTION_CALLS */
 
-MODULE_API void *xemacs_c_alloca (unsigned int size) ATTRIBUTE_MALLOC;
+MODULE_API void *xemacs_c_alloca (size_t size) ATTRIBUTE_MALLOC;
 
 MODULE_API int record_unwind_protect_freeing (void *ptr);
 

@@ -129,7 +129,7 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
    implementations of C, for example under Gould's UTX/32.  */
 
 pointer
-xemacs_c_alloca (unsigned int size)
+xemacs_c_alloca (size_t size)
 {
   char probe;			/* Probes stack depth: */
   register char *depth = ADDRESS_FUNCTION (probe);
@@ -177,7 +177,15 @@ xemacs_c_alloca (unsigned int size)
 
   {
 #ifdef emacs
-    register pointer new_ = xmalloc (sizeof (header) + size);
+    size_t total_size = sizeof (header) + size;
+    register pointer new_;
+
+    if (total_size < size || ((Bytecount) (total_size) < 0))
+      {
+	memory_full ();
+      }
+
+    new_ = xmalloc ((Bytecount) total_size);
 #else
     register pointer new_ = malloc (sizeof (header) + size);
 #endif

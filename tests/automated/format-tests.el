@@ -707,12 +707,8 @@
 ;; This used to crash with bignum builds.
 (Check-Error (wrong-type-argument syntax-error) (format "%n" pi))
 
-(unless (featurep 'mule)
-  ;; This might work (not error) on a non-mule build. On my 11 year old 32
-  ;; bit machine, I don't have enough RAM for it to succeed, whence the
-  ;; conditional. It's unlikely to work on a 64 bit build.
-  (Check-Error args-out-of-range (format (concat "%" (number-to-string
-                                                      most-positive-fixnum)
-                                                 "d") 1)))
+(Check-Error (args-out-of-range out-of-memory)
+	     (format (concat "%" (number-to-string most-positive-fixnum) "d")
+		     1))
 
 ;; end of format-tests.el

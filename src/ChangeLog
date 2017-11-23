@@ -1,3 +1,14 @@
+2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alloca.c (xemacs_c_alloca):
+	If this is going to take an unsigned argument, as it always has,
+	that unsigned argument needs to have the bit width of a
+	size_t. Use it explicitly.
+	Do some overflow checking, too, calling memory_full() if we find
+	it.
+	* lisp.h:
+	Updatte the declaration of xemacs_c_alloca().
+
 2017-11-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* specifier.c (error_or_quit_failed_instantiator_in_domain): New.
