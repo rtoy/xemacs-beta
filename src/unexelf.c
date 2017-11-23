@@ -569,7 +569,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
   int new_file, old_file, new_file_size;
 
   /* Pointers to the base of the image of the two files. */
-  caddr_t old_base, new_base;
+  void *old_base, *new_base;
 
   /* Pointers to the file, program and section headers for the old and new
    * files.
@@ -600,9 +600,10 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
   if (fstat (old_file, &stat_buf) == -1)
     fatal ("Can't fstat (%s): errno %d\n", old_name, errno);
 
-  old_base = (caddr_t) mmap (0, stat_buf.st_size, PROT_READ, MAP_SHARED, old_file, 0);
+  old_base = (void *) mmap (0, stat_buf.st_size, PROT_READ, MAP_SHARED,
+			    old_file, 0);
 
-  if (old_base == (caddr_t) -1)
+  if (old_base == (void *) -1)
     fatal ("Can't mmap (%s): errno %d\n", old_name, errno);
 
 #ifdef DEBUG
@@ -727,7 +728,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
   if (ftruncate (new_file, new_file_size))
     fatal ("Can't ftruncate (%s): errno %d\n", new_name, errno);
 
-  new_base = (caddr_t) mmap (0, new_file_size, PROT_READ | PROT_WRITE,
+  new_base = (void *) mmap (0, new_file_size, PROT_READ | PROT_WRITE,
 #ifdef UNEXEC_USE_MAP_PRIVATE
 			     MAP_PRIVATE,
 #else
@@ -735,7 +736,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
 #endif
 			     new_file, 0);
 
-  if (new_base == (caddr_t) -1)
+  if (new_base == (void *) -1)
     fatal ("Can't mmap (%s): errno %d\n", new_name, errno);
 
   new_file_h = (ElfW(Ehdr) *) new_base;
@@ -841,7 +842,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
      before the new bss section. */
   for (n = 1, nn = 1; n < (int) old_file_h->e_shnum; n++, nn++)
     {
-      caddr_t src;
+      void * src;
       /* If it is (s)bss section, insert the new data2 section before it.  */
       /* new_data2_index is the index of either old_sbss or old_bss, that was
 	 chosen as a section for new_data2.   */
@@ -861,7 +862,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
 
 	  /* Now copy over what we have in the memory now. */
 	  memcpy (NEW_SECTION_H (nn).sh_offset + new_base,
-		  (caddr_t) OLD_SECTION_H (n).sh_addr,
+		  (void *) OLD_SECTION_H (n).sh_addr,
 		  new_data2_size);
 	  nn++;
 	}
@@ -952,7 +953,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
 		      ".sdata1")
 	  || !strcmp ((old_section_names + NEW_SECTION_H (n).sh_name),
 		      ".data1"))
-	src = (caddr_t) OLD_SECTION_H (n).sh_addr;
+	src = (void *) OLD_SECTION_H (n).sh_addr;
       else
 	src = old_base + OLD_SECTION_H (n).sh_offset;
 
@@ -1134,7 +1135,7 @@ unexec (Extbyte *new_name, Extbyte *old_name, uintptr_t UNUSED (data_start),
 	  {
 	    ElfW(Addr) offset = NEW_SECTION_H (nn).sh_addr -
 	      NEW_SECTION_H (nn).sh_offset;
-	    caddr_t reloc = old_base + section.sh_offset, end;
+	    void *reloc = old_base + section.sh_offset, end;
 	    for (end = reloc + section.sh_size; reloc < end;
 		 reloc += section.sh_entsize)
 	      {

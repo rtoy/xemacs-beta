@@ -4,6 +4,10 @@
 	Make a HAVE_GLIBC #define available, turns out autoconf is too
 	enthusiastic about _GNU_SOURCE, #defining it even on non-glibc
 	systems.
+
+	Accept MAP_ANON, a BSDism, as an alias for MAP_ANONYMOUS here.
+	Remove a caddr_t variable, this type is long obsolete and the
+	variable was unused.
 	* configure: Regenerate.
 
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>

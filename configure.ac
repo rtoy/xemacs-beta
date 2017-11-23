@@ -4831,7 +4831,9 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([#include <stdio.h>
 int main (int argc, char **argv)
 {
   int fd = -1;
-  caddr_t p;
+#ifdef MAP_ANON
+#define MAP_ANONYMOUS MAP_ANON
+#endif
 #ifndef MAP_ANONYMOUS
   fd = open ("/dev/zero", O_RDWR);
   if (fd < 0)

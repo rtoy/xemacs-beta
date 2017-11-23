@@ -1248,6 +1248,10 @@ static const VM_ADDR VM_FAILURE_ADDR = (VM_ADDR) -1; /* mmap returns this when i
 #  define MAP_ADDRCHOICE_FLAG 0
 #endif /* MAP_ADDRCHOICE_FLAG */
 
+#ifdef MAP_ANON
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 #ifdef MAP_ANONYMOUS
 #  define MAP_FLAGS (MAP_PRIVATE | MAP_ADDRCHOICE_FLAG | MAP_ANONYMOUS)
 #else
@@ -1708,7 +1712,7 @@ New_Addr_Block (size_t sz)
 static void
 Free_Addr_Block (VM_ADDR addr, size_t sz)
 {
-  munmap ((caddr_t) addr, sz );
+  munmap ((void *) addr, sz );
 }
 
 #endif /* MMAP_GENERATE_ADDRESSES */
