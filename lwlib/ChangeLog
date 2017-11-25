@@ -1,3 +1,7 @@
+2017-11-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* lwlib-colors.c (xft_convert_color): Remove unused variable.
+
 2017-11-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lwlib-internal.h:

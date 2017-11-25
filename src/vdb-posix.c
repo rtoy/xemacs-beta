@@ -55,6 +55,7 @@ struct sigaction act, segv_oact, bus_oact;
 sighandler_t segv_oact, bus_oact;
 #endif /* USE_SIGNAL */
 
+void vdb_fault_handler (FAULT_HANDLER_ARGUMENTS);
 void vdb_remove_signal_handler (void);
 
 void 
