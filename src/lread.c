@@ -2644,6 +2644,9 @@ retry:
 	      while ((c = readchar (readcharfun)) >= 0
 		     && c >= '0' && c <= '9')
                 {
+		  /* #### I think this logic is wrong.  Skip can be in the
+		     range 0x40000000-0xffffffff, the overflow will not
+		     trigger, but this won't fit in a fixnum. */
                   skip = (10 * skip) + (c - '0');
                   if (oskip <= skip)
                     {

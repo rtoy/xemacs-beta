@@ -1,3 +1,19 @@
+2017-11-24  Stephen J. Turnbull  <stephen@xemacs.org>
+
+2017-11-23  Stephen J. Turnbull  <stephen@xemacs.org>
+
+	* sysdep.c (total_data_usage):
+	Document that sbrk(0) usage is still OK.
+
+	* window.c (window_divider_width):
+	* window-impl.h (MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED):
+	Use EMACS_INT_ABS to shut up compiler.
+
+	* lread.c (read1): Comment too-clever logic.
+
+	* vdb-posix.c (vdb_fault_handler):
+	Add prototype to quiet clang (at least 4.0 and 5.0).
+
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
