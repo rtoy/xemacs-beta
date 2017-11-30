@@ -4269,7 +4269,7 @@ describe_command (Lisp_Object definition, Lisp_Object stream)
             }
 	  else
 	    {
-              Fprin1 (stream, name);
+              Fprin1 (name, stream);
 	    }
 	}
       else
