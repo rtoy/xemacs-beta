@@ -1,4 +1,8 @@
-2017-11-24  Stephen J. Turnbull  <stephen@xemacs.org>
+2017-11-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* keymap.c (describe_command):
+	Correct the order of the arguments to Fprin1() here, avoid an
+	error when calling #'describe-bindings.
 
 2017-11-23  Stephen J. Turnbull  <stephen@xemacs.org>
 
