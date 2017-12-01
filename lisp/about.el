@@ -49,13 +49,9 @@
 
 (require 'wid-edit)
 
-;; People in this list have their individual links from the main page,
-;; or from the `Legion' page.  If they have an image, it should be
-;; named after the CAR of the list element (baw -> baw.png).
-;;
-;; If you add to this list, you'll want to update
-;; `about-personal-info' and `about-hackers', and add the name to one
-;; of the three mutually exclusive lists just below.
+;; It's unlikely anyone will customise this, but the warning about a
+;; non-existent group for the faces is distracting.
+(defgroup about nil "Customization group for the `About the Authors' page.")
 
 (defface about-headline-face
   '((((class color) (background dark))
@@ -71,7 +67,8 @@
     (((class grayscale) (background dark))
      (:foreground "DimGray" :bold t))
     (t (:bold t)))
-  "Face used for color-highlighted headlines in the About page.")
+  "Face used for color-highlighted headlines in the About page."
+  :group 'about)
 
 (defface about-link-face
   '((((class color) (background dark))
@@ -86,7 +83,16 @@
     (((class grayscale) (background dark))
      (:foreground "LightGray" :bold t :italic t :underline t))
     (t (:underline t)))
-  "Face used for links in the About page.")
+  "Face used for links in the About page."
+  :group 'about)
+
+;; People in this list have their individual links from the main page,
+;; or from the `Legion' page.  If they have an image, it should be
+;; named after the CAR of the list element (baw -> baw.png).
+;;
+;; If you add to this list, you'll want to update
+;; `about-personal-info' and `about-hackers', and add the name to one
+;; of the three mutually exclusive lists just below.
 
 (defvar xemacs-hackers
   '(
