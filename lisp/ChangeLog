@@ -1,3 +1,11 @@
+2017-12-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* about.el (about): New custom group for this file.
+	* about.el (about-headline-face):
+	* about.el (about-link-face):
+	Provide and use a custom group for these faces, avoiding a
+	distracting warning when viewing the about page.
+
 2017-11-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-faces.el (x-library-search-path):
