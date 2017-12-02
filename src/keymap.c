@@ -3593,10 +3593,8 @@ of a key read from the user rather than a character from a buffer.
     {
       DECLARE_EISTRING (bufp);
 
-      Lisp_Object rest;
-      LIST_LOOP (rest, key)
+      EXTERNAL_LIST_LOOP_3 (keysym, key, rest)
 	{
-	  Lisp_Object keysym = XCAR (rest);
 	  if (EQ (keysym, Qcontrol))    eicat_ascii (bufp, "C-");
 	  else if (EQ (keysym, Qctrl))  eicat_ascii (bufp, "C-");
 	  else if (EQ (keysym, Qmeta))  eicat_ascii (bufp, "M-");

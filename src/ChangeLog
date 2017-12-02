@@ -1,3 +1,18 @@
+2017-12-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c (set_compiled_function_arglist):
+	Check that NEW_ is a true list, avoid having a circular list in
+	the compiled funcction down the line.
+	* debug.c (Fset_debug_classes_to_check):
+	Use EXTERNAL_LIST_LOOP_3() looping through CLASSES for circularity
+	checking, leave the type checking to it.
+	* eval.c (Fmultiple_value_prog1):
+	ARGS is an external list, check for circularity and
+	well-formedness.
+	* keymap.c (Fsingle_key_description):
+	If KEY is a cons, loop using EXTERNAL_LIST_LOOP_3(), giving us
+	type and circularity checking.
+
 2017-11-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (describe_command):
