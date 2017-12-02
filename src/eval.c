@@ -5081,7 +5081,7 @@ arguments: (FIRST &rest BODY)
   GCPRO1 (val);
 
   {
-    LIST_LOOP_2 (form, XCDR (args))
+    EXTERNAL_LIST_LOOP_2 (form, XCDR (args))
       Feval (form);
   }
 
