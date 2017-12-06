@@ -13,6 +13,16 @@
 	If KEY is a cons, loop using EXTERNAL_LIST_LOOP_3(), giving us
 	type and circularity checking.
 
+2017-12-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* unicode.c (allocate_jit_ucs_charset):
+	Ben removed the ccl-encode-to-ucs-2 CCL program even from the
+	non-unicode-internal build, and this meant that redisplay of the
+	just-in-time characters failed on X11.
+	Address this and simplify the code by leaving charset-registries
+	as nil for the just in time charsets, meaning the second-stage
+	code always gets invoked, and we don't need the CCL program.
+
 2017-11-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* keymap.c (describe_command):
