@@ -1,3 +1,9 @@
+2017-12-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process-unix.c (unix_init_process_io_handles):
+	Set input FDs to non-blocking unconditionally, see recent patch
+	posted to xemacs-beta from Johann "Myrkraverk" Oskarsson.
+
 2017-12-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecode.c (set_compiled_function_arglist):
