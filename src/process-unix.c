@@ -831,6 +831,25 @@ unix_init_process_io_handles (Lisp_Process *p, void *in, void *UNUSED (out),
   /* if sizeof(EMACS_INT) > sizeof(int) this truncates the value */
   UNIX_DATA(p)->infd = (EMACS_INT) in;
   UNIX_DATA(p)->errfd = (EMACS_INT) err;
+
+  /* In the event where the input file descriptor is a pipe, XEmacs as of 
+   * 21.4.24 will hang on the read() system call when the pipe doesn't 
+   * have enough to fill the incoming buffer. 
+   * 
+   * This will likely affect other kinds of blocking file descriptors also, so
+   * we unconditionally set the input fd to non-blocking mode. See:
+   * http://mid.xemacs.org/CAA_SOw__WYNiUO=4hHhiwg0LXq7++9Xr=tnBMgN5Uc8iAa+mvg@mail.gmail.com
+   * and the related thread.
+   */ 
+  { 
+    int f = fcntl (UNIX_DATA(p)->infd, F_SETFL, O_NONBLOCK); 
+    if (f == -1)
+      { 
+        warn_when_safe (Qio_error, lisp_strerror (errno),
+                        "failed setting pipe (fd %ld) to nonblocking mode",
+                        (EMACS_INT) in);
+      } 
+  } 
 }
 
 /* Move the file descriptor FD so that its number is not less than MIN. *
