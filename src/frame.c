@@ -3620,9 +3620,9 @@ get_frame_new_total_pixel_size (struct frame *f, int *out_width,
 /*                                                                        */
 /**************************************************************************/
 
-/* Change the frame height and/or width.  Values passed in are in
-   frame units (character cells on X/GTK, displayable-area pixels
-   on MS Windows or generally on pixelated-geometry window systems). */
+/* Change the frame height and/or width.  Values passed in are in frame units
+   character cells on all systems, both TTYs and pixel-oriented window
+   systems. */
 static void
 change_frame_size_1 (struct frame *f, int newwidth, int newheight)
 {
@@ -3757,9 +3757,8 @@ change_frame_size_1 (struct frame *f, int newwidth, int newheight)
    which is the device method that is called (from internal_set_frame_size())
    when `set-frame-size' or similar function is called.
 
-   Values passed in are in frame units (character cells on X/GTK,
-   displayable-area pixels on MS Windows or generally on pixelated-geometry
-   window systems).  See discussion at top of file.
+   Values passed in are in character cells, both on TTYs and on pixel-oriented
+   window systems.  See discussion at top of file.
 
    See also internal_set_frame_size() and adjust_frame_size().
 */

@@ -39,6 +39,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "process.h"
 #include "redisplay.h"
 #include "window.h"
+#include "text.h"
 
 #include "console-tty.h"
 
@@ -206,6 +207,24 @@ handle_map_event (struct frame *f, GdkEvent *event)
     {
       FRAME_GTK_TOTALLY_VISIBLE_P (f) = 1;
       change_frame_visibility (f, 1);
+
+      if (event->any.window ==
+          gtk_widget_get_window (FRAME_GTK_SHELL_WIDGET (f)))
+        {
+          GtkAllocation galloc;
+          int rows, columns;
+
+          gtk_widget_get_allocation (FRAME_GTK_SHELL_WIDGET (f), &galloc);
+
+          FRAME_PIXWIDTH (f) = galloc.width;
+          FRAME_PIXHEIGHT (f) = galloc.height;
+
+          pixel_to_frame_unit_size (f, galloc.width, galloc.height, &columns,
+                                    &rows);
+          /* #### We possibly don't have to do this if the character height
+             #### and width haven't changed. */
+          change_frame_size (f, columns, rows, 1);
+        }
     }
   else
     {
@@ -504,7 +523,13 @@ gtk_keysym_to_emacs_keysym (guint keysym)
 
       if (unicode != 0)
         {
-          return Funicode_to_char (make_fixnum ((EMACS_INT) unicode), Qnil);
+          Ichar ich = unicode_to_ichar (unicode,
+                                        Vdefault_unicode_precedence_array,
+                                        CONVERR_FAIL);
+          if (ich >= 0)
+            {
+              return make_char (ich);
+            }
         }
 
       /* All of the names in gdkkeysms-compat.h are ASCII-only, and if keysym
@@ -1515,6 +1540,7 @@ gtk_event_to_emacs_event (struct frame *frame, GdkEvent *gdk_event, struct Lisp_
 	gdk_window_get_pointer (ev->window, &x, &y, &mask);
 #endif
 #ifdef HAVE_GTK3
+        assert (GDK_IS_WINDOW (ev->window));
 	gdk_window_get_device_position (ev->window, ev->device,
 					&x, &y, &mask);
 #endif
@@ -1725,24 +1751,6 @@ reinit_vars_of_event_gtk (void)
 
   /* this function only makes safe calls */
   init_what_input_once ();
-}
-
-void
-vars_of_event_gtk (void)
-{
-  DEFVAR_BOOL ("gtk-allow-sendevents", &gtk_allow_sendevents /*
-*Non-nil means to allow synthetic events.  Nil means they are ignored.
-Beware: allowing emacs to process SendEvents opens a big security hole.
-*/ );
-  gtk_allow_sendevents = 0;
-
-  last_quit_check_signal_tick_count = 0;
-
-  DEFVAR_LISP ("gdk-event-names", &Vgdk_event_names /*
-An alist of Gdk event types to names.
-Do NOT modify.
-*/);
-  Vgdk_event_names = Qnil;
 }
 
 void
@@ -2076,28 +2084,42 @@ gtk_key_is_modifier_p (KeyCode keycode, struct device *d)
 #endif
 
 static void 
-register_event_name(const char *name, int value)
+register_event_name (const char *name, int value)
 {
-  char *nm = xstrdup(name);
-  char *ptr = nm;
-  while (*ptr) {
-    if (*ptr == '_')
-      *ptr = '-';
-    else
-      *ptr = tolower(*ptr);
-    ++ptr;
+  Ascbyte *nm = alloca_ascbytes (strlen (name) + 1), *beg = nm;
+  const Extbyte *ptr = name;
+
+  while (*ptr)
+    {
+      if (*ptr == '_')
+        {
+          *nm = '-';
+        }
+      else if (*ptr < 0x80)
+        {
+          *nm = tolower (*ptr);
+        }
+      else
+        {
+          assert (*ptr < 0x80); /* None of the event names below are non-ASCII,
+                                   and we're called sufficiently early that we
+                                   may not be able to handle non-ASCII. */
+          *nm = *ptr;
+        }
+
+      ++ptr, ++nm;
   }
-  Vgdk_event_names = Facons (build_extstring (nm, Qutf_8),
-                             make_fixnum (value),
+  *nm = '\0';
+  
+  Vgdk_event_names = Facons (build_ascstring (beg), make_fixnum (value),
                              Vgdk_event_names);
-  xfree (nm);
 }
 
-static void
+static Lisp_Object
 register_event_names (void)
 {
   if (!NILP (Vgdk_event_names))
-    return;
+    return Vgdk_event_names;
 #define FROB_EVENT_NAME(name) register_event_name(#name, name)
   FROB_EVENT_NAME(GDK_NOTHING);
   FROB_EVENT_NAME(GDK_DELETE);
@@ -2141,10 +2163,25 @@ register_event_names (void)
   FROB_EVENT_NAME(GDK_DAMAGE);
 #undef FROB_EVENT_NAME
   Vgdk_event_names = Fnreverse (Vgdk_event_names);
+
+  return Vgdk_event_names;
 }
 
 void
-complex_vars_of_event_gtk()
+vars_of_event_gtk (void)
 {
-  register_event_names();
+  DEFVAR_BOOL ("gtk-allow-sendevents", &gtk_allow_sendevents /*
+*Non-nil means to allow synthetic events.  Nil means they are ignored.
+Beware: allowing emacs to process SendEvents opens a big security hole.
+*/ );
+  gtk_allow_sendevents = 0;
+
+  last_quit_check_signal_tick_count = 0;
+
+  DEFVAR_LISP ("gdk-event-names", &Vgdk_event_names /*
+An alist of Gdk event types to names.
+Do NOT modify.
+*/);
+  Vgdk_event_names = register_event_names ();
 }
+

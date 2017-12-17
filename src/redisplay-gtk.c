@@ -474,15 +474,12 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
   GtkWidget *widget = FRAME_GTK_TEXT_WIDGET (f);
   GdkWindow *win = gtk_widget_get_window (widget);
 #if GTK_CHECK_VERSION(3, 22, 0)
-  cairo_region_t *region = gdk_window_get_visible_region (win);
-  /* We should be able to avoid the next call, but the GTK documentation
-   * doesn't explain how to get the drawing context. */
-  GdkDrawingContext *ctx = gdk_window_begin_draw_frame (win,
-							region);
-  cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
-#else
-  cairo_t *cr = gdk_cairo_create (win);
+  /* Can't initialise REGION, CTX and CR until we have called
+      redisplay_clear_region(). */
+  cairo_region_t *region;
+  GdkDrawingContext *ctx;
 #endif
+  cairo_t *cr;
   struct device *d = XDEVICE (f->device);
   Lisp_Object window;
 
@@ -504,6 +501,16 @@ XLIKE_output_eol_cursor (struct window *w, struct display_line *dl, int xpos,
 
   if (NILP (w->text_cursor_visible_p))
     return;
+
+#if GTK_CHECK_VERSION(3, 22, 0)
+  region = gdk_window_get_visible_region (win);
+  /* We should be able to avoid the next call, but the GTK documentation
+     doesn't explain how to get the drawing context. */
+  ctx = gdk_window_begin_draw_frame (win, region);
+  cr = gdk_drawing_context_get_cairo_context (ctx);
+#else
+  cr = gdk_cairo_create (win);
+#endif
 
   default_face_font_info (window, &defascent, 0, 0, &defheight, 0);
 

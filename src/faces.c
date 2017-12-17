@@ -2399,7 +2399,7 @@ complex_vars_of_faces (void)
       "-*-*-medium-r-*-*-*-170-*-*-c-*-*-*",
 #endif
     };
-#endif /* defined (HAVE_XFT) || defined (MULE) */
+#endif /* defined (HAVE_XFT) || defined (HAVE_GTK) || defined (MULE) */
 
 #ifdef MULE
 
@@ -2438,7 +2438,7 @@ complex_vars_of_faces (void)
 				build_cistring (*fontptr)),
 			 inst_list);
 
-#else /* !HAVE_XFT */
+#else /* !HAVE_XFT && !HAVE_GTK */
     inst_list =
       Fcons
       (Fcons
@@ -2499,6 +2499,7 @@ complex_vars_of_faces (void)
 	build_ascstring
 	("-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1")),
        inst_list);
+#endif /* not HAVE_GTK */
 #endif /* not UNICODE_INTERNAL */
 
 #endif /* MULE */

@@ -234,6 +234,8 @@ decode_gtk_frame (Lisp_Object frame)
   return XFRAME (frame);
 }
 
+static void gtk_recompute_cell_sizes (struct frame *, int *width_incr,
+                                      int *height_incr);
 
 /************************************************************************/
 /*			window-manager interactions			*/
@@ -410,15 +412,8 @@ gtk_set_initial_frame_size (struct frame *f, int x, int y,
 
   if (GTK_IS_WINDOW (shell))
     {
-      GdkWindowHints geometry_mask = GDK_HINT_RESIZE_INC;
-      /* Deal with the cell size */
-      default_face_width_and_height (wrap_frame (f), &geometry.width_inc, &geometry.height_inc);
-
-      gtk_window_set_geometry_hints (GTK_WINDOW (shell),
-				     FRAME_GTK_TEXT_WIDGET (f),
-				     &geometry, geometry_mask);
-      gtk_window_move (GTK_WINDOW (shell), x, y);
-      gtk_window_set_resizable (GTK_WINDOW (shell), TRUE);
+      int pixw, pixh;
+      gtk_recompute_cell_sizes (f, &pixw, &pixh);
     }
 
   FRAME_HEIGHT (f) = h;
@@ -1271,35 +1266,19 @@ gtk_set_frame_size (struct frame *f, int cols, int rows)
   GdkGeometry geometry;
   GtkRequisition req;
 
-  if (GTK_IS_WINDOW (shell))
-    {
-      GdkWindowHints geometry_mask = GDK_HINT_RESIZE_INC;
+  assert (GTK_IS_WINDOW (shell));
 
-      /* Update the cell size */
-      default_face_width_and_height (wrap_frame (f), &geometry.width_inc,
-				     &geometry.height_inc);
-
-      gtk_window_set_geometry_hints (GTK_WINDOW (shell),
-				     FRAME_GTK_TEXT_WIDGET (f), &geometry, geometry_mask);
-    }
-
-  change_frame_size (f, cols, rows, 0);
-#ifdef HAVE_GTK2
-  gtk_widget_size_request (FRAME_GTK_SHELL_WIDGET (f), &req);
-#endif
-#ifdef HAVE_GTK3
   {
-    GtkRequisition min;
-    gtk_widget_get_preferred_size (FRAME_GTK_SHELL_WIDGET (f), &min, &req);
-  }    
-#endif
-  gtk_widget_set_size_request (FRAME_GTK_SHELL_WIDGET (f), req.width, req.height);
+    int pixw, pixh;
 
-  if (GTK_IS_WINDOW (shell))
-    {
-      gtk_window_set_default_size (GTK_WINDOW (shell), req.width, req.height);
-      /* gtk_window_set_default_geometry (GTK_WINDOW (shell), req.width, req.height); */
-    }
+    change_frame_size (f, cols, rows, 0);
+    gtk_recompute_cell_sizes (f, &pixw, &pixh);
+    
+    gtk_window_set_default_size (GTK_WINDOW (shell), pixw, pixh);
+    FRAME_PIXWIDTH (f) = pixw;
+    FRAME_PIXHEIGHT (f) = pixh; /* These values will be corrected when
+                                   the window is mapped. */
+  }
 }
 
 static void
@@ -1462,22 +1441,27 @@ gtk_delete_frame (struct frame *f)
 }
 
 static void
-gtk_recompute_cell_sizes (struct frame *frm)
+gtk_recompute_cell_sizes (struct frame *frm, int *width_incr, int *height_incr)
 {
   if (GTK_IS_WINDOW (FRAME_GTK_SHELL_WIDGET (frm)))
     {
       GtkWindow *w = GTK_WINDOW (FRAME_GTK_SHELL_WIDGET (frm));
       GdkGeometry geometry;
       GdkWindowHints geometry_mask;
-      gint width_inc = 10;
-      gint height_inc = 10;
+      *width_incr = 10;
+      *height_incr = 10;
 
-      default_face_width_and_height (wrap_frame (frm), &width_inc, &height_inc);
-      geometry_mask = GDK_HINT_RESIZE_INC;
-      geometry.width_inc = width_inc;
-      geometry.height_inc = height_inc;
+      default_face_width_and_height (wrap_frame (frm), width_incr, height_incr);
 
-      gtk_window_set_geometry_hints (w, FRAME_GTK_TEXT_WIDGET (frm), &geometry, geometry_mask);
+      geometry_mask
+        = GDK_HINT_RESIZE_INC | GDK_HINT_MIN_SIZE | GDK_HINT_BASE_SIZE;
+      geometry.width_inc = geometry.base_width
+        = geometry.min_width = *width_incr;
+      geometry.height_inc = geometry.base_height
+        = geometry.min_height = *height_incr;
+
+      gtk_window_set_geometry_hints (w, FRAME_GTK_TEXT_WIDGET (frm),
+                                     &geometry, geometry_mask);
     }
 }
 
@@ -1576,7 +1560,10 @@ gtk_update_frame_external_traits (struct frame* frm, Lisp_Object name)
   /* Set window manager resize increment hints according to
      the new character size */
   if (EQ (name, Qfont) && FRAME_GTK_TOP_LEVEL_FRAME_P (frm))
-	  gtk_recompute_cell_sizes (frm);
+    {
+      int pixw, pixh;
+      gtk_recompute_cell_sizes (frm, &pixw, &pixh);
+    }
 }
 
 
