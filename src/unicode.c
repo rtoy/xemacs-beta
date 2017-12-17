@@ -1301,17 +1301,17 @@ allocate_jit_ucs_charset (void)
 
   sprintf (setname, "jit-ucs-charset-%d", number_of_jit_charsets);
 
-  Vcurrent_jit_charset = Fmake_charset 
-    (intern (setname), Vcharset_descr, 
-     nconc2 (list6 (Qcolumns, Qone, Qchars,
-		    make_fixnum (96),
-		    Qdimension, make_fixnum (2)),
-	     list4 (Qregistries, Qunicode_registries,
-		    /* not allowed to set non-nil tags when not yet
-		       initialized, for bootstrapping reasons; these
-		       get set in mule-charset.el */
-		    Qtags, initialized ? list2 (intern ("jit"), Qinternal)
-		    : Qnil)));
+  Vcurrent_jit_charset
+    = Fmake_charset (intern (setname), Vcharset_descr, 
+                     listu (Qcolumns, Qone, Qchars, make_fixnum (96),
+                            Qdimension, make_fixnum (2),
+                            /* not allowed to set non-nil tags when not yet
+                               initialized, for bootstrapping reasons; these
+                               get set in mule-charset.el */
+                            Qtags, initialized ? list2 (intern ("jit"),
+                                                        Qinternal) : Qnil,
+                            Qunbound));
+                                 
   XCHARSET (Vcurrent_jit_charset)->jit_charset_p = 1;
   last_allocated_jit_c1 = last_allocated_jit_c2 = 32;
 

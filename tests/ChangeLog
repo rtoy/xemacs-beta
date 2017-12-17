@@ -1,3 +1,8 @@
+2017-12-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/keymap-tests.el:
+	Test circularity checkcing in #'single-key-description.
+
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el (args-out-of-range):

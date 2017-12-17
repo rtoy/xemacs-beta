@@ -133,4 +133,10 @@
 						      pi))
   (Check-Error wrong-type-argument (command-remapping 'describe-function-at-point
 						      nil pi)))
+
+;; Not quite a keymap test, but this function is in keymap.c, so add a test
+;; here:
  
+(Check-Error circular-list (single-key-description '#1=(control shift . #1#)))
+
+;;; end of keymap-tests.el

@@ -355,7 +355,6 @@ XftColor
 xft_convert_color (Display *dpy, Colormap cmap, Visual *visual, int c, int dim)
 {
   static XColor color;		/* #### why is this static ?? */
-  XftColor result;
       
   color.pixel = c;
   XQueryColor(dpy, cmap, &color);

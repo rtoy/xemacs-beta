@@ -1991,6 +1991,9 @@ total_data_usage (void)
 #endif
 
 #ifndef WIN32_ANY
+  /* clang emits a deprecation warning but this usage documented OK.
+     On Linux, apparently can use /proc filesystem; on Mac OS X need to use
+     mach_vm_region_info which looks annoying. */
   void *data_end = sbrk (0);
 #else
   void *data_end = maximum_address_seen;
