@@ -3408,8 +3408,8 @@ mswindows_wnd_proc (HWND hwnd, UINT message_, WPARAM wParam, LPARAM lParam)
 	      FRAME_PIXWIDTH (frame) = rect.right;
 	      FRAME_PIXHEIGHT (frame) = rect.bottom;
 
-	      pixel_to_frame_unit_size (frame, rect.right, rect.bottom, &columns,
-				  &rows);
+	      pixel_to_frame_unit_size (frame, rect.right, rect.bottom,
+                                        &columns, &rows);
 	      change_frame_size (frame, columns, rows, 1);
 
 	      /* If we are inside frame creation, we have to apply geometric

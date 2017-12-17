@@ -2488,7 +2488,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
 	 variables initialized above. */
 #ifdef HAVE_GTK
       complex_vars_of_glyphs_gtk ();
-      complex_vars_of_event_gtk ();
 #endif
 #ifdef HAVE_X_WINDOWS
       complex_vars_of_glyphs_x ();

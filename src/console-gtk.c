@@ -129,12 +129,11 @@ gtk_perhaps_init_unseen_key_defaults (struct console *UNUSED(con),
       gchar *symbol_name = LISP_STRING_TO_EXTERNAL (XSYMBOL_NAME (key), Qutf_8);
       char_to_associate 
 #ifdef __GDK_KEYS_H__ 
-	= make_char (buffer_unicode_to_ichar
+	= make_char (filtered_unicode_to_ichar
 		     (gdk_keyval_to_unicode
 		      (gdk_keyval_from_name (symbol_name)),
-		      /* @@#### need to get some sort of buffer to compute
-			 this off; only applies in the old-Mule world */
-		      current_buffer, CONVERR_SUCCEED));
+                      Vdefault_unicode_precedence_array, NULL,
+                      CONVERR_SUCCEED));
 #else /* GTK 1.whatever doesn't. Use the X11 map. */
         = gtk_keysym_to_character(gdk_keyval_from_name(symbol_name));
 #endif

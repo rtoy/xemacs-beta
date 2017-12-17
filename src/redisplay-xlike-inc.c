@@ -595,37 +595,6 @@ XLIKE_text_width_single_run (struct frame * USED_IF_XFT (f),
 }
 #endif
 
-
-/*
-   XLIKE_text_width
-
-   Given a string and a merged face, return the string's length in pixels
-   when displayed in the fonts associated with the face.
-   */
-
-static int
-XLIKE_text_width (struct frame *f, struct face_cachel *cachel,
-		  const Ibyte *str, Bytecount len)
-{
-  Extbyte *text_storage = NULL;
-  int width_so_far = 0, text_storage_len = 0;
-  struct textual_run *runs = alloca_array (struct textual_run, len);
-  XLIKE_DISPLAY dpy = GET_XLIKE_DISPLAY (XDEVICE (f->device));
-  int nruns;
-  int i;
-
-  ALLOCATE_RUNS_TEXT (text_storage, text_storage_len, str, len);
-  nruns = separate_textual_runs (WINDOW_XBUFFER (FRAME_SELECTED_XWINDOW (f)),
-                                 text_storage, runs, str, len, cachel);
-
-  USED (text_storage_len);
-
-  for (i = 0; i < nruns; i++)
-    width_so_far += XLIKE_text_width_single_run (dpy, cachel, runs + i);
-
-  return width_so_far;
-}
-
 /*****************************************************************************
  XLIKE_divider_height
 

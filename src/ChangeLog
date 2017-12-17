@@ -1,3 +1,55 @@
+2017-12-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
+	Remove a buffer dependence here, use the default unicode
+	precedence list when converting a keysym's Unicode code point to
+	an XEmacs character.
+	* device-gtk.c (gtk_init_device):
+	On versions of GTK > 2.8.0, if gdk_screen_get_rgba_visual()
+	failed, try with gdk_visual_get_best().
+	When examining Vselection_converter_out_alist, Fsafe_length() is
+	no longer available. Use Flist_length instead.
+	* emacs.c (main_1):
+	Remove complex_vars_of_event_gtk(), there's no need for it.
+	* event-gtk.c:
+	* event-gtk.c (handle_map_event):
+	Check for possible resizing on the map event too.
+	* event-gtk.c (gtk_keysym_to_emacs_keysym):
+	Use unicode_to_ichar(), rather than Funicode_to_char() with the
+	wrong number of arguments.
+	* event-gtk.c (gtk_event_to_emacs_event):
+	* event-gtk.c (register_event_name):
+	Don't strdup into the heap.
+	Assert that every character in NAME is ASCII, use
+	build_ascstring() with the result of the transformation, using
+	Qutf_8 is an issue very early in the build.
+	* event-gtk.c (register_event_names):
+	Return Vgdk_event_names from this function, so the return value
+	can be used in vars_of_event_gtk().
+	* event-gtk.c (vars_of_event_gtk):
+	Use register_event_names() here.
+	* event-gtk.c (complex_vars_of_event_gtk): Removed, no need for
+	this, the relevant vars aren't actually complex.
+	* faces.c (complex_vars_of_faces):
+	Make some comments here a little more complete.
+	* frame-gtk.c:
+	* frame-gtk.c (gtk_recompute_cell_sizes):
+	Make this take WIDTH_INCR and HEIGHT_INCR pointer output
+	arguments, so callers can find out the effective character dimensions.
+	* frame-gtk.c (gtk_set_initial_frame_size): Use this.
+	* frame-gtk.c (gtk_set_frame_size): Use this.
+	* frame-gtk.c (gtk_update_frame_external_traits): Use this.
+	* frame.c:
+	* frame.c (change_frame_size_1):
+	Correct some comments here.
+	* redisplay-gtk.c (XLIKE_output_eol_cursor):
+	Some GTK version compatibility changes here.
+	* redisplay-xlike-inc.c (XLIKE_text_width): Remove this
+	completely, with Pango GTK and X11 have diverged sufficiently this
+	doesn't help any more.
+	* symsinit.h:
+	Remove complex_vars_of_event_gtk() from this.
+
 2017-12-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process-unix.c (unix_init_process_io_handles):

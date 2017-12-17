@@ -259,9 +259,13 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
   /* Always search for the best visual */
 #if GTK_CHECK_VERSION(2, 8, 0)
   visual = gdk_screen_get_rgba_visual (gdk_screen_get_default ());
-#else
-  visual = gdk_visual_get_best();
-  #endif
+#endif
+
+  if (NULL == visual)
+    {
+      visual = gdk_visual_get_best();
+    }
+
 
   DEVICE_GTK_VISUAL (d) = visual;
 #if GTK_CHECK_VERSION(2,22,1)
@@ -309,7 +313,9 @@ gtk_init_device (struct device *d, Lisp_Object UNUSED (props))
      available; this isn't the case under GTK, the set is examined once at
      startup. */
   {
-    guint target_count = XFIXNUM (Fsafe_length (Vselection_converter_out_alist));
+    Lisp_Object tcount
+      = Flist_length (Vselection_converter_out_alist);
+    guint target_count = NILP (tcount) ? 0 : XFIXNUM (tcount);
     GtkTargetEntry *targets = alloca_array (GtkTargetEntry, target_count);
     Lisp_Object tail = Vselection_converter_out_alist;
     DECLARE_EISTRING(ei_symname);
