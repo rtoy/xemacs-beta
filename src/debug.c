@@ -135,16 +135,12 @@ CLASSES should be a list of debug classes.
 */
        (classes))
 {
-  Lisp_Object rest;
-
-  CHECK_LIST (classes);
-
   /* Make sure all objects in the list are valid.  If anyone is not
      valid, reject the entire list without doing anything. */
-  LIST_LOOP (rest, classes)
+  EXTERNAL_LIST_LOOP_3 (elt, classes, rest)
     {
-      if (NILP (xemacs_debug_loop (X_VALIDATE, XCAR (rest), Qnil)))
-	sferror ("Invalid object in class list", Qunbound);
+      if (NILP (xemacs_debug_loop (X_VALIDATE, elt, Qnil)))
+        sferror ("Invalid object in class list", elt);
     }
 
   LIST_LOOP (rest, classes)

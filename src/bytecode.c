@@ -2681,7 +2681,7 @@ set_compiled_function_documentation (Lisp_Compiled_Function *f,
 static void
 set_compiled_function_arglist (Lisp_Compiled_Function *f, Lisp_Object new_)
 {
-  CHECK_LIST (new_);
+  CHECK_TRUE_LIST (new_);
   f->arglist = new_;
 
   /* Recalculate the optimized version of the function, since this depends

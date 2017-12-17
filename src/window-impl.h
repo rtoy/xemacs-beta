@@ -269,12 +269,12 @@ struct window_mirror
 #define WINDOW_HAS_MODELINE_P(w) (!NILP (w->has_modeline_p))
 
 #define MODELINE_OFF_SHADOW_THICKNESS_ADJUSTED(win)		\
- abs ((!WINDOW_HAS_MODELINE_P (win)				\
-       ? ((XFIXNUM (win->modeline_shadow_thickness) > 1)		\
-	  ? XFIXNUM (win->modeline_shadow_thickness) - 1		\
+ EMACS_INT_ABS ((!WINDOW_HAS_MODELINE_P (win)			\
+       ? ((XFIXNUM (win->modeline_shadow_thickness) > 1)	\
+	  ? XFIXNUM (win->modeline_shadow_thickness) - 1	\
 	  : ((XFIXNUM (win->modeline_shadow_thickness) < -1)	\
 	     ? XFIXNUM (win->modeline_shadow_thickness) + 1	\
-	     : XFIXNUM (win->modeline_shadow_thickness)))		\
+	     : XFIXNUM (win->modeline_shadow_thickness)))	\
        : XFIXNUM (win->modeline_shadow_thickness)))
 
 #define MODELINE_SHADOW_THICKNESS(win)				\

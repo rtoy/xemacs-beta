@@ -1062,7 +1062,7 @@ window_divider_width (struct window *w)
     return
       XFIXNUM (w->vertical_divider_line_width)
       + 2 * XFIXNUM (w->vertical_divider_spacing)
-      + 2 * abs (XFIXNUM (w->vertical_divider_shadow_thickness));
+      + 2 * EMACS_INT_ABS (XFIXNUM (w->vertical_divider_shadow_thickness));
   else
     return XFIXNUM (w->vertical_divider_line_width) == 0 ? 0 : 1;
 }
