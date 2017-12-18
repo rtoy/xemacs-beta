@@ -875,6 +875,40 @@ XLIKE_output_blank (struct window *w, struct display_line *dl, struct rune *rb,
 #endif
 }
 
+/*****************************************************************************
+ gtk_output_string
+
+ Given a string and a starting position, output that string in the
+ given face.  If cursor is true, draw a cursor around the string.
+ Correctly handles multiple charsets in the string.
+
+ The meaning of the parameters is something like this:
+
+ W		Window that the text is to be displayed in.
+ DL		Display line that this text is on.  The values in the
+ 		structure are used to determine the vertical position and
+		clipping range of the text.
+ BUF		Pointer to those Ibytes to be output.
+ LEN            Number of those Ibytes to be output
+ XPOS		X position in pixels where the text should start being drawn.
+ XOFFSET	Number of pixels to be chopped off the left side of the
+ 		text.  The effect is as if the text were shifted to the
+		left this many pixels and clipped at XPOS.
+ CLIP_START	Clip everything left of this X position.
+ WIDTH		Clip everything right of XPOS + WIDTH.
+ FINDEX		Index for the face cache element describing how to display
+ 		the text.
+ CURSOR		#### I don't understand this.  There's something
+ 		strange and overcomplexified with this variable.
+		Chuck, explain please?
+ CURSOR_START	Starting X position of cursor.
+ CURSOR_WIDTH	Width of cursor in pixels.
+ CURSOR_HEIGHT	Height of cursor in pixels.
+
+ Starting Y position of cursor is the top of the text line.
+ The cursor is drawn sometimes whether or not CURSOR is set. ???
+ ****************************************************************************/
+
 void
 gtk_output_string (struct window *w, struct display_line *dl,
                    const Ibyte *buf, Bytecount len,

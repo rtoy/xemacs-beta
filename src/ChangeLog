@@ -1,3 +1,42 @@
+2017-12-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* event-Xt.c:
+	* event-Xt.c (USE_UNICODE_MAP):
+	Add support for Hangul, Armenian, Georgian, Azeri, Vietnamese
+	support here.
+	Merge the unicode-internal changes into this file.
+	* event-Xt.c (x_keysym_to_character):
+	As above.
+	* event-xlike-inc.c:
+	Move the Hangule, Armenian, Georgian, Azeri, Vietnamese support in
+	here. 
+	* redisplay-gtk.c:
+	* redisplay-x.c:
+	* redisplay-x.c (separate_textual_runs_nomule):
+	* redisplay-x.c (separate_textual_runs_xft_nomule):
+	* redisplay-x.c (separate_textual_runs_xft_mule):
+	* redisplay-x.c (separate_textual_runs_mule):
+	* redisplay-x.c (x_text_width_single_run):
+	* redisplay-x.c (x_text_width):
+	* redisplay-x.c (x_window_output_begin):
+	* redisplay-x.c (x_window_output_end):
+	* redisplay-x.c (x_clear_region):
+	* redisplay-x.c (x_clear_frame):
+	* redisplay-x.c (x_bevel_area):
+	* redisplay-x.c (x_output_horizontal_line):
+	* redisplay-x.c (x_output_vertical_divider):
+	* redisplay-x.c (x_ring_bell):
+	* redisplay-x.c (x_flash):
+	* redisplay-x.c (x_output_blank):
+	* redisplay-x.c (x_output_eol_cursor):
+	* redisplay-x.c (x_output_xlike_pixmap):
+	* redisplay-x.c (x_output_string):
+	Move all the X-specific stuff here from redisplay-xlike-inc.c,
+	since it is no longer helpful on GTK with the end of support for
+	GTK 1.0.
+	* redisplay-xlike-inc.c:
+	Delete all the newly-X-specific stuff from here.
+
 2017-12-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* console-gtk.c (gtk_perhaps_init_unseen_key_defaults):
