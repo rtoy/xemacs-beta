@@ -182,6 +182,7 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
 #ifdef HAVE_GTK3
   GtkStyleContext *gstyle = gtk_widget_get_style_context (widget);
   GdkWindow *window = gtk_widget_get_window (widget);
+#endif
 #if GTK_CHECK_VERSION(3, 22, 0)
   cairo_region_t *region = gdk_window_get_visible_region (window);
   /* We should be able to avoid the next call, but the GTK documentation
@@ -191,7 +192,6 @@ XLIKE_bevel_area (struct window *w, face_index UNUSED (findex),
   cairo_t *cr = gdk_drawing_context_get_cairo_context (ctx);
 #else
   cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
-#endif
 #endif
   GtkShadowType stype;
 
@@ -604,7 +604,7 @@ gtk_text_attributes (struct face_cachel *cachel)
                                                        bg->blue));
 
 #endif
-#if HAVE_GTK3
+#ifdef HAVE_GTK3
   GdkRGBA *fg = XCOLOR_INSTANCE_GTK_COLOR (cachel->foreground);
   GdkRGBA *bg = XCOLOR_INSTANCE_GTK_COLOR (cachel->background);
 
