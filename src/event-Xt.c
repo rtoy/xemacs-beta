@@ -125,7 +125,7 @@ static const char * x_fallback_resources[] =
   0
 };
 
-static Lisp_Object x_keysym_to_emacs_keysym (KeySym keysym, int simple_p);
+static Lisp_Object x_keysym_to_emacs_keysym (KeySym keysym);
 void emacs_Xt_mapping_action (Widget w, XEvent *event);
 void debug_process_finalization (Lisp_Process *p);
 void emacs_Xt_event_handler (Widget wid, XtPointer closure, XEvent *event,
@@ -147,13 +147,12 @@ static int last_quit_check_signal_tick_count;
       && map[keysym - FIRST_KNOWN_##map ]) do				\
     {									\
       keysym -= FIRST_KNOWN_##map ;					\
-      return make_char (buffer_unicode_to_ichar ((int) map[keysym],	\
-					  /* @@#### need to get some sort \
-					     of buffer to compute this off; \
-					     only applies in the old-Mule \
-					     world */			\
-					  current_buffer,		\
-					  CONVERR_SUCCEED));		\
+      /* Use the language-environment precedence list, not that of */   \
+      /* the current buffer. */                                         \
+      return make_char (filtered_unicode_to_ichar                       \
+                        ((int) map[keysym],                             \
+                         Vdefault_unicode_precedence_array, NULL,       \
+                         CONVERR_SUCCEED));                             \
     } while (0)
 
 /* Maps to Unicode for X11 KeySyms, where we don't have a direct internal
@@ -1004,8 +1003,12 @@ x_keysym_to_character (KeySym keysym)
   int code = 0;
 #endif /* MULE */
 
+  if (keysym < 0x100)
+    {
+      return make_char ((Ichar) keysym);
+    }
+
   /* @@#### Add support for 0xFE?? and 0xFF?? keysyms
-     Add support for KOI8-U extensions in the 0x06?? range
 
      See http://www.cl.cam.ac.uk/~mgk25/ucs/keysyms.txt
  */
@@ -1021,11 +1024,12 @@ x_keysym_to_character (KeySym keysym)
     return make_char (keysym & 0xFFFFFF);
 #else
   if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
-    return make_char (buffer_unicode_to_ichar
-		      ((int) (keysym & 0xFFFFFF),
-		       /* @@#### need to get some sort of buffer to compute
-			  this off; only applies in the old-Mule world */
-		       current_buffer, CONVERR_SUCCEED));
+    /* Use the language-environment precedence list, not that of
+       the current buffer. */
+    return make_char (filtered_unicode_to_ichar
+                      ((int)(keysym & 0xFFFFFF),
+                       Vdefault_unicode_precedence_array, NULL,
+                       CONVERR_SUCCEED));
 #endif /* not MULE */
 
   if ((keysym & 0xff) < 0xa0)
@@ -1131,12 +1135,10 @@ x_keysym_to_character (KeySym keysym)
     case 32: /* Currency. The lower sixteen bits of these keysyms happily
 		correspond exactly to the Unicode code points of the
 		associated characters */
-      return make_char (buffer_unicode_to_ichar
-			((int) (keysym & 0xffff),
-			 /* @@#### need to get some sort of buffer to
-			    compute this off; only applies in the old-Mule
-			    world */
-			 current_buffer, CONVERR_SUCCEED));
+      return make_char (filtered_unicode_to_ichar
+                        ((int) (keysym & 0xffff),
+                         Vdefault_unicode_precedence_array, NULL,
+                         CONVERR_SUCCEED));
 
 /* @@#### Support me!
 
@@ -1204,11 +1206,16 @@ if necessary). DOCUMENT the existing system that does this.
       break;
     }
 
-  if (code == 0)
-    return Qnil;
+  assert (!NILP (charset));
 
-  /* #### Is this check on !NILP (charset) needed?  Maybe should be assert? */
-  if (!NILP (charset))
+  if (code == 0 || EQ (charset, Qzero))
+    {
+      /* CHARSET being zero is unlikely, but we shouldn't crash, even with
+         error-checking turned on, if X11 gives us a keysym we don't
+         understand. Don't make it an assertion. */
+      return Qnil;
+    }
+  else
     {
       /* First try to generate a unified character by converting through
 	 Unicode, then try converting directly to an Ichar (only matters
@@ -1216,16 +1223,21 @@ if necessary). DOCUMENT the existing system that does this.
       int ucs = charset_codepoint_to_unicode (charset, 0, code, CONVERR_FAIL);
       if (ucs >= 0)
 	{
-	  /* @@#### current_buffer dependency */
-	  Ichar ich = buffer_unicode_to_ichar (ucs, current_buffer,
-					       CONVERR_FAIL);
+          Ichar ich
+            /* Use the language-environment precedence list, not that of the
+               current buffer. */
+            = filtered_unicode_to_ichar (ucs,
+                                         Vdefault_unicode_precedence_array,
+                                         NULL, CONVERR_SUCCEED);
 	  if (ich >= 0)
-	    return make_char (ich);
+            {
+              return make_char (ich);
+            }
 	}
       else
 	{
-	  Ichar ich =
-	    charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
+	  Ichar ich
+            = charset_codepoint_to_ichar (charset, 0, code, CONVERR_FAIL);
 	  if (ich >= 0)
 	    return make_char (ich);
 	}
@@ -1242,29 +1254,18 @@ if necessary). DOCUMENT the existing system that does this.
 /*                            keymap handling                           */
 /************************************************************************/
 
-/* @@#### This is the wrong approach, I think.  We should not be exposing the
-   name of the keysym anywhere, or forcing the user to use this name.
-   At the Lisp level, the user should simply see the character itself, and
-   should be able to bind the actual character.  Furthermore, introducing
-   the symbol introduces an X-specific dependency; I can't expect to set
-   a binding for a particular Unicode character and have it work on both
-   Windows and X. --ben */
+extern Lisp_Object Vcurrent_global_map;
 
 /* See comment near character_to_event(). */
 static void
-maybe_define_x_key_as_self_inserting_character (KeySym keysym,
-						Lisp_Object symbol)
+maybe_define_x_key_as_self_inserting_character (Lisp_Object emacs_keysym)
 {
-  Lisp_Object character = x_keysym_to_character (keysym);
-
-  if (CHARP (character))
+  if (CHARP (emacs_keysym))
     {
-      extern Lisp_Object Vcurrent_global_map;
-      extern Lisp_Object Qcharacter_of_keysym;
-      if (NILP (Flookup_key (Vcurrent_global_map, symbol, Qnil))) 
+      if (NILP (Flookup_key (Vcurrent_global_map, emacs_keysym, Qnil))) 
         {
-	  Fput (symbol, Qcharacter_of_keysym, character);
-	  Fdefine_key (Vcurrent_global_map, symbol, Qself_insert_command); 
+	  Fdefine_key (Vcurrent_global_map, emacs_keysym,
+                       Qself_insert_command); 
         }
     }
 }
@@ -1275,7 +1276,7 @@ x_has_keysym (KeySym keysym, Lisp_Object hash_table, int with_modifiers)
   KeySym upper_lower[2];
   int j;
 
-  if (keysym < 0x80) /* Optimize for ASCII keysyms */
+  if (keysym < 0x80) /* ASCII keysyms have default bindings anyway. */
     return;
 
   /* If you execute:
@@ -1292,7 +1293,7 @@ x_has_keysym (KeySym keysym, Lisp_Object hash_table, int with_modifiers)
   for (j = 0; j < (upper_lower[0] == upper_lower[1] ? 1 : 2); j++)
     {
       KeySym ks = upper_lower[j];
-      Lisp_Object sym = x_keysym_to_emacs_keysym (ks, 0);
+      Lisp_Object sym = x_keysym_to_emacs_keysym (ks);
       Lisp_Object new_value = with_modifiers ? Qt : Qsans_modifiers;
       Lisp_Object old_value = Fgethash (sym, hash_table, Qnil);
 
@@ -1300,7 +1301,7 @@ x_has_keysym (KeySym keysym, Lisp_Object hash_table, int with_modifiers)
           && ! (EQ (old_value, Qsans_modifiers) &&
                 EQ (new_value, Qt)))
         {
-          maybe_define_x_key_as_self_inserting_character (ks, sym);
+          maybe_define_x_key_as_self_inserting_character (sym);
           Fputhash (sym, new_value, hash_table);
 	}
     }
@@ -1846,32 +1847,19 @@ emacs_Xt_mapping_action (Widget UNUSED (w), XEvent *event)
 /************************************************************************/
 
 static Lisp_Object
-x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
+x_keysym_to_emacs_keysym (KeySym keysym)
 {
   Extbyte *name;
   DECLARE_EISTRING(einame);
+  Lisp_Object character;
 
   if (keysym >= XK_exclam && keysym <= XK_asciitilde)
     /* We must assume that the X keysym numbers for the ASCII graphic
        characters are the same as their ASCII codes.  */
     return make_char (keysym);
 
-  if (keysym >= 0x01000000 && keysym <= 0x0110FFFF)
-    {
-      /* These keysyms malloc with XKeysymToString(), *every time the
-         function is called.* Avoid leaking, construct the keysym string
-         ourselves. */
-      Ascbyte buf [10];
-      qxesprintf ((Ibyte *) buf, keysym & 0xff0000 ? "U%06X" : "U%04X",
-                  (unsigned int) (keysym & 0xffffff));
-      return KEYSYM (buf);
-    }
-
   switch (keysym)
     {
-      /* These would be handled correctly by the default case, but by
-	 special-casing them here we don't garbage a string or call
-	 intern().  */
     case XK_BackSpace:	return QKbackspace;
     case XK_Tab:	return QKtab;
     case XK_Linefeed:	return QKlinefeed;
@@ -1881,8 +1869,15 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
     case XK_Delete:	return QKdelete;
     case 0:		return Qnil;
     default:
-      if (simple_p) return Qnil;
+      character = x_keysym_to_character (keysym);
+
+      if (CHARP (character))
+        {
+          return character; 
+        }
+
       name = XKeysymToString (keysym);
+
       if (!name || !name[0])
 	/* This happens if there is a mismatch between the Xlib of
            XEmacs and the Xlib of the X server...
@@ -1947,8 +1942,7 @@ x_keysym_to_emacs_keysym (KeySym keysym, int simple_p)
 }
 
 static Lisp_Object
-x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p, KeySym *x_keysym_out)
-     /* simple_p means don't try too hard (ASCII only) */
+x_to_emacs_keysym (XKeyPressedEvent *event, KeySym *x_keysym_out)
 {
   KeySym keysym = NoSymbol;
 
@@ -1984,7 +1978,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p, KeySym *x_keysym_out)
       XLookupString (event, dummy, 200, &keysym, 0);
       *x_keysym_out = keysym;
       return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
-	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
+	? Qnil : x_keysym_to_emacs_keysym (keysym);
     }
 #endif /* ! XIM_MOTIF */
 
@@ -2045,7 +2039,7 @@ x_to_emacs_keysym (XKeyPressedEvent *event, int simple_p, KeySym *x_keysym_out)
     case XLookupBoth:
       *x_keysym_out = keysym;
       return (IsModifierKey (keysym) || keysym == XK_Mode_switch )
-	? Qnil : x_keysym_to_emacs_keysym (keysym, simple_p);
+	? Qnil : x_keysym_to_emacs_keysym (keysym);
 
     case XLookupChars:
       {
@@ -2229,7 +2223,7 @@ x_event_to_emacs_event (XEvent *x_event, Lisp_Event *emacs_event)
 	    /* This used to compute the frame from the given X window and
 	       store it here, but we really don't care about the frame. */
 	    SET_EVENT_CHANNEL (emacs_event, DEVICE_CONSOLE (d));
-	    keysym = x_to_emacs_keysym (&x_event->xkey, 0, &x_keysym);
+	    keysym = x_to_emacs_keysym (&x_event->xkey, &x_keysym);
 
 	    /* If the emacs keysym is nil, then that means that the X
 	       keysym was either a Modifier or NoSymbol, which

@@ -1,5 +1,30 @@
 2017-12-20  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Use Lisp characters as the keysym for event objects reflecting
+	keys with character mappings on X11, as we do on every other
+	platform, and as Ben suggests.
+	* event-Xt.c:
+	* event-Xt.c (USE_UNICODE_MAP):
+	Don't use the current buffer for the Unicode conversion precedence
+	list, use the language-specific default in
+	Vdefault_unicode_precedence_array.
+	* event-Xt.c (x_keysym_to_character):
+	Give useful values for ASCII values too.
+	* event-Xt.c (maybe_define_x_key_as_self_inserting_character):
+	Don't mess around with the character-of-keysym property here, now
+	we no longer use symbol keysyms for X11 keys with character
+	mappings.
+	* event-Xt.c (x_has_keysym):
+	Call m_d_x_k_a_s_i_c() with its new simpler calling convention.
+	* event-Xt.c (x_keysym_to_emacs_keysym):
+	Call x_keysym_to_character() early.
+	* event-Xt.c (x_to_emacs_keysym):
+	Drop the SIMPLE_P argument, not used.
+	* event-Xt.c (x_event_to_emacs_event):
+	Update calls to x_to_emacs_keysym() correspondingly in this function.
+
+2017-12-20  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* redisplay-gtk.c (XLIKE_bevel_area):
 	* redisplay-gtk.c (gtk_text_attributes):
 	Correct the placement of some #ifdefs here, get the code building
