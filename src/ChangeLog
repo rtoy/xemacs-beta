@@ -1,3 +1,10 @@
+2017-12-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-gtk.c (XLIKE_bevel_area):
+	* redisplay-gtk.c (gtk_text_attributes):
+	Correct the placement of some #ifdefs here, get the code building
+	under GTK2 again.
+
 2017-12-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* event-Xt.c:
@@ -8,7 +15,7 @@
 	* event-Xt.c (x_keysym_to_character):
 	As above.
 	* event-xlike-inc.c:
-	Move the Hangule, Armenian, Georgian, Azeri, Vietnamese support in
+	Move the Hangul, Armenian, Georgian, Azeri, Vietnamese support from
 	here. 
 	* redisplay-gtk.c:
 	* redisplay-x.c:
