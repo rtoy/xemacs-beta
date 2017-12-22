@@ -552,7 +552,7 @@ digits."
 
 ;; The autoloads for the compose map, and their bindings in
 ;; function-key-map-parent are used by GTK as well as X11. And Julian
-;; Bradfield, at least, uses x-compose on the TTY, it's reasonable to make
+;; Bradfield, at least, uses compose.el on the TTY, it's reasonable to make
 ;; them generally available.
 
 (loop for map in '(compose-acute-map compose-breve-map compose-caron-map
@@ -562,7 +562,7 @@ digits."
                    compose-hook-map compose-horn-map compose-macron-map
                    compose-map compose-ogonek-map compose-ring-map
                    compose-stroke-map compose-tilde-map)
-  do (autoload map "x-compose" nil t 'keymap))
+  do (autoload map "compose" nil t 'keymap))
 
 (loop 
   for (key map)
