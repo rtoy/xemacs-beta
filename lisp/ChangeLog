@@ -1,5 +1,11 @@
 2017-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* descr-text.el (describe-char-unicodedata-file):
+	The UnicodeData.txt installed with Perl no longer serves our
+	needs. Use that installed by TeX instead, if available.
+	
+2017-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* compose.el: Rename from x-compose.el, it's not
 	platform-specific.
 	(decide-on-bindings):
