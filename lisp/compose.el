@@ -406,9 +406,9 @@ value of characters under non-Mule. "
    (compose-caron-map [?A] #x01CD) ;; CAPITAL A WITH CARON
    (compose-caron-map [?C] #x010C) ;; CAPITAL C WITH CARON
    (compose-caron-map [?D] #x010E) ;; CAPITAL D WITH CARON
-   (compose-caron-map [U01F1] #x01C4) ;; CAPITAL DZ WITH CARON
+   (compose-caron-map (decode-char 'ucs #x01f1) #x01C4) ;; CAPITAL DZ WITH CARON
    (compose-caron-map [?E] #x011A) ;; CAPITAL E WITH CARON
-   (compose-caron-map [U01B7] #x01EE) ;; CAPITAL EZH WITH CARON
+   (compose-caron-map (decode-char 'ucs #x01b7) #x01EE) ;; CAPITAL EZH WITH CARON
    (compose-caron-map [?G] #x01E6) ;; CAPITAL G WITH CARON
    (compose-caron-map [?H] #x021E) ;; CAPITAL H WITH CARON
    (compose-caron-map [?I] #x01CF) ;; CAPITAL I WITH CARON
@@ -424,9 +424,9 @@ value of characters under non-Mule. "
    (compose-caron-map [?a] #x01CE) ;; SMALL A WITH CARON
    (compose-caron-map [?c] #x010D) ;; SMALL C WITH CARON
    (compose-caron-map [?d] #x010F) ;; SMALL D WITH CARON
-   (compose-caron-map [U01F3] #x01C6) ;; SMALL DZ WITH CARON
+   (compose-caron-map (decode-char 'ucs #x01F3) #x01C6) ;; SMALL DZ WITH CARON
    (compose-caron-map [?e] #x011B) ;; SMALL E WITH CARON
-   (compose-caron-map [U0292] #x01EF) ;; SMALL EZH WITH CARON
+   (compose-caron-map (decode-char 'ucs #x0292) #x01EF) ;; SMALL EZH WITH CARON
    (compose-caron-map [?g] #x01E7) ;; SMALL G WITH CARON
    (compose-caron-map [?h] #x021F) ;; SMALL H WITH CARON
    (compose-caron-map [?i] #x01D0) ;; SMALL I WITH CARON
@@ -515,7 +515,7 @@ value of characters under non-Mule. "
    (compose-dot-map [?f] #x1E1F) ;; SMALL F WITH DOT ABOVE
    (compose-dot-map [?g] #x0121) ;; SMALL G WITH DOT ABOVE
    (compose-dot-map [?h] #x1E23) ;; SMALL H WITH DOT ABOVE
-   (compose-dot-map [U017F] #x1E9B) ;; SMALL LONG S WITH DOT ABOVE
+   (compose-dot-map (decode-char 'ucs #x017F) #x1E9B) ;; SMALL LONG S WITH DOT ABOVE
    (compose-dot-map [?m] #x1E41) ;; SMALL M WITH DOT ABOVE
    (compose-dot-map [?n] #x1E45) ;; SMALL N WITH DOT ABOVE
    (compose-dot-map [?o] #x022F) ;; SMALL O WITH DOT ABOVE
@@ -543,23 +543,23 @@ value of characters under non-Mule. "
    (compose-hook-map [?V] #x01B2) ;; CAPITAL V WITH HOOK
    (compose-hook-map [?Y] #x01B3) ;; CAPITAL Y WITH HOOK
    (compose-hook-map [?Z] #x0224) ;; CAPITAL Z WITH HOOK
-   (compose-hook-map [U0262] #x029B) ;; SMALL CAPITAL G WITH HOOK
+   (compose-hook-map (decode-char 'ucs #x0262) #x029B) ;; SMALL CAPITAL G WITH HOOK
    (compose-hook-map [?b] #x0253) ;; SMALL B WITH HOOK
    (compose-hook-map [?c] #x0188) ;; SMALL C WITH HOOK
    (compose-hook-map [?d] #x0257) ;; SMALL D WITH HOOK
    (compose-hook-map [?f] #x0192) ;; SMALL F WITH HOOK
    (compose-hook-map [?g] #x0260) ;; SMALL G WITH HOOK
    (compose-hook-map [?h] #x0266) ;; SMALL H WITH HOOK
-   (compose-hook-map [U0266] #x0267) ;; SMALL HENG WITH HOOK
+   (compose-hook-map (decode-char 'ucs #x0266) #x0267) ;; SMALL HENG WITH HOOK
    (compose-hook-map [?k] #x0199) ;; SMALL K WITH HOOK
    (compose-hook-map [?m] #x0271) ;; SMALL M WITH HOOK
    (compose-hook-map [?p] #x01A5) ;; SMALL P WITH HOOK
    (compose-hook-map [?q] #x02A0) ;; SMALL Q WITH HOOK
-   (compose-hook-map [U025C] #x025D) ;; SMALL REVERSED OPEN E WITH HOOK
+   (compose-hook-map (decode-char 'ucs #x025C) #x025D) ;; SMALL REVERSED OPEN E WITH HOOK
    (compose-hook-map [?s] #x0282) ;; SMALL S WITH HOOK
-   (compose-hook-map [U0259] #x025A) ;; SMALL SCHWA WITH HOOK
+   (compose-hook-map (decode-char 'ucs #x0259) #x025A) ;; SMALL SCHWA WITH HOOK
    (compose-hook-map [?t] #x01AD) ;; SMALL T WITH HOOK
-   (compose-hook-map [U0279] #x027B) ;; SMALL TURNED R WITH HOOK
+   (compose-hook-map (decode-char 'ucs #x0279) #x027B) ;; SMALL TURNED R WITH HOOK
    (compose-hook-map [?v] #x028B) ;; SMALL V WITH HOOK
    (compose-hook-map [?y] #x01B4) ;; SMALL Y WITH HOOK
    (compose-hook-map [?z] #x0225) ;; SMALL Z WITH HOOK
