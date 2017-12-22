@@ -208,31 +208,20 @@ otherwise."
 	(describe-property-list properties)))))
 
 (defcustom describe-char-unicodedata-file
-  ;; XEmacs change; initialise this by default, using Perl. 
-  (let ((have-perl
+  ;; XEmacs change; initialise this by default, using TeX. 
+  (let ((have-kpsewhich
          (member-if 
           #'(lambda (path) 
-              (file-exists-p (format "%s%cperl" path directory-sep-char))) 
+              (file-exists-p (format "%s%ckpsewhich" path directory-sep-char))) 
           exec-path)) 
-        installprivlib res)
-    (when have-perl 
-      (setq installprivlib  
+        path)
+    (when have-kpsewhich
+      (setq path
             (with-string-as-buffer-contents ""
-              (shell-command "perl -V:installprivlib" t) 
-              ;; 1+ because buffer offsets start at one. 
-              (delete-region 1 (1+ (length "installprivlib='"))) 
-              ;; Delete the final newline, semicolon and quotation mark. 
-              (delete-region (- (point-max) 3) (point-max)))) 
-      (cond 
-       ((file-exists-p 
-         (setq res
-               (format "%s%cunicore%cUnicodeData.txt" 
-                       installprivlib directory-sep-char directory-sep-char)))) 
-       ((file-exists-p 
-         (setq res
-               (format "%s%cunicode%cUnicodeData.txt" 
-                       installprivlib directory-sep-char directory-sep-char)))))
-      res))
+              (shell-command "kpsewhich UnicodeData.txt" t) 
+              ;; Delete the final newline
+              (delete-region (- (point-max) 1) (point-max))))
+      (if (file-exists-p path) path)))
   "Location of Unicode data file.
 This is the UnicodeData.txt file from the Unicode Consortium, used for
 diagnostics.  If it is non-nil `describe-char' will print data
