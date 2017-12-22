@@ -2,6 +2,9 @@
 
 	* compose.el: Rename from x-compose.el, it's not
 	platform-specific.
+	(decide-on-bindings):
+	Remove the last of the X11-specific code, don't use the UABCD
+	keysyms for some exotic composed base characters.
 	* gtk-compose.el (gtk-compose): Require the new feature.
 	* isearch-mode.el (isearch-pre-command-hook):
 	* keymap.el (for):
