@@ -357,9 +357,6 @@ separate_textual_runs_mule (struct buffer *buf,
 	  ccl_driver (&char_converter, 0, buf, 0, 0, 0, CCL_MODE_ENCODING);
 	  byte1 = char_converter.reg[1];
 	  byte2 = char_converter.reg[2];
-	  get_external_charset_codepoint (charset, make_fixnum (byte1),
-                                          make_fixnum (byte2),
-					  &byte1, &byte2, 1);
 	}
       else if (EQ (charset, Vcharset_ascii) && byte2 != CANT_DISPLAY_CHAR)
 	{

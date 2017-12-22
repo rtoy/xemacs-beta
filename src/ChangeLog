@@ -1,3 +1,11 @@
+2017-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-x.c (separate_textual_runs_mule):
+	The output of a charset's CCL program is just two octets, it is
+	incorrect and buggy to transform it to an "external charset
+	codepoint", something that will usually error in redisplay. Remove
+	this unicode-internal change from Ben.
+
 2017-12-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Use Lisp characters as the keysym for event objects reflecting
