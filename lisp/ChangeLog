@@ -1,3 +1,13 @@
+2017-12-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* compose.el: Rename from x-compose.el, it's not
+	platform-specific.
+	* gtk-compose.el (gtk-compose): Require the new feature.
+	* isearch-mode.el (isearch-pre-command-hook):
+	* keymap.el (for):
+	Update documentation, references to x-compose.el to reference the
+	new name.
+
 2017-12-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* about.el (about): New custom group for this file.

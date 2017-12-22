@@ -1,4 +1,4 @@
-;;; x-compose.el --- Compose-key processing in XEmacs
+;;; compose.el --- Compose-key processing in XEmacs
 
 ;; Copyright (C) 1992, 1993, 1997, 2005 Free Software Foundation, Inc.
 
@@ -36,7 +36,7 @@
 ;;;                                     XFree86 deadkeys
 
 ;; This file implements DEC-, OpenWindows-, and HP-compatible "Compose"
-;; processing for XEmacs.
+;; processing for XEmacs.  It was formerly named x-compose.el.
 
 ;; If you are running a version of X which already does compose processing,
 ;; then you don't need this file.  But the MIT R4 and R5 distributions don't
@@ -960,5 +960,6 @@ which it understands) are:
 
 
 (provide 'x-compose)
+(provide 'compose)
 
-;;; x-compose.el ends here
+;;; compose.el ends here

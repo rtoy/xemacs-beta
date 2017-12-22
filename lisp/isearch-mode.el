@@ -1618,14 +1618,14 @@ If there is no completion possible, say so and continue searching."
                 ;; bound to self-insert-command, then do the same thing as for
                 ;; self-inserting commands: arrange for that character to be
                 ;; added to the search string.  If we didn't do this, then
-                ;; typing a compose sequence (a la x-compose.el) would
+                ;; typing a compose sequence (a la compose.el) would
                 ;; terminate the search and insert the character, instead of
                 ;; searching for that character.
                 ;;
                 ;; We should continue doing this, since it's pretty much the
                 ;; behavior one would expect, but it will stop being so
                 ;; necessary once key-translation- map exists and is used by
-                ;; x-compose.el and things like it, since the translation will
+                ;; compose.el and things like it, since the translation will
                 ;; have been done before we see the keys.
                 ;;
                 (cond ((eq this-command 'self-insert-command)
