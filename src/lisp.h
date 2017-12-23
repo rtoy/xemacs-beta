@@ -4770,18 +4770,19 @@ Bytecount ratio_to_string (Ibyte **buffer_inout, Bytecount size, ratio number,
 Lisp_Object format_into (Lisp_Object stream, Lisp_Object format_reloc,
                          int nargs, const Lisp_Object *largs);
 
-MODULE_API void write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
+MODULE_API Bytecount write_fmt_string (Lisp_Object stream, const CIbyte *fmt,
+				       ...)
   PRINTF_ARGS (2, 3);
-MODULE_API void write_fmt_string_va (Lisp_Object stream,
-                                     const CIbyte *fmt, va_list);
-MODULE_API void write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt,
-				       ...);
-MODULE_API void write_fmt_string_lisp_va (Lisp_Object stream,
-                                          const CIbyte *fmt, va_list);
+MODULE_API Bytecount write_fmt_string_va (Lisp_Object stream,
+					  const CIbyte *fmt, va_list);
+MODULE_API Bytecount write_fmt_string_lisp (Lisp_Object stream,
+					    const CIbyte *fmt, ...);
+MODULE_API Bytecount write_fmt_string_lisp_va (Lisp_Object stream,
+					       const CIbyte *fmt, va_list);
 
-void stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void stderr_out_lisp (const CIbyte *, ...);
-void stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+Bytecount stderr_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+Bytecount stderr_out_lisp (const CIbyte *, ...);
+Bytecount stdout_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
 
 Lisp_Object emacs_vsprintf_string_lisp (const CIbyte *format_nonreloc,
                                         va_list vargs);
@@ -5864,8 +5865,8 @@ void debug_p4 (Lisp_Object obj);
 void debug_p3 (Lisp_Object obj);
 void debug_short_backtrace (int);
 void debug_backtrace (void);
-MODULE_API void write_lisp_string (Lisp_Object stream, Lisp_Object string,
-                                   Bytecount offset, Bytecount len);
+MODULE_API Bytecount write_lisp_string (Lisp_Object stream, Lisp_Object string,
+					Bytecount offset, Bytecount len);
 
 /* NOTE: Do not call the following with the data of a Lisp_String.  Use
    write_lisp_string().
@@ -5873,41 +5874,41 @@ MODULE_API void write_lisp_string (Lisp_Object stream, Lisp_Object string,
    If you would like a STREAM value of Qt, Qnil to indicate output to the
    selected frame, rather than C's standard output, call
    canonicalize_printcharfun () before calling this function. */
-void write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size);
+Bytecount write_string_1 (Lisp_Object stream, const Ibyte *str,
+			  Bytecount size);
 
 /* Same goes for this function. */
 DECLARE_INLINE_HEADER (
-void write_istring (Lisp_Object stream, const Ibyte *str)
+Bytecount write_istring (Lisp_Object stream, const Ibyte *str)
 )
 {
   /* This function can GC. We'd like to qxestrlen, but that's not yet
      available in this file. */
-  write_string_1 (stream, str, strlen ((const char *) str));
+  return write_string_1 (stream, str, strlen ((const char *) str));
 }
 /* Same goes for this function. */
 DECLARE_INLINE_HEADER (
-void write_cistring (Lisp_Object stream, const CIbyte *str)
+Bytecount write_cistring (Lisp_Object stream, const CIbyte *str)
 )
 {
   /* This function can GC. We'd like to qxestrlen, but that's not yet
      available in this file. */
-  write_string_1 (stream, (const Ibyte *) str,
-                  strlen ((const char *) str));
+  return write_string_1 (stream, (const Ibyte *) str,
+			 strlen ((const char *) str));
 }
 /* Same goes for this function. */
 DECLARE_INLINE_HEADER (
-void write_ascstring (Lisp_Object stream, const Ascbyte *str)
+Bytecount write_ascstring (Lisp_Object stream, const Ascbyte *str)
 )
 {
   /* This function can GC. */
-  write_string_1 (stream, (const Ibyte *) str,
-                  strlen ((char *) str));
+  return write_string_1 (stream, (const Ibyte *) str, strlen ((char *) str));
 }
-void write_eistring (Lisp_Object stream, const Eistring *ei);
+Bytecount write_eistring (Lisp_Object stream, const Eistring *ei);
 
-void external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
-void debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
-void debug_out_lisp (const CIbyte *, ...);
+Bytecount external_out (int dest, const CIbyte *fmt, ...) PRINTF_ARGS (2, 3);
+Bytecount debug_out (const CIbyte *, ...) PRINTF_ARGS (1, 2);
+Bytecount debug_out_lisp (const CIbyte *, ...);
 DECLARE_DOESNT_RETURN (fatal (const CIbyte *, ...)) PRINTF_ARGS(1, 2);
 
 /* Internal functions: */

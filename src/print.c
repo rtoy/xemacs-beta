@@ -158,8 +158,8 @@ int in_debug_print;
 
 FILE *termscript;	/* Stdio stream being used for copy of all output.  */
 
-static void write_string_to_alternate_debugging_output (const Ibyte *str,
-							Bytecount len);
+static Bytecount write_string_to_alternate_debugging_output (const Ibyte *str,
+							     Bytecount len);
 
 /* To avoid consing in debug_prin1, we package up variables we need to bind
    into an opaque object. */
@@ -186,17 +186,17 @@ int stdout_clear_before_next_output;
 
 /* Basic function to actually write to a stdio stream or TTY console. */
 
-static void
+static Bytecount
 write_string_to_stdio_stream_1 (FILE *stream, struct console *con,
 				const Ibyte *ptr, Bytecount len,
 				int must_flush)
 {
   Extbyte *extptr = 0;
-  Bytecount extlen = 0;
-  int output_is_std_handle =
+  Bytecount extlen = 0, result;
+  Boolint output_is_std_handle =
     stream ? stream == stdout || stream == stderr :
-      CONSOLE_TTY_DATA (con)->is_stdio;
-
+    CONSOLE_TTY_DATA (con)->is_stdio;
+  
   if (stream || output_is_std_handle)
     {
       if (initialized && !inhibit_non_essential_conversion_operations)
@@ -229,7 +229,7 @@ write_string_to_stdio_stream_1 (FILE *stream, struct console *con,
       else
 #endif
 	{
-	  retry_fwrite (extptr, 1, extlen, stream);
+	  result = retry_fwrite (extptr, 1, extlen, stream);
 #ifdef WIN32_NATIVE
 	  /* Q122442 says that pipes are "treated as files, not as
 	     devices", and that this is a feature. Before I found that
@@ -243,7 +243,8 @@ write_string_to_stdio_stream_1 (FILE *stream, struct console *con,
     }
   else
     /* The stream itself does conversion to external format */
-    Lstream_write (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream), ptr, len);
+    result = Lstream_write (XLSTREAM (CONSOLE_TTY_DATA (con)->outstream),
+			    ptr, len);
 
   if (output_is_std_handle)
     {
@@ -254,12 +255,14 @@ write_string_to_stdio_stream_1 (FILE *stream, struct console *con,
 	}
       stdout_needs_newline = (ptr[len - 1] != '\n');
     }
+
+  return result;
 }
 
 /* Write to a stdio stream or TTY console, first clearing the left side
    if necessary. */
 
-static void
+static Bytecount
 write_string_to_stdio_stream (FILE *stream, struct console *con,
 			      const Ibyte *ptr, Bytecount len,
 			      int must_flush)
@@ -274,7 +277,7 @@ write_string_to_stdio_stream (FILE *stream, struct console *con,
       stdout_clear_before_next_output = 0;
     }
 
-  write_string_to_stdio_stream_1 (stream, con, ptr, len, must_flush);
+  return write_string_to_stdio_stream_1 (stream, con, ptr, len, must_flush);
 }
 
 /*
@@ -299,20 +302,35 @@ enum ext_print
     EXT_PRINT_ALL = 14
   };
 
-static void
+static Bytecount
 write_string_to_external_output (const Ibyte *ptr, Bytecount len,
 				 int dest)
 {
+  Bytecount result = 0, output;
   if (dest & EXT_PRINT_STDOUT)
-    write_string_to_stdio_stream (stdout, 0, ptr, len, 1);
+    {
+      output = write_string_to_stdio_stream (stdout, 0, ptr, len, 1);
+      result = min (result, output);
+    }
   if (dest & EXT_PRINT_STDERR)
-    write_string_to_stdio_stream (stderr, 0, ptr, len, 1);
+    {
+      output = write_string_to_stdio_stream (stderr, 0, ptr, len, 1);
+      result = min (result, output);      
+    }
   if (dest & EXT_PRINT_ALTERNATE)
-    write_string_to_alternate_debugging_output (ptr, len);
+    {
+      output = write_string_to_alternate_debugging_output (ptr, len);
+      result = min (result, output);
+    }
 #ifdef WIN32_NATIVE
   if (dest & EXT_PRINT_MSWINDOWS)
-    write_string_to_mswindows_debugging_output (ptr, len);
+    {
+      output = write_string_to_mswindows_debugging_output (ptr, len);
+      result = min (result, output);
+    }
 #endif
+
+  return result;
 }
 
 /* This function can be called from fatal_error_signal() and so should make as
@@ -332,7 +350,7 @@ write_string_to_external_output (const Ibyte *ptr, Bytecount len,
 
    Both emacs_vsnprintf() and write_string_to_external_output_va() will fail
    if we run out of stack space. Oh well. */
-static void
+static Bytecount
 write_string_to_external_output_va (const CIbyte *fmt, va_list args,
 				    int dest)
 {
@@ -347,17 +365,22 @@ write_string_to_external_output_va (const CIbyte *fmt, va_list args,
   write_string_to_external_output (kludge,
                                    min (klen, (Bytecount) sizeof (kludge)),
                                    dest);
+
+  return klen;
 }
 
 /* Output portably to print destination as specified by DEST. */
 
-void
+Bytecount
 external_out (int dest, const CIbyte *fmt, ...)
 {
+  Bytecount result;
   va_list args;
   va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, dest);
+  result = write_string_to_external_output_va (fmt, args, dest);
   va_end (args);
+
+  return result;
 }
 
 DOESNT_RETURN
@@ -391,7 +414,7 @@ fatal (const CIbyte *fmt, ...)
    Use Qexternal_debugging_output to get output to stderr.
 */
 
-static void
+static Bytecount
 output_string (Lisp_Object function, const Ibyte *nonreloc,
 	       Lisp_Object reloc, Bytecount offset, Bytecount len)
 {
@@ -402,15 +425,12 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
      may get confused and an assertion failure in
      fixup_internal_substring() may get triggered. */
   const Ibyte *newnonreloc;
-  struct gcpro gcpro1, gcpro2;
+  Bytecount result;
 
   /* Emacs won't print while GCing, but an external debugger might */
 #ifdef NO_PRINT_DURING_GC
-  if (gc_in_progress) return;
+  if (gc_in_progress) return 0;
 #endif
-
-  /* Perhaps not necessary but probably safer. */
-  GCPRO2 (function, reloc);
 
   fixup_internal_substring (nonreloc, reloc, offset, &len);
 
@@ -418,6 +438,9 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 
   if (LSTREAMP (function))
     {
+      struct gcpro gcpro1, gcpro2;
+      GCPRO2 (reloc, function);
+
       if (STRINGP (reloc))
 	{
           /* We used to inhibit GC here. There's no need, the only Lstreams
@@ -429,24 +452,37 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
              have write_with_extents (), which knows it has been handed a Lisp
              string, and can take appropriate action to re-fetch string
              data. */
-          Lstream_write_with_extents (XLSTREAM (function), reloc, offset,
-                                      len);
+	  result = Lstream_write_with_extents (XLSTREAM (function), reloc,
+					       offset, len);
 	}
       else
         {
-          Lstream_write (XLSTREAM (function), newnonreloc + offset, len);
+          result = Lstream_write (XLSTREAM (function), newnonreloc + offset,
+				  len);
         }
 
       if (print_unbuffered)
 	Lstream_flush (XLSTREAM (function));
+
+      RETURN_UNGCPRO (result);
     }
   else if (BUFFERP (function))
     {
+      struct gcpro gcpro1;
+
       CHECK_LIVE_BUFFER (function);
+
+      GCPRO1 (reloc);
+      
       buffer_insert_string (XBUFFER (function), nonreloc, reloc, offset, len);
+
+      RETURN_UNGCPRO (len);
     }
   else if (MARKERP (function))
     {
+      struct gcpro gcpro1;
+      GCPRO1 (reloc);
+
       buffer_insert_string_1 (XMARKER (function)->buffer,
 			      /* marker_position() will err if marker
 				 doesn't point anywhere.  */
@@ -454,22 +490,29 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 			      offset, len, -1, 0);
       set_byte_marker_position (function,
 				byte_marker_position (function) + len);
+      RETURN_UNGCPRO (len); /* We will have errored on failure. */
     }
   else if (FRAMEP (function))
     {
       /* This gets used by functions not invoking print_prepare(),
          such as Fwrite_char, Fterpri, etc..  */
       struct frame *f = XFRAME (function);
+      struct gcpro gcpro1;
+
       CHECK_LIVE_FRAME (function);
+
+      GCPRO1 (reloc);
 
       if (!EQ (Vprint_message_label, echo_area_status (f)))
 	clear_echo_area_from_print (f, Qnil, 1);
       echo_area_append (f, nonreloc, reloc, offset, len, Vprint_message_label);
+
+      RETURN_UNGCPRO (len);
     }
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
-      write_string_to_stdio_stream (stdout, 0, newnonreloc + offset, len,
-				    print_unbuffered);
+      return write_string_to_stdio_stream (stdout, 0, newnonreloc + offset,
+					   len, print_unbuffered);
     }
   else if (EQ (function, Qexternal_debugging_output))
     {
@@ -477,15 +520,19 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 	 having each character passed separately to
 	 `external-debugging-output'.  The API says to pass each character
 	 separately because that is the Lisp Way. */
-      write_string_to_stdio_stream (stderr, 0, newnonreloc + offset, len,
-				    print_unbuffered);
+      return write_string_to_stdio_stream (stderr, 0, newnonreloc + offset,
+					   len, print_unbuffered);
     }
   else
     {
       Bytecount end = offset + len;
+      struct gcpro gcpro1;
+
+      GCPRO1 (reloc);
 
       while (offset < end)
 	{
+	  /* call1() GCPROs FUNCTION. */
 	  call1 (function, make_char (itext_ichar (newnonreloc + offset)));
 
           if (STRINGP (reloc))
@@ -509,9 +556,9 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 
           offset += itext_ichar_len (newnonreloc + offset);
 	}
-    }
 
-  UNGCPRO;
+      RETURN_UNGCPRO (len);
+    }
 }
 
 static int
@@ -645,12 +692,12 @@ print_finish (Lisp_Object stream, Lisp_Object frame_kludge)
 
 /* Write a Lisp string to STREAM, preserving extent data if STREAM can handle
    it, and protecting its string data from relocation when appropriate. */
-void
+Bytecount
 write_lisp_string (Lisp_Object stream, Lisp_Object string, Bytecount offset,
                    Bytecount len)
 {
   /* This function can GC */
-  output_string (stream, NULL, string, offset, len);
+  return output_string (stream, NULL, string, offset, len);
 }  
 
 /* Write internal-format data to STREAM.  See output_string() for
@@ -668,18 +715,18 @@ write_lisp_string (Lisp_Object stream, Lisp_Object string, Bytecount offset,
 
    Also note that STREAM should be the result of canonicalize_printcharfun()
    (i.e. Qnil means stdout, not Vstandard_output, etc.)  */
-void
+Bytecount
 write_string_1 (Lisp_Object stream, const Ibyte *str, Bytecount size)
 {
   /* This function can GC */
   text_checking_assert (size >= 0);
-  output_string (stream, str, Qnil, 0, size);
+  return output_string (stream, str, Qnil, 0, size);
 }
 
-void
+Bytecount
 write_eistring (Lisp_Object stream, const Eistring *ei)
 {
-  write_string_1 (stream, eidata (ei), eilen (ei));
+  return write_string_1 (stream, eidata (ei), eilen (ei));
 }
 
 DEFUN ("write-char", Fwrite_char, 1, 2, 0, /*
@@ -2467,7 +2514,7 @@ to 0.
   return character;
 }
 
-static void
+static Bytecount
 write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
 {
   int extlen;
@@ -2486,7 +2533,7 @@ write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
 
   /* If not yet initialized, just skip it. */
   if (alternate_do_string == NULL)
-    return;
+    return 0;
 
   if (alternate_do_pointer + extlen >= alternate_do_size)
     {
@@ -2497,6 +2544,7 @@ write_string_to_alternate_debugging_output (const Ibyte *str, Bytecount len)
   memcpy (alternate_do_string + alternate_do_pointer, extptr, extlen);
   alternate_do_pointer += extlen;
   alternate_do_string[alternate_do_pointer] = 0;
+  return extlen;
 }
 
 
@@ -2839,15 +2887,17 @@ external_debug_print (Lisp_Object object, int dest)
 
 /* Printf-style debugging output. */
 
-void
+Bytecount
 debug_out (const CIbyte *fmt, ...)
 {
   int depth =  begin_inhibit_non_essential_conversion_operations ();
+  Bytecount result;
   va_list args;
   va_start (args, fmt);
-  write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
+  result = write_string_to_external_output_va (fmt, args, EXT_PRINT_ALL);
   va_end (args);
   unbind_to (depth);
+  return result;
 }
 
 /* Basic entry point: Print out a Lisp object to the debugging output. */
@@ -2855,7 +2905,7 @@ debug_out (const CIbyte *fmt, ...)
 void
 debug_print (Lisp_Object debug_print_obj)
 {
-  external_debug_print (debug_print_obj, EXT_PRINT_ALL);
+  return external_debug_print (debug_print_obj, EXT_PRINT_ALL);
 }
 
 /* Printf-style output when the objects being printed are Lisp objects.
@@ -2864,13 +2914,13 @@ debug_print (Lisp_Object debug_print_obj)
    debug_out_lisp ("Called foo(%s %s)\n", arg0, arg1)
 */
 
-void
+Bytecount
 debug_out_lisp (const CIbyte *format, ...)
 {
   /* This function cannot GC, since GC is forbidden */
   struct debug_bindings bindings;
   int specdepth = debug_print_enter (&bindings);
-  Bytecount len;
+  Bytecount len, result;
   va_list va;
   Ibyte *msgout;
 
@@ -2878,9 +2928,11 @@ debug_out_lisp (const CIbyte *format, ...)
   len = emacs_vasprintf_lisp (&msgout, format, va);
   va_end (va);
 
-  write_string_to_external_output (msgout, len, EXT_PRINT_ALL);
+  result = write_string_to_external_output (msgout, len, EXT_PRINT_ALL);
   xfree (msgout);
   unbind_to (specdepth);
+
+  return result;
 }
 
 /* Getting tired of typing debug_print() ... */

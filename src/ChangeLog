@@ -1,3 +1,41 @@
+2017-12-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* console-msw.c (mswindows_output_console_string):
+	Return a Bytecount reflecting the number of Ibytes written from
+	this function.
+	* doprnt.c (write_string_1_lstream):
+	* doprnt.c (write_lisp_string_lstream):
+	Return a Bytecount, not void, in these two functions.
+	* doprnt.c (doprnt_1):
+	Use this.
+	* doprnt.c (write_fmt_string_va):
+	* doprnt.c (write_fmt_string):
+	* doprnt.c (write_fmt_string_lisp_va):
+	* doprnt.c (write_fmt_string_lisp):
+	* doprnt.c (stderr_out):
+	* doprnt.c (stdout_out):
+	* doprnt.c (stderr_out_lisp):
+	Return a Bytecount in all these functions, not void, pass through
+	the result from the underlying call.
+	* lisp.h:
+	Adjust the declarations for these functions to reflect that they
+	return a Bytecount.
+	* print.c (write_string_to_stdio_stream_1):
+	* print.c (write_string_to_stdio_stream):
+	* print.c (write_string_to_external_output):
+	Return the shortest of the results of the writes to the various
+	destinations here.
+	* print.c (write_string_to_external_output_va):
+	* print.c (external_out):
+	* print.c (output_string):
+	* print.c (write_lisp_string):
+	* print.c (write_string_1):
+	* print.c (write_eistring):
+	* print.c (debug_out):
+	* print.c (debug_print):
+	* print.c (debug_out_lisp):
+	Return Bytecount values, not void, in all these functions.
+
 2017-12-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay-x.c (separate_textual_runs_mule):
