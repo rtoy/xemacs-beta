@@ -780,19 +780,19 @@ enum hl_flag {
       break;                                                            \
     } while (0)
 
-static void
+static Bytecount
 write_string_1_lstream (Lisp_Object stream, const Ibyte *str, Bytecount size)
 {
   /* This becomes just a jmp _Lstream_write in the assembler. */
-  Lstream_write (XLSTREAM (stream), (const void *) str, size);
+  return Lstream_write (XLSTREAM (stream), (const void *) str, size);
 }
 
-static void
+static Bytecount
 write_lisp_string_lstream (Lisp_Object stream, Lisp_Object string,
                            Bytecount offset, Bytecount len)
 {
   /* And this becomes just a jmp _Lstream_write_with_extents. */
-  Lstream_write_with_extents (XLSTREAM (stream), string, offset, len);
+  return Lstream_write_with_extents (XLSTREAM (stream), string, offset, len);
 }
 
 /* Append the string of length LEN starting at OFFSET to STREAM. Preserve any
@@ -844,8 +844,9 @@ doprnt_1 (Lisp_Object stream,
 {
   Bytecount result_len = 0, begin;
   const Ibyte *newnonreloc = NILP (reloc) ? nonreloc : XSTRING_DATA (reloc);
-  void (*write_string_2) (Lisp_Object, const Ibyte *, Bytecount);
-  void (*write_lisp_string_2) (Lisp_Object, Lisp_Object, Bytecount, Bytecount);
+  Bytecount (*write_string_2) (Lisp_Object, const Ibyte *, Bytecount);
+  Bytecount (*write_lisp_string_2) (Lisp_Object, Lisp_Object, Bytecount,
+				    Bytecount);
 
   text_checking_assert (!(EQ (reloc, format_object)) || NILP (reloc));
 
@@ -964,14 +965,13 @@ doprnt_1 (Lisp_Object stream,
       text_checking_assert (realfill <= filllen);
       if (realfill)
         {
-          write_string_2 (stream, filling, realfill);
-          result_len += realfill;
+          result_len += write_string_2 (stream, filling, realfill);
           fill_cursor = filling;
         }
 
       if (NILP (reloc))
         {
-          write_string_2 (stream, newnonreloc + offset, len);
+          result_len += write_string_2 (stream, newnonreloc + offset, len);
         }
       else
         {
@@ -979,10 +979,8 @@ doprnt_1 (Lisp_Object stream,
              adjusts it such that its bytecount changes.
              2. Copy RELOC's extent information directly to this point in the
              output, do not stretch it. */
-          write_lisp_string_2 (stream, reloc, offset, len);
+          result_len += write_lisp_string_2 (stream, reloc, offset, len);
         }
-
-      result_len += len;
 
       /* Padding at end to left-justify ... */
       if (left_justify)
@@ -1007,8 +1005,7 @@ doprnt_1 (Lisp_Object stream,
           text_checking_assert (realfill < filllen);
           if (realfill)
             {
-              write_string_2 (stream, filling, realfill);
-              result_len += realfill;
+              result_len += write_string_2 (stream, filling, realfill);
             }
         }
 
@@ -1026,7 +1023,7 @@ doprnt_1 (Lisp_Object stream,
     {
       if (NILP (reloc))
         {
-          write_string_2 (stream, newnonreloc + offset, len);
+          result_len += write_string_2 (stream, newnonreloc + offset, len);
         }
       else
         {
@@ -1034,9 +1031,8 @@ doprnt_1 (Lisp_Object stream,
              adjusts it such that its bytecount changes.
              2. Copy RELOC's extent information directly to this point in the
              output, do not stretch it. */
-          write_lisp_string_2 (stream, reloc, offset, len);
+          result_len += write_lisp_string_2 (stream, reloc, offset, len);
         }
-      result_len += len;
     }
 
   return result_len;
@@ -2868,7 +2864,7 @@ emacs_doprnt (Lisp_Object stream,
    We also do not handle the $ repositioning specs; they make it harder to
    determine an upper bound on the number of specs. This can be revised if
    necessary, but it is unlikely to be that necessary on the C level.  */
-void
+Bytecount
 write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
   const CIbyte *cursor = fmt;
@@ -2890,7 +2886,7 @@ write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 
   if (speccount == 1)
     {
-      write_string_1 (stream, (const Ibyte *) fmt, len);
+      return write_string_1 (stream, (const Ibyte *) fmt, len);
     }
   else
     {
@@ -2907,26 +2903,28 @@ write_fmt_string_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
       args = alloca_array (printf_arg, nargs);
 
       get_doprnt_c_args (args, nargs, &specs, va);
-      emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, &specs, NULL,
-                    args);
+      return emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, &specs,
+			   NULL, args);
     }
 }
 
 /* Write a printf-style string to STREAM; see output_string(). Arguments are C
    doubles, longs, uints, char *s, etc, rather than uniformly Lisp_Objects. */
-void
+Bytecount
 write_fmt_string (Lisp_Object stream, const CIbyte *fmt, ...)
 {
   va_list va;
+  Bytecount result;
   va_start (va, fmt);
-  write_fmt_string_va (stream, fmt, va);
+  result = write_fmt_string_va (stream, fmt, va);
   va_end (va);
+  return result;
 }
 
 /* Write a printf-style string to STREAM, an object accepted by
    output_string(), using FMT as the format string, and taking Lisp_Object
    arguments from the va_list VA. */
-void
+Bytecount
 write_fmt_string_lisp_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
 {
   Bytecount len = strlen (fmt);
@@ -2936,15 +2934,19 @@ write_fmt_string_lisp_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
   int count = record_unwind_protect_freeing_dynarr (specs);
   Lisp_Object *largs = alloca_array (Lisp_Object, nargs);
   struct gcpro gcpro1, gcpro2;
+  Bytecount result;
 
   for (ii = 0; ii < nargs; ii++)
     largs[ii] = va_arg (va, Lisp_Object);
 
   GCPRO2 (largs[0], stream);
   gcpro1.nvars = nargs;
-  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, largs, NULL);
+  result = emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs,
+			 largs, NULL);
   UNGCPRO;
   unbind_to (count);
+
+  return result;
 }
 
 /* Write a printf-style string to STREAM, where the arguments are Lisp objects
@@ -2954,7 +2956,7 @@ write_fmt_string_lisp_va (Lisp_Object stream, const CIbyte *fmt, va_list va)
    but write_fmt_string_lisp () itself is called far more often, and since
    write_fmt_string_lisp_va is externally visible, the compiler is unlikely to
    inline it. */
-void
+Bytecount
 write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, ...)
 {
   Bytecount len = strlen (fmt);
@@ -2965,6 +2967,7 @@ write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, ...)
   Lisp_Object *largs = alloca_array (Lisp_Object, nargs);
   struct gcpro gcpro1, gcpro2;
   va_list va;
+  Bytecount result;
 
   va_start (va, fmt);
   for (ii = 0; ii < nargs; ii++)
@@ -2973,9 +2976,12 @@ write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, ...)
 
   GCPRO2 (largs[0], stream);
   gcpro1.nvars = nargs;
-  emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, largs, NULL);
+  result = emacs_doprnt (stream, (const Ibyte *) fmt, len, Qnil, specs, largs,
+			 NULL);
   UNGCPRO;
   unbind_to (count);
+
+  return result;
 }
 
 /* Output portably to stderr or its equivalent (i.e. may be a console
@@ -2993,48 +2999,55 @@ write_fmt_string_lisp (Lisp_Object stream, const CIbyte *fmt, ...)
 
    This function is safe to use even when not initialized or when dying --
    we don't do conversion in such cases. */
-
-void
+Bytecount
 stderr_out (const CIbyte *fmt, ...)
 {
+  Bytecount result;
   va_list args;
   va_start (args, fmt);
 
   if (initialized && !inhibit_non_essential_conversion_operations)
     fmt = GETTEXT (fmt);
 
-  write_fmt_string_va (Qexternal_debugging_output, fmt, args);
+  result = write_fmt_string_va (Qexternal_debugging_output, fmt, args);
   va_end (args);
+
+  return result;
 }
 
 /* Output portably to stdout or its equivalent (i.e. may be a console
    window under MS Windows).  Works like stderr_out(). */
-void
+Bytecount
 stdout_out (const CIbyte *fmt, ...)
 {
+  Bytecount result;
   va_list args;
   va_start (args, fmt);
 
   if (initialized && !inhibit_non_essential_conversion_operations)
     fmt = GETTEXT (fmt);
 
-  write_fmt_string_va (Qt, fmt, args);
+  result = write_fmt_string_va (Qt, fmt, args);
   va_end (args);
+  return result;
 }
 
 /* Write a printf-style string to standard output, where the arguments are
    Lisp_Objects. */
-void
+Bytecount
 stderr_out_lisp (const CIbyte *fmt, ...)
 {
+  Bytecount result;
   va_list va;
 
   if (initialized && !inhibit_non_essential_conversion_operations)
     fmt = GETTEXT (fmt);
 
   va_start (va, fmt);
-  write_fmt_string_lisp_va (Qexternal_debugging_output, fmt, va);
+  result = write_fmt_string_lisp_va (Qexternal_debugging_output, fmt, va);
   va_end (va);
+
+  return result;
 }
 
 /* Return a Lisp string reflecting FORMAT_NONRELOC and VARGS, where VARGS

@@ -287,7 +287,7 @@ mswindows_ensure_console_buffered (void)
 
 int mswindows_message_outputted;
 
-int
+Bytecount
 mswindows_output_console_string (const Ibyte *ptr, Bytecount len)
 {
   DWORD num_written;
@@ -303,15 +303,25 @@ mswindows_output_console_string (const Ibyte *ptr, Bytecount len)
       TO_EXTERNAL_FORMAT (DATA, (ptr, len),
 			  ALLOCA, (extptr, extlen),
 			  Qmswindows_tstr);
-      return qxeWriteConsole (mswindows_console_buffer, extptr,
-			      extlen / XETCHAR_SIZE, &num_written, NULL);
+      qxeWriteConsole (mswindows_console_buffer, extptr,
+		       extlen / XETCHAR_SIZE, &num_written, NULL);
+
+      if (num_written != (extlen / XETCHAR_SIZE))
+	{
+	  TO_INTERNAL_FORMAT (DATA, (extptr, num_written * XETCHAR_SIZE),
+			      ALLOCA, (ptr, len), Qmswindows_tstr);
+	}
+
+      return len;
     }
-  else
+
 #ifdef NON_ASCII_INTERNAL_FORMAT
 #error Do something here
 #endif
-    return WriteConsoleA (mswindows_console_buffer, (Chbyte *) ptr, len,
-			  &num_written, NULL);
+  WriteConsoleA (mswindows_console_buffer, (Chbyte *) ptr, len, &num_written,
+		 NULL);
+
+  return (Bytecount) num_written;
 }
 
 DEFUN ("mswindows-debugging-output", Fmswindows_debugging_output, 1, 1, 0, /*
