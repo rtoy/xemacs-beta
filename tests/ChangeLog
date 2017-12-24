@@ -1,3 +1,9 @@
+2017-12-24  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/mule-tests.el:
+	Call Skip-Test-Unless correctly for #'test-chars, thank you
+	Stephen Turnbull.
+
 2017-12-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/keymap-tests.el:

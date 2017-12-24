@@ -379,6 +379,7 @@ success indicating that this is unexpected."
 REASON is a description of the condition failure, and must be unique (it
 is used as a hash key).  DESCRIPTION describes the tests that were skipped.
 BODY is a sequence of expressions and may contain several tests."
+	(or body (error 'syntax-error "BODY omitted in `skip-test-unless'"))
 	`(if (not ,condition)
 	     (let ((count (gethash ,reason skipped-test-reasons)))
 	       (puthash ,reason (if (null count) 1 (1+ count))

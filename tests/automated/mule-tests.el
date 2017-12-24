@@ -85,6 +85,7 @@ the Assert macro checks for correctness."
  ;; and the string means I run out of memory when I attempt to run this.
  (<= char-code-limit #x200000) 
  "CHAR-CODE-LIMIT is impractically large"
+ "check that all existing characters can be inserted into a buffer"
  ;; Run #'test-chars in byte-compiled mode only.
  (and (compiled-function-p (symbol-function 'test-chars)) (test-chars t)))
 
