@@ -380,7 +380,13 @@ a = autoloaded, b = byte-compiled, i = internal, l = lambda, m = macro.\n\n"
 		      (string-match "\\`\n+" doc))
 		 (setq doc (substring doc (match-end 0))))
 	     (insert-face (if doc
-			      (concat " - " (subseq doc (if userp 1 0)
+			      (concat " - " (subseq doc
+						    (or
+						     (and userp 
+							  (position ?* doc
+								    :test-not
+								    #'eq))
+						     0)
                                                     (position ?\n doc)))
 			    " - Not documented.")
 			  'hyper-apropos-documentation)))
