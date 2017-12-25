@@ -1,3 +1,9 @@
+2017-12-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* hyper-apropos.el (hyper-apropos-grok-variables):
+	User variables' docstrings do not necessarily start with *, check
+	for one before removing the first character from the output.
+
 2017-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* test-harness.el (test-harness-from-buffer):
