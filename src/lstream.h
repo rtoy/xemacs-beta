@@ -572,7 +572,7 @@ struct fixed_buffer_stream
   } lname##u;                                                           \
   Lisp_Object lname = wrap_pointer_1 (&(lname##u.l))                    \
 
-#define INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM(lname, buf, size) do      \
+#define INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM(lname, buf, bsize) do     \
     {                                                                   \
       memset (lname##u.s, 0, max (sizeof (lname##u.s),                  \
                                   sizeof (lname##u.l)));                \
@@ -583,7 +583,7 @@ struct fixed_buffer_stream
       lname##u.l.flags = LSTR_IS_OPEN;                                  \
       lname##u.l.flags |= LSTR_WRITE;                                   \
       FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->outbuf = buf;           \
-      FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->size = size;            \
+      FIXED_BUFFER_STREAM_DATA (&(lname##u.l))->size = bsize;           \
     } while (0)
 
 #endif

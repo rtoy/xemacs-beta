@@ -5663,7 +5663,7 @@ EXFUN (Flookup_key, 3);
 EXFUN (Fmake_sparse_keymap, 1);
 EXFUN (Fset_keymap_parents, 2);
 
-void where_is_to_char (Lisp_Object, Eistring *);
+Bytecount where_is_to_Ibyte (Lisp_Object, Ibyte *, Bytecount);
 
 /* Defined in lread.c */
 EXFUN (Fread, 1);

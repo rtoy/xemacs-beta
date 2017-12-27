@@ -75,6 +75,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <config.h>
 #include "lisp.h"
 
+#define EXPOSE_FIXED_BUFFER_INTERNALS 1
+#include "lstream.h"
 #include "blocktype.h"
 #include "buffer.h"
 #include "commands.h"
@@ -85,7 +87,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "frame-impl.h"
 #include "insdel.h"		/* for buffer_reset_changes */
 #include "keymap.h"
-#include "lstream.h"
 #include "macros.h"		/* for defining_keyboard_macro */
 #include "menubar.h"            /* #### for evil kludges. */
 #include "process.h"
@@ -481,11 +482,11 @@ event_stream_handle_magic_event (Lisp_Event *event)
   event_stream->handle_magic_event_cb (event);
 }
 
-void
+Bytecount
 event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
 {
   check_event_stream_ok ();
-  event_stream->format_magic_event_cb (event, pstream);
+  return event_stream->format_magic_event_cb (event, pstream);
 }
 
 int
@@ -644,9 +645,9 @@ echo_key_event (struct command_builder *command_builder,
 		Lisp_Object event)
 {
   /* This function can GC */
-  DECLARE_EISTRING_MALLOC (buf);
   Bytecount buf_fill_pointer = command_builder->echo_buf_fill_pointer;
-  Bytecount len;
+  Bytecount len = 0;
+  DECLARE_STACK_FIXED_BUFFER_LSTREAM (stream);
 
   if (buf_fill_pointer < 0)
     {
@@ -654,28 +655,35 @@ echo_key_event (struct command_builder *command_builder,
       clear_echo_area (selected_frame (), Qnil, 0);
     }
 
-  format_event_object (buf, event, 1);
-  len = eilen (buf);
-
-  if (NILP (command_builder->echo_buf) ||
-      (len + buf_fill_pointer + 3 > XSTRING_LENGTH (command_builder->echo_buf)))
+  if (NILP (command_builder->echo_buf))
     {
-      eifree (buf);
       return;
     }
 
-  eicat_ascii (buf, " - ");
+  INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM
+    (stream, XSTRING_DATA (command_builder->echo_buf) + buf_fill_pointer,
+     XSTRING_LENGTH (command_builder->echo_buf) - buf_fill_pointer);
 
-  memcpy (XSTRING_DATA (command_builder->echo_buf) + buf_fill_pointer,
-          eidata (buf), eilen (buf));
+  len += format_event_object (stream, event, 1);
+
+  if (len + buf_fill_pointer + 3 > XSTRING_LENGTH (command_builder->echo_buf))
+    {
+      memset (XSTRING_DATA (command_builder->echo_buf) + buf_fill_pointer, 0,
+	      XSTRING_LENGTH (command_builder->echo_buf) - buf_fill_pointer);
+      return; /* Not enough space. */
+    }
+
+  write_ascstring (stream, " - ");
+
   init_string_ascii_begin (command_builder->echo_buf);
   bump_string_modiff (command_builder->echo_buf);
   sledgehammer_check_ascii_begin (command_builder->echo_buf);
 
-  command_builder->echo_buf_end = buf_fill_pointer + eilen (buf);
+  command_builder->echo_buf_end
+    = buf_fill_pointer + len + qxestrlen ((const Ibyte *) " - ");
   /* Including the first space of the trailing " - ". */
-  command_builder->echo_buf_fill_pointer = buf_fill_pointer + len + 1;
-  eifree (buf);
+  command_builder->echo_buf_fill_pointer = buf_fill_pointer + len
+    + ichar_len (' ');
 }
 
 static void

@@ -4279,11 +4279,14 @@ emacs_mswindows_next_event (Lisp_Event *emacs_event)
   Fdeallocate_event (event);
 }
 
-static void
+static Bytecount
 emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
 				    Lisp_Object pstream)
 {
-#define FROB(msg) case msg: write_ascstring (pstream, "type=" #msg); break
+  Bytecount result = 0;
+#define FROB(msg) case msg:				\
+  result += write_ascstring (pstream, "type=" #msg);	\
+  break
 
   switch (EVENT_MAGIC_MSWINDOWS_EVENT (emacs_event))
     {
@@ -4300,9 +4303,11 @@ emacs_mswindows_format_magic_event (Lisp_Event *emacs_event,
   
   if (!NILP (EVENT_CHANNEL (emacs_event)))
     {
-      write_ascstring (pstream, " ");
-      print_internal (EVENT_CHANNEL (emacs_event), pstream, 1);
+      result += write_fmt_string (pstream, " %S",
+				  EVENT_CHANNEL (emacs_event));
     }
+
+  return result;
 }
 
 static int

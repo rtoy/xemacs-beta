@@ -247,11 +247,12 @@ emacs_tty_next_event (Lisp_Event *emacs_event)
     }
 }
 
-static void
+static Bytecount
 emacs_tty_format_magic_event (Lisp_Event *UNUSED (emacs_event),
 			      Lisp_Object UNUSED (pstream))
 {
   /* Nothing to do currently */
+  return 0;
 }
 
 static int

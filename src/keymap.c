@@ -27,6 +27,8 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <config.h>
 #include "lisp.h"
 
+#define EXPOSE_FIXED_BUFFER_INTERNALS 1
+#include "lstream.h"
 #include "buffer.h"
 #include "bytecode.h"
 #include "console-impl.h"
@@ -3564,14 +3566,13 @@ of a key read from the user rather than a character from a buffer.
 */
        (key))
 {
+  Lisp_Object stream = make_resizing_buffer_output_stream ();
+
   if (SYMBOLP (key))
     key = Fcons (key, Qnil); /* sleaze sleaze */
 
   if (EVENTP (key) || CHAR_OR_CHAR_INTP (key))
     {
-      DECLARE_EISTRING_MALLOC (buf);
-      Lisp_Object str;
-      
       if (!EVENTP (key))
 	{
 	  Lisp_Object event = Fmake_event (Qnil, Qnil);
@@ -3579,51 +3580,47 @@ of a key read from the user rather than a character from a buffer.
 	  character_to_event (XCHAR (key), XEVENT (event),
 			      XCONSOLE (Vselected_console),
 			      high_bit_is_meta, 1);
-	  format_event_object (buf, event, 1);
+	  format_event_object (stream, event, 1);
 	  Fdeallocate_event (event);
 	}
       else
-	format_event_object (buf, key, 1);
-      str = eimake_string (buf);
-      eifree (buf);
-      return str;
+	format_event_object (stream, key, 1);
+
+      return resizing_buffer_to_lisp_string (XLSTREAM (stream));
     }
 
   if (CONSP (key))
     {
-      DECLARE_EISTRING (bufp);
-
       EXTERNAL_LIST_LOOP_3 (keysym, key, rest)
 	{
-	  if (EQ (keysym, Qcontrol))    eicat_ascii (bufp, "C-");
-	  else if (EQ (keysym, Qctrl))  eicat_ascii (bufp, "C-");
-	  else if (EQ (keysym, Qmeta))  eicat_ascii (bufp, "M-");
-	  else if (EQ (keysym, Qsuper)) eicat_ascii (bufp, "S-");
-	  else if (EQ (keysym, Qhyper)) eicat_ascii (bufp, "H-");
-	  else if (EQ (keysym, Qalt))	eicat_ascii (bufp, "A-");
-	  else if (EQ (keysym, Qshift)) eicat_ascii (bufp, "Sh-");
+	  if (EQ (keysym, Qcontrol))    write_ascstring (stream, "C-");
+	  else if (EQ (keysym, Qctrl))  write_ascstring (stream, "C-");
+	  else if (EQ (keysym, Qmeta))  write_ascstring (stream, "M-");
+	  else if (EQ (keysym, Qsuper)) write_ascstring (stream, "S-");
+	  else if (EQ (keysym, Qhyper)) write_ascstring (stream, "H-");
+	  else if (EQ (keysym, Qalt))	write_ascstring (stream, "A-");
+	  else if (EQ (keysym, Qshift)) write_ascstring (stream, "Sh-");
 	  else if (CHAR_OR_CHAR_INTP (keysym))
-	    eicat_ch (bufp, XCHAR_OR_CHAR_INT (keysym));
+	    {
+	      Ibyte str[MAX_ICHAR_LEN];
+
+	      write_string_1 (stream, str,
+			      set_itext_ichar (str,
+					       XCHAR_OR_CHAR_INT (keysym)));
+	    }
 	  else
 	    {
 	      CHECK_SYMBOL (keysym);
-#if 0                           /* This is bogus */
-	      if (EQ (keysym, QKlinefeed))	 eicat_ascii (bufp, "LFD");
-	      else if (EQ (keysym, QKtab))	 eicat_ascii (bufp, "TAB");
-	      else if (EQ (keysym, QKreturn))	 eicat_ascii (bufp, "RET");
-	      else if (EQ (keysym, QKescape))	 eicat_ascii (bufp, "ESC");
-	      else if (EQ (keysym, QKdelete))	 eicat_ascii (bufp, "DEL");
-	      else if (EQ (keysym, QKspace))	 eicat_ascii (bufp, "SPC");
-	      else if (EQ (keysym, QKbackspace)) eicat_ascii (bufp, "BS");
-	      else
-#endif
-		eicat_lstr (bufp, XSYMBOL (keysym)->name);
+	      write_lisp_string (stream, XSYMBOL (keysym)->name, 0,
+				 XSTRING_LENGTH (XSYMBOL (keysym)->name));
 	      if (!NILP (XCDR (rest)))
 		invalid_argument ("Invalid key description", key);
 	    }
 	}
-      return eimake_string (bufp);
+
+      return resizing_buffer_to_lisp_string (XLSTREAM (stream));
     }
+
   return Fsingle_key_description
     (wrong_type_argument (intern ("char-or-event-p"), key));
 }
@@ -3742,7 +3739,7 @@ of a character from a buffer rather than a key read from the user.
 
 static Lisp_Object
 where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
-                   Lisp_Object firstonly, Eistring *target_buffer);
+                   Lisp_Object firstonly, Lisp_Object target_buffer);
 
 DEFUN ("where-is-internal", Fwhere_is_internal, 1, 5, 0, /*
 Return list of keys that invoke DEFINITION in KEYMAPS.
@@ -3813,22 +3810,23 @@ argument to KEYMAPS).
       return Qnil;
     }
 
-  return where_is_internal (definition, gubbish, nmaps, firstonly, 0);
+  return where_is_internal (definition, gubbish, nmaps, firstonly, Qnil);
 }
 
 /* This function is like
    (key-description (where-is-internal definition nil t))
-   except that it writes its output into a (char *) buffer that you
-   provide; it doesn't cons (or allocate memory) at all, so it's
-   very fast.  This is used by menubar.c.
- */
-void
-where_is_to_char (Lisp_Object definition, Eistring *buffer)
+
+   except that it writes its output into an (Ibyte *) buffer that you
+   provide; it doesn't allocate heap memory for this, so it's fast.  This is
+   used by GUI code when generating menu entries. */
+Bytecount
+where_is_to_Ibyte (Lisp_Object definition, Ibyte *buffer, Bytecount bufsize)
 {
   /* This function can GC */
-  Lisp_Object maps[100];
+  Lisp_Object maps[100], result;
   Lisp_Object *gubbish = maps;
   int nmaps;
+  DECLARE_STACK_FIXED_BUFFER_LSTREAM (stream);
 
   /* Get keymaps as an array */
   nmaps = get_relevant_keymaps (Qnil, Qnil, countof (maps), gubbish);
@@ -3838,9 +3836,37 @@ where_is_to_char (Lisp_Object definition, Eistring *buffer)
       nmaps = get_relevant_keymaps (Qnil, Qnil, nmaps, gubbish);
     }
 
-  where_is_internal (definition, maps, nmaps, Qt, buffer);
-}
+  INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM (stream, buffer, bufsize);
+  
+  result = where_is_internal (definition, maps, nmaps, Qt, stream);
 
+  if (NILP (result))
+    {
+      return 0;
+    }
+
+  if (XFIXNUM (result) >= bufsize)
+    {
+      Ibyte *bufp = buffer + bufsize;
+      unsigned jj = 0;
+
+      while (jj < sizeof (" ..."))
+        {
+          DEC_IBYTEPTR (bufp);
+          jj++;
+        }
+      
+      bufp += set_itext_ichar (bufp, ' ');
+      bufp += set_itext_ichar (bufp, '.');
+      bufp += set_itext_ichar (bufp, '.');
+      bufp += set_itext_ichar (bufp, '.');
+      bufp += set_itext_ichar (bufp, 0);
+      return bufp - ichar_len (0) - buffer;
+    }
+
+  return XREALFIXNUM (result); /* Return the amount of space it would have
+                                  taken, on the model of snprintf(). */
+}
 
 static Lisp_Object
 raw_keys_to_keys (Lisp_Key_Data *keys, int count)
@@ -3851,11 +3877,11 @@ raw_keys_to_keys (Lisp_Key_Data *keys, int count)
   return result;
 }
 
-
-static void
-format_raw_keys (Lisp_Key_Data *keys, int count, Eistring *buf)
+static Bytecount
+format_raw_keys (Lisp_Key_Data *keys, int count, Lisp_Object stream)
 {
   int i;
+  Bytecount result = 0;
   Lisp_Object event = Fmake_event (Qnil, Qnil);
   XSET_EVENT_TYPE (event, key_press_event);
   XSET_EVENT_CHANNEL (event, Vselected_console);
@@ -3863,11 +3889,15 @@ format_raw_keys (Lisp_Key_Data *keys, int count, Eistring *buf)
     {
       XSET_EVENT_KEY_KEYSYM (event, keys[i].keysym);
       XSET_EVENT_KEY_MODIFIERS (event, KEY_DATA_MODIFIERS (&keys[i]));
-      format_event_object (buf, event, 1);
+      result += format_event_object (stream, event, 1);
       if (i < count - 1)
-	eicat_ascii (buf, " ");
+	{
+	  result += write_ascstring (stream, " ");
+	}
     }
   Fdeallocate_event (event);
+
+  return result;
 }
 
 
@@ -3887,7 +3917,7 @@ format_raw_keys (Lisp_Key_Data *keys, int count, Eistring *buf)
    (keys_so_far is a global buffer and the keys_count arg says how much
    of it we're currently interested in.)
 
-   If target_buffer is provided, then we write a key-description into it,
+   If target_buffer is non-nil, then we write a key-description into it,
    to avoid consing a string.  This only works with firstonly on.
    */
 
@@ -3899,7 +3929,7 @@ struct where_is_closure
     int firstonly;
     int keys_count;
     int modifiers_so_far;
-    Eistring *target_buffer;
+    Lisp_Object target_buffer;
     Lisp_Key_Data *keys_so_far;
     int keys_so_far_total_size;
     int keys_so_far_malloced;
@@ -3916,7 +3946,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
   const int firstonly = c->firstonly;
   const int keys_count = c->keys_count;
   const int modifiers_so_far = c->modifiers_so_far;
-  Eistring *target_buffer = c->target_buffer;
+  Lisp_Object target_buffer = c->target_buffer;
   Lisp_Object keys = Fgethash (definition,
                                XKEYMAP (map)->inverse_table,
                                Qnil);
@@ -3957,11 +3987,14 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 	    }
 
 	  /* OK, the key is for real */
-	  if (target_buffer)
+	  if (!NILP (target_buffer))
 	    {
+	      Bytecount blen
+		= format_raw_keys (so_far, keys_count + 1, target_buffer);
+	      /* Don't include the trailing ?\x00 in the bytecount. */
+	      write_string_1 (target_buffer, (const Ibyte *) "\0", 1);
 	      assert (firstonly);
-	      format_raw_keys (so_far, keys_count + 1, target_buffer);
-	      return Qone;
+	      return make_fixnum (blen);
 	    }
 	  else if (firstonly)
 	    return raw_keys_to_keys (so_far, keys_count + 1);
@@ -4072,7 +4105,7 @@ where_is_recursive_mapper (Lisp_Object map, void *arg)
 
 static Lisp_Object
 where_is_internal (Lisp_Object definition, Lisp_Object *maps, int nmaps,
-                   Lisp_Object firstonly, Eistring *target_buffer)
+                   Lisp_Object firstonly, Lisp_Object target_buffer)
 {
   /* This function can GC */
   Lisp_Object result = Qnil;

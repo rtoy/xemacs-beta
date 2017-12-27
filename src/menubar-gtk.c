@@ -736,20 +736,19 @@ menu_descriptor_to_widget_1 (Lisp_Object descr, GtkAccelGroup* accel_group)
 	    }
 	  else if (SYMBOLP (callback))
 	    {
-	      DECLARE_EISTRING_MALLOC (buf);
-
+	      Ibyte buf[64];
 	      /* #### Warning, dependency here on current_buffer and point */
-	      where_is_to_char (callback, buf);
+	      Bytecount blen
+		= where_is_to_Ibyte (callback, buf, sizeof (buf));
 
-	      if (eilen (buf) > 0)
-		keys = eimake_string (buf);
+	      if (blen > 0)
+		{
+		  keys = make_string (buf, blen);
+		}
 	      else
 		{
-		  
 		  keys = Qnil;
 		}
-
-	      eifree (buf);
 	    }
 	}
 

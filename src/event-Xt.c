@@ -2837,13 +2837,17 @@ emacs_Xt_force_event_pending (struct frame *f)
      event. */
 }
 
-static void
+static Bytecount
 emacs_Xt_format_magic_event (Lisp_Event *event, Lisp_Object pstream)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (event));
   if (CONSOLE_X_P (XCONSOLE (console)))
-    write_ascstring
-      (pstream, x_event_name ((EVENT_MAGIC_X_EVENT (event)).type));
+    {
+      return write_ascstring
+	(pstream, x_event_name ((EVENT_MAGIC_X_EVENT (event)).type));
+    }
+
+  return 0;
 }
 
 static int
