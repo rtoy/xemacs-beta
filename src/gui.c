@@ -550,13 +550,13 @@ gui_item_display_flush_right (Lisp_Object gui_item)
   /* See if we can derive keys out of callback symbol */
   if (SYMBOLP (pgui_item->callback))
     {
-      DECLARE_EISTRING_MALLOC (buf);
-      Lisp_Object str;
-      
-      where_is_to_char (pgui_item->callback, buf);
-      str = eimake_string (buf);
-      eifree (buf);
-      return str;
+      Ibyte buf[64];
+      Bytecount blen
+	= where_is_to_Ibyte (pgui_item->callback, buf, sizeof (buf));
+      if (blen > 0)
+	{
+	  return make_string (buf, blen);
+	}
     }
 
   /* No keys - no right flush display */

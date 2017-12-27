@@ -487,14 +487,16 @@ button_item_to_widget_value (Lisp_Object gui_object_instance,
     }
   else if (SYMBOLP (pgui->callback))	/* Show the binding of this command. */
     {
-      DECLARE_EISTRING_MALLOC (buf);
+      Ibyte buf[64];
       /* #### Warning, dependency here on current_buffer and point */
-      where_is_to_char (pgui->callback, buf);
-      if (eilen (buf) > 0)
-	wv->key = ITEXT_TO_EXTERNAL_MALLOC (eidata (buf), Qlwlib_encoding);
+      Bytecount blen = where_is_to_Ibyte (pgui->callback, buf, sizeof (buf));
+      if (blen > 0)
+	{
+	  TO_EXTERNAL_FORMAT (DATA, (buf, blen), C_STRING_MALLOC, wv->key,
+			      Qlwlib_encoding);			      
+	}
       else
 	wv->key = 0;
-      eifree (buf);
     }
 
   CHECK_SYMBOL (pgui->style);

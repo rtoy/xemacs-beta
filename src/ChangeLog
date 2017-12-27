@@ -1,3 +1,70 @@
+2017-12-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Remove use of Eistring malloc buffers, have the corresponding
+	functions write to Lisp streams instead, as they were usually
+	ultimately doing anyway.
+	
+	* event-Xt.c (emacs_Xt_format_magic_event):
+	Return a Bytecount here, helpful for its use as part of the
+	write-to-Lisp-stream infrastructure.
+	* event-gtk.c (emacs_gtk_format_magic_event):
+	Ditto.
+	* event-msw.c (emacs_mswindows_format_magic_event):
+	Dito.
+	* event-stream.c:
+	* event-stream.c (event_stream_format_magic_event):
+	Ditto.
+	* event-stream.c (echo_key_event):
+	Don't use an Eistring for the constructed string to echo the
+	event, build it directly into command_builder->echo_buf, using a
+	fixed_buffer Lisp output stream.
+	* event-tty.c (emacs_tty_format_magic_event):
+	Return zero, not void.
+	* events.c (print_event_1): Removed.
+	This mainly existed to provide a place to declare an Eistring. 
+	* events.c (print_event):
+	Use write_ascstring() and format_event_object() as appropriate.
+	* events.c (format_event_object):
+	Return a Bytecount, and print into a Lisp stream, rather than an
+	Eistring.
+	* events.h:
+	Update the declaration of format_magic_event_cb(),
+	format_event_object(), event_stream_format_magic_event().
+	* events.h (struct event_stream):
+	* gui-x.c (button_item_to_widget_value):
+	Don't use an Eistring here, use a small Ibyte buffer; there's no
+	value to generating a long strong.
+	* gui.c (gui_item_display_flush_right):
+	Ditto.
+	* keymap.c:
+	* keymap.c (EXPOSE_FIXED_BUFFER_INTERNALS):
+	#define this when #including lstream.h, so where_is_to_Ibyte() can
+	create a stack-based Lstream object.
+	* keymap.c (Fsingle_key_description):
+	Use a resizing_buffer Lisp stream in this function rather than an
+	Eistring.
+	* keymap.c (Fwhere_is_internal):
+	Update the call to where_is_internal().
+	* keymap.c (where_is_to_Ibyte): Renamed from where_is_to_char().
+	Updated to use a stack fixed buffer lstream, and to return the
+	number of bytes that would have been written to the buffer, on the
+	model of emacs_asnprintf().
+	* keymap.c (raw_keys_to_keys):
+	Format into a stream, rather than an Eistring.
+	* keymap.c (format_raw_keys):
+	* keymap.c (where_is_recursive_mapper):
+	When TARGET-BUFFER is non-nil, format into it with
+	format_raw_keys(). Return the bytecount needed for them.
+	* lisp.h:
+	Rename and update the declaration of where_is_to_char() ->
+	where_is_to_Ibyte().
+	* lstream.h:
+	* lstream.h (INIT_STACK_FIXED_BUFFER_OUTPUT_STREAM):
+	TThere was an issue in the name of the third argument to this
+	macro, correct it.
+	* menubar-gtk.c (menu_descriptor_to_widget_1):
+	Limit the printed name of this callback to 64 characters.
+
 2017-12-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* console-msw.c (mswindows_output_console_string):

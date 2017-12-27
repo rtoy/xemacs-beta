@@ -44,7 +44,7 @@ struct event_stream
   int  (*event_pending_p)	(int);
   void (*next_event_cb)		(Lisp_Event *);
   void (*handle_magic_event_cb)	(Lisp_Event *);
-  void (*format_magic_event_cb)	(Lisp_Event *, Lisp_Object pstream);
+  Bytecount (*format_magic_event_cb)	(Lisp_Event *, Lisp_Object pstream);
   int (*compare_magic_event_cb) (Lisp_Event *, Lisp_Event *);
   Hashcode (*hash_magic_event_cb)(Lisp_Event *);
   int  (*add_timeout_cb)	(EMACS_TIME);
@@ -956,8 +956,8 @@ typedef enum character_to_event_meta_behavior
 } character_to_event_meta_behavior;
 
 /* from events.c */
-void format_event_object (Eistring *buf, Lisp_Object event, int brief);
-/*void format_event_data_object (Eistring *buf, Lisp_Object data, int brief);*/
+Bytecount format_event_object (Lisp_Object printcharfun, Lisp_Object event,
+			       Boolint brief);
 void character_to_event (Ichar, Lisp_Event *, struct console *,
                          character_to_event_meta_behavior meta_flag,
                          int do_backspace_mapping);
@@ -1004,7 +1004,8 @@ void enqueue_dispatch_event (Lisp_Object event);
 Lisp_Object dequeue_dispatch_event (void);
 void enqueue_magic_eval_event (void (*fun) (Lisp_Object), Lisp_Object object);
 void event_stream_handle_magic_event (Lisp_Event *event);
-void event_stream_format_magic_event (Lisp_Event *event, Lisp_Object pstream);
+Bytecount event_stream_format_magic_event (Lisp_Event *event,
+					   Lisp_Object pstream);
 int event_stream_compare_magic_event (Lisp_Event *e1, Lisp_Event *e2);
 Hashcode event_stream_hash_magic_event (Lisp_Event *e);
 void event_stream_select_console   (struct console *con);

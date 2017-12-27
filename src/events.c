@@ -288,16 +288,6 @@ mark_event (Lisp_Object obj)
 }
 
 static void
-print_event_1 (const Ascbyte *str, Lisp_Object obj, Lisp_Object printcharfun)
-{
-  DECLARE_EISTRING_MALLOC (ei);
-  write_ascstring (printcharfun, str);
-  format_event_object (ei, obj, 0);
-  write_eistring (printcharfun, ei);
-  eifree (ei);
-}
-
-static void
 print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	     int UNUSED (escapeflag))
 {
@@ -307,17 +297,21 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
   switch (XEVENT (obj)->event_type)
     {
     case key_press_event:
-      print_event_1 ("#<keypress-event ", obj, printcharfun);
+      write_ascstring (printcharfun, "#<keypress-event ");
+      format_event_object (printcharfun, obj, 0);
       break;
     case button_press_event:
-      print_event_1 ("#<buttondown-event ", obj, printcharfun);
+      write_ascstring (printcharfun, "#<buttondown-event ");
+      format_event_object (printcharfun, obj, 0);
       break;
     case button_release_event:
-      print_event_1 ("#<buttonup-event ", obj, printcharfun);
+      write_ascstring (printcharfun, "#<buttonup-event ");
+      format_event_object (printcharfun, obj, 0);
       break;
     case magic_event:
     case magic_eval_event:
-      print_event_1 ("#<magic-event ", obj, printcharfun);
+      write_ascstring (printcharfun, "#<magic-event ");
+      format_event_object (printcharfun, obj, 0);
       break;
     case pointer_motion_event:
       {
@@ -327,39 +321,37 @@ print_event (Lisp_Object obj, Lisp_Object printcharfun,
 	Vy = Fevent_y_pixel (obj);
 	assert (FIXNUMP (Vy));
 	write_fmt_string (printcharfun, "#<motion-event %ld, %ld",
-			  (long) XFIXNUM (Vx), (long) XFIXNUM (Vy));
+			  XFIXNUM (Vx), XFIXNUM (Vy));
 	break;
       }
     case process_event:
-	write_fmt_string_lisp (printcharfun, "#<process-event %S",
-			       XEVENT_PROCESS_PROCESS (obj));
-	break;
+      write_fmt_string_lisp (printcharfun, "#<process-event %S",
+			     XEVENT_PROCESS_PROCESS (obj));
+      break;
     case timeout_event:
-	write_fmt_string_lisp (printcharfun, "#<timeout-event %S",
-			       XEVENT_TIMEOUT_OBJECT (obj));
-	break;
+      write_fmt_string_lisp (printcharfun, "#<timeout-event %S",
+			     XEVENT_TIMEOUT_OBJECT (obj));
+      break;
     case empty_event:
-	write_ascstring (printcharfun, "#<empty-event");
-	break;
+      write_ascstring (printcharfun, "#<empty-event");
+      break;
     case misc_user_event:
-	write_fmt_string_lisp (printcharfun, "#<misc-user-event (%S",
-			       XEVENT_MISC_USER_FUNCTION (obj));
-	write_fmt_string_lisp (printcharfun, " %S)",
-			       XEVENT_MISC_USER_OBJECT (obj));
-	break;
+      write_fmt_string_lisp (printcharfun, "#<misc-user-event (%S %S)",
+			     XEVENT_MISC_USER_FUNCTION (obj),
+			     XEVENT_MISC_USER_OBJECT (obj));
+      break;
     case eval_event:
-	write_fmt_string_lisp (printcharfun, "#<eval-event (%S",
-			       XEVENT_EVAL_FUNCTION (obj));
-	write_fmt_string_lisp (printcharfun, " %S)",
-			       XEVENT_EVAL_OBJECT (obj));
-	break;
+      write_fmt_string_lisp (printcharfun, "#<eval-event (%S %S)",
+			     XEVENT_EVAL_FUNCTION (obj),
+			     XEVENT_EVAL_OBJECT (obj));
+      break;
     case dead_event:
-	write_ascstring (printcharfun, "#<DEALLOCATED-EVENT");
-	break;
+      write_ascstring (printcharfun, "#<DEALLOCATED-EVENT");
+      break;
     default:
-	write_ascstring (printcharfun, "#<UNKNOWN-EVENT-TYPE");
-	break;
-      }
+      write_ascstring (printcharfun, "#<UNKNOWN-EVENT-TYPE");
+      break;
+    }
   write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
 }
 
@@ -1491,15 +1483,16 @@ key_sequence_to_event_chain (Lisp_Object seq)
 }
 
 
-/* Concatenate a string description of EVENT onto the end of BUF.  If
-   BRIEF, use short forms for keys, e.g. C- instead of control-. */
-
-void
-format_event_object (Eistring *buf, Lisp_Object event, int brief)
+/* Write a string description of EVENT to PRINTCHARFUN.  If BRIEF is
+   non-zero, use short forms for keys, e.g. C- instead of control-. */
+Bytecount
+format_event_object (Lisp_Object printcharfun, Lisp_Object event,
+		     Boolint brief)
 {
-  int mouse_p = 0;
+  Boolint mouse_p = 0;
   int mod = 0;
   Lisp_Object key;
+  Bytecount result = 0;
 
   switch (XEVENT_TYPE (event))
     {
@@ -1512,7 +1505,7 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
             mod & (XEMACS_MOD_CONTROL | XEMACS_MOD_META | XEMACS_MOD_SUPER |
 		   XEMACS_MOD_HYPER))
 	{
-	  int k = XCHAR (key);
+	  Ichar k = XCHAR (key);
 	  if (k >= 'a' && k <= 'z')
 	    key = make_char (k - ('a' - 'A'));
 	  else if (k >= 'A' && k <= 'Z')
@@ -1532,33 +1525,48 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
       }
     case magic_event:
       {
-	Lisp_Object stream;
-	struct gcpro gcpro1;
-	GCPRO1 (stream);
-
-	stream = make_resizing_buffer_output_stream ();
-	event_stream_format_magic_event (XEVENT (event), stream);
-	Lstream_flush (XLSTREAM (stream));
-	eicat_raw (buf, resizing_buffer_stream_ptr (XLSTREAM (stream)),
-		   Lstream_byte_count (XLSTREAM (stream)));
-	Lstream_delete (XLSTREAM (stream));
-	UNGCPRO;
-	return;
+	return event_stream_format_magic_event (XEVENT (event),
+						printcharfun);
       }
-    case magic_eval_event:	eicat_ascii (buf, "magic-eval"); return;
-    case pointer_motion_event:	eicat_ascii (buf, "motion");     return;
-    case misc_user_event:	eicat_ascii (buf, "misc-user");  return;
-    case eval_event:		eicat_ascii (buf, "eval");	     return;
-    case process_event:		eicat_ascii (buf, "process");    return;
-    case timeout_event:		eicat_ascii (buf, "timeout");    return;
-    case empty_event:		eicat_ascii (buf, "empty");	     return;
-    case dead_event:		eicat_ascii (buf, "DEAD-EVENT"); return;
+    case magic_eval_event:
+      {
+	return write_ascstring (printcharfun, "magic-eval");
+      }
+    case pointer_motion_event:
+      {
+	return write_ascstring (printcharfun, "motion");
+      }
+    case misc_user_event:
+      {
+	return write_ascstring (printcharfun, "misc-user");
+      }
+    case eval_event:
+      {
+	return write_ascstring (printcharfun, "eval");
+      }
+    case process_event:
+      {
+	return write_ascstring (printcharfun, "process");
+      }
+    case timeout_event:
+      {
+	return write_ascstring (printcharfun, "timeout");
+      }
+    case empty_event:
+      {
+	return write_ascstring (printcharfun, "empty");
+      }
+    case dead_event:
+      {
+	return write_ascstring (printcharfun, "DEAD-EVENT");
+      }
     default:
       ABORT ();
-      return;
+      return 0;
     }
-#define modprint(x,y) \
-  do { if (brief) eicat_ascii (buf, (y)); else eicat_ascii (buf, (x)); } while (0)
+#define modprint(x,y)							\
+  do { if (brief) result += write_ascstring (printcharfun, (y));	\
+    else result += write_ascstring (printcharfun, (x)); } while (0)
   if (mod & XEMACS_MOD_CONTROL) modprint ("control-", "C-");
   if (mod & XEMACS_MOD_META)    modprint ("meta-",    "M-");
   if (mod & XEMACS_MOD_SUPER)   modprint ("super-",   "S-");
@@ -1567,14 +1575,18 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
   if (mod & XEMACS_MOD_SHIFT)   modprint ("shift-",   "Sh-");
   if (mouse_p)
     {
-      eicat_ascii (buf, "button");
+      result += write_ascstring (printcharfun, "button");
       --mouse_p;
     }
 
 #undef modprint
 
   if (CHARP (key))
-    eicat_ch (buf, XCHAR (key));
+    {
+      Ibyte str[MAX_ICHAR_LEN];
+      result += write_string_1 (printcharfun, str,
+				set_itext_ichar (str, XCHAR (key)));
+    }
   else if (SYMBOLP (key))
     {
       const Ascbyte *str = 0;
@@ -1589,14 +1601,21 @@ format_event_object (Eistring *buf, Lisp_Object event, int brief)
 	  else if (EQ (key, QKbackspace)) str = "BS";
 	}
       if (str)
-	eicat_ascii (buf, str);
+	{
+	  result += write_ascstring (printcharfun, str);
+	}
       else
-	eicat_lstr (buf, XSYMBOL (key)->name);
+	{
+	  result += write_lisp_string (printcharfun, XSYMBOL (key)->name, 0,
+				       XSTRING_LENGTH (XSYMBOL (key)->name));
+	}
     }
   else
     ABORT ();
   if (mouse_p)
-    eicat_ascii (buf, "up");
+    result += write_ascstring (printcharfun, "up");
+
+  return result;
 }
 
 void

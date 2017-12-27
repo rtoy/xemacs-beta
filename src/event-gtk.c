@@ -310,14 +310,17 @@ handle_scroll_event (struct frame *frame, GdkEvent *event)
   enqueue_dispatch_event (emacs_event);
 }
 
-static void
+static Bytecount
 emacs_gtk_format_magic_event (Lisp_Event *emacs_event, Lisp_Object pstream)
 {
   Lisp_Object console = CDFW_CONSOLE (EVENT_CHANNEL (emacs_event));
   if (CONSOLE_GTK_P (XCONSOLE (console)))
-    write_cistring
-      (pstream,
-       gtk_event_name (EVENT_MAGIC_GDK_EVENT (emacs_event).type));
+    {
+      return write_cistring
+	(pstream,
+	 gtk_event_name (EVENT_MAGIC_GDK_EVENT (emacs_event).type));
+    }
+  return 0;
 }
 
 static int
