@@ -464,7 +464,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
       if (print_unbuffered)
 	Lstream_flush (XLSTREAM (function));
 
-      RETURN_UNGCPRO (result);
+      UNGCPRO;
+      return result;
     }
   else if (BUFFERP (function))
     {
@@ -476,7 +477,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
       
       buffer_insert_string (XBUFFER (function), nonreloc, reloc, offset, len);
 
-      RETURN_UNGCPRO (len);
+      UNGCPRO;
+      return len;
     }
   else if (MARKERP (function))
     {
@@ -490,7 +492,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 			      offset, len, -1, 0);
       set_byte_marker_position (function,
 				byte_marker_position (function) + len);
-      RETURN_UNGCPRO (len); /* We will have errored on failure. */
+      UNGCPRO;
+      return len; /* We will have errored on failure. */
     }
   else if (FRAMEP (function))
     {
@@ -507,7 +510,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 	clear_echo_area_from_print (f, Qnil, 1);
       echo_area_append (f, nonreloc, reloc, offset, len, Vprint_message_label);
 
-      RETURN_UNGCPRO (len);
+      UNGCPRO;
+      return len;
     }
   else if (EQ (function, Qt) || EQ (function, Qnil))
     {
@@ -557,7 +561,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
           offset += itext_ichar_len (newnonreloc + offset);
 	}
 
-      RETURN_UNGCPRO (len);
+      UNGCPRO;
+      return len;
     }
 }
 

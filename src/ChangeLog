@@ -1,5 +1,11 @@
 2017-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* print.c (output_string):
+	Don't RETURN_UNGCPRO() a non-Lisp_Object value, thank you Jerry
+	James.
+
+2017-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* process.c:
 	* process.c (generate_new_process_name): New.
 	Function on the model of #'generate-new-buffer-name, returning a
