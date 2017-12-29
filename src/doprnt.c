@@ -3125,17 +3125,15 @@ emacs_asprintf_lisp (Ibyte **retval_out, const CIbyte *format_nonreloc,
 
 /* vsprintf()-like replacement. Arguments are interpreted as C
    objects--doubles, char *s, EMACS_INTs, etc. Returns a Lisp string.  Data
-   from Lisp strings is OK because we explicitly inhibit GC. */
+   from Lisp strings is OK because we cannot GC. */
 Lisp_Object
 emacs_vsprintf_string (const CIbyte *format, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream (), obj;
-  int count = begin_gc_forbidden ();
 
   write_fmt_string_va (stream, format, vargs);
   obj = resizing_buffer_to_lisp_string (XLSTREAM (stream));
   Lstream_delete (XLSTREAM (stream));
-  end_gc_forbidden (count);
 
   return obj;
 }
@@ -3157,14 +3155,13 @@ emacs_sprintf_string (const CIbyte *format, ...)
 
 /* vasprintf() implementation. Arguments are interpreted as C
    objects--doubles, char *s, EMACS_INTs, etc.  Data from Lisp strings is OK
-   because we explicitly inhibit GC.  Returns length (not including the
+   because we cannot GC.  Returns length (not including the
    terminating zero). Stores a pointer to be freed with free() into
    *RETVAL_OUT. */
 Bytecount
 emacs_vasprintf (Ibyte **retval_out, const CIbyte *format, va_list vargs)
 {
   Lisp_Object stream = make_resizing_buffer_output_stream ();
-  int count = begin_gc_forbidden ();
   Bytecount len;
 
   write_fmt_string_va (stream, format, vargs);
@@ -3175,8 +3172,6 @@ emacs_vasprintf (Ibyte **retval_out, const CIbyte *format, va_list vargs)
   memcpy (*retval_out, resizing_buffer_stream_ptr (XLSTREAM (stream)), len);
   (*retval_out)[len] = '\0';
   Lstream_delete (XLSTREAM (stream));
-
-  end_gc_forbidden (count);
 
   return len;
 }

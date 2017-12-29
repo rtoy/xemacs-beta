@@ -1,5 +1,17 @@
 2017-12-29  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* doprnt.c (emacs_vsprintf_string):
+	* doprnt.c (emacs_vasprintf):
+	There is no need to forbid GC in these functions, the resizing
+	buffer output stream cannot GC and continue, nor can
+	write_fmt_string_lisp_va().
+	Jerry James just showed a backtrace where forbidding GC here
+	actually caused XEmacs to crash, early in startup when
+	specpdl_size was unitialised and begin_gc_forbidden() did an
+	infinite loop.
+
+2017-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* print.c (output_string):
 	Don't RETURN_UNGCPRO() a non-Lisp_Object value, thank you Jerry
 	James.
