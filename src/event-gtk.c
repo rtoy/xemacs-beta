@@ -1699,12 +1699,21 @@ emacs_gtk_drain_queue (void)
      it on the queue, then we go into Fnext_event(), which calls
      emacs_gtk_drain_queue().  But gtk_events_pending() will always return
      TRUE if there are file-descriptor (aka our process) events
-     pending.  Using GDK_events_pending() only shows us windowing
-     system events.
+     pending.
+     GDK_events_pending() documentation says it only shows us
+     windowing system events, but in GTK3 on Mac OS X "High Sierra" at least
+     it returns true even though gdk_event_peek returns NULL.  So we use the
+     the latter.
   */
   if (gdk_display_get_default ())
-    while (gdk_events_pending ())
-      gtk_main_iteration_do (FALSE);
+    {
+      GdkEvent *e = gdk_event_peek();
+      while (e) {
+	gtk_main_iteration_do (FALSE);
+	gdk_event_free(e);
+	e = gdk_event_peek();
+      }
+    }
 
 #ifdef HAVE_TTY
   drain_tty_devices ();
