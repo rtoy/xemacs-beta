@@ -1,3 +1,14 @@
+2017-12-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c:
+	* process.c (generate_new_process_name): New.
+	Function on the model of #'generate-new-buffer-name, returning a
+	string based on its argument that does not refer to any existing
+	process.
+	* process.c (make_process_internal):
+	Use it, avoid use of SUFFIX, a buffer that was too small for the
+	use made of it.
+
 2017-12-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Remove use of Eistring malloc buffers, have the corresponding
