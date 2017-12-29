@@ -40,6 +40,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "commands.h"
 #include "device.h"
 #include "events.h"
+#include "extents.h"
 #include "file-coding.h"
 #include "frame.h"
 #include "hash.h"
@@ -507,31 +508,66 @@ report_network_error (const Ascbyte *reason, Lisp_Object data)
   report_error_with_errno (Qnetwork_error, reason, data);
 }
 
+static Lisp_Object
+generate_new_process_name (Lisp_Object name)
+{
+  int count = 1;
+  Bytecount clen = XSTRING_LENGTH (name);
+  Bytecount csize = clen + ichar_len ('<') + DECIMAL_PRINT_SIZE (count) + 
+    + ichar_len ('>');
+  Ibyte *candidate = alloca_ibytes (csize);
+  Boolint seen;
+
+  memcpy (candidate, XSTRING_DATA (name), clen);
+
+  /* If NAME is already in use, modify it until it is unused.  */
+  do
+    {
+      seen = 0;
+      {
+	LIST_LOOP_2 (process, Vprocess_list)
+	  {
+	    if (XSTRING_LENGTH (XPROCESS (process)->name) == clen
+		&& !qxememcmp (candidate,
+			       XSTRING_DATA (XPROCESS (process)->name),
+			       clen))
+	      {
+		seen = 1;
+		break;
+	      }
+	  }
+      }
+    }
+  while (seen
+	 /* The following will always give non-zero, and will only be
+	    executed if the current candidate represents an existing
+	    process: */
+	 && (clen = emacs_snprintf (candidate, csize, "%s<%d>",
+				    XSTRING_DATA (name), ++count)));
+
+  if (count == 1)
+    {
+      return name;
+    }
+  else
+    {
+      Lisp_Object result = make_string (candidate, clen);
+      /* copy_string_extents() can't GC. */
+      copy_string_extents (result, name, 0, 0, XSTRING_LENGTH (name));
+      return result;
+    }
+}
+
 Lisp_Object
 make_process_internal (Lisp_Object name)
 {
-  Lisp_Object name1;
-  int i;
   Lisp_Object obj = ALLOC_NORMAL_LISP_OBJECT (process);
   Lisp_Process *p = XPROCESS (obj);
 
 #define MARKED_SLOT(x)	p->x = Qnil;
 #include "process-slots.h"
 
-  /* If name is already in use, modify it until it is unused.  */
-  name1 = name;
-  for (i = 1; ; i++)
-    {
-      Ascbyte suffix[10];
-      Lisp_Object tem = Fget_process (name1);
-      if (NILP (tem))
-        break;
-      sprintf (suffix, "<%d>", i);
-      name1 = concat2 (name, build_ascstring (suffix));
-    }
-  name = name1;
-  p->name = name;
-
+  p->name = generate_new_process_name (name);
   p->mark = Fmake_marker ();
   p->stderr_mark = Fmake_marker ();
   p->status_symbol = Qrun;
