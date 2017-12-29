@@ -312,7 +312,7 @@ things are arranged in config.h.in.  In particular:
 #undef STDC_HEADERS
 
 #undef TIME_WITH_SYS_TIME
-/* #undef WORDS_BIGENDIAN */
+#undef WORDS_BIGENDIAN
 
 #undef HAVE_LONG_FILE_NAMES
 
