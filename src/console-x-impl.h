@@ -36,6 +36,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "console-impl.h"
 #include "console-x.h"
+#include "gccache-x.h"
 
 DECLARE_CONSOLE_TYPE (x);
 
@@ -54,9 +55,6 @@ struct x_device
 
   /* Xt application info. */
   Widget Xt_app_shell;
-
-  /* Cache of GC's for frames on this device. */
-  struct gc_cache *gc_cache;
 
   /* Selected visual, depth and colormap for this device */
   Visual *visual;
@@ -161,6 +159,9 @@ struct x_device
   KeyCode last_downkey;
   Time release_time;
   Time modifier_release_time;
+
+  /* Cache of GCs for frames on this device. */
+  struct x_gc_cache gc_cache;
 };
 
 #ifdef NEW_GC
@@ -183,7 +184,7 @@ DECLARE_LISP_OBJECT (x_device, Lisp_X_Device);
 #define DEVICE_X_DEPTH(d)	(DEVICE_X_DATA (d)->depth)
 #define DEVICE_X_COLORMAP(d) 	(DEVICE_X_DATA (d)->device_cmap)
 #define DEVICE_XT_APP_SHELL(d) 	(DEVICE_X_DATA (d)->Xt_app_shell)
-#define DEVICE_X_GC_CACHE(d) 	(DEVICE_X_DATA (d)->gc_cache)
+#define DEVICE_X_GC_CACHE(d) 	(&(DEVICE_X_DATA (d)->gc_cache))
 #define DEVICE_X_GRAY_PIXMAP(d) (DEVICE_X_DATA (d)->gray_pixmap)
 #define DEVICE_X_WM_COMMAND_FRAME(d) (DEVICE_X_DATA (d)->WM_COMMAND_frame)
 #define DEVICE_X_MOUSE_TIMESTAMP(d)  (DEVICE_X_DATA (d)->mouse_timestamp)

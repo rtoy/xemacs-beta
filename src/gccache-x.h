@@ -26,16 +26,51 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <X11/Xlib.h>
 
-struct gc_cache;
-struct gc_cache *make_gc_cache (Display *, Window);
-void free_gc_cache (struct gc_cache *cache);
-GC gc_cache_lookup (struct gc_cache *, XGCValues *, unsigned long mask);
+#define GC_CACHE_SIZE 100
+
+struct gcv_and_mask {
+  XGCValues gcv;
+  unsigned long mask;
+};
+
+struct gc_cache_cell {
+  struct gcv_and_mask gcvm;
+  GC gc;
+  INT_16_BIT prev_index, next_index;
+};
+
+struct x_gc_cache {
+  /* This is marked in x_mark_device(). */
+  Lisp_Object table;
+
+  struct gc_cache_cell *head;
+  struct gc_cache_cell *tail;
+
+  Display *dpy;
+  Window window;
+
+  UINT_16_BIT count;
+
+#ifdef DEBUG_XEMACS
+  UINT_16_BIT create_count;
+  UINT_16_BIT delete_count;
+#endif
+
+  struct gc_cache_cell cells[GC_CACHE_SIZE];
+};
+
+void init_x_gc_cache (struct device *);
+void free_x_gc_cache_entries (struct device *);
+GC x_gc_cache_lookup (struct device *, XGCValues *, unsigned long mask);
 
 #define XE_GCONTEXT(cell) (XGContextFromGC(cell->gc))
 
+extern Lisp_Object Vgc_cache_hash_table_test;
+extern Lisp_Object define_gc_cache_hash_table_test (void);
+
 #ifdef DEBUG_XEMACS
 
-void describe_gc_cache (struct gc_cache *cache, int flags);
+void describe_gc_cache (struct x_gc_cache *, int flags);
 
 #define DGCCFLAG_DISABLE		0
 #define DGCCFLAG_SUMMARY		1 << 0
@@ -43,6 +78,7 @@ void describe_gc_cache (struct gc_cache *cache, int flags);
 #define DGCCFLAG_CELL_DETAILS		1 << 2
 /* A combination of the flags above. */
 #define DGCCFLAG_DEFAULT		DGCCFLAG_SUMMARY | DGCCFLAG_LIST_CELLS
-#endif
+
+#endif /* DEBUG_XEMACS */
 
 #endif /* INCLUDED_gccache_x_h_ */
