@@ -654,8 +654,8 @@ x_bevel_area (struct window *w, face_index findex,
       /* this is needed because the GC draws with a pixmap here */
       gcv.fill_style = FillOpaqueStippled;
       gcv.stipple = DEVICE_X_GRAY_PIXMAP (d);
-      top_shadow_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv,
-				       (mask | GCStipple | GCFillStyle));
+      top_shadow_gc = x_gc_cache_lookup (d, &gcv,
+                                         (mask | GCStipple | GCFillStyle));
 
       tmp_pixel = WINDOW_FACE_CACHEL_FOREGROUND (w, findex);
       tmp_color = COLOR_INSTANCE_X_COLOR (XCOLOR_INSTANCE (tmp_pixel));
@@ -667,11 +667,11 @@ x_bevel_area (struct window *w, face_index findex,
   else
     {
       gcv.foreground = top_shadow_pixel;
-      top_shadow_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
+      top_shadow_gc = x_gc_cache_lookup (d, &gcv, mask);
     }
 
   gcv.foreground = bottom_shadow_pixel;
-  bottom_shadow_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
+  bottom_shadow_gc = x_gc_cache_lookup (d, &gcv, mask);
 
   if (use_pixmap && flip_gcs)
     {
@@ -681,7 +681,7 @@ x_bevel_area (struct window *w, face_index findex,
     }
 
   gcv.foreground = background_pixel;
-  background_gc = gc_cache_lookup (DEVICE_X_GC_CACHE (d), &gcv, mask);
+  background_gc = x_gc_cache_lookup (d, &gcv, mask);
 
   /* possibly revert the GC's This will give a depressed look to the
      divider */
@@ -958,7 +958,7 @@ x_output_vertical_divider (struct window *w, int USED_IF_X (clear))
   gcv.graphics_exposures = False;
   mask = XLIKE_GC_FOREGROUND | XLIKE_GC_BACKGROUND | XLIKE_GC_EXPOSURES;
 
-  background_gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, mask);
+  background_gc = x_gc_cache_lookup (d, &gcv, mask);
 
   /* Clear the divider area first.  This needs to be done when a
      window split occurs. */
@@ -1046,7 +1046,7 @@ x_flash (struct device *d)
   XLIKE_SET_GC_PIXEL (gcv.foreground, tmp_fcolor ^ tmp_bcolor);
   gcv.function = XLIKE_GX_XOR;
   gcv.graphics_exposures = False;
-  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (XDEVICE (f->device)), &gcv,
+  gc = x_gc_cache_lookup (XDEVICE (f->device), &gcv,
 			XLIKE_GC_FOREGROUND | XLIKE_GC_FUNCTION | XLIKE_GC_EXPOSURES);
   default_face_width_and_height (frame, 0, &flash_height);
 
@@ -1322,7 +1322,7 @@ x_output_xlike_pixmap (struct frame *f, Lisp_Image_Instance *p, int x, int y,
       */
     }
 
-  gc = gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, pixmap_mask);
+  gc = x_gc_cache_lookup (d, &gcv, pixmap_mask);
 
   /* depth of 0 means it's a bitmap, not a pixmap, and we should use
      XCopyPlane (1 = current foreground color, 0 = background) instead

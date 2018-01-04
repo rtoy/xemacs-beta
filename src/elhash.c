@@ -2960,7 +2960,6 @@ vars_of_elhash (void)
   assert (!NILP (Fassq (Qeql, weak_list_list)));
   assert (!NILP (Fassq (Qequal, weak_list_list)));
   assert (!NILP (Fassq (Qequalp, weak_list_list)));
-  assert (4 == XFIXNUM (Flength (weak_list_list)));
 
   Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
   XWEAK_LIST_LIST (Vhash_table_test_weak_list) = weak_list_list;

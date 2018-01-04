@@ -552,7 +552,7 @@ XLIKE_get_gc (struct frame *f, Lisp_Object font,
 #if 0
   debug_out ("\nx_get_gc: calling gc_cache_lookup\n");
 #endif
-  return gc_cache_lookup (DEVICE_XLIKE_GC_CACHE (d), &gcv, mask);
+  return x_gc_cache_lookup (d, &gcv, mask);
 }
 
 #endif

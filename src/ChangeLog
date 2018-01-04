@@ -1,3 +1,62 @@
+2018-01-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the X GC cache to using the Lisp hash table structure (as
+	part of a more general approach to remove hash.c).
+	Improve its hashing algorithm, giving better performance.
+	Incorporate it directly into the x_device struct, don't allocate
+	it separately.
+	* console-x-impl.h:
+	* console-x-impl.h (struct x_device):
+	Incorporate the x_gc_cache directly here, not a pointer to it.
+	* console-x-impl.h (DEVICE_X_GC_CACHE):
+	Update the macro to reflect this.
+	* device-x.c:
+	Provide a new gc-cache hash table test object.
+	* device-x.c (x_data_device_description):
+	Document that the GC cache hash table is reachable from the X
+	device for the new GC.
+	* device-x.c (x_init_device):
+	Init the already-allocate X GC ccache.
+	* device-x.c (x_mark_device):
+	Mark the table. No need to mark the other fields of the GC cache
+	struct.
+	* device-x.c (x_delete_device):
+	Free the GC cache on deletion.
+	* device-x.c (syms_of_device_x):
+	Init the hash table test object.
+	* device-x.c (reinit_console_type_create_device_x):
+	* elhash.c (vars_of_elhash):
+	Can't make the assertion about the number of built-in hash table
+	tests any more.
+	* gccache-x.c:
+	Rework this file to use the Lisp hash table infrastructure and a
+	better hashing algorithm.
+	* gccache-x.c (gc_cache_eql): Rework this to use the Lisp hash
+	table calling conventtion.
+	* gccache-x.c (gc_cache_hash): Ditto.
+	* gccache-x.c (define_gc_cache_hash_table_test): New. Provide the
+	gc-cache Lisp hash table test.
+	* gccache-x.c (init_x_gc_cache):
+	Replacement for make_gc_cache. 
+	* gccache-x.c (free_x_gc_cache_entries):
+	Renamed; Nil out the hash table.
+	* gccache-x.c (x_gc_cache_lookup):
+	Rename to emphasise this is the X-specific cache.
+	* gccache-x.c (describe_gc_cache):
+	Adjust to reflect new structures.
+	* gccache-x.h:
+	Move the gc cache structure here, since it's now included in the X
+	device structure.
+	* gccache-x.h (GC_CACHE_SIZE):
+	This is now here and remains 100.
+	* redisplay-x.c (x_bevel_area):
+	* redisplay-x.c (x_output_vertical_divider):
+	* redisplay-x.c (x_flash):
+	* redisplay-x.c (x_output_xlike_pixmap):
+	Call x_gc_cache_lookup() in this file, rather than gc_cache_lookup().
+	* redisplay-xlike-inc.c (XLIKE_get_gc):
+	Ditto.
+
 2017-12-30  Stephen J. Turnbull  <stephen@xemacs.org>
 
 	* glyphs.c (print_image_instance): Use %p for subwindow id.

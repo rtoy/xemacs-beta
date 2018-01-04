@@ -73,6 +73,8 @@ Lisp_Object Vx_emacs_application_class;
 
 Lisp_Object Vx_initial_argv_list; /* #### ugh! */
 
+Lisp_Object Vgc_cache_hash_table_test;
+
 /* Shut up G++ 4.3. */
 #define Xrm_ODR(option,resource,type,default) \
   { (String) option, (String) resource, type, default }
@@ -105,6 +107,9 @@ static XrmOptionDescRec emacs_options[] =
 static const struct memory_description x_device_data_description_1 [] = {
   { XD_LISP_OBJECT, offsetof (struct x_device, x_keysym_map_hash_table) },
   { XD_LISP_OBJECT, offsetof (struct x_device, WM_COMMAND_frame) },
+  { XD_LISP_OBJECT, offsetof (struct x_device, WM_COMMAND_frame) },
+  { XD_LISP_OBJECT, offsetof (struct x_device, gc_cache)
+                    + offsetof (struct x_gc_cache, table) },
   { XD_END }
 };
 
@@ -904,7 +909,8 @@ x_init_device (struct device *d, Lisp_Object UNUSED (props))
   init_baud_rate (d);
   init_one_device (d);
 
-  DEVICE_X_GC_CACHE (d) = make_gc_cache (dpy, XtWindow (app_shell));
+  init_x_gc_cache (d);
+
   DEVICE_X_GRAY_PIXMAP (d) = None;
   Xatoms_of_device_x (d);
   Xatoms_of_select_x (d);
@@ -923,6 +929,7 @@ x_mark_device (struct device *d)
 {
   mark_object (DEVICE_X_WM_COMMAND_FRAME (d));
   mark_object (DEVICE_X_DATA (d)->x_keysym_map_hash_table);
+  mark_object (DEVICE_X_GC_CACHE (d)->table);
 }
 
 
@@ -959,7 +966,7 @@ x_delete_device (struct device *d)
 	disable_strict_free_check ();
 #endif
 
-      free_gc_cache (DEVICE_X_GC_CACHE (d));
+      free_x_gc_cache_entries (d);
       if (DEVICE_X_DATA (d)->x_modifier_keymap)
 	XFreeModifiermap (DEVICE_X_DATA (d)->x_modifier_keymap);
       if (DEVICE_X_DATA (d)->x_keysym_map)
@@ -2079,6 +2086,9 @@ syms_of_device_x (void)
 #ifdef MULE
   DEFSYMBOL (Qget_coding_system_from_locale);
 #endif
+
+  Vgc_cache_hash_table_test = define_gc_cache_hash_table_test ();
+  staticpro (&Vgc_cache_hash_table_test);
 }
 
 void
