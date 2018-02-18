@@ -1,3 +1,17 @@
+2018-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* simple.el (no-case-regexp-p):
+	* simple.el (with-search-caps-disable-folding):
+	* simple.el (with-interactive-search-caps-disable-folding):
+	* simple.el (log-message-filter):
+	Use `string-match-p' in these functions, no need to save the match
+	data with same.
+	* simple.el (clone-process):
+	* simple.el (clone-buffer):
+	* simple.el (clone-indirect-buffer):
+	Ditto; use the same idiom throughout the file when stripping
+	trailing <DIGIT+> patterns from strings.
+
 2017-12-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* hyper-apropos.el (hyper-apropos-grok-variables):
