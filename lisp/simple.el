@@ -111,17 +111,16 @@ character classes [:lower:] and [:upper:] are viewed as case-specific.
 
 This is intended to be used by interactive searching code to decide, in a
 do-what-I-mean fashion, whether a given search should be case-sensitive."
-  (let ((case-fold-search nil))
-    (save-match-data
-      (not (or (string-match "\\(^\\|\\\\\\\\\\|[^\\]\\)[[:upper:]]" regexp)
-               (and (string-match "\\[:\\(upp\\|low\\)er:]" regexp)
-                    (condition-case err
-                        (progn
-                          (string-match (substring regexp 0
-                                                   (match-beginning 0)) "")
-                          nil)
-                      (invalid-regexp
-                       (equal "Unmatched [ or [^" (cadr err))))))))))
+  (let ((case-fold-search nil) start)
+    (not (or (string-match-p "\\(^\\|\\\\\\\\\\|[^\\]\\)[[:upper:]]" regexp)
+             (and (setq start (string-match-p "\\[:\\(upp\\|low\\)er:]"
+                                              regexp))
+                  (condition-case err
+                      (progn
+                        (string-match-p (substring regexp 0 start) "")
+                        nil)
+                    (invalid-regexp
+                     (equal "Unmatched [ or [^" (cadr err)))))))))
 
 (defmacro* with-search-caps-disable-folding (string regexp-p &body body)
   "Execute the forms in BODY, respecting `search-caps-disable-folding'.
@@ -138,9 +137,8 @@ case-specific character classes such as `[[:upper:]]' or
           (if (and case-fold-search search-caps-disable-folding)
               (if ,regexp-p
                   (no-case-regexp-p ,string)
-                (save-match-data
-                  (let (case-fold-search)
-                    (not (string-match "[[:upper:]]" ,string)))))
+                (let (case-fold-search)
+                  (not (string-match-p "[[:upper:]]" ,string))))
             case-fold-search)))
      ,@body))
 (put 'with-search-caps-disable-folding 'lisp-indent-function 2)
@@ -155,9 +153,8 @@ case-specific character classes such as `[[:upper:]]' or
                    search-caps-disable-folding)
               (if ,regexp-p
                   (no-case-regexp-p ,string)
-                (save-match-data
-                  (let (case-fold-search)
-                    (not (string-match "[[:upper:]]" ,string)))))
+                (let (case-fold-search)
+                  (not (string-match-p "[[:upper:]]" ,string))))
             case-fold-search)))
      ,@body))
 (put 'with-interactive-search-caps-disable-folding 'lisp-indent-function 2)
@@ -3743,9 +3740,8 @@ NEWNAME is modified by adding or incrementing <N> at the end as necessary.
 If PROCESS is associated with a buffer, the new process will be associated
   with the current buffer instead.
 Returns nil if PROCESS has already terminated."
-  (setq newname (or newname (process-name process)))
-  (if (string-match "<[0-9]+>\\'" newname)
-      (setq newname (substring newname 0 (match-beginning 0))))
+  (setq newname (or newname (process-name process))
+        newname (subseq newname 0 (string-match-p "<[0-9]+>\\'" newname)))
   (when (memq (process-status process) '(run stop open))
     (let* ((process-connection-type (process-tty-name process))
 	   (old-kwoq (process-kill-without-query process nil))
@@ -3784,9 +3780,8 @@ after it has been set up properly in other respects."
       (error "Cannot clone a file-visiting buffer"))
   (if (get major-mode 'no-clone)
       (error "Cannot clone a buffer in %s mode" mode-name))
-  (setq newname (or newname (buffer-name)))
-  (if (string-match "<[0-9]+>\\'" newname)
-      (setq newname (substring newname 0 (match-beginning 0))))
+  (setq newname (or newname (buffer-name))
+        newname (subseq newname 0 (string-match-p "<[0-9]+>\\'" newname)))
   (let ((buf (current-buffer))
 	(ptmin (point-min))
 	(ptmax (point-max))
@@ -3796,7 +3791,7 @@ after it has been set up properly in other respects."
 	(mode major-mode)
 	(lvars (buffer-local-variables))
 	(process (get-buffer-process (current-buffer)))
-	(new (generate-new-buffer (or newname (buffer-name)))))
+	(new (generate-new-buffer newname)))
     (save-restriction
       (widen)
       (with-current-buffer new
@@ -3846,9 +3841,8 @@ front of the list of recently selected ones."
   (interactive (list (if current-prefix-arg
 			 (read-string "BName of indirect buffer: "))
 		     t))
-  (setq newname (or newname (buffer-name)))
-  (if (string-match "<[0-9]+>\\'" newname)
-      (setq newname (substring newname 0 (match-beginning 0))))
+  (setq newname (or newname (buffer-name))
+        newname (subseq newname 0 (string-match-p "<[0-9]+>\\'" newname)))
   (let* ((name (generate-new-buffer-name newname))
 	 (buffer (make-indirect-buffer (current-buffer) name t)))
     (when display-flag
@@ -4320,11 +4314,10 @@ Messages whose text matches one of the `log-message-ignore-regexps'
 or whose label appears in `log-message-ignore-labels' are not saved."
   (let ((r  log-message-ignore-regexps)
 	(ok (not (memq label log-message-ignore-labels))))
-    (save-match-data
-      (while (and r ok)
-	(when (string-match (car r) message)
-	  (setq ok nil))
-	(setq r (cdr r))))
+    (while (and r ok)
+      (when (string-match-p (car r) message)
+        (setq ok nil))
+      (setq r (cdr r)))
     ok))
 
 (defun log-message-filter-errors-only (label message)
