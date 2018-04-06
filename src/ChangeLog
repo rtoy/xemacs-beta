@@ -1,3 +1,9 @@
+2018-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process-unix.c:
+	* process-unix.c (child_setup):
+	When execve() fails, print the associated error message.
+
 2018-01-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Move the X GC cache to using the Lisp hash table structure (as

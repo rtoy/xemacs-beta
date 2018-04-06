@@ -896,7 +896,7 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
 	     Lisp_Object current_dir)
 {
   Ibyte **env;
-  Ibyte *pwd;
+  Ibyte *pwd, *errmess;
 
 #ifdef SET_EMACS_PRIORITY
   if (emacs_priority != 0)
@@ -1033,7 +1033,9 @@ child_setup (int in, int out, int err, Ibyte **new_argv,
   /* we've wrapped execve; it translates its arguments */
   qxe_execve (new_argv[0], new_argv, env);
 
-  stdout_out ("Can't exec program %s\n", new_argv[0]);
+  GET_STRERROR (errmess, errno);
+
+  stdout_out ("Can't exec program %s: %s\n", new_argv[0], errmess);
   _exit (1);
 }
 
