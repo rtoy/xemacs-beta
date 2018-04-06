@@ -34,60 +34,45 @@
 ;; in <b9yoeipvwn0.fsf@jpl.org>.
 
 ;; tac works by lines, unfortunately
-;; #### The contortions around `executable-find' gag me, but I don't have time
-;; to deal today.  If we have `executable-find', we should use its value!
-(let* ((original-string "a\nb\nc\nd\n")
-       ;; `executable-find' is in a package and may be unavailable.
-       (tac-cases (if (and (fboundp 'executable-find) (executable-find "tac"))
-		      '((1 . "c\nb\na\nd\n")
-			(3 . "a\nc\nb\nd\n")
-			(5 . "a\nc\nb\nd\n")
-			(7 . "a\nc\nb\nd\n")
-			(9 . "a\nd\nc\nb\n"))
-		    nil))
-       (cat-cases (if (and (fboundp 'executable-find) (executable-find "cat"))
-		      '((1 . "b\nc\na\nd\n")
-			(3 . "a\nb\nc\nd\n")
-			(5 . "a\nb\nc\nd\n")
-			(7 . "a\nb\nc\nd\n")
-			(9 . "a\nd\nb\nc\n"))
-		    nil))
-       cases case)
-  (with-temp-buffer
-    (Skip-Test-Unless tac-cases
-	 "tac executable not found"
-	 "Tests of call-process-region with region deleted after inserting
+(macrolet
+    ((handle-call-process-cases (program &rest cases)
+       (cons
+	'progn
+	(loop for (pos . result) in cases
+	      nconc `((erase-buffer)
+		      (insert "a\nb\nc\nd\n")
+		      (goto-char ,pos)
+		      (Assert (eql (call-process-region 3 7 ,program t t) 0)
+		       ,(concat "failed calling " program))
+		      (goto-char (point-min))
+		      (Assert (equal (buffer-string) ,result)
+		       ,(format "test call-process-region, %s, pos %d, "
+				program pos)))))))
+  (with-temp-buffer 
+    (Skip-Test-Unless
+     (condition-case nil (call-process "tac") (process-error nil))
+     "tac executable not found"
+     "Tests of call-process-region with region deleted after inserting
 tac process output."
-      (setq cases tac-cases)
-      (while cases
-        (setq case (car cases)
-	      cases (cdr cases))
-	(labels ((do-test (pos result)
-                   (erase-buffer)
-                   (insert original-string)
-                   (goto-char pos)
-                   (call-process-region 3 7 "tac" t t)
-                   (goto-char (point-min))
-                   (Assert (looking-at result))))
-	  (do-test (car case) (cdr case)))))
+     (handle-call-process-cases "tac"
+				(1 . "c\nb\na\nd\n")
+				(3 . "a\nc\nb\nd\n")
+				(5 . "a\nc\nb\nd\n")
+				(7 . "a\nc\nb\nd\n")
+				(9 . "a\nd\nc\nb\n")))
     ;; if you're in that much of a hurry you can blow cat off
     ;; if you've done tac, but I'm not going to bother
-    (Skip-Test-Unless cat-cases
-	 "cat executable not found"
-	 "Tests of call-process-region with region deleted after inserting
+    (Skip-Test-Unless
+     (condition-case nil (call-process "cat") (process-error nil))
+     "cat executable not found"
+     "Tests of call-process-region with region deleted after inserting
 cat process output."
-      (setq cases cat-cases)
-      (while cases
-        (setq case (car cases)
-	      cases (cdr cases))
-	(labels ((do-test (pos result)
-                   (erase-buffer)
-                   (insert original-string)
-                   (goto-char pos)
-                   (call-process-region 3 7 "cat" t t)
-                   (goto-char (point-min))
-                   (Assert (looking-at result))))
-	  (do-test (car case) (cdr case)))))))
+     (handle-call-process-cases "cat"
+				(1 . "b\nc\na\nd\n")
+				(3 . "a\nb\nc\nd\n")
+				(5 . "a\nb\nc\nd\n")
+				(7 . "a\nb\nc\nd\n")
+				(9 . "a\nd\nb\nc\n")))))
 
 (loop
   with envvar-not-existing = (symbol-name (gensym "whatever"))
@@ -120,8 +105,10 @@ cat process output."
                    (setenv envvar-existing envvar-existing-val))
   for (pre post)
   in examples
-  do 
-  (Assert (string= post (substitute-in-file-name pre))))
+  do (Assert (string= post (substitute-in-file-name pre)))
+  ;; Be polite and don't overrun ARG_MAX for any processes called down
+  ;; the line.
+  finally (setenv envvar-existing nil t))
 
 ;; Check some restrictions introduced to the ZONE argument to #'encode-time.
 

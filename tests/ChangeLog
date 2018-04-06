@@ -1,3 +1,12 @@
+2018-04-06  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/os-tests.el (handle-call-process-cases): New.
+	* automated/os-tests.el :
+	Rework the call-process-region tests, making the Assert messages
+	on failure more helpful, and not depending on #'executable-find.
+	Be polite after the #'substitute-in-file-name tests, remove our
+	unreasonably large values from the process environment.
+
 2017-12-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/mule-tests.el:
