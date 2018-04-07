@@ -1495,10 +1495,7 @@ If `/~' appears, all of FILENAME through that `/' is discarded.
        (filename))
 {
   /* This function can GC.  GC checked 2000-07-28 ben. */
-  Ibyte *nm;
-
-  Ibyte *s, *p, *o, *x, *endp, *got;
-  Ibyte *target = 0;
+  Ibyte *nm, *s, *p, *o, *x, *endp, *got, *target = 0;
   int total = 0;
   int substituted = 0, seen_braces;
   Ibyte *xnm;
@@ -2897,17 +2894,17 @@ under Mule, is very difficult.)
   int speccount;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
   Lisp_Object val;
-  int total;
+  Bytecount total;
   Ibyte *read_buf = alloca_ibytes (READ_BUF_SIZE);
   int mc_count;
   struct buffer *buf = current_buffer;
   Lisp_Object curbuf;
-  int not_regular = 0;
-  int do_speedy_insert =
+  Boolint not_regular = 0, do_speedy_insert =
     coding_system_is_binary (Fget_coding_system (codesys));
 
   if (buf->base_buffer && ! NILP (visit))
-    invalid_operation ("Cannot do file visiting in an indirect buffer", Qunbound);
+    invalid_operation ("Cannot do file visiting in an indirect buffer",
+                       Qunbound);
 
   /* No need to call Fbarf_if_buffer_read_only() here.
      That's called in begin_multiple_change() or wherever. */
@@ -2977,12 +2974,12 @@ under Mule, is very difficult.)
 #endif /* S_IFREG */
 
   if (!NILP (start))
-    CHECK_FIXNUM (start);
+    CHECK_NATNUM (start);
   else
     start = Qzero;
 
   if (!NILP (end))
-    CHECK_FIXNUM (end);
+    CHECK_NATNUM (end);
 
   if (fd < 0)
     {
@@ -2997,18 +2994,19 @@ under Mule, is very difficult.)
 
   record_unwind_protect (close_file_unwind, make_fixnum (fd));
 
-  /* Supposedly happens on VMS.  */
-  if (st.st_size < 0)
-    signal_error (Qfile_error, "File size is negative", Qunbound);
-
   if (NILP (end))
     {
       if (!not_regular)
 	{
-	  end = make_fixnum (st.st_size);
-	  if (XFIXNUM (end) != st.st_size)
-	    out_of_memory ("Maximum buffer size exceeded", Qunbound);
+	  end = make_integer (st.st_size);
+          CHECK_NATNUM (end);
 	}
+    }
+
+  /* Supposedly happens on VMS.  */
+  if (NILP (end) && st.st_size < 0)
+    {
+      signal_error (Qfile_error, "File size is negative", Qunbound);
     }
 
   /* If requested, replace the accessible part of the buffer
@@ -3097,8 +3095,8 @@ under Mule, is very difficult.)
 	     match the text at the end of the buffer.  */
 	  while (1)
 	    {
-	      int total_read, nread;
-	      Charcount charbpos, curpos, trial;
+	      Bytecount total_read, nread;
+	      OFF_T charbpos, curpos, trial;
 
 	      /* At what file position are we now scanning?  */
 	      curpos = st.st_size - (BUF_ZV (buf) - same_at_end);
@@ -3146,8 +3144,8 @@ under Mule, is very difficult.)
 	    same_at_end += overlap;
 
 	  /* Arrange to read only the nonmatching middle part of the file.  */
-	  start = make_fixnum (same_at_start - BUF_BEGV (buf));
-	  end = make_fixnum (st.st_size - (BUF_ZV (buf) - same_at_end));
+	  start = make_integer (same_at_start - BYTE_BUF_BEGV (buf));
+	  end = make_integer (st.st_size - (BYTE_BUF_ZV (buf) - same_at_end));
 
 	  buffer_delete_range (buf, same_at_start, same_at_end,
 			       !NILP (visit) ? INSDEL_NO_LOCKING : 0);
@@ -3158,24 +3156,75 @@ under Mule, is very difficult.)
 
   if (!not_regular)
     {
-      total = XFIXNUM (end) - XFIXNUM (start);
+      Lisp_Object args[] = { end, start };
+      Lisp_Object diff = Fminus (countof (args), args);
 
       /* Make sure point-max won't overflow after this insertion.  */
-      if (total != XFIXNUM (make_fixnum (total)))
-	out_of_memory ("Maximum buffer size exceeded", Qunbound);
+      if (FIXNUMP (diff))
+        {
+          total = XREALFIXNUM (diff);
+        }
+#ifdef HAVE_BIGNUM
+      else if (bignum_fits_emacs_int_p (XBIGNUM_DATA (diff)))
+        {
+          total = bignum_to_emacs_int (XBIGNUM_DATA (diff));
+        }
+#endif
+      else
+        {
+          /* Doesn't fit in an EMACS_INT, which means doesn't fit in a
+             Bytecount, which means we should error. */
+          goto unreasonably_large;
+        }
+
+      if ((total > ((Bytecount) (~((EMACS_UINT) 0) >> 1))))
+        {
+        unreasonably_large:
+          out_of_memory ("Maximum buffer byte size exceeded",
+                         diff);
+        }
     }
   else
     /* For a special file, all we can do is guess.  The value of -1
        will make the stream functions read as much as possible.  */
     total = -1;
 
-  if (XFIXNUM (start) != 0
+  if (!(EQ (start, Qzero))
       /* why was this here? asked jwz.  The reason is that the replace-mode
 	 connivings above will normally put the file pointer other than
 	 where it should be. */
       || (!NILP (replace) && do_speedy_insert))
     {
-      if (lseek (fd, XFIXNUM (start), 0) < 0)
+      OFF_T starting;
+
+      if (FIXNUMP (start))
+        {
+          starting = XREALFIXNUM (start);
+        }
+#ifdef HAVE_BIGNUM 
+      else if (bignum_fits_emacs_int_p (XBIGNUM_DATA (start)))
+        {
+          starting = bignum_to_emacs_int (XBIGNUM_DATA (start));
+        }
+      else if (sizeof (starting) == sizeof (long long)
+               && bignum_fits_llong_p (XBIGNUM_DATA (start)))
+        {
+          starting = bignum_to_llong (XBIGNUM_DATA (start));
+        }
+      else if (sizeof (starting) == sizeof (unsigned long long)
+               && bignum_fits_ullong_p (XBIGNUM_DATA (start)))
+        {
+          starting = bignum_to_ullong (XBIGNUM_DATA (start));
+        }
+#endif
+      else
+	{
+	  signal_error (Qunimplemented,
+			"File offset not supported in this XEmacs",
+			start);
+	}
+
+      if (lseek (fd, starting, 0) < 0)
 	report_file_error ("Setting file position", filename);
     }
 

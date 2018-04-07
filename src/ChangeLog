@@ -1,3 +1,20 @@
+2018-04-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Fsubstitute_in_file_name): Fixup some whitespace here.
+	* fileio.c (Finsert_file_contents_internal):
+	Handle bignum values for START, END. Error if the difference
+	between START and END means the relevant buffer would become too
+	big to handle.
+	* insdel.c (buffer_insert_string_1):
+	Check the new buffer size in terms of characters, not bytes.
+	* lstream.c (make_filedesc_stream_1):
+	* lstream.c (make_filedesc_input_stream):
+	* lstream.c (make_filedesc_output_stream):
+	* lstream.h:
+	Use the OFF_T type for the OFFSET argument to these functions,
+	Bytecount for the COUNT argument, as has long been the most
+	reasonable approach.
+
 2018-04-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process-unix.c:

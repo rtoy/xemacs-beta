@@ -1232,7 +1232,7 @@ DEFINE_LSTREAM_IMPLEMENTATION ("filedesc", filedesc);
    should start at.  COUNT is the number of bytes to be read (it is
    ignored when writing); -1 for unlimited. */
 static Lisp_Object
-make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
+make_filedesc_stream_1 (int filedesc, OFF_T offset, Bytecount count, int flags,
 			tls_state_t *state)
 {
   Lstream *lstr = Lstream_new (lstream_filedesc,
@@ -1271,16 +1271,16 @@ make_filedesc_stream_1 (int filedesc, int offset, int count, int flags,
  */
 
 Lisp_Object
-make_filedesc_input_stream (int filedesc, int offset, int count, int flags,
-			    tls_state_t *state)
+make_filedesc_input_stream (int filedesc, OFF_T offset, Bytecount count,
+                            int flags, tls_state_t *state)
 {
   return make_filedesc_stream_1 (filedesc, offset, count,
 				 flags | LSTR_READ, state);
 }
 
 Lisp_Object
-make_filedesc_output_stream (int filedesc, int offset, int count, int flags,
-			     tls_state_t *state)
+make_filedesc_output_stream (int filedesc, OFF_T offset, Bytecount count,
+                             int flags, tls_state_t *state)
 {
   return make_filedesc_stream_1 (filedesc, offset, count,
 				 flags | LSTR_WRITE, state);
