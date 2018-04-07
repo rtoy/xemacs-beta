@@ -507,10 +507,12 @@ Lstream_unget_ichar (Lstream *stream, Ichar ch)
 
 Lisp_Object make_stdio_input_stream (FILE *stream, int flags);
 Lisp_Object make_stdio_output_stream (FILE *stream, int flags);
-Lisp_Object make_filedesc_input_stream (int filedesc, int offset, int count,
-					int flags, tls_state_t *state);
-Lisp_Object make_filedesc_output_stream (int filedesc, int offset, int count,
-					 int flags, tls_state_t *state);
+Lisp_Object make_filedesc_input_stream (int filedesc, OFF_T offset,
+                                        Bytecount count, int flags,
+                                        tls_state_t *state);
+Lisp_Object make_filedesc_output_stream (int filedesc, OFF_T offset,
+                                         Bytecount count, int flags,
+                                         tls_state_t *state);
 void filedesc_stream_set_pty_flushing (Lstream *stream,
 				       int pty_max_bytes,
 				       Ibyte eof_char);

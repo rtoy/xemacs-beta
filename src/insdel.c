@@ -1079,10 +1079,6 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
      is a string. */
 #endif
 
-  /* Make sure that point-max won't exceed the size of an emacs int. */
-  if ((length + BUF_Z (buf)) > MOST_POSITIVE_FIXNUM)
-    out_of_memory ("Maximum buffer size exceeded", Qunbound);
-
   /* theoretically not necessary -- caller should GCPRO.
      #### buffer_insert_from_buffer_1() doesn't!  */
   GCPRO1 (reloc);
@@ -1127,6 +1123,12 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
                                 : bytecount_to_charcount (nonreloc + offset,
                                                           length)));
 #endif /* ERROR_CHECK_TEXT */
+    }
+
+  /* Make sure that point-max won't exceed the size of an emacs int. */
+  if ((MOST_POSITIVE_FIXNUM - 1) - BUF_Z (buf) < cclen)
+    {
+      out_of_memory ("Maximum buffer size exceeded", Qunbound);
     }
 
   /* &&#### Here we check if the text can't fit into the format of the buffer,
