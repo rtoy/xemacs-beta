@@ -1,5 +1,14 @@
 2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* regex.c (compile_char_class):
+	Use CHAR_CODE_LIMIT instead of MOST_POSITIVE_FIXNUM as the upper
+	bound for characters in the PRINT, GRAPH, NONASCII classes.
+	* regex.c (re_compile_fastmap):
+	Don't attempt to set_itext_ichar() with a non-character value
+	under Unicode internal.
+
+2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* fileio.c (lisp_to_off_t): New function.
 	Decode a Lisp_Object into an OFF_T. Accept floats as well as
 	integers, as does GNU (they have more need to, because they don't

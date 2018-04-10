@@ -4191,17 +4191,17 @@ compile_char_class (re_wctype_t cc, Lisp_Object rtab, Bitbyte *flags_out)
 
     case RECC_PRINT:
       put_range_table (rtab, ' ', 0x7e, Qt);
-      put_range_table (rtab, 0x80, MOST_POSITIVE_FIXNUM, Qt);
+      put_range_table (rtab, 0x80, CHAR_CODE_LIMIT, Qt);
       break;
 
     case RECC_GRAPH:
       put_range_table (rtab, '!', 0x7e, Qt);
-      put_range_table (rtab, 0x80, MOST_POSITIVE_FIXNUM, Qt);
+      put_range_table (rtab, 0x80, CHAR_CODE_LIMIT, Qt);
       break;
 
     case RECC_NONASCII:
     case RECC_MULTIBYTE:
-      put_range_table (rtab, 0x80, MOST_POSITIVE_FIXNUM, Qt);
+      put_range_table (rtab, 0x80, CHAR_CODE_LIMIT, Qt);
       break;
 
     case RECC_CNTRL:
@@ -4401,7 +4401,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		    set_itext_ichar (strr, last);
 		    fastmap[*strr] = 1;
 		  }
-                else if (MOST_POSITIVE_FIXNUM == last)
+                else if (CHAR_CODE_LIMIT == last)
                   {
 		    /* This is RECC_MULTIBYTE or RECC_NONASCII; true for all
                        non-ASCII characters. */
@@ -4422,7 +4422,7 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		{
 		  Ibyte strrlast[MAX_ICHAR_LEN];
 		  set_itext_ichar (strr, first);
-		  set_itext_ichar (strrlast, last);
+		  set_itext_ichar (strrlast, min (last, CHAR_CODE_LIMIT - 1));
 		  for (jj = *strr; jj <= *strrlast; jj++)
 		    fastmap[jj] = 1;
 		}
@@ -4546,7 +4546,10 @@ re_compile_fastmap (struct re_pattern_buffer *bufp
 		else
 		  {
 		    Ibyte strr[MAX_ICHAR_LEN];
-		    Bytecount slen = set_itext_ichar (strr, last);
+		    Bytecount slen
+			    = set_itext_ichar (strr,
+					       min (last,
+						    CHAR_CODE_LIMIT - 1));
 		    int kk;
 		    /* Same as above but for the last character using
 		       our leading byte. */
