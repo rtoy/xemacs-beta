@@ -1,3 +1,15 @@
+2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (lisp_to_off_t): New function.
+	Decode a Lisp_Object into an OFF_T. Accept floats as well as
+	integers, as does GNU (they have more need to, because they don't
+	have bignums)
+	* fileio.c (Finsert_file_contents_internal):
+	Use it here.
+	* fileio.c (Fwrite_region_internal):
+	Interpret a numeric APPEND argument as specifying a byte offset in
+	the output file to seek to before writing.
+
 2018-04-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Fsubstitute_in_file_name): Fixup some whitespace here.

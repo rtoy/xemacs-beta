@@ -167,6 +167,54 @@ lisp_strerror (int errnum)
   return build_extstring (ret, Qstrerror_encoding);
 }
 
+static OFF_T
+lisp_to_off_t (Lisp_Object offset)
+{
+  OFF_T result;
+  double v;
+
+  if (FIXNUMP (offset))
+    {
+      type_checking_assert (FIXNUM_VALBITS <=
+                            (sizeof (OFF_T) * BITS_PER_CHAR));
+      return XREALFIXNUM (offset);
+    }
+#ifdef HAVE_BIGNUM 
+  if (BIGNUMP (offset))
+    {
+      if (bignum_fits_emacs_int_p (XBIGNUM_DATA (offset)))
+        {
+          type_checking_assert (BITS_PER_EMACS_INT <=
+                                (sizeof (OFF_T) * BITS_PER_CHAR));
+          return bignum_to_emacs_int (XBIGNUM_DATA (offset));
+        }
+      else if (sizeof (OFF_T) == sizeof (long long)
+               && bignum_fits_llong_p (XBIGNUM_DATA (offset)))
+        {
+          return bignum_to_llong (XBIGNUM_DATA (offset));
+        }
+      else if (sizeof (OFF_T) == sizeof (unsigned long long)
+               && (OFF_T)(-1) != -1
+               && bignum_fits_ullong_p (XBIGNUM_DATA (offset)))
+        {
+          return bignum_to_ullong (XBIGNUM_DATA (offset));
+        }
+    }
+#endif
+
+  v = extract_float (offset);
+  result = v;
+
+  if (result == v) /* Value bits preserved? */
+    {
+      return result;
+    }
+
+  wtaerror ("Offset not supported", offset);
+  RETURN_NOT_REACHED (-1);
+}
+
+
 static Lisp_Object
 close_file_unwind (Lisp_Object fd)
 {
@@ -2973,13 +3021,14 @@ under Mule, is very difficult.)
     }
 #endif /* S_IFREG */
 
-  if (!NILP (start))
-    CHECK_NATNUM (start);
-  else
-    start = Qzero;
-
-  if (!NILP (end))
-    CHECK_NATNUM (end);
+  if (NILP (start))
+    {
+      start = Qzero;
+    }
+  else if (lisp_to_off_t (start) < 0)
+    {
+      start = wrong_type_argument (Qnatnump, start);
+    }
 
   if (fd < 0)
     {
@@ -3146,7 +3195,6 @@ under Mule, is very difficult.)
 	  /* Arrange to read only the nonmatching middle part of the file.  */
 	  start = make_integer (same_at_start - BYTE_BUF_BEGV (buf));
 	  end = make_integer (st.st_size - (BYTE_BUF_ZV (buf) - same_at_end));
-
 	  buffer_delete_range (buf, same_at_start, same_at_end,
 			       !NILP (visit) ? INSDEL_NO_LOCKING : 0);
 	  /* Insert from the file at the proper position.  */
@@ -3159,29 +3207,17 @@ under Mule, is very difficult.)
       Lisp_Object args[] = { end, start };
       Lisp_Object diff = Fminus (countof (args), args);
 
-      /* Make sure point-max won't overflow after this insertion.  */
-      if (FIXNUMP (diff))
+      total = lisp_to_off_t (diff);
+
+      if (total < 0)
         {
-          total = XREALFIXNUM (diff);
-        }
-#ifdef HAVE_BIGNUM
-      else if (bignum_fits_emacs_int_p (XBIGNUM_DATA (diff)))
-        {
-          total = bignum_to_emacs_int (XBIGNUM_DATA (diff));
-        }
-#endif
-      else
-        {
-          /* Doesn't fit in an EMACS_INT, which means doesn't fit in a
-             Bytecount, which means we should error. */
-          goto unreasonably_large;
+          dead_wrong_type_argument (Qnatnump, make_integer (total));
         }
 
+      /* Make sure point-max won't overflow after this insertion.  */
       if ((total > ((Bytecount) (~((EMACS_UINT) 0) >> 1))))
         {
-        unreasonably_large:
-          out_of_memory ("Maximum buffer byte size exceeded",
-                         diff);
+          out_of_memory ("Maximum buffer byte size exceeded", diff);
         }
     }
   else
@@ -3197,32 +3233,10 @@ under Mule, is very difficult.)
     {
       OFF_T starting;
 
-      if (FIXNUMP (start))
+      if (NUMBERP (start))
         {
-          starting = XREALFIXNUM (start);
+          starting = lisp_to_off_t (start);
         }
-#ifdef HAVE_BIGNUM 
-      else if (bignum_fits_emacs_int_p (XBIGNUM_DATA (start)))
-        {
-          starting = bignum_to_emacs_int (XBIGNUM_DATA (start));
-        }
-      else if (sizeof (starting) == sizeof (long long)
-               && bignum_fits_llong_p (XBIGNUM_DATA (start)))
-        {
-          starting = bignum_to_llong (XBIGNUM_DATA (start));
-        }
-      else if (sizeof (starting) == sizeof (unsigned long long)
-               && bignum_fits_ullong_p (XBIGNUM_DATA (start)))
-        {
-          starting = bignum_to_ullong (XBIGNUM_DATA (start));
-        }
-#endif
-      else
-	{
-	  signal_error (Qunimplemented,
-			"File offset not supported in this XEmacs",
-			start);
-	}
 
       if (lseek (fd, starting, 0) < 0)
 	report_file_error ("Setting file position", filename);
@@ -3424,6 +3438,7 @@ here because write-region handler writers need to be aware of it.
   Lisp_Object annotations = Qnil;
   struct buffer *given_buffer;
   Charbpos start1, end1;
+  OFF_T offset = 0;
   struct gcpro gcpro1, gcpro2, gcpro3, gcpro4, gcpro5;
   struct gcpro ngcpro1, ngcpro2;
   Lisp_Object curbuf = wrap_buffer (current_buffer);
@@ -3555,13 +3570,24 @@ here because write-region handler writers need to be aware of it.
 
     if (!NILP (append))
       {
-	if (lseek (desc, 0, 2) < 0)
+        int whence = SEEK_END;
+        if (NUMBERP (append))
+          {
+            whence = SEEK_SET;
+            offset = lisp_to_off_t (append);
+            if (offset < 0)
+              {
+                dead_wrong_type_argument (Qnatnump, append);
+              }
+          }
+
+	if (lseek (desc, offset, whence) < 0)
 	  {
 #ifdef CLASH_DETECTION
 	    if (!auto_saving) unlock_file (lockname);
 #endif /* CLASH_DETECTION */
-	    report_file_error ("Lseek error",
-			       filename);
+	    report_error_with_errno (Qfile_error, "Lseek error", 
+                                     list2 (filename, make_integer (offset)));
 	  }
       }
 
