@@ -1,5 +1,14 @@
 2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* config.h.in:
+	No need for HAVE_WCWIDTH anymore.
+	* unicode.c (unicode_char_columns):
+	Don't ever use wcwidth() in this function, it's not
+	reliable, and this gives test failures with
+	#'truncate-string-to-width. Document what we should use instead.
+
+2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* regex.c (compile_char_class):
 	Use CHAR_CODE_LIMIT instead of MOST_POSITIVE_FIXNUM as the upper
 	bound for characters in the PRINT, GRAPH, NONASCII classes.

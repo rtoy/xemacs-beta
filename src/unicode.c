@@ -2661,13 +2661,10 @@ init_charset_unicode_map (Lisp_Object charset, Lisp_Object map)
 int
 unicode_char_columns (int code)
 {
-#if defined (HAVE_WCWIDTH) && defined (__STDC_ISO_10646__)
-  return wcwidth ((wchar_t) code);
-#else
-  /* #### We need to do a much better job here.  Although maybe wcwidth()
-     is available everywhere we care.  @@#### Copy the source for wcwidth().
-     Also check under Windows for an equivalent. */
-  /* #### Use a range table for this! */
+  /* #### wcwidth() isn't reliable. E.g. Debian GLIBC 2.24-11+deb9u1 gives
+     -1 for ?\uD55c. And of course it varies by platform anyway. This code
+     should instead use a character or range table generated from
+     EastAsianWidth.txt. */
   if (
       /* Tibetan */
       (code >= 0x0F00 && code <= 0x0FFF) ||
@@ -2690,7 +2687,6 @@ unicode_char_columns (int code)
       (code >= 0x20000 && code <= 0x2FFFF))
     return 2;
   return 1;
-#endif /* defined (HAVE_WCWIDTH) && defined (__STDC_ISO_10646__) */
 }
 
 #endif /* MULE */

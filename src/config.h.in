@@ -428,7 +428,6 @@ things are arranged in config.h.in.  In particular:
 #undef HAVE_WAITPID
 #undef HAVE_WCSCMP
 #undef HAVE_WCSLEN
-#undef HAVE_WCWIDTH
 
 /* Functions and structs checked for vdb. */
 #undef HAVE_MPROTECT
