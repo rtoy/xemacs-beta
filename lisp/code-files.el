@@ -597,8 +597,8 @@ With a prefix arg, prompts for a coding system as well.
 
 When called from a program, takes three required arguments:
 START, END and FILENAME.  START and END are buffer positions.
-APPEND, if non-nil, means append to existing file contents (if any), else
-  the file's existing contents are replaced by the specified region.
+APPEND, if non-nil, means append to existing file contents (if any). If it is
+a byte file offset, seek to that point before writing.
 VISIT, if non-nil, should be a string naming a file.  The buffer is marked
                  as  visiting VISIT.  VISIT is also the file name to lock
                  and unlock for clash detection.

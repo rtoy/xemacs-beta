@@ -1,3 +1,9 @@
+2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (write-region):
+	Document that APPEND can now be a numeric offset, indicating a
+	point to seek to.
+
 2018-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* simple.el (no-case-regexp-p):
