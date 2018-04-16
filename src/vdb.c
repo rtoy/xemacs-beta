@@ -98,6 +98,7 @@ Test virtual dirty bit implementation. Prints results to stderr.
   fprintf (stderr, "Attempt to read p[666]... ");
   c = p[666];
   fprintf (stderr, "read ok.\n");
+  USED (c); /* Quiet compiler. */
 
   /* Test write. */
   fprintf (stderr, "Attempt to write 42 to p[666]... ");

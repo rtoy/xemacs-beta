@@ -1,3 +1,19 @@
+2018-04-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* fileio.c (Finsert_file_contents_internal):
+	Be clearer about not using an unitialised OFFSET in an lseek(2)
+	call here. 
+	* regex.c (re_wctype):
+	Match the argument types used in the declaration in regex.h, to
+	placate the C++ compiler.
+	* text.c:
+	Only make unicode_internal_handle_bad_ichar_to_unicode() available
+	on unicode-internal builds.
+	* tls.h (tls_negotiate):
+	Rework this stub macro to mark its arguments as used.
+	* vdb.c (Ftest_vdb):
+	Quiet the compiler regarding one variable here.
+
 2018-04-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* config.h.in:
