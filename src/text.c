@@ -1857,7 +1857,7 @@ old_mule_round_down_to_valid_ichar (int charpos)
   return -1;
 }
 
-#endif /* not UNICODE_INTERNAL */
+#else /* if defined (UNICODE_INTERNAL) */
 
 int
 unicode_internal_handle_bad_ichar_to_unicode (Ichar chr, enum converr fail)
@@ -1891,6 +1891,8 @@ unicode_internal_handle_bad_ichar_to_unicode (Ichar chr, enum converr fail)
       return 0xFFFD;
     }
 }
+
+#endif /* defined (UNICODE_INTERNAL) */
 
 #endif /* MULE */
 

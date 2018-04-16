@@ -3231,14 +3231,7 @@ under Mule, is very difficult.)
 	 where it should be. */
       || (!NILP (replace) && do_speedy_insert))
     {
-      OFF_T starting;
-
-      if (NUMBERP (start))
-        {
-          starting = lisp_to_off_t (start);
-        }
-
-      if (lseek (fd, starting, 0) < 0)
+      if (lseek (fd, lisp_to_off_t (start), 0) < 0)
 	report_file_error ("Setting file position", filename);
     }
 

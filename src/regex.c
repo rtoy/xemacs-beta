@@ -2211,7 +2211,7 @@ typedef struct
 
    Return RECC_ERROR if STRP doesn't match a known character class. */
 re_wctype_t
-re_wctype (const re_char *beg, int limit)
+re_wctype (const unsigned char *beg, int limit)
 {
   /* Sort tests in the length=five case by frequency the classes to minimize
      number of times we fail the comparison.  The frequencies of character class
