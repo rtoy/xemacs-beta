@@ -172,7 +172,18 @@ EXFUN (Fbignump, 1);
 }  while (0)
 
 #ifdef HAVE_BIGNUM
-#define make_integer(x)							\
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define make_integer(x)                                                    \
+  ({ __typeof__ (x) _x = (x);                                              \
+    assert (x == _x); /* Catch non-idempotent arguments. */                \
+    (NUMBER_FITS_IN_A_FIXNUM (_x) ? make_fixnum (_x) :                     \
+     (((__typeof__ (x))-1 < 0) ?                                           \
+      (sizeof (_x) > SIZEOF_LONG ? make_bignum_ll (_x) : make_bignum (_x)) \
+      : (sizeof (_x) > SIZEOF_LONG ? make_bignum_ull (_x)                  \
+         : make_bignum_un (_x)))); })
+#define make_unsigned_integer make_integer
+#else
+#define make_integer(x)                                                 \
   (NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)			\
    : (sizeof (x) > SIZEOF_LONG ? make_bignum_ll (x) :                   \
       make_bignum ((long) x)))
@@ -180,6 +191,7 @@ EXFUN (Fbignump, 1);
   (UNSIGNED_NUMBER_FITS_IN_A_FIXNUM (x) ? make_fixnum (x)		\
    : (sizeof (x) > SIZEOF_LONG ? make_bignum_ull (x) :                  \
       make_bignum_un ((unsigned long) x)))
+#endif /* USE_GCC_EXTENDED_EXPRESSION_SYNTAX */
 #else
 #define make_integer(x) make_fixnum (x)
 #define make_unsigned_integer(x) make_fixnum ((EMACS_INT) x)

@@ -1,5 +1,14 @@
 2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* lisp.h (NUMBER_FITS_IN_A_FIXNUM, NUMBER_FITS_IN_A_FIXNUM):
+	* number.h (make_integer, make_unsigned_integer):
+	If the GCC extended expression syntax is available, use it and
+	__typeof__ to catch non-idempotent arguments to these arguments,
+	and to silence type-narrowing warnings for non-EMACS_INT
+	arguments.
+
+2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* gccache-x.c (gc_cache_hash):
 	* gccache-x.c (x_gc_cache_lookup):
 	Add a couple of casts here to placate the C++ compiler.

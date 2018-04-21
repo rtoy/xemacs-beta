@@ -1810,11 +1810,26 @@ enum Lisp_Type
 #define MOST_POSITIVE_FIXNUM ((EMACS_INT) MOST_POSITIVE_FIXNUM_UNSIGNED)
 #define MOST_NEGATIVE_FIXNUM (-(MOST_POSITIVE_FIXNUM) - 1)
 /* WARNING: evaluates its arg twice. */
+#ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
+#define NUMBER_FITS_IN_A_FIXNUM(num)                                    \
+  ({ __typeof__ (num) _num = (num);                                     \
+    assert (_num == num); /* Catch any non-idempotent argument. */      \
+    (((__typeof__ (num))-1 < 0) ? /* Signed? */                         \
+     ((sizeof (_num) * BITS_PER_CHAR) <= FIXNUM_VALBITS ||              \
+      (((__typeof__ (num)) MOST_NEGATIVE_FIXNUM <= _num) &&             \
+       _num <= ((__typeof__ (num)) MOST_POSITIVE_FIXNUM)))              \
+     : ((sizeof (_num) * BITS_PER_CHAR) < FIXNUM_VALBITS ||             \
+        (((__typeof__ (num)) 0 <= _num) &&                              \
+         _num <= ((__typeof__ (num)) MOST_POSITIVE_FIXNUM)))); })
+#define UNSIGNED_NUMBER_FITS_IN_A_FIXNUM(num)                   \
+  ((num) <= (__typeof__ (num)) MOST_POSITIVE_FIXNUM_UNSIGNED)
+#else
 #define NUMBER_FITS_IN_A_FIXNUM(num) \
   ((num) <= MOST_POSITIVE_FIXNUM && (num) >= MOST_NEGATIVE_FIXNUM)
 #define UNSIGNED_NUMBER_FITS_IN_A_FIXNUM(num) \
   ((num) <= MOST_POSITIVE_FIXNUM_UNSIGNED)
 
+#endif
 #ifdef USE_UNION_TYPE
 # include "lisp-union.h"
 #else /* !USE_UNION_TYPE */
