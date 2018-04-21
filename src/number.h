@@ -437,6 +437,12 @@ enum lazy_number_type { NUMBER_TYPES(LAZY_), LAZY_MARKER_T };
 extern enum number_type get_number_type (Lisp_Object);
 extern enum number_type promote_args (Lisp_Object *, Lisp_Object *);
 
+extern Lisp_Object OFF_T_to_lisp (OFF_T);
+extern OFF_T lisp_to_OFF_T (Lisp_Object);
+
+extern Lisp_Object uid_t_to_lisp (uid_t);
+extern uid_t lisp_to_uid_t (Lisp_Object);
+
 #ifdef WITH_NUMBER_TYPES
 
 /* promote_args() *always* converts a marker argument to a fixnum.

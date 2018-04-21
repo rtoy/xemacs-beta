@@ -1,5 +1,29 @@
 2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c:
+	Provide macros to generalise the two-way conversion
+	between C integer types and Lisp values (fixnums, bignums, conses
+	of fixnums and, because GNU, floats).
+	Use these macros to generate conversion functions for OFF_T and
+	for uid_t. There may be scope down the line for further types, it
+	needs looking into.
+	* dired.c (Ffile_attributes):
+	Use OFF_T_to_lisp here.
+	* editfns.c:
+	* editfns.c (Ftemp_directory):
+	* editfns.c (Fuser_login_name):
+	* editfns.c (Fuser_uid):
+	* editfns.c (Fuser_real_uid):
+	Use lisp_to_uid_t, uid_t_to_lisp as appropriate in these
+	functions.
+	* fileio.c:
+	Remove the old lisp_to_off_t(). Use the new lisp_to_OFF_T.
+	* number.h:
+	Declare the new generated conversion functions for OFF_T and for
+	uid_t. 
+
+2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* lisp.h (NUMBER_FITS_IN_A_FIXNUM, NUMBER_FITS_IN_A_FIXNUM):
 	* number.h (make_integer, make_unsigned_integer):
 	If the GCC extended expression syntax is available, use it and

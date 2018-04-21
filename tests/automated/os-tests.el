@@ -119,4 +119,14 @@ cat process output."
                '(22803 29256))) ;; "05/10/17 09:04:24 PM"
 (Check-Error args-out-of-range (encode-time 24 4 20 11 5 2017 86401))
 
+(let ((two-to-the-thirty-second (expt 2 32)))
+  (Skip-Test-Unless (and (integerp two-to-the-thirty-second)
+                         (> two-to-the-thirty-second 0))
+                    "No integers greater than #x3fffffff"
+                    "Testing bit width confusion with underlying uid_t"
+                    (Assert
+                     (not (equal (ignore-errors
+                                   (user-login-name two-to-the-thirty-second))
+                                 "root")))))
+
 ;;; end of os-tests.el

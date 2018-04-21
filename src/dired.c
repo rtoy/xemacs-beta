@@ -838,13 +838,13 @@ If file does not exist, returns nil.
   Lisp_Object directory = Qnil;
   struct stat s;
   char modes[10];
-  Lisp_Object handler, mode, modestring = Qnil, size, gid;
-  struct gcpro gcpro1, gcpro2, gcpro3;
+  Lisp_Object handler, mode, modestring = Qnil, size = Qzero, gid;
+  struct gcpro gcpro1, gcpro2, gcpro3, gcpro4;
 
   Lisp_Object uidInfo = Qnil;
   Lisp_Object gidInfo = Qnil;
 
-  GCPRO3 (filename, directory, modestring);
+  GCPRO4 (filename, directory, modestring, size);
   filename = Fexpand_file_name (filename, Qnil);
 
   /* If the file name has special constructs in it,
@@ -900,13 +900,7 @@ If file does not exist, returns nil.
 #endif
     }
 
-#ifndef HAVE_BIGNUM
-  size = make_fixnum (NUMBER_FITS_IN_A_FIXNUM (s.st_size) ?
-		      (EMACS_INT)s.st_size : -1);
-#else
-  size = make_integer (s.st_size);
-#endif
-
+  size = OFF_T_to_lisp (s.st_size);
   filemodestring (&s, modes);
   modestring = make_string ((Ibyte *) modes, 10);
 
