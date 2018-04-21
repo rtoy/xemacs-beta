@@ -4099,6 +4099,217 @@ Return non-nil if OBJECT is an ephemeron.
   return EPHEMERONP (object) ? Qt : Qnil;
 }
 
+/****************** Converting to and from specific C types ******************/
+
+#ifdef HAVE_BIGNUM
+#define LISP_INTEGER_TO_C_TYPE(c_type, objekt)                          \
+  if (INTEGERP (objekt))                                                \
+    do                                                                  \
+      {                                                                 \
+        check_integer_range (objekt, make_integer (min_lisp_to_c_type), \
+                             make_integer (max_lisp_to_c_type));        \
+        if (FIXNUMP (objekt))                                           \
+          {                                                             \
+            return (c_type) XREALFIXNUM (objekt);                       \
+          }                                                             \
+        else if (BIGNUMP (objekt))                                      \
+          {                                                             \
+            if (sizeof (c_type) >= SIZEOF_EMACS_INT &&                  \
+                bignum_fits_emacs_int_p (XBIGNUM_DATA (objekt)))        \
+              {                                                         \
+                return (c_type) bignum_to_emacs_int (XBIGNUM_DATA       \
+                                                    (objekt));          \
+              }                                                         \
+                                                                        \
+            if (sizeof (c_type) >= sizeof (long long) &&                \
+                bignum_fits_llong_p (XBIGNUM_DATA (objekt)))            \
+              {                                                         \
+                return (c_type) bignum_to_llong (XBIGNUM_DATA (objekt)); \
+              }                                                         \
+                                                                        \
+            if (sizeof (c_type) >= sizeof (long long) &&                \
+                bignum_fits_ullong_p (XBIGNUM_DATA (objekt)))           \
+              {                                                         \
+                return (c_type) bignum_to_ullong (XBIGNUM_DATA (objekt)); \
+              }                                                         \
+                                                                        \
+            signal_error (Qunimplemented,                               \
+                          "cannot decode this " #c_type,                \
+                          objekt);                                      \
+            RETURN_NOT_REACHED ((c_type) -1);                           \
+          }                                                             \
+      } while (0)
+#define C_TYPE_TO_LISP_INTEGER(c_type, value)\
+  return make_integer (value)
+#else
+#define LISP_INTEGER_TO_C_TYPE(c_type, objekt)        \
+  if (FIXNUMP (objekt))                                                 \
+    do                                                                  \
+      {                                                                 \
+        EMACS_INT ival = XREALFIXNUM (objekt);                          \
+                                                                        \
+        if (sizeof (c_type) >= sizeof (EMACS_INT) ?                     \
+            ((c_type) ival < min_lisp_to_c_type ||                      \
+             (c_type) ival > max_lisp_to_c_type) :                      \
+            (ival < (EMACS_INT) min_lisp_to_c_type ||                   \
+             ival > (EMACS_INT) max_lisp_to_c_type))                    \
+          {                                                             \
+            args_out_of_range_3 (objekt,                                \
+                                 make_float (min_lisp_to_c_type),       \
+                                 make_float (max_lisp_to_c_type));      \
+          }                                                             \
+                                                                        \
+        return (c_type) ival;                                           \
+      } while (0)
+
+#define C_TYPE_TO_LISP_INTEGER(c_type, value)                           \
+  if (NUMBER_FITS_IN_A_FIXNUM (value))                                  \
+    {                                                                   \
+      return make_fixnum (value);                                       \
+    }                                                                   \
+  else                                                                  \
+    {                                                                   \
+      Lisp_Object result = Fcons (make_fixnum (value & 0xFFFF), Qnil);  \
+      Boolint negative = value < 0;                                     \
+                                                                        \
+      /* Only the most significant 16 bits will be negative in the      \
+	 constructed cons. */                                           \
+      value = (value >> 16);                                            \
+      if (negative)                                                     \
+	{                                                               \
+	  value = -value;                                               \
+	}                                                               \
+                                                                        \
+      while (value)                                                     \
+	{                                                               \
+	  value = value >> 16;                                          \
+	  result = Fcons (make_fixnum (value & 0xFFFF), result);        \
+	}                                                               \
+                                                                        \
+      if (negative)                                                     \
+	{                                                               \
+	  XSETCAR (result, make_fixnum (- (XFIXNUM (XCAR (result)))));  \
+	}                                                               \
+                                                                        \
+      return result;                                                    \
+    }                                                                   \
+  RETURN_NOT_REACHED ((c_type)-1)
+#endif
+
+#define DEFINE_C_INTEGER_TYPE_LISP_CONVERSION(visibility, c_type)      \
+  visibility c_type                                                     \
+  lisp_to_##c_type (Lisp_Object objeto)                                 \
+  {                                                                     \
+    c_type min_lisp_to_c_type, max_lisp_to_c_type, result = 0;          \
+    double dval;                                                        \
+                                                                        \
+    if (((c_type) -1) < 0) /* Signed type? */                           \
+      {                                                                 \
+        if (sizeof (c_type) == SIZEOF_SHORT)                            \
+          {                                                             \
+            max_lisp_to_c_type = (c_type) ((unsigned short) -1) / 2;    \
+            min_lisp_to_c_type                                          \
+              = (c_type) ((unsigned short)(max_lisp_to_c_type) + 1);    \
+          }                                                             \
+        else if (sizeof (c_type) == SIZEOF_INT)                         \
+          {                                                             \
+            max_lisp_to_c_type = (c_type) ((unsigned int) -1) / 2;      \
+            min_lisp_to_c_type                                          \
+              = (c_type) ((unsigned int)(max_lisp_to_c_type) + 1);      \
+          }                                                             \
+        else if (sizeof (c_type) == SIZEOF_LONG)                        \
+          {                                                             \
+            max_lisp_to_c_type = (c_type) (((unsigned long) -1) / 2);   \
+            min_lisp_to_c_type                                          \
+              = (c_type) ((unsigned long)(max_lisp_to_c_type) + 1);     \
+          }                                                             \
+        else if (sizeof (c_type) == SIZEOF_LONG_LONG)                   \
+          {                                                             \
+            max_lisp_to_c_type                                          \
+              = (c_type) (((unsigned long long) -1) / 2);               \
+            min_lisp_to_c_type                                          \
+              = (c_type) ((unsigned long long)(max_lisp_to_c_type) + 1); \
+          }                                                             \
+        else                                                            \
+          {                                                             \
+            assert (0); /* Very very very unlikely. */                  \
+          }                                                             \
+      }                                                                 \
+    else                                                                \
+      {                                                                 \
+        min_lisp_to_c_type = 0;                                         \
+        max_lisp_to_c_type = (c_type)(-1);                              \
+      }                                                                 \
+                                                                        \
+    LISP_INTEGER_TO_C_TYPE (c_type, objeto);                            \
+                                                                        \
+    if (CONSP (objeto))                                                 \
+      {                                                                 \
+        unsigned counter = 1;                                           \
+        Lisp_Object orig = objeto;                                      \
+                                                                        \
+        if ((c_type)-1 < 0)                                             \
+          {                                                             \
+            check_integer_range (XCAR (objeto), make_fixnum (-32768),   \
+                                 make_fixnum (32767));                  \
+          }                                                             \
+        else                                                            \
+          {                                                             \
+            check_integer_range (XCAR (objeto), Qzero,                  \
+                                 make_fixnum (65535));                  \
+          }                                                             \
+                                                                        \
+        result = XFIXNUM (XCAR (objeto));                               \
+        objeto = XCDR (objeto);                                         \
+                                                                        \
+        while (CONSP (objeto))                                          \
+          {                                                             \
+            check_integer_range (XCAR (objeto), Qzero,                  \
+                                 make_fixnum (65535));                  \
+            counter++;                                                  \
+            if (counter > sizeof (c_type) / 2)                          \
+              {                                                         \
+                invalid_argument ("Too many bits supplied "             \
+                                  "for " #c_type,                       \
+                                  orig);                                \
+              }                                                         \
+            result                                                      \
+              = (result << 16) | (XFIXNUM (XCAR (objeto)) & 0xFFFF);    \
+            objeto = XCDR (objeto);                                     \
+          }                                                             \
+                                                                        \
+        return result;                                                  \
+      }                                                                 \
+                                                                        \
+    dval = extract_float (objeto);                                      \
+    result = dval;                                                      \
+                                                                        \
+    if (result < min_lisp_to_c_type || result > max_lisp_to_c_type)     \
+      {                                                                 \
+        args_out_of_range_3 (objeto, make_float (min_lisp_to_c_type),   \
+                             make_float (max_lisp_to_c_type));          \
+      }                                                                 \
+                                                                        \
+    if (dval != result)                                                 \
+      {                                                                 \
+        invalid_argument ("Fractional or two wide " #c_type,            \
+                          objeto);                                      \
+      }                                                                 \
+                                                                        \
+    return result;                                                      \
+  }                                                                     \
+                                                                        \
+  visibility Lisp_Object                                                \
+  c_type##_to_lisp (c_type value)                                       \
+  {                                                                     \
+    C_TYPE_TO_LISP_INTEGER (c_type, value);                             \
+  }                                                                     \
+  visibility Lisp_Object c_type##_to_lisp (c_type)
+
+DEFINE_C_INTEGER_TYPE_LISP_CONVERSION (extern, OFF_T);
+
+DEFINE_C_INTEGER_TYPE_LISP_CONVERSION (extern, uid_t);
+
 /************************************************************************/
 /*                            initialization                            */
 /************************************************************************/

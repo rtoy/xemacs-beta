@@ -604,7 +604,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
  if (!tmpdir)
     {
       struct stat st;
-      int myuid = getuid ();
+      uid_t myuid = getuid ();
       Ibyte *login_name = user_login_name (NULL);
       DECLARE_EISTRING (eipath);
       Ibyte *path;
@@ -614,7 +614,7 @@ On Unix it is obtained from TMPDIR, with /tmp as the default.
       path = eidata (eipath);
       if (qxe_lstat (path, &st) < 0 && errno == ENOENT)
 	qxe_mkdir (path, 0700);	/* ignore retval -- checked next anyway. */
-      if (qxe_lstat (path, &st) == 0 && (int) st.st_uid == myuid
+      if (qxe_lstat (path, &st) == 0 && st.st_uid == myuid
 	  && S_ISDIR (st.st_mode))
 	tmpdir = path;
       else
@@ -665,8 +665,7 @@ ignored and this function returns the login name for that UID, or nil.
 
   if (!NILP (uid))
     {
-      CHECK_FIXNUM (uid);
-      local_uid = XFIXNUM (uid);
+      local_uid = lisp_to_uid_t (uid);
       returned_name = user_login_name (&local_uid);
     }
   else
@@ -750,7 +749,7 @@ Return the effective uid of Emacs, as an integer.
 */
        ())
 {
-  return make_fixnum (geteuid ());
+  return uid_t_to_lisp (geteuid ());
 }
 
 DEFUN ("user-real-uid", Fuser_real_uid, 0, 0, 0, /*
@@ -758,7 +757,7 @@ Return the real uid of Emacs, as an integer.
 */
        ())
 {
-  return make_fixnum (getuid ());
+  return uid_t_to_lisp (getuid ());
 }
 
 DEFUN ("user-full-name", Fuser_full_name, 0, 1, 0, /*

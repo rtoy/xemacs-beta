@@ -1,3 +1,9 @@
+2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/os-tests.el (two-to-the-thirty-second):
+	Check that (user-login-name 4294967296) no longer gives "root", as
+	it used to do on 64-bit builds.
+
 2018-04-06  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/os-tests.el (handle-call-process-cases): New.

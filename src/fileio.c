@@ -166,54 +166,6 @@ lisp_strerror (int errnum)
     }
   return build_extstring (ret, Qstrerror_encoding);
 }
-
-static OFF_T
-lisp_to_off_t (Lisp_Object offset)
-{
-  OFF_T result;
-  double v;
-
-  if (FIXNUMP (offset))
-    {
-      type_checking_assert (FIXNUM_VALBITS <=
-                            (sizeof (OFF_T) * BITS_PER_CHAR));
-      return XREALFIXNUM (offset);
-    }
-#ifdef HAVE_BIGNUM 
-  if (BIGNUMP (offset))
-    {
-      if (bignum_fits_emacs_int_p (XBIGNUM_DATA (offset)))
-        {
-          type_checking_assert (BITS_PER_EMACS_INT <=
-                                (sizeof (OFF_T) * BITS_PER_CHAR));
-          return bignum_to_emacs_int (XBIGNUM_DATA (offset));
-        }
-      else if (sizeof (OFF_T) == sizeof (long long)
-               && bignum_fits_llong_p (XBIGNUM_DATA (offset)))
-        {
-          return bignum_to_llong (XBIGNUM_DATA (offset));
-        }
-      else if (sizeof (OFF_T) == sizeof (unsigned long long)
-               && (OFF_T)(-1) != -1
-               && bignum_fits_ullong_p (XBIGNUM_DATA (offset)))
-        {
-          return bignum_to_ullong (XBIGNUM_DATA (offset));
-        }
-    }
-#endif
-
-  v = extract_float (offset);
-  result = v;
-
-  if (result == v) /* Value bits preserved? */
-    {
-      return result;
-    }
-
-  wtaerror ("Offset not supported", offset);
-  RETURN_NOT_REACHED (-1);
-}
-
 
 static Lisp_Object
 close_file_unwind (Lisp_Object fd)
@@ -3025,7 +2977,7 @@ under Mule, is very difficult.)
     {
       start = Qzero;
     }
-  else if (lisp_to_off_t (start) < 0)
+  else if (lisp_to_OFF_T (start) < 0)
     {
       start = wrong_type_argument (Qnatnump, start);
     }
@@ -3207,7 +3159,7 @@ under Mule, is very difficult.)
       Lisp_Object args[] = { end, start };
       Lisp_Object diff = Fminus (countof (args), args);
 
-      total = lisp_to_off_t (diff);
+      total = lisp_to_OFF_T (diff);
 
       if (total < 0)
         {
@@ -3231,7 +3183,7 @@ under Mule, is very difficult.)
 	 where it should be. */
       || (!NILP (replace) && do_speedy_insert))
     {
-      if (lseek (fd, lisp_to_off_t (start), 0) < 0)
+      if (lseek (fd, lisp_to_OFF_T (start), 0) < 0)
 	report_file_error ("Setting file position", filename);
     }
 
@@ -3567,7 +3519,7 @@ here because write-region handler writers need to be aware of it.
         if (NUMBERP (append))
           {
             whence = SEEK_SET;
-            offset = lisp_to_off_t (append);
+            offset = lisp_to_OFF_T (append);
             if (offset < 0)
               {
                 dead_wrong_type_argument (Qnatnump, append);
