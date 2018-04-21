@@ -1285,23 +1285,40 @@ const Bytecount rep_bytes_by_first_byte[256] =
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  /* 0x80 - 0xbf are not valid first bytes */
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
-  0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF, 0xDEADBEEF,
+  /* 0x80 - 0xbf are not valid first bytes. A bare 0xDEADBEEF or
+     DEADBEEF_CONSTANT without the cast runs foul of the C++ compiler. */
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT), 
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT),
   /* 0xc0 - 0xdf for 2-byte sequences */
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -1312,7 +1329,8 @@ const Bytecount rep_bytes_by_first_byte[256] =
      0xfc - 0xfd for 6-byte sequences;
      0xfe, 0xff not allowed
    */
-  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 0xDEADBEEF, 0xDEADBEEF
+  4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6,
+  (Bytecount) (DEADBEEF_CONSTANT), (Bytecount) (DEADBEEF_CONSTANT)
 };
 #else
 /* #### Maybe this table should be derived programmatically, at least

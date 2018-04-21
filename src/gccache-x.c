@@ -70,7 +70,8 @@ gc_cache_eql (const Hash_Table_Test * UNUSED (http),
 static Hashcode
 gc_cache_hash (const Hash_Table_Test * UNUSED (http), Lisp_Object arg)
 {
-  const struct gcv_and_mask *gcvm = GET_VOID_FROM_LISP (arg);
+  const struct gcv_and_mask *gcvm
+    = (const struct gcv_and_mask *) GET_VOID_FROM_LISP (arg);
   EMACS_UINT *longs = (EMACS_UINT *) &gcvm->gcv;
   Hashcode hash = gcvm->mask;
   unsigned i;
@@ -218,7 +219,7 @@ x_gc_cache_lookup (struct device *d, XGCValues *gcv, unsigned long mask)
   e = find_htentry (STORE_VOID_IN_LISP (&gcvm), XHASH_TABLE (cache->table));
   if (!HTENTRY_CLEAR_P (e))
     {
-      cell = GET_VOID_FROM_LISP (e->value);
+      cell = (struct gc_cache_cell *) GET_VOID_FROM_LISP (e->value);
 
       /* Found a cell. */
 #ifdef DEBUG_GC_CACHE

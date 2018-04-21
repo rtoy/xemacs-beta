@@ -1,3 +1,13 @@
+2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gccache-x.c (gc_cache_hash):
+	* gccache-x.c (x_gc_cache_lookup):
+	Add a couple of casts here to placate the C++ compiler.
+	* text.c (rep_bytes_by_first_byte):
+	Don't use hexadecimal notation for 0xDEADBEEF in this table,
+	that causes a compile problem with C++ on a thirty-two bit
+	machine.
+
 2018-04-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fileio.c (Finsert_file_contents_internal):
