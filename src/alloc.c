@@ -150,9 +150,9 @@ static Bytecount gc_count_long_string_storage_including_overhead;
 
 static struct
 {
-  int instances_in_use;
-  int bytes_in_use;
-  int bytes_in_use_including_overhead;
+  Elemcount instances_in_use;
+  Bytecount bytes_in_use;
+  Bytecount bytes_in_use_including_overhead;
 } lrecord_stats [countof (lrecord_implementations_table)];
 
 #else /* not NEW_GC */
@@ -315,7 +315,7 @@ while (0)
 static void
 malloc_after (void *val, Bytecount size)
 {
-  if (!val && size != 0)
+  if (size < 0 || (!val && size != 0))
     memory_full ();
   set_alloc_mins_and_maxes (val, size);
 }
@@ -393,7 +393,7 @@ xmalloc (Bytecount size)
 {
   void *val;
   MALLOC_BEGIN ();
-  val = malloc (size);
+  val = malloc ((size_t) size);
   MALLOC_END ();
   malloc_after (val, size);
   return val;
@@ -405,7 +405,7 @@ xcalloc (Elemcount nelem, Bytecount elsize)
 {
   void *val;
   MALLOC_BEGIN ();
-  val= calloc (nelem, elsize);
+  val= calloc ((size_t) nelem, (size_t) elsize);
   MALLOC_END ();
   malloc_after (val, nelem * elsize);
   return val;
@@ -422,7 +422,7 @@ void *
 xrealloc (void *block, Bytecount size)
 {
   FREE_OR_REALLOC_BEGIN (block);
-  block = realloc (block, size);
+  block = realloc (block, (size_t) size);
   MALLOC_END ();
   malloc_after (block, size);
   return block;
@@ -454,8 +454,10 @@ deadbeef_memory (void *ptr, Bytecount size)
 char *
 xstrdup (const char *str)
 {
-  int len = strlen (str) + 1;   /* for stupid terminating 0 */
-  void *val = xmalloc (len);
+  size_t len = strlen (str) + 1;   /* for stupid terminating 0 */
+  void *val;
+
+  val = xmalloc ((Bytecount) len);
 
   if (val == 0) return 0;
   return (char *) memcpy (val, str, len);
@@ -596,7 +598,7 @@ alloc_sized_lrecord_1 (Bytecount size,
 
   assert_proper_sizing (size);
 
-  lheader = (struct lrecord_header *) mc_alloc (size);
+  lheader = (struct lrecord_header *) mc_alloc ((size_t) size);
   gc_checking_assert (LRECORD_FREE_P (lheader));
   set_lheader_implementation (lheader, implementation);
 #ifdef ALLOC_TYPE_STATS
@@ -641,7 +643,7 @@ noseeum_alloc_lrecord (const struct lrecord_implementation *implementation)
 }
 
 Lisp_Object
-alloc_sized_lrecord_array (Bytecount size, int elemcount,
+alloc_sized_lrecord_array (Bytecount size, Elemcount elemcount,
 			   const struct lrecord_implementation *implementation)
 {
   struct lrecord_header *lheader;
@@ -671,7 +673,7 @@ alloc_sized_lrecord_array (Bytecount size, int elemcount,
 }
 
 Lisp_Object
-alloc_lrecord_array (int elemcount,
+alloc_lrecord_array (Elemcount elemcount,
 		     const struct lrecord_implementation *implementation)
 {
   type_checking_assert (implementation->static_size > 0);
@@ -767,7 +769,7 @@ copy_lisp_object (Lisp_Object dst, Lisp_Object src)
 #ifdef NEW_GC
   memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lrecord_header),
 	  (char *) XRECORD_LHEADER (src) + sizeof (struct lrecord_header),
-	  size - sizeof (struct lrecord_header));
+	  size - (Bytecount) sizeof (struct lrecord_header));
 #else /* not NEW_GC */
   if (imp->frob_block_p)
     memcpy ((char *) XRECORD_LHEADER (dst) + sizeof (struct lrecord_header),
@@ -896,8 +898,8 @@ unsigned char dbg_gctypebits = GCTYPEBITS;
 
 /* On some systems, the above definitions will be optimized away by
    the compiler or linker unless they are referenced in some function. */
-long dbg_inhibit_dbg_symbol_deletion (void);
-long
+EMACS_UINT dbg_inhibit_dbg_symbol_deletion (void);
+EMACS_UINT
 dbg_inhibit_dbg_symbol_deletion (void)
 {
   return
@@ -1857,7 +1859,7 @@ Lisp_Object
 make_uninit_vector (Elemcount sizei)
 {
   /* no `next' field; we use lcrecords */
-  EMACS_UINT sizeui = sizei;
+  EMACS_UINT sizeui = (EMACS_UINT) sizei;
   EMACS_UINT sizem = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Vector, Lisp_Object,
                                                    contents, sizeui);
   Lisp_Object obj;
@@ -1910,7 +1912,7 @@ arguments: (&rest ARGS)
                           check_integer_range() does <=, adjust for this. */
                        make_fixnum (ARRAY_DIMENSION_LIMIT - 1));
   result = make_uninit_vector (nargs);
-  memcpy (XVECTOR_DATA (result), args, sizeof (Lisp_Object) * nargs);
+  memcpy (XVECTOR_DATA (result), args, sizeof (Lisp_Object) * (size_t) nargs);
   return result;
 }
 
@@ -2057,8 +2059,8 @@ bit_vector_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
 
   return ((bit_vector_length (v1) == bit_vector_length (v2)) &&
 	  !memcmp (v1->bits, v2->bits,
-		   BIT_VECTOR_LONG_STORAGE (bit_vector_length (v1)) *
-		   sizeof (long)));
+		   (size_t) BIT_VECTOR_LONG_STORAGE (bit_vector_length (v1))
+		   * sizeof (long)));
 }
 
 /* This needs to be algorithmically identical to internal_array_hash in
@@ -2156,15 +2158,18 @@ make_bit_vector (Elemcount length, Lisp_Object bit)
 {
   Lisp_Bit_Vector *p = make_bit_vector_internal (length);
   Elemcount num_longs = BIT_VECTOR_LONG_STORAGE (length);
+  size_t bcount = (size_t) num_longs * sizeof (long);
 
   CHECK_BIT (bit);
 
+  structure_checking_assert ((bcount / (size_t) num_longs) == sizeof (long));
+
   if (ZEROP (bit))
-    memset (p->bits, 0, num_longs * sizeof (long));
+    memset (p->bits, 0, bcount);
   else
     {
       Elemcount bits_in_last = length & (LONGBITS_POWER_OF_2 - 1);
-      memset (p->bits, ~0, num_longs * sizeof (long));
+      memset (p->bits, ~0, bcount);
       /* But we have to make sure that the unused bits in the
 	 last long are 0, so that equal/hash is easy. */
       if (bits_in_last)
@@ -2672,7 +2677,8 @@ string_equal (Lisp_Object obj1, Lisp_Object obj2, int UNUSED (depth),
     return !lisp_strcasecmp_i18n (obj1, obj2);
   else
     return (((len = XSTRING_LENGTH (obj1)) == XSTRING_LENGTH (obj2)) &&
-	    !memcmp (XSTRING_DATA (obj1), XSTRING_DATA (obj2), len));
+	    !memcmp (XSTRING_DATA (obj1), XSTRING_DATA (obj2),
+		     (size_t) len));
 }
 
 static const struct memory_description string_description[] = {
@@ -3056,14 +3062,16 @@ resize_string (Lisp_Object s, Bytecount pos, Bytecount delta)
   
   if (delta < 0 && pos >= 0)
     memmove (XSTRING_DATA (s) + pos + delta,
-	     XSTRING_DATA (s) + pos, len);
+	     /* LEN is guaranteed greater than zero. */
+	     XSTRING_DATA (s) + pos, (size_t) len);
   
   XSTRING_DATA_OBJECT (s) = 
     wrap_string_direct_data (mc_realloc (XPNTR (XSTRING_DATA_OBJECT (s)),
 					 newfullsize));
   if (delta > 0 && pos >= 0)
     memmove (XSTRING_DATA (s) + pos + delta, XSTRING_DATA (s) + pos,
-	     len);
+	     /* LEN is guaranteed greater than zero. */
+	     (size_t) len);
   
 #else /* not NEW_GC */
   oldfullsize = STRING_FULLSIZE (XSTRING_LENGTH (s));
@@ -3222,10 +3230,10 @@ set_string_char (Lisp_Object ss, Charcount idx, Ichar cc)
   /* XSTRING_DATA (ss) might have changed, reload it. */
   data = XSTRING_DATA (ss) + bytoff;
 
-  memcpy (data, newstr, newlen);
+  memcpy (data, newstr, (size_t) newlen);
   if (oldlen != newlen) 
     {
-      if (newlen > 1 && idx <= (Charcount) XSTRING_ASCII_BEGIN (ss))
+      if (newlen > 1 && idx < (Charcount) XSTRING_ASCII_BEGIN (ss))
       /* Everything starting with the new char is no longer part of
 	 ascii_begin */
 	XSET_STRING_ASCII_BEGIN (ss, idx);
@@ -3238,9 +3246,7 @@ set_string_char (Lisp_Object ss, Charcount idx, Ichar cc)
 	      if (!byte_ascii_p (XSTRING_DATA (ss)[jj]))
 		break;
 	    }
-	  XSET_STRING_ASCII_BEGIN (ss,
-                                   min (jj,
-                                        (Bytecount) MAX_STRING_ASCII_BEGIN));
+	  XSET_STRING_ASCII_BEGIN (ss, jj);
 	}
     }
   sledgehammer_check_ascii_begin (ss);
@@ -3269,9 +3275,9 @@ See the variable `string-total-size-limit' for restrictions on LENGTH.
                            make_fixnum (STRING_BYTE_TOTAL_SIZE_LIMIT - 1));
 
       val = make_uninit_string (XFIXNUM (length));
-      memset (XSTRING_DATA (val), XCHAR (character), XSTRING_LENGTH (val));
-      XSET_STRING_ASCII_BEGIN (val, min (MAX_STRING_ASCII_BEGIN,
-                                         XSTRING_LENGTH (val)));
+      memset (XSTRING_DATA (val), XCHAR (character),
+	      (size_t) XSTRING_LENGTH (val));
+      XSET_STRING_ASCII_BEGIN (val, XSTRING_LENGTH (val));
     }
   else if (FIXNUMP (length) && XREALFIXNUM (length) >= 0)
     {
@@ -3304,7 +3310,7 @@ See the variable `string-total-size-limit' for restrictions on LENGTH.
       val = make_uninit_string ((Bytecount) product);
       ptr = XSTRING_DATA (val);
 
-      for (i = clen; i; i--)
+      for (i = (EMACS_INT) clen; i; i--)
         {
           Ibyte *init_ptr = init_str;
           switch (onelen)
@@ -3350,7 +3356,7 @@ arguments: (&rest ARGS)
                        make_fixnum ((STRING_BYTE_TOTAL_SIZE_LIMIT - 1) /
                                     MAX_ICHAR_LEN));
 
-  storage = p = alloca_ibytes (nargs * MAX_ICHAR_LEN);
+  storage = p = alloca_ibytes ((size_t) nargs * MAX_ICHAR_LEN);
 
   for (; nargs; nargs--, args++)
     {
@@ -3400,10 +3406,9 @@ init_string_ascii_begin (Lisp_Object string)
       if (!byte_ascii_p (contents[i]))
 	break;
     }
-  XSET_STRING_ASCII_BEGIN (string, min (i, MAX_STRING_ASCII_BEGIN));
+  XSET_STRING_ASCII_BEGIN (string, i);
 #else
-  XSET_STRING_ASCII_BEGIN (string, min (XSTRING_LENGTH (string),
-					MAX_STRING_ASCII_BEGIN));
+  XSET_STRING_ASCII_BEGIN (string, XSTRING_LENGTH (string));
 #endif
   sledgehammer_check_ascii_begin (string);
 }
@@ -3421,7 +3426,7 @@ make_string (const Ibyte *contents, Bytecount length)
 #endif
 
   val = make_uninit_string (length);
-  memcpy (XSTRING_DATA (val), contents, length);
+  memcpy (XSTRING_DATA (val), contents, (size_t) length);
   init_string_ascii_begin (val);
   sledgehammer_check_ascii_begin (val);  
   return val;
@@ -4196,7 +4201,7 @@ dec_lrecord_stats (Bytecount size_including_overhead,
 		   const struct lrecord_header *h)
 {
   int type_index = h->type;
-  int size = detagged_lisp_object_size (h);
+  Bytecount size = detagged_lisp_object_size (h);
 
   lrecord_stats[type_index].instances_in_use--;
   lrecord_stats[type_index].bytes_in_use -= size;
@@ -4206,11 +4211,11 @@ dec_lrecord_stats (Bytecount size_including_overhead,
   DECREMENT_CONS_COUNTER (size);
 }
 
-int
+Bytecount
 lrecord_stats_heap_size (void)
 {
   int i;
-  int size = 0;
+  Bytecount size = 0;
   for (i = 0; i < countof (lrecord_implementations_table); i++)
     size += lrecord_stats[i].bytes_in_use;
   return size;
@@ -4395,7 +4400,7 @@ gc_plist_hack (const Ascbyte *name, EMACS_INT value, Lisp_Object tail)
 static void
 pluralize_word (Ascbyte *buf)
 {
-  Bytecount len = strlen (buf);
+  size_t len = strlen (buf);
   int upper = 0;
   Ascbyte d, e;
 

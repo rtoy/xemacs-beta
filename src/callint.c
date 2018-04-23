@@ -281,10 +281,10 @@ when reading the arguments.
 #endif
   /* If SPECS is a string, we reset prompt_data to XSTRING_DATA (specs)
      every time a GC might have occurred */
-  const char *prompt_data = 0;
-  int prompt_index = 0;
+  const Ibyte *prompt_data = 0;
+  Bytecount prompt_index = 0;
   int argcount;
-  int set_zmacs_region_stays = 0;
+  Boolint set_zmacs_region_stays = 0;
   int mouse_event_count = 0;
 
   if (!NILP (keys))
@@ -316,7 +316,7 @@ when reading the arguments.
 
   if (SUBRP (fun))
     {
-      prompt_data = XSUBR (fun)->prompt;
+      prompt_data = (const Ibyte *) XSUBR (fun)->prompt;
       if (!prompt_data)
 	{
 	lose:
@@ -369,7 +369,7 @@ when reading the arguments.
   if (!STRINGP (specs) && prompt_data == 0)
     {
       struct gcpro gcpro1, gcpro2, gcpro3;
-      int i = num_input_chars;
+      Charcount i = num_input_chars;
       Lisp_Object input = specs;
 
       GCPRO3 (function, specs, input);
@@ -466,7 +466,7 @@ when reading the arguments.
     for (;;)
       {
 	if (STRINGP (specs))
-	  prompt_data = (const char *) XSTRING_DATA (specs);
+	  prompt_data = (const Ibyte *) XSTRING_DATA (specs);
 
 	if (prompt_data[prompt_index] == '+')
 	  syntax_error ("`+' is not used in `interactive' for ordinary commands", Qunbound);
@@ -527,7 +527,7 @@ when reading the arguments.
      us give to the function.  */
   argcount = 0;
   {
-    const char *tem;
+    const Ibyte *tem;
     for (tem = prompt_data + prompt_index; *tem; )
       {
 	/* 'r' specifications ("point and mark as 2 numeric args")
@@ -536,7 +536,7 @@ when reading the arguments.
 	  argcount += 2;
 	else
 	  argcount += 1;
-	tem = (const char *) strchr (tem + 1, '\n');
+	tem = qxestrchr (tem + 1, '\n');
 	if (!tem)
 	  break;
 	tem++;
@@ -575,11 +575,11 @@ when reading the arguments.
   {
     /* args[-1] is the function to call */
     /* args[n] is the n'th argument to the function */
-    int alloca_size = (1	/* function to call */
-                       + argcount /* actual arguments */
-                       + argcount /* visargs */
-                       + argcount /* varies */
-                       );
+    Bytecount alloca_size = (1	/* function to call */
+			     + argcount /* actual arguments */
+			     + argcount /* visargs */
+			     + argcount /* varies */
+			     );
     Lisp_Object *args = alloca_array (Lisp_Object, alloca_size) + 1;
     /* visargs is an array of either Qnil or user-friendlier versions (often
      *  strings) of previous arguments, to use in prompts for successive
@@ -590,7 +590,7 @@ when reading the arguments.
        its value in this call quoted in the command history.  It should be
        recorded as a call to the function named varies[i]]. */
     Lisp_Object *varies = visargs + argcount;
-    int arg_from_tty = 0;
+    Boolint arg_from_tty = 0;
     REGISTER int argnum;
     struct gcpro gcpro1, gcpro2;
 
@@ -606,12 +606,12 @@ when reading the arguments.
 
     for (argnum = 0; ; argnum++)
       {
-	const char *prompt_start = prompt_data + prompt_index + 1;
-	const char *prompt_limit = (const char *) strchr (prompt_start, '\n');
-	int prompt_length;
+	const Ibyte *prompt_start = prompt_data + prompt_index + 1;
+	const Ibyte *prompt_limit = qxestrchr (prompt_start, '\n');
+	Bytecount prompt_length;
 	prompt_length = ((prompt_limit)
 			 ? (prompt_limit - prompt_start)
-			 : (int) strlen (prompt_start));
+			 : qxestrlen (prompt_start));
 	if (prompt_limit && prompt_limit[1] == 0)
 	  {
 	    prompt_limit = 0;	/* "sfoo:\n" -- strip tailing return */
@@ -933,7 +933,7 @@ when reading the arguments.
 	if (!prompt_limit)
 	  break;
 	if (STRINGP (specs))
-	  prompt_data = (const char *) XSTRING_DATA (specs);
+	  prompt_data = (const Ibyte *) XSTRING_DATA (specs);
 	prompt_index += prompt_length + 1 + 1; /* +1 to skip spec, +1 for \n */
       }
     unbind_to (speccount);

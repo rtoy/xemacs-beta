@@ -51,10 +51,10 @@ BEGIN_C_DECLS
   type *base;					\
   DECLARE_DYNARR_LISP_IMP ()			\
   DECLARE_DYNARR_LOCKED ()			\
-  int elsize_;					\
-  int len_;					\
-  int largest_;					\
-  int max_
+  Bytecount elsize_;				\
+  Elemcount len_;				\
+  Elemcount largest_;				\
+  Elemcount max_
 
 typedef struct dynarr
 {
@@ -152,7 +152,7 @@ typedef struct dynarr
 
 #ifdef ERROR_CHECK_DYNARR
 DECLARE_INLINE_HEADER (
-int
+Elemcount
 Dynarr_verify_pos_at (void *d, Elemcount pos, const Ascbyte *file, int line)
 )
 {
@@ -164,7 +164,7 @@ Dynarr_verify_pos_at (void *d, Elemcount pos, const Ascbyte *file, int line)
 }
 
 DECLARE_INLINE_HEADER (
-int
+Elemcount
 Dynarr_verify_pos_atp (void *d, Elemcount pos, const Ascbyte *file, int line)
 )
 {
@@ -204,7 +204,7 @@ Dynarr_verify_pos_atp (void *d, Elemcount pos, const Ascbyte *file, int line)
 }
 
 DECLARE_INLINE_HEADER (
-int
+Elemcount
 Dynarr_verify_pos_atp_allow_end (void *d, Elemcount pos, const Ascbyte *file,
 				 int line)
 )
@@ -441,8 +441,9 @@ Dynarr_zero_many (void *d, Elemcount pos, Elemcount len)
 )
 {
   Dynarr *dy = Dynarr_verify_mod (d);
-  memset ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), 0,
-	  len*Dynarr_elsize (dy));
+  size_t bcount = (size_t) len * (size_t) (Dynarr_elsize (dy));
+
+  memset ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), 0, bcount);
 }
 
 /* This is an optimization.  This is like Dynarr_set_length_and_zero() but
@@ -543,8 +544,10 @@ Dynarr_add_many (void *d, const void *base, Elemcount len)
   Elemcount pos = Dynarr_length (dy);
   Dynarr_increase_length (dy, Dynarr_length (dy) + len);
   if (base)
-    memcpy ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), base,
-	    len*Dynarr_elsize (dy));
+    {
+      size_t bcount = (size_t) len * (size_t) Dynarr_elsize (dy);
+      memcpy ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), base, bcount);
+    }
 }
 
 /* Insert LEN elements, currently pointed to by BASE, into dynarr D
@@ -606,7 +609,7 @@ MODULE_API void Dynarr_delete_many (void *d, Elemcount pos, Elemcount len);
 #define Dynarr_delete_object(d, el)				\
 do								\
 {								\
-  REGISTER int _ddo_i;						\
+  REGISTER Elemcount _ddo_i;					\
   for (_ddo_i = Dynarr_length (d) - 1; _ddo_i >= 0; _ddo_i--)	\
     {								\
       if (el == Dynarr_at (d, _ddo_i))				\
@@ -767,7 +770,7 @@ typedef struct gap_array_marker
 #ifdef NEW_GC
   NORMAL_LISP_OBJECT_HEADER header;
 #endif /* NEW_GC */
-  int pos;
+  Elemcount pos;
   struct gap_array_marker *next;
 } Gap_Array_Marker;
 

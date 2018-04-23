@@ -142,7 +142,7 @@ update_mirror_syntax_if_dirty (Lisp_Object table)
 /* Return the syntax code for a particular character and mirror table. */
 
 DECLARE_INLINE_HEADER (
-int
+EMACS_INT
 SYNTAX_CODE (Lisp_Object table, Ichar c)
 )
 {

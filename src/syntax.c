@@ -750,7 +750,7 @@ Optional SYNTAX-TABLE defaults to the current buffer's syntax table.
    COUNT negative means scan backward and stop at word beginning.  */
 
 Charbpos
-scan_words (struct buffer *buf, Charbpos from, int count)
+scan_words (struct buffer *buf, Charbpos from, EMACS_INT count)
 {
   Charbpos limit = count > 0 ? BUF_ZV (buf) : BUF_BEGV (buf);
   Ichar ch0, ch1;

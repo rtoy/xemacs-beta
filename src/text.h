@@ -1047,9 +1047,9 @@ Bytecount dfc_external_data_len (const void *ptr, Lisp_Object codesys)
 )
 {
   if (dfc_coding_system_is_unicode (codesys))
-    return sizeof (wchar_t) * wcslen ((wchar_t *) ptr);
+    return (Bytecount) (sizeof (wchar_t) * wcslen ((wchar_t *) ptr));
   else
-    return strlen ((char *) ptr);
+    return (Bytecount) strlen ((char *) ptr);
 }
 
 
@@ -1331,9 +1331,8 @@ validate_ibyte_string_backward (const Ibyte *ptr, Bytecount n)
 #ifdef ERROR_CHECK_TEXT
 #define ASSERT_ASCTEXT_ASCII_LEN(ptr, len)			\
 do {								\
-  int aia2;							\
+  size_t aia2, aia2len = (len);					\
   const Ascbyte *aia2ptr = (ptr);				\
-  int aia2len = (len);						\
 								\
   for (aia2 = 0; aia2 < aia2len; aia2++)			\
     assert (aia2ptr[aia2] >= 0x00 && aia2ptr[aia2] < 0x7F);	\
@@ -2694,7 +2693,7 @@ typedef struct
   Bytecount max_size_allocated_;
   Bytecount bytelen_;
   Charcount charlen_;
-  int mallocp_;
+  Boolint mallocp_;
 
   Extbyte *extdata_;
   Bytecount extlen_;
@@ -2757,17 +2756,17 @@ do {							\
 
 #define EI_ALLOC(ei, newbytelen, newcharlen, newz)			\
 do {									\
-  int ei1oldeibytelen = (ei)->bytelen_;					\
+  Bytecount ei1oldeibytelen = (ei)->bytelen_;				\
 									\
   (ei)->charlen_ = (newcharlen);					\
   (ei)->bytelen_ = (newbytelen);					\
 									\
   if (ei1oldeibytelen != (ei)->bytelen_)				\
     {									\
-      int ei1newsize = (ei)->max_size_allocated_;			\
+      Bytecount ei1newsize = (ei)->max_size_allocated_;			\
       while (ei1newsize < (ei)->bytelen_ + 1)				\
 	{								\
-	  ei1newsize = (int) (ei1newsize * 1.5);			\
+	  ei1newsize = (Bytecount) (ei1newsize * 1.5);			\
 	  if (ei1newsize < 32)						\
 	    ei1newsize = 32;						\
 	}								\
@@ -2816,13 +2815,13 @@ do {									\
 #define eicpy_lstr_off(ei, lisp_string, off, charoff, len, charlen)	\
 do {									\
   Lisp_Object ei23lstr = (lisp_string);					\
-  int ei23off = (off);							\
-  int ei23charoff = (charoff);						\
-  int ei23len = (len);							\
-  int ei23charlen = (charlen);						\
+  Bytecount ei23off = (off);						\
+  Charcount ei23charoff = (charoff);					\
+  Bytecount ei23len = (len);						\
+  Charcount ei23charlen = (charlen);					\
   const Ibyte *ei23data = XSTRING_DATA (ei23lstr);			\
 									\
-  int ei23oldbytelen = (ei)->bytelen_;					\
+  Bytecount ei23oldbytelen = (ei)->bytelen_;				\
 									\
   eifixup_byte (ei23data, ei23off, ei23charoff);			\
   eifixup_bytechar (ei23data + ei23off, ei23len, ei23charlen);		\
@@ -2834,7 +2833,7 @@ do {									\
 do {									\
   const Ibyte *ei12ptr = (ptr);						\
   Internal_Format ei12fmt = (fmt);					\
-  int ei12len = (len);							\
+  Bytecount ei12len = (len);						\
   assert (ei12fmt == FORMAT_DEFAULT);					\
   EI_ALLOC_AND_COPY (ei, ei12ptr, ei12len,				\
 		     bytecount_to_charcount (ei12ptr, ei12len));	\
@@ -2871,7 +2870,7 @@ do {						\
 #define eicpy_ascii_len(ei, ascstr, c_len)	\
 do {						\
   const Ascbyte *ei6 = (ascstr);		\
-  int ei6len = (c_len);				\
+  Bytecount ei6len = (c_len);				\
 						\
   ASSERT_ASCTEXT_ASCII_LEN (ei6, ei6len);	\
   eicpy_ext_len (ei, ei6, ei6len, Qbinary);	\
@@ -2880,7 +2879,7 @@ do {						\
 #define eicpy_ext_len(ei, extdata, extlen, codesys)			\
 do {									\
   const Extbyte *ei7 = (extdata);					\
-  int ei7len = (extlen);						\
+  Bytecount ei7len = (extlen);						\
 									\
   TO_INTERNAL_FORMAT (DATA, (ei7, ei7len),				\
 		      ALLOCA, ((ei)->data_, (ei)->bytelen_),		\
@@ -2914,10 +2913,10 @@ do {								\
 #define eimake_string_off(eistr, off, charoff, len, charlen)		\
 do {									\
   Lisp_Object ei24lstr;							\
-  int ei24off = (off);							\
-  int ei24charoff = (charoff);						\
-  int ei24len = (len);							\
-  int ei24charlen = (charlen);						\
+  Bytecount ei24off = (off);						\
+  Charcount ei24charoff = (charoff);					\
+  Bytecount ei24len = (len);						\
+  Charcount ei24charlen = (charlen);					\
 									\
   eifixup_byte ((eistr)->data_, ei24off, ei24charoff);			\
   eifixup_byte ((eistr)->data_ + ei24off, ei24len, ei24charlen);	\
@@ -2966,7 +2965,8 @@ do {						\
     eiinit (ei);				\
 } while (0)
 
-int eifind_large_enough_buffer (int oldbufsize, int needed_size);
+Bytecount eifind_large_enough_buffer (Bytecount oldbufsize,
+				      Bytecount needed_size);
 void eito_malloc_1 (Eistring *ei);
 
 #define eito_malloc(ei) eito_malloc_1 (ei)
@@ -3044,7 +3044,7 @@ DECLARE_INLINE_HEADER (Bytecount eidecpos_1 (Eistring *eistr,
 					     Charcount n))
 {
   Ibyte *pos = eistr->data_ + bytepos;
-  int i;
+  Charcount i;
 
   text_checking_assert (bytepos >= 0 && bytepos <= eistr->bytelen_);
   text_checking_assert (n >= 0 && n <= eistr->charlen_);
@@ -3078,12 +3078,12 @@ DECLARE_INLINE_HEADER (Bytecount eidecpos_1 (Eistring *eistr,
 
 #define eicat_1(ei, data, bytelen, charlen)		\
 do {							\
-  int ei14oldeibytelen = (ei)->bytelen_;		\
-  int ei14bytelen = (bytelen);				\
+  Bytecount ei14oldeibytelen = (ei)->bytelen_;		\
+  Bytecount ei14bytelen = (bytelen);			\
   EI_ALLOC (ei, (ei)->bytelen_ + ei14bytelen,		\
 	    (ei)->charlen_ + (charlen), 1);		\
   memcpy ((ei)->data_ + ei14oldeibytelen, (data),	\
-	  ei14bytelen);					\
+	  (size_t) ei14bytelen);			\
 } while (0)
 
 #define eicat_ei(ei, ei2)					\
@@ -3095,16 +3095,17 @@ do {								\
 #define eicat_ascii(ei, ascstr)					\
 do {								\
   const Ascbyte *ei15 = (ascstr);				\
-  int ei15len = strlen (ei15);					\
+  size_t ei15len = strlen (ei15);				\
 								\
   ASSERT_ASCTEXT_ASCII_LEN (ei15, ei15len);			\
   eicat_1 (ei, ei15, ei15len,					\
-           bytecount_to_charcount ((Ibyte *) ei15, ei15len));	\
+           bytecount_to_charcount ((Ibyte *) ei15,		\
+				   (Bytecount) ei15len));	\
 } while (0)
 
 #define eicat_raw(ei, data, len)			\
 do {							\
-  int ei16len = (len);					\
+  Bytecount ei16len = (len);				\
   const Ibyte *ei16data = (data);			\
   eicat_1 (ei, ei16data, ei16len,			\
            bytecount_to_charcount (ei16data, ei16len));	\
@@ -3139,15 +3140,15 @@ do {							\
 
 #define eisub_1(ei, off, charoff, len, charlen, src, srclen, srccharlen) \
 do {									 \
-  int ei18off = (off);							 \
-  int ei18charoff = (charoff);						 \
-  int ei18len = (len);							 \
-  int ei18charlen = (charlen);						 \
+  Bytecount ei18off = (off);						 \
+  Charcount ei18charoff = (charoff);					 \
+  Bytecount ei18len = (len);						 \
+  Charcount ei18charlen = (charlen);					 \
   Ibyte *ei18src = (Ibyte *) (src);					 \
-  int ei18srclen = (srclen);						 \
-  int ei18srccharlen = (srccharlen);					 \
+  Bytecount ei18srclen = (srclen);					 \
+  Charcount ei18srccharlen = (srccharlen);				 \
 									 \
-  int ei18oldeibytelen = (ei)->bytelen_;				 \
+  Bytecount ei18oldeibytelen = (ei)->bytelen_;				 \
 									 \
   eifixup_bytechar ((ei)->data_, ei18off, ei18charoff);			 \
   eifixup_bytechar ((ei)->data_ + ei18off, ei18len, ei18charlen);	 \
@@ -3174,7 +3175,7 @@ do {									\
 #define eisub_ascii(ei, off, charoff, len, charlen, ascstr)	\
 do {								\
   const Ascbyte *ei20 = (ascstr);				\
-  int ei20len = strlen (ei20);					\
+  Bytecount ei20len = (Bytecount) strlen (ei20);		\
   ASSERT_ASCTEXT_ASCII_LEN (ei20, ei20len);			\
   eisub_1 (ei, off, charoff, len, charlen, ei20, ei20len, -1);	\
 } while (0)
@@ -3315,8 +3316,9 @@ do {									\
   int ei11new_allocmax = (ei)->charlen_ * MAX_ICHAR_LEN + 1;		\
   Ibyte *ei11storage =							\
      (Ibyte *) alloca_ibytes (ei11new_allocmax);			\
-  int ei11newlen = eistr_casefiddle_1 ((ei)->data_, (ei)->bytelen_,	\
-				       ei11storage, downp);		\
+  Bytecount ei11newlen = eistr_casefiddle_1 ((ei)->data_,		\
+					     (ei)->bytelen_,		\
+					     ei11storage, downp);	\
 									\
   if (ei11newlen)							\
     {									\

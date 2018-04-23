@@ -269,7 +269,6 @@ static Lisp_Object
 clone_chartab_table (Lisp_Object table, int level, int catp)
 {
   Lisp_Object newtab;
-  Bytecount size;
 
   check_chartab_invariants (table, level, catp);
 
@@ -280,10 +279,9 @@ clone_chartab_table (Lisp_Object table, int level, int catp)
       return table;
     }
 
-  size = sizeof (Lisp_Object);
   newtab = ALLOCATE_LEVEL_N_SUBTAB ();
   memcpy (SUBTAB_ARRAY_FROM_SUBTAB (newtab), SUBTAB_ARRAY_FROM_SUBTAB (table),
-	  256 * size);
+	  256 * sizeof (Lisp_Object));
 
   {
     int i;
@@ -506,7 +504,7 @@ put_char_table (Lisp_Object chartab, Ichar start, Ichar end, Lisp_Object val)
   int levels;
 #ifndef MAXIMIZE_CHAR_TABLE_DEPTH
   int code_levels;
-  int catp = XCHAR_TABLE_CATEGORY_P (chartab);
+  Boolint catp = XCHAR_TABLE_CATEGORY_P (chartab);
 #endif
 
   /* DO NOT check to see whether START and END are valid Ichars.  They
@@ -1217,8 +1215,6 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
 			     range);
       outrange->type = CHARTAB_RANGE_ROW;
       outrange->charset = Fget_charset (elts[0]);
-      CHECK_FIXNUM (elts[1]);
-      outrange->row = XFIXNUM (elts[1]);
       if (XCHARSET_DIMENSION (outrange->charset) == 1)
 	sferror ("Charset in row vector must be multi-byte",
 		 outrange->charset);
@@ -1229,6 +1225,7 @@ decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
              make_fixnum (XCHARSET_OFFSET (outrange->charset, 0) +
                        XCHARSET_CHARS (outrange->charset, 0) - 1));
 	}
+      outrange->row = (int) XFIXNUM (elts[1]);
     }
   else
     {

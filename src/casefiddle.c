@@ -68,7 +68,7 @@ casify_object (enum case_action flag, Lisp_Object string_or_char,
       Ibyte *newp = storage;
       Ibyte *oldp = XSTRING_DATA (string_or_char);
       Ibyte *endp = oldp + XSTRING_LENGTH (string_or_char);
-      int wordp = 0, wordp_prev;
+      Boolint wordp = 0, wordp_prev;
 
       while (oldp < endp)
 	{
@@ -203,7 +203,7 @@ casify_region_internal (enum case_action flag, Lisp_Object start,
   Charbpos pos, s, e;
   Lisp_Object syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);
   int mccount;
-  int wordp = 0, wordp_prev;
+  Boolint wordp = 0, wordp_prev;
 
   if (EQ (start, end))
     /* Not modifying because nothing marked */

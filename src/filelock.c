@@ -89,7 +89,7 @@ typedef struct
 
 /* When we read the info back, we might need this much more,
    enough for decimal representation plus null.  */
-#define LOCK_PID_MAX (4 * sizeof (pid_t))
+#define LOCK_PID_MAX (4 * (int) (sizeof (pid_t)))
 
 /* Free the two dynamically-allocated pieces in PTR.  */
 #define FREE_LOCK_INFO(i) do {			\
@@ -109,7 +109,7 @@ fill_in_lock_file_name (Ibyte *lockfile, Lisp_Object fn)
 {
   Ibyte *file_name = XSTRING_DATA (fn);
   Ibyte *p;
-  Bytecount dirlen;
+  size_t dirlen;
 
   for (p = file_name + XSTRING_LENGTH (fn) - 1;
        p > file_name && !IS_ANY_SEP (p[-1]);
@@ -173,11 +173,11 @@ static int
 current_lock_owner (lock_info_type *owner, Ibyte *lfname)
 {
   /* Does not GC. */
-  int len, ret;
-  int local_owner = 0;
+  Bytecount len;
+  int local_owner = 0, ret;
   Ibyte *at, *dot;
   Ibyte *lfinfo = 0;
-  int bufsize = 50;
+  size_t bufsize = 50;
   /* Read arbitrarily-long contents of symlink.  Similar code in
      file-symlink-p in fileio.c.  */
   do
@@ -186,7 +186,7 @@ current_lock_owner (lock_info_type *owner, Ibyte *lfname)
       lfinfo = (Ibyte *) xrealloc (lfinfo, bufsize);
       len = qxe_readlink (lfname, lfinfo, bufsize);
     }
-  while (len >= bufsize);
+  while (len >= (Bytecount) bufsize);
 
   /* If nonexistent lock file, all is well; otherwise, got strange error. */
   if (len == -1)

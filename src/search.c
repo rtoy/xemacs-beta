@@ -924,7 +924,7 @@ byte_find_next_ichar_in_string (Lisp_Object str, Ichar target, Bytecount st,
    find_next_newline (...)-1, because you might hit TO.  */
 Charbpos
 find_before_next_newline (struct buffer *buf, Charbpos from, Charbpos to,
-			  int count)
+			  EMACS_INT count)
 {
   EMACS_INT shortage;
   Charbpos pos = scan_buffer (buf, '\n', from, to, count, &shortage, 1);

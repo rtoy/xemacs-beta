@@ -83,7 +83,7 @@ typedef EMACS_INT Lisp_Object;
 #define XPNTRVAL(x) (x) /* This depends on Lisp_Type_Record == 0 */
 /* A character is always >= 0, so get 30 bits out of it by treating it as
    unsigned */
-#define XCHARVAL(x) ((EMACS_UINT)(x) >> GCBITS)
+#define XCHARVAL(x) ((EMACS_UINT)(x) >> (EMACS_UINT) GCBITS)
 #define XREALFIXNUM(x) ((x) >> FIXNUM_GCBITS)
 #define XUINT(x) ((EMACS_UINT)(x) >> FIXNUM_GCBITS)
 

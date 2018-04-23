@@ -101,9 +101,9 @@ int valid_device_class_p (Lisp_Object class_);
 void select_device_1 (Lisp_Object);
 struct device *decode_device (Lisp_Object);
 void handle_asynch_device_change (void);
-void delete_device_internal (struct device *d, int force,
-			     int called_from_delete_console,
-			     int from_io_error);
+void delete_device_internal (struct device *d, Boolint force,
+			     Boolint called_from_delete_console,
+			     Boolint from_io_error);
 void io_error_delete_device (Lisp_Object device);
 Lisp_Object find_nonminibuffer_frame_not_on_device (Lisp_Object device);
 void set_device_selected_frame (struct device *d, Lisp_Object frame);

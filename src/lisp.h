@@ -1447,7 +1447,7 @@ we do two things:
 
 #ifdef USE_GCC_EXTENDED_EXPRESSION_SYNTAX
 #define ALLOCA(size)						\
-  ({ Bytecount temp_alloca_size;				\
+  ({ size_t temp_alloca_size;					\
      REGEX_MALLOC_CHECK ();					\
      temp_alloca_size = (size);					\
      temp_alloca_size  > MAX_ALLOCA_VS_C_ALLOCA ?		\
@@ -2848,7 +2848,7 @@ DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 /* WARNING: If you modify an existing string, you must call
    bump_string_modiff() afterwards. */
 #define XSET_STRING_ASCII_BEGIN(s, val) \
-  ((void) (XSTRING (s)->u.v.ascii_begin = (val)))
+  ((void) (XSTRING (s)->u.v.ascii_begin = (val) & MAX_STRING_ASCII_BEGIN))
 #define XSTRING_FORMAT(s) FORMAT_DEFAULT
 
 #define XSTRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp + 0)
@@ -3277,12 +3277,27 @@ XCHAR_OR_FIXNUM (Lisp_Object obj)
    character. */
 #define CHAR_OR_CHAR_INTP(x) (CHARP (x) || CHAR_INTP (x))
 
+#define XCHAR_OR_CHAR_INT(x) XCHAR_OR_CHAR_INT_1 (x, __FILE__, __LINE__)
+
 DECLARE_INLINE_HEADER (
 Ichar
-XCHAR_OR_CHAR_INT (Lisp_Object obj)
+XCHAR_OR_CHAR_INT_1 (Lisp_Object obj, const Ascbyte *file, int line)
 )
 {
-  return CHARP (obj) ? XCHAR (obj) : XFIXNUM (obj);
+  if (CHARP (obj))
+    {
+      return XCHARVAL (obj);
+    }
+  if (FIXNUMP (obj))
+    {
+      EMACS_INT ival = XREALFIXNUM (obj);
+      if (valid_ichar_p (ival))
+	{
+	  return (Ichar) ival;
+	}
+    }
+  assert_at_line (CHARP (obj) || CHAR_INTP (obj), file, line);
+  return (Ichar) -1;
 }
 
 /* Signal an error if CH is not a valid character or integer Lisp_Object.
@@ -3294,7 +3309,7 @@ XCHAR_OR_CHAR_INT (Lisp_Object obj)
   if (CHARP (x))				\
      ;						\
   else if (CHAR_INTP (x))			\
-    x = make_char (XFIXNUM (x));			\
+    x = make_char ((Ichar) XREALFIXNUM (x));	\
   else						\
     x = wrong_type_argument (Qcharacterp, x);	\
 } while (0)
@@ -4003,8 +4018,14 @@ int begin_do_check_for_quit (void);
 /*				 hashing				*/
 /************************************************************************/
 
-/* #### for a 64-bit machine, we should substitute a prime just over 2^32 */
-#define GOOD_HASH 65599 /* prime number just over 2^16; Dragon book, p. 435 */
+#if SIZEOF_EMACS_INT < 8
+#define GOOD_HASH ((Hashcode) 65599) /* prime number just over 2^16;
+					Dragon book, p. 435 */
+
+#else
+#define GOOD_HASH ((Hashcode) 4294967311UL) /* prime number just over 2^32 */
+#endif
+
 #define HASH2(a,b)               (GOOD_HASH * (a)                     + (b))
 #define HASH3(a,b,c)             (GOOD_HASH * HASH2 (a,b)             + (c))
 #define HASH4(a,b,c,d)           (GOOD_HASH * HASH3 (a,b,c)           + (d))
@@ -4014,10 +4035,10 @@ int begin_do_check_for_quit (void);
 #define HASH8(a,b,c,d,e,f,g,h)   (GOOD_HASH * HASH7 (a,b,c,d,e,f,g)   + (h))
 #define HASH9(a,b,c,d,e,f,g,h,i) (GOOD_HASH * HASH8 (a,b,c,d,e,f,g,h) + (i))
 
-#define LISP_HASH(obj) ((unsigned long) STORE_LISP_IN_VOID (obj))
+#define LISP_HASH(obj) ((Hashcode) STORE_LISP_IN_VOID (obj))
 Hashcode memory_hash (const void *xv, Bytecount size);
 Hashcode internal_hash (Lisp_Object obj, int depth, Boolint equalp);
-Hashcode internal_array_hash (Lisp_Object *arr, int size, int depth,
+Hashcode internal_array_hash (Lisp_Object *arr, Elemcount size, int depth,
                               Boolint equalp);
 
 
@@ -4075,7 +4096,7 @@ struct gcpro
 {
   struct gcpro *next;
   const Lisp_Object *var;	/* Address of first protected variable */
-  int nvars;			/* Number of consecutive protected variables */
+  Elemcount nvars;		/* Number of consecutive protected variables */
 #if defined (__cplusplus) && defined (ERROR_CHECK_GC)
   /* Try to catch GCPRO without UNGCPRO, or vice-versa.  G++ complains (at
      least with sufficient numbers of warnings enabled, i.e. -Weffc++) if a
@@ -5632,10 +5653,10 @@ extern Lisp_Object Qgui_error;
 EXFUN (Findent_to, 3);
 EXFUN (Fvertical_motion, 3);
 
-int byte_spaces_at_point (struct buffer *, Bytebpos);
-int column_at_point (struct buffer *, Charbpos, int);
-int string_column_at_point (Lisp_Object, Charbpos, int);
-int current_column (struct buffer *);
+Charcount byte_spaces_at_point (struct buffer *, Bytebpos);
+Charcount column_at_point (struct buffer *, Charbpos, Charcount);
+Charcount string_column_at_point (Lisp_Object, Charbpos, Charcount);
+Charcount current_column (struct buffer *);
 void invalidate_current_column (void);
 Charbpos vmotion (struct window *, Charbpos, int, int *);
 Charbpos vmotion_pixels (Lisp_Object, Charbpos, int, int, int *);
@@ -5654,7 +5675,7 @@ fixup_internal_substring (const Ibyte *nonreloc, Lisp_Object reloc,
   if (*len < 0)
     {
       if (nonreloc)
-	*len = strlen ((const Chbyte *) nonreloc) - offset;
+	*len = (Bytecount) strlen ((const Chbyte *) nonreloc) - offset;
       else
 	*len = XSTRING_LENGTH (reloc) - offset;
     }
@@ -5878,7 +5899,7 @@ void print_internal (Lisp_Object, Lisp_Object, int);
 void debug_print (Lisp_Object);
 void debug_p4 (Lisp_Object obj);
 void debug_p3 (Lisp_Object obj);
-void debug_short_backtrace (int);
+void debug_short_backtrace (EMACS_INT);
 void debug_backtrace (void);
 MODULE_API Bytecount write_lisp_string (Lisp_Object stream, Lisp_Object string,
 					Bytecount offset, Bytecount len);
@@ -5899,7 +5920,8 @@ Bytecount write_istring (Lisp_Object stream, const Ibyte *str)
 {
   /* This function can GC. We'd like to qxestrlen, but that's not yet
      available in this file. */
-  return write_string_1 (stream, str, strlen ((const char *) str));
+  return write_string_1 (stream, str,
+			 (Bytecount) strlen ((const char *) str));
 }
 /* Same goes for this function. */
 DECLARE_INLINE_HEADER (
@@ -5909,7 +5931,7 @@ Bytecount write_cistring (Lisp_Object stream, const CIbyte *str)
   /* This function can GC. We'd like to qxestrlen, but that's not yet
      available in this file. */
   return write_string_1 (stream, (const Ibyte *) str,
-			 strlen ((const char *) str));
+			 (Bytecount) strlen ((const char *) str));
 }
 /* Same goes for this function. */
 DECLARE_INLINE_HEADER (
@@ -5917,7 +5939,8 @@ Bytecount write_ascstring (Lisp_Object stream, const Ascbyte *str)
 )
 {
   /* This function can GC. */
-  return write_string_1 (stream, (const Ibyte *) str, strlen ((char *) str));
+  return write_string_1 (stream, (const Ibyte *) str,
+			 (Bytecount) strlen ((char *) str));
 }
 Bytecount write_eistring (Lisp_Object stream, const Eistring *ei);
 
@@ -6031,7 +6054,8 @@ Charbpos find_next_newline_no_quit (struct buffer *, Charbpos, int);
 Bytebpos byte_find_next_newline_no_quit (struct buffer *, Bytebpos, int);
 Bytecount byte_find_next_ichar_in_string (Lisp_Object, Ichar, Bytecount,
 					 EMACS_INT);
-Charbpos find_before_next_newline (struct buffer *, Charbpos, Charbpos, int);
+Charbpos find_before_next_newline (struct buffer *, Charbpos, Charbpos,
+				   EMACS_INT);
 struct re_pattern_buffer *compile_pattern (Lisp_Object pattern,
 					   struct re_registers *regp,
 					   Lisp_Object translate,
@@ -6125,7 +6149,7 @@ extern MODULE_API Lisp_Object Qt, Qunbound;
 extern Lisp_Object Vobarray;
 
 /* Defined in syntax.c */
-Charbpos scan_words (struct buffer *, Charbpos, int);
+Charbpos scan_words (struct buffer *, Charbpos, EMACS_INT);
 EXFUN (Fchar_syntax, 2);
 EXFUN (Fforward_word, 2);
 extern Lisp_Object Vstandard_syntax_table;
@@ -6287,7 +6311,7 @@ DECLARE_INLINE_HEADER (Ibyte *qxestrdup (const Ibyte *s))
 
 DECLARE_INLINE_HEADER (Bytecount qxestrlen (const Ibyte *s))
 {
-  return strlen ((const Chbyte *) s);
+  return (Bytecount) strlen ((const Chbyte *) s);
 }
 
 DECLARE_INLINE_HEADER (Charcount qxestrcharlen (const Ibyte *s))
@@ -6566,7 +6590,7 @@ EXFUN (Fset_charset_tags, 2);
 /* Defined in undo.c */
 EXFUN (Fundo_boundary, 0);
 
-Lisp_Object truncate_undo_list (Lisp_Object, int, int);
+Lisp_Object truncate_undo_list (Lisp_Object, Fixnum, Fixnum);
 void record_extent (Lisp_Object, int);
 void record_insert (struct buffer *, Charbpos, Charcount);
 void record_delete (struct buffer *, Charbpos, Charcount);
@@ -6732,7 +6756,7 @@ write_msg_ascstring (Lisp_Object stream, const Ascbyte *str)
   /* This function can GC */
   str = ASCGETTEXT (str);
   write_string_1 (stream, (const Ibyte *) str,
-                  strlen ((const Ascbyte *) str));
+                  (Bytecount) strlen ((const Ascbyte *) str));
 }
 
 #define write_msg_string write_msg_ascstring

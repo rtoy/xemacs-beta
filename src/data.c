@@ -1200,7 +1200,8 @@ lisp_to_uint32_t (Lisp_Object item)
 
       type_checking_assert (FIXNUMP (top) && FIXNUMP (bot));
 
-      return (XFIXNUM (top) << 16) | (XFIXNUM (bot) & 0xffff);
+      return ((UINT_32_BIT) XFIXNUM (top) << 16) |
+	      (UINT_32_BIT) (XFIXNUM (bot) & 0xffff);
     }
 }
 
@@ -1237,7 +1238,7 @@ lisp_to_int32_t (Lisp_Object item)
           return (INT_32_BIT) bignum_to_emacs_int (XBIGNUM_DATA (item));
         }
 #endif
-      return XFIXNUM (item);
+      return (UINT_32_BIT) XFIXNUM (item);
     }
   else
     {
@@ -2924,7 +2925,7 @@ rem_two_fixnum (EMACS_INT number1, EMACS_INT number2)
 
   val2 = EMACS_INT_ABS (number2);
       
-  return make_fixnum ((EMACS_INT)((val1 % val2) * sign));
+  return make_fixnum ((EMACS_INT)(val1 % val2) * sign);
 }
 
 DEFUN ("%", Frem, 2, 2, 0, /*
@@ -3146,7 +3147,7 @@ In this case, zeros are shifted in on the left.
             {
               args_out_of_range_3 (count,
 				   make_bignum_ll (- (long long)(ULONG_MAX)),
-                                   make_bignum_ll (ULONG_MAX));
+                                   make_bignum_ull (ULONG_MAX));
             }
 	  bignum_rshift (scratch_bignum2, XBIGNUM_DATA (value),
 			 bignum_to_ulong (scratch_bignum));
@@ -3158,7 +3159,7 @@ In this case, zeros are shifted in on the left.
             {
               args_out_of_range_3 (count,
 				   make_bignum_ll (- (long long) (ULONG_MAX)),
-                                   make_bignum_ll (ULONG_MAX));
+                                   make_bignum_ull (ULONG_MAX));
             }
 	  bignum_lshift (scratch_bignum2, XBIGNUM_DATA (value),
 			 bignum_to_ulong (XBIGNUM_DATA (count)));

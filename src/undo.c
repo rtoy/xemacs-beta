@@ -250,10 +250,10 @@ but another undo command will undo to the previous boundary.
    undo-high-threshold.  */
 
 Lisp_Object
-truncate_undo_list (Lisp_Object list, int minsize, int maxsize)
+truncate_undo_list (Lisp_Object list, Fixnum minsize, Fixnum maxsize)
 {
   Lisp_Object prev, next, last_boundary;
-  int size_so_far = 0;
+  Fixnum size_so_far = 0;
 
   if (!(minsize > 0 || maxsize > 0))
     return list;

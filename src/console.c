@@ -681,8 +681,9 @@ nuke_all_console_slots (struct console *con, Lisp_Object zap)
 */
 
 void
-delete_console_internal (struct console *con, int force,
-			 int called_from_kill_emacs, int from_io_error)
+delete_console_internal (struct console *con, Boolint force,
+			 Boolint called_from_kill_emacs,
+			 Boolint from_io_error)
 {
   /* This function can GC */
   Lisp_Object console;
@@ -1115,10 +1116,10 @@ See also `current-input-mode'.
        (UNUSED (ignored), USED_IF_TTY (flow), meta, quit, console))
 {
   struct console *con = decode_console (console);
-  int meta_key = (!CONSOLE_TTY_P (con) ? 1 :
-		  EQ (meta, Qnil)      ? 0 :
-		  EQ (meta, Qt)        ? 1 :
-		  2);
+  unsigned int meta_key = (!CONSOLE_TTY_P (con) ? 1 :
+			     EQ (meta, Qnil)      ? 0 :
+			     EQ (meta, Qt)        ? 1 :
+			     2);
 
   if (!NILP (quit))
     {
@@ -1133,7 +1134,7 @@ See also `current-input-mode'.
     {
       reset_one_console (con);
       TTY_FLAGS (con).flow_control = !NILP (flow);
-      TTY_FLAGS (con).meta_key = meta_key;
+      TTY_FLAGS (con).meta_key = meta_key & 0x2;
       init_one_console (con);
       MARK_FRAME_CHANGED (XFRAME (CONSOLE_SELECTED_FRAME (con)));
     }
@@ -1337,7 +1338,7 @@ do {									   \
   MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				   \
 									   \
   {									   \
-    int offset = ((char *)symbol_value_forward_forward (I_hate_C)	   \
+    size_t offset = ((char *)symbol_value_forward_forward (I_hate_C)	   \
 		  - (char *)&console_local_flags);			   \
 									   \
     defvar_magic (lname, I_hate_C);					   \

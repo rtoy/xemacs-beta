@@ -138,8 +138,9 @@ struct console_methods *decode_console_type (Lisp_Object type,
 
 enum console_variant get_console_variant (Lisp_Object type);
 
-void delete_console_internal (struct console *con, int force,
-			      int from_kill_emacs, int from_io_error);
+void delete_console_internal (struct console *con, Boolint force,
+			      Boolint from_kill_emacs,
+			      Boolint from_io_error);
 void io_error_delete_console (Lisp_Object console);
 void set_console_last_nonminibuf_frame (struct console *con,
 					Lisp_Object frame);

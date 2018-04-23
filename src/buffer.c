@@ -749,7 +749,7 @@ reset_buffer_local_variables (struct buffer *b, int first_time)
   /* For each slot that has a default value,
      copy that into the slot.  */
 #define MARKED_SLOT(slot)						\
-  { int mask = XFIXNUM (buffer_local_flags.slot);				\
+  { EMACS_INT mask = XFIXNUM (buffer_local_flags.slot);			\
     if ((mask > 0 || mask == -1 || mask == -3)				\
 	&& (first_time							\
 	    || NILP (Fget (XBUFFER (Vbuffer_local_symbols)->slot,	\
@@ -811,7 +811,7 @@ is first appended to NAME, to speed up finding a non-existent buffer.
     }
 
   csize = XSTRING_LENGTH (name) + DECIMAL_PRINT_SIZE (EMACS_INT)
-    + sizeof ("<>");
+    + (Bytecount) (sizeof ("<>"));
   candidate = alloca_ibytes (csize);
 
   count = itext_ichar_eql (XSTRING_DATA (name), ' ') ? get_random () : 1;
@@ -954,7 +954,7 @@ No argument or nil as argument means use current buffer as BUFFER.
   {
     struct buffer *syms = XBUFFER (Vbuffer_local_symbols);
 #define MARKED_SLOT(slot)					\
-    { int mask = XFIXNUM (buffer_local_flags.slot);		\
+    { EMACS_INT mask = XFIXNUM (buffer_local_flags.slot);	\
       if (mask == 0 || mask == -1				\
 	  || ((mask > 0) && (buf->local_var_flags & mask)))	\
         result = Fcons (Fcons (syms->slot, buf->slot), result);	\
@@ -2221,8 +2221,8 @@ do									  \
   MARK_LRECORD_AS_LISP_READONLY (I_hate_C);				  \
 									  \
   {									  \
-    int offset = ((char *)symbol_value_forward_forward (I_hate_C) -	  \
-		  (char *)&buffer_local_flags);				  \
+    ssize_t offset = ((char *)symbol_value_forward_forward (I_hate_C) -	  \
+		      (char *)&buffer_local_flags);			  \
     defvar_magic (lname, I_hate_C);					  \
 									  \
     *((Lisp_Object *)(offset + (char *)XBUFFER (Vbuffer_local_symbols)))  \

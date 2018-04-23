@@ -49,7 +49,7 @@ int indent_tabs_mode;
 
    Some things set last_known_column_point to -1
    to mark the memoized value as invalid */
-static int last_known_column;
+static Charcount last_known_column;
 
 /* Last buffer searched by current_column */
 static struct buffer *last_known_column_buffer;
@@ -120,13 +120,13 @@ invalidate_current_column (void)
   last_known_column_point = -1;
 }
 
-int
-column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
+Charcount
+column_at_point (struct buffer *buf, Charbpos init_pos, Charcount cur_col)
 {
-  int col;
-  int tab_seen;
-  int tab_width = XFIXNUM (buf->tab_width);
-  int post_tab;
+  Charcount col;
+  Charcount tab_seen;
+  Charcount tab_width = XFIXNUM (buf->tab_width);
+  Charcount post_tab;
   Charbpos pos = init_pos;
   Ichar c;
 
@@ -187,12 +187,12 @@ column_at_point (struct buffer *buf, Charbpos init_pos, int cur_col)
   return col;
 }
 
-int
-string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
+Charcount
+string_column_at_point (Lisp_Object s, Charbpos init_pos, Charcount tab_width)
 {
-  int col;
-  int tab_seen;
-  int post_tab;
+  Charcount col;
+  Charcount tab_seen;
+  Charcount post_tab;
   Charbpos pos = init_pos;
   Ichar c;
 
@@ -230,7 +230,7 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, int tab_width)
   return col;
 }
 
-int
+Charcount
 current_column (struct buffer *buf)
 {
   if (buf == last_known_column_buffer
@@ -268,10 +268,10 @@ If BUFFER is nil, the current buffer is assumed.
        (column, minimum, buffer))
 {
   /* This function can GC */
-  int mincol;
-  int fromcol;
+  Charcount mincol;
+  Charcount fromcol;
   struct buffer *buf = decode_buffer (buffer, 0);
-  int tab_width = XFIXNUM (buf->tab_width);
+  Charcount tab_width = XFIXNUM (buf->tab_width);
   Charbpos opoint = 0;
 
   CHECK_FIXNUM (column);
@@ -305,7 +305,7 @@ If BUFFER is nil, the current buffer is assumed.
 
   if (indent_tabs_mode)
     {
-      int n = mincol / tab_width - fromcol / tab_width;
+      Charcount n = mincol / tab_width - fromcol / tab_width;
       if (n != 0)
 	{
 	  Finsert_char (make_char ('\t'), make_fixnum (n), Qnil, buffer);
@@ -328,13 +328,13 @@ If BUFFER is nil, the current buffer is assumed.
   return make_fixnum (mincol);
 }
 
-int
+Charcount
 byte_spaces_at_point (struct buffer *b, Bytebpos byte_pos)
 {
   Bytebpos byte_end = BYTE_BUF_ZV (b);
-  int col = 0;
+  Charcount col = 0;
   Ichar c;
-  int tab_width = XFIXNUM (b->tab_width);
+  Charcount tab_width = XFIXNUM (b->tab_width);
 
   if (tab_width <= 0 || tab_width > 1000)
     tab_width = 8;
@@ -392,19 +392,26 @@ Returns the actual column that it moved to.
   /* This function can GC */
   Charbpos pos;
   struct buffer *buf = decode_buffer (buffer, 0);
-  int col = current_column (buf);
-  int goal;
+  Charcount col = current_column (buf);
+  Charcount goal;
   Charbpos end;
-  int tab_width = XFIXNUM (buf->tab_width);
+  Charcount tab_width = XFIXNUM (buf->tab_width);
 
-  int prev_col = 0;
+  Charcount prev_col = 0;
   Ichar c = 0;
 
   buffer = wrap_buffer (buf);
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
 
-  check_integer_range (column, Qzero, make_fixnum (MOST_POSITIVE_FIXNUM));
-  goal = XFIXNUM (column);
+  CHECK_NATNUM (column);
+  if (BIGNUMP (column))
+    {
+      goal = 1 + MOST_POSITIVE_FIXNUM;
+    }
+  else
+    {
+      goal = XFIXNUM (column);
+    }
 
  retry:
   pos = BUF_PT (buf);
@@ -526,7 +533,7 @@ visible section of the buffer, and pass LINE and COL as TOPOS.
 {
   Lisp_Object charbpos, hpos, vpos, prevhpos, contin;
   struct position *pos;
-  int hscroll, tab_offset;
+  Charcount hscroll, tab_offset;
   struct window *w = decode_window (window);
 
   CHECK_FIXNUM_COERCE_MARKER (from);
@@ -694,7 +701,7 @@ Lisp_Object vertical_motion_1 (Lisp_Object lines, Lisp_Object window,
 {
   Charbpos charbpos;
   Charbpos orig;
-  int selected;
+  Boolint selected;
   int *vpos, *vpix;
   int value=0;
   struct window *w;
@@ -877,9 +884,9 @@ that the motion should be as close as possible to PIXELS.
 {
   Charbpos charbpos;
   Charbpos orig;
-  int selected;
+  Boolint selected;
   int motion;
-  int howto;
+  int howto = 0;
   struct window *w;
 
   if (NILP (window))
@@ -895,7 +902,19 @@ that the motion should be as close as possible to PIXELS.
   orig = selected ? BUF_PT (XBUFFER (w->buffer))
                   : marker_position (w->pointm[CURRENT_DISP]);
 
-  howto = FIXNUMP (how) ? XFIXNUM (how) : 0;
+  if (INTEGERP (how))
+    {
+      if (FIXNUMP (how))
+	{
+	  howto = XFIXNUM (how) < 0 ? -1 : (XFIXNUM (how) > 0);
+	}
+#ifdef HAVE_BIGNUM
+      else
+	{
+	  howto = bignum_sign (XBIGNUM_DATA (how));
+	}
+#endif
+    }
 
   charbpos = vmotion_pixels (window, orig, XFIXNUM (pixels), howto, &motion);
 

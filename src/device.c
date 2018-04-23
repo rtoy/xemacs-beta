@@ -621,7 +621,7 @@ have no effect.
      specify different global resources (there's a property on each X
      server's root window that holds some resources); tough luck for the
      moment. */
-  int first = NILP (get_default_device (type));
+  Boolint first = NILP (get_default_device (type));
 
   GCPRO3 (device, console, name);
 
@@ -778,9 +778,9 @@ find_nonminibuffer_frame_not_on_device (Lisp_Object device)
 */
 
 void
-delete_device_internal (struct device *d, int force,
-			int called_from_delete_console,
-			int from_io_error)
+delete_device_internal (struct device *d, Boolint force,
+			Boolint called_from_delete_console,
+			Boolint from_io_error)
 {
   /* This function can GC */
   struct console *c;
@@ -1031,7 +1031,8 @@ and other strategic decisions made during redisplay.
 */
        (device, rate))
 {
-  CHECK_FIXNUM (rate);
+  /* Nothing greater than 30 bits, please.*/
+  check_integer_range (rate, Qzero, make_fixnum (0x3fffffff));
 
   DEVICE_BAUD_RATE (decode_device (device)) = XFIXNUM (rate);
 

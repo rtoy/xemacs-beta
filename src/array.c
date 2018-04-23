@@ -308,16 +308,27 @@ static Elemcount Dynarr_min_size = 8;
 static void
 Dynarr_realloc (Dynarr *dy, Elemcount new_size)
 {
+  size_t bcount = (size_t) new_size * (size_t) (Dynarr_elsize (dy));
+
+  if ((bcount / (size_t) new_size) != (size_t) Dynarr_elsize (dy))
+    {
+      memory_full ();
+    }
+
   if (DUMPEDP (dy->base))
     {
-      void *new_base = malloc (new_size * Dynarr_elsize (dy));
-      memcpy (new_base, dy->base, 
-	      (Dynarr_max (dy) < new_size ? Dynarr_max (dy) : new_size) *
-	      Dynarr_elsize (dy));
+      size_t copycount
+	= (size_t) (Dynarr_max (dy) < new_size ? Dynarr_max (dy) : new_size) 
+	* (size_t) Dynarr_elsize (dy);
+      void *new_base = malloc (bcount);
+      memcpy (new_base, dy->base, copycount);
       dy->base = new_base;
     }
   else
-    dy->base = xrealloc (dy->base, new_size * Dynarr_elsize (dy));
+    {
+      malloc_checking_assert ((Bytecount) bcount >= 0);
+      dy->base = xrealloc (dy->base, bcount);
+    }
 }
 
 void *
@@ -407,28 +418,40 @@ Dynarr_insert_many (void *d, const void *base, Elemcount len, Elemcount pos)
 
   if (pos != old_len)
     {
+      size_t bcount = (size_t) (old_len - pos) * (size_t) Dynarr_elsize (dy);
+      if ((bcount / (size_t) ((old_len - pos)))	\
+	  != (size_t) Dynarr_elsize (dy))
+	{
+	  /* Overflow */
+	  memory_full ();
+	}
       memmove ((Rawbyte *) dy->base + (pos + len)*Dynarr_elsize (dy),
-	       (Rawbyte *) dy->base + pos*Dynarr_elsize (dy),
-	       (old_len - pos)*Dynarr_elsize (dy));
+	       (Rawbyte *) dy->base + pos*Dynarr_elsize (dy), bcount);
     }
   /* Some functions call us with a value of 0 to mean "reserve space but
      don't write into it" */
   if (base)
-    memcpy ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), base,
-	    len*Dynarr_elsize (dy));
+    {
+      size_t bcount = (size_t) len * (size_t) (Dynarr_elsize (dy));
+      dynarr_checking_assert ((Bytecount) bcount >= 0);
+      memcpy ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy), base, bcount);
+    }
 }
 
 void
 Dynarr_delete_many (void *d, Elemcount pos, Elemcount len)
 {
   Dynarr *dy = Dynarr_verify_mod (d);
+  size_t bcount
+    = (size_t) (Dynarr_length (dy) - pos - len) * (size_t) Dynarr_elsize (dy);
 
   dynarr_checking_assert (pos >= 0 && len >= 0 &&
 			  pos + len <= Dynarr_length (dy));
+  /* Not checking on overflow for BCOUNT because we're reducing the size
+     used, we had to have overflowed already. */
 
   memmove ((Rawbyte *) dy->base + pos*Dynarr_elsize (dy),
-	   (Rawbyte *) dy->base + (pos + len)*Dynarr_elsize (dy),
-	   (Dynarr_length (dy) - pos - len)*Dynarr_elsize (dy));
+	   (Rawbyte *) dy->base + (pos + len)*Dynarr_elsize (dy), bcount);
 
   Dynarr_set_length_1 (dy, Dynarr_length (dy) - len);
 }
@@ -771,17 +794,21 @@ gap_array_move_gap (Gap_Array *ga, Elemcount pos)
 
   if (pos < gap)
     {
+      size_t bcount = (size_t) (gap - pos) * (size_t) (ga->elsize);
+      structure_checking_assert ((bcount / (size_t) (gap - pos))
+				 == (size_t) (ga->elsize));
       memmove (GAP_ARRAY_MEMEL_ADDR (ga, pos + gapsize),
-	       GAP_ARRAY_MEMEL_ADDR (ga, pos),
-	       (gap - pos)*ga->elsize);
+	       GAP_ARRAY_MEMEL_ADDR (ga, pos), bcount);
       gap_array_adjust_markers (ga, (Memxpos) pos, (Memxpos) gap,
 				gapsize);
     }
   else if (pos > gap)
     {
+      size_t bcount = (size_t) (pos - gap) * (size_t) (ga->elsize);
+      structure_checking_assert ((bcount / (size_t) (pos - gap))
+				 == (size_t) (ga->elsize));
       memmove (GAP_ARRAY_MEMEL_ADDR (ga, gap),
-	       GAP_ARRAY_MEMEL_ADDR (ga, gap + gapsize),
-	       (pos - gap)*ga->elsize);
+	       GAP_ARRAY_MEMEL_ADDR (ga, gap + gapsize), bcount);
       gap_array_adjust_markers (ga, (Memxpos) (gap + gapsize),
 				(Memxpos) (pos + gapsize), - gapsize);
     }

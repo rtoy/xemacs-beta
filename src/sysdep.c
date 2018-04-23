@@ -204,7 +204,7 @@ set_descriptor_non_blocking (
 #ifdef NEED_SYNC_PROCESS_CODE /* #### Used only on super-ancient systems */
 
 static void
-wait_for_termination (int pid)
+wait_for_termination (pid_t pid)
 {
   /* #### With the new improved SIGCHLD handling stuff, there is much
      less danger of race conditions and some of the comments below
@@ -608,7 +608,7 @@ sys_subshell (void)
 #else /* not WIN32_NATIVE */
 
   {
-    int pid;
+    pid_t pid;
     struct save_signal saved_handlers[5];
 
     saved_handlers[0].code = SIGINT;
@@ -663,7 +663,7 @@ sys_suspend (void)
 {
 #if defined (SIGTSTP)
   {
-    int pgrp = EMACS_GET_PROCESS_GROUP ();
+    pid_t pgrp = EMACS_GET_PROCESS_GROUP ();
     EMACS_KILLPG (pgrp, SIGTSTP);
   }
 
@@ -681,9 +681,9 @@ sys_suspend (void)
 void
 sys_suspend_process (
 #ifdef SIGTSTP
-		     int process
+		     pid_t process
 #else
-		     int UNUSED (process)
+		     pid_t UNUSED (process)
 #endif
 		     )
 {
@@ -929,7 +929,7 @@ init_sigio_on_device (struct device *d)
 
 #if defined (FIOSSAIOOWN)
   { /* HPUX stuff */
-    int owner = getpid ();
+    pid_t owner = getpid ();
     int ioctl_status;
     if (DEVICE_TTY_P (d))
 	{
@@ -2904,10 +2904,10 @@ qxe_lstat (const Ibyte *path, struct stat *buf)
 }
 
 #if defined (HAVE_READLINK)
-int
+ssize_t
 qxe_readlink (const Ibyte *path, Ibyte *buf, size_t bufsiz)
 {
-  int retval;
+  Bytecount retval;
   Extbyte *pathout;
 
   PATHNAME_CONVERT_OUT (path, pathout);

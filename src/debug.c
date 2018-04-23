@@ -61,7 +61,7 @@ xemacs_debug_loop (enum debug_loop op, Lisp_Object class_, Lisp_Object type)
   if (op == X_LIST || op == X_ACTIVE || op == X_INIT || EQ (class_, Q##item)) \
     {									      \
       if (op == X_ADD || op == X_DELETE || op == X_INIT)		      \
-	active_debug_classes.item = flag;				      \
+	active_debug_classes.item = flag & 1;				      \
       else if (op == X_LIST						      \
 	       || (op == X_ACTIVE && active_debug_classes.item))	      \
 	retval = Fcons (Q##item, retval);				      \

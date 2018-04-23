@@ -239,7 +239,7 @@ struct buffer
 
   /* Flags saying which DEFVAR_PER_BUFFER variables
      are local to this buffer.  */
-  int local_var_flags;
+  EMACS_INT local_var_flags;
 
   /* Set to the modtime of the visited file when read or written.
      -1 means visited file was nonexistent.
