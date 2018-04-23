@@ -284,7 +284,7 @@ If no abbrev matched, but `pre-abbrev-expand-hook' changed the buffer,
 {
   /* This function can GC */
   struct buffer *buf = current_buffer;
-  int oldmodiff = BUF_MODIFF (buf);
+  EMACS_INT oldmodiff = BUF_MODIFF (buf);
   Lisp_Object pre_modiff_p;
   Charbpos point;			/* position of point */
   Charbpos abbrev_start;		/* position of abbreviation beginning */

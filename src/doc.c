@@ -48,7 +48,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
 {
   Ibyte buf[DOC_MAX_FILENAME_LENGTH+1];
   Ibyte *buffer = buf;
-  int buffer_size = sizeof (buf) - 1, space_left;
+  Bytecount buffer_size = sizeof (buf) - 1, space_left;
   Ibyte *from, *to;
   REGISTER Ibyte *p = buffer;
   Lisp_Object return_me;
@@ -82,7 +82,7 @@ extract_object_file_name (int fd, EMACS_INT doc_pos,
   space_left = buffer_size - (p - buffer);
   while (space_left > 0)
     {
-      int nread;
+      Bytecount nread;
 
       nread = Lstream_read (XLSTREAM (instream), p, space_left);
       if (nread < 0)
@@ -740,8 +740,8 @@ when doc strings are referred to in the dumped Emacs.
 {
   int fd;
   Ibyte buf[1024 + 1];
-  REGISTER int filled;
-  REGISTER int pos;
+  REGISTER Bytecount filled;
+  REGISTER OFF_T pos;
   REGISTER Ibyte *p, *end;
   Lisp_Object sym, fun, tem;
   Ibyte *name;
@@ -987,7 +987,7 @@ verify_doc_mapper (Lisp_Object UNUSED (key), Lisp_Object sym, void *arg)
 
   if (!NILP (Ffboundp (sym)))
     {
-      int doc = 0;
+      EMACS_INT doc = 0;
       Lisp_Object fun = XSYMBOL (sym)->function;
       if (CONSP (fun) &&
 	  EQ (XCAR (fun), Qmacro))
@@ -1129,7 +1129,8 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
       strdata = XSTRING_DATA (string);
       strlength = XSTRING_LENGTH (string);
       strp = strdata + idx;
-      backslashp = (const Ibyte *) memchr (strp, '\\', strlength - idx);
+      backslashp = (const Ibyte *) memchr (strp, '\\', 
+					   max (strlength - idx, 0));
       partlen = backslashp ? backslashp - strp : strlength - idx;
 
       if (changed)
@@ -1159,7 +1160,7 @@ thus, \\=\\=\\=\\= puts \\=\\= into the output, and \\=\\=\\=\\[ puts \\=\\[ int
           
           idx += ichar_len ('[');
           strp = strdata + idx;
-          strp = (Ibyte *) memchr (strp, ']', strlength - idx);
+          strp = (Ibyte *) memchr (strp, ']', max (strlength - idx, 0));
  
           if (!strp)
             {

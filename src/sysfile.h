@@ -383,7 +383,7 @@ int retry_fclose (FILE *);
 int qxe_access (const Ibyte *path, int mode);
 int qxe_eaccess (const Ibyte *path, int mode);
 int qxe_lstat (const Ibyte *path, struct stat *buf);
-int qxe_readlink (const Ibyte *path, Ibyte *buf, size_t bufsiz);
+ssize_t qxe_readlink (const Ibyte *path, Ibyte *buf, size_t bufsiz);
 int qxe_fstat (int fd, struct stat *buf);
 int qxe_stat (const Ibyte *path, struct stat *buf);
 Ibyte *qxe_realpath (const Ibyte *path, Ibyte resolved_path [],

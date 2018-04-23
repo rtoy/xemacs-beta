@@ -610,7 +610,14 @@ arguments: (NUMBER &optional (RADIX 10) RADIX_TABLE)
     {
       Bytecount size = ratio_size_in_base (XRATIO_DATA (number),
                                            radixing), len;
-      Ibyte *buffer = alloca_ibytes (size);
+      Ibyte *buffer;
+
+      if (size < 0)
+	{
+	  out_of_memory ("cannot print supplied ratio", Qunbound);
+	}
+
+      buffer = alloca_ibytes (size);
 
       len = ratio_to_string_1 (&buffer, size, XRATIO_DATA (number), radixing,
                                fixnum_to_char_table);
@@ -2404,6 +2411,10 @@ emacs_doprnt (Lisp_Object stream,
               }
 
             size = bignum_size_decimal (XBIGNUM_DATA (obj));
+	    if (size < 0)
+	      {
+		out_of_memory ("cannot print bignum in decimal", Qunbound);
+	      }
             to_print = alloca_ibytes (size);
             end = to_print + size; 
 
@@ -2452,6 +2463,11 @@ emacs_doprnt (Lisp_Object stream,
               }
 
             size = bignum_size_octal (XBIGNUM_DATA (obj));
+	    if (size < 0)
+	      {
+		out_of_memory ("cannot print bignum", Qunbound);
+	      }
+
             to_print = alloca_ibytes (size);
             end = to_print + size; 
 
@@ -2506,6 +2522,10 @@ emacs_doprnt (Lisp_Object stream,
               }
 
             size = bignum_size_binary (XBIGNUM_DATA (obj));
+	    if (size < 0)
+	      {
+		out_of_memory ("cannot print bignum in binary", Qunbound);
+	      }
             to_print = alloca_ibytes (size);
             end = to_print + size; 
 
@@ -2559,6 +2579,10 @@ emacs_doprnt (Lisp_Object stream,
               }
 
             size = bignum_size_hex (XBIGNUM_DATA (obj));
+	    if (size < 0)
+	      {
+		out_of_memory ("cannot print bignum in hex", Qunbound);
+	      }
             to_print = alloca_ibytes (size);
             end = to_print + size; 
 
@@ -2603,6 +2627,10 @@ emacs_doprnt (Lisp_Object stream,
               }
 
             size = ratio_size_in_base (XRATIO_DATA (obj), 10);
+	    if (size < 0)
+	      {
+		out_of_memory ("cannot print ratio in decimal", Qunbound);
+	      }
             to_print = alloca_ibytes (size);
             end = to_print + size; 
 

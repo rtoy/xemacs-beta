@@ -2307,7 +2307,8 @@ prune_weak_hash_tables (void)
 /* Return a hash value for an array of Lisp_Objects of size SIZE. */
 
 Hashcode
-internal_array_hash (Lisp_Object *arr, int size, int depth, Boolint equalp)
+internal_array_hash (Lisp_Object *arr, Elemcount size, int depth,
+		     Boolint equalp)
 {
   int i;
   Hashcode hash = 0;

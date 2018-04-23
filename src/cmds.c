@@ -170,7 +170,7 @@ This function does not move point.
        (count, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  REGISTER int orig, end;
+  REGISTER Charbpos orig, end;
 
   buffer = wrap_buffer (b);
   if (NILP (count))
@@ -228,7 +228,7 @@ This function does not move point.
     }
 
   return make_fixnum (find_before_next_newline (buf, BUF_PT (buf), 0,
-					     n - (n <= 0)));
+						n - (n <= 0)));
 }
 
 DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
@@ -379,7 +379,7 @@ internal_self_insert (Ichar c1, int noautofill)
   Lisp_Object overwrite;
   Lisp_Object syntax_table;
   struct buffer *buf = current_buffer;
-  int tab_width;
+  Charcount tab_width;
 
   overwrite = buf->overwrite_mode;
   syntax_table = BUFFER_MIRROR_SYNTAX_TABLE (buf);

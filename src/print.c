@@ -2983,9 +2983,9 @@ db (void)
 /* Do a "short" backtrace. */
 
 void
-debug_short_backtrace (int length)
+debug_short_backtrace (EMACS_INT length)
 {
-  int first = 1;
+  Fixnum first = 1;
   struct backtrace *bt = backtrace_list;
 
   debug_out ("   [");

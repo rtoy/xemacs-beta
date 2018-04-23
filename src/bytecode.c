@@ -60,14 +60,16 @@ by Hallvard:
 
 #ifdef NEW_GC
 static Lisp_Object
-make_compiled_function_args (int totalargs)
+make_compiled_function_args (Elemcount totalargs)
 {
+  size_t bcount
+    = FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
+				    Lisp_Object, args, (size_t) totalargs);
   Lisp_Compiled_Function_Args *args;
+  structure_checking_assert ((Bytecount) bcount >= 0);
+
   args = XCOMPILED_FUNCTION_ARGS
-    (ALLOC_SIZED_LISP_OBJECT 
-     (FLEXIBLE_ARRAY_STRUCT_SIZEOF (Lisp_Compiled_Function_Args, 
-				    Lisp_Object, args, totalargs),
-      compiled_function_args));
+    (ALLOC_SIZED_LISP_OBJECT ((Bytecount) bcount, compiled_function_args));
   args->size = totalargs;
   return wrap_compiled_function_args (args);
 }
@@ -1470,7 +1472,7 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
 		     const Opbyte *UNUSED (program_ptr),
 		     Opcode opcode)
 {
-  REGISTER int n;
+  REGISTER EMACS_INT n;
 
   switch (opcode)
     {

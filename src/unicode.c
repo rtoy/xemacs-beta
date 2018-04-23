@@ -1644,7 +1644,8 @@ print_precedence_array (Lisp_Object obj, Lisp_Object printcharfun,
 
   write_ascstring (printcharfun,
 		   "#<INTERNAL OBJECT (XEmacs bug?) (precedence-array)");
-  write_fmt_string (printcharfun, " length=%d", Dynarr_length (data->precdyn));
+  write_fmt_string (printcharfun, " length=%ld",
+		    Dynarr_length (data->precdyn));
   for (i = 0; i < Dynarr_length (data->precdyn); i++)
     {
       Lisp_Object charset = Dynarr_at (data->precdyn, i);

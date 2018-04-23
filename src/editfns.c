@@ -1651,7 +1651,7 @@ text into.  If BUFFER is nil, the current buffer is assumed.
   REGISTER Bytecount charlen;
   Ibyte str[MAX_ICHAR_LEN];
   struct buffer *b = decode_buffer (buffer, 1);
-  int cou;
+  Charcount cou;
 
   CHECK_CHAR_COERCE_INT (character);
   if (NILP (count))
@@ -2161,7 +2161,7 @@ save_restriction_restore (Lisp_Object data)
 {
   struct buffer *buf;
   Lisp_Object markers = XCDR (data);
-  int local_clip_changed = 0;
+  Boolint local_clip_changed = 0;
 
   buf = XBUFFER (XCAR (data));
   /* someone could have killed the buffer in the meantime ... */

@@ -220,7 +220,7 @@ EXFUN (Foddp, 1);
    NATNUMP. */
 
 #ifdef HAVE_BIGNUM
-#define NATNUMP(x) ((FIXNUMP (x) && XFIXNUM (x) >= 0) || \
+#define NATNUMP(x) ((FIXNUMP (x) && XREALFIXNUM (x) >= 0) || \
 		    (BIGNUMP (x) && bignum_sign (XBIGNUM_DATA (x)) >= 0))
 #else
 #define NATNUMP(x) (FIXNUMP (x) && XFIXNUM (x) >= 0)

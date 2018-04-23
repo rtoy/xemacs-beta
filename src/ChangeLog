@@ -1,3 +1,150 @@
+2018-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* abbrev.c (Fexpand_abbrev):
+	* alloc.c (struct):
+	* alloc.c (malloc_after):
+	* alloc.c (xmalloc):
+	* alloc.c (xcalloc):
+	* alloc.c (xrealloc):
+	* alloc.c (xstrdup):
+	* alloc.c (alloc_sized_lrecord_1):
+	* alloc.c (alloc_sized_lrecord_array):
+	* alloc.c (alloc_lrecord_array):
+	* alloc.c (copy_lisp_object):
+	* alloc.c (dbg_inhibit_dbg_symbol_deletion):
+	* alloc.c (make_uninit_vector):
+	* alloc.c (Fvector):
+	* alloc.c (bit_vector_equal):
+	* alloc.c (make_bit_vector):
+	* alloc.c (string_equal):
+	* alloc.c (resize_string):
+	* alloc.c (set_string_char):
+	* alloc.c (Fmake_string):
+	* alloc.c (Fstring):
+	* alloc.c (init_string_ascii_begin):
+	* alloc.c (make_string):
+	* alloc.c (dec_lrecord_stats):
+	* alloc.c (lrecord_stats_heap_size):
+	* alloc.c (pluralize_word):
+	* array.c (Dynarr_realloc):
+	* array.c (Dynarr_insert_many):
+	* array.c (Dynarr_delete_many):
+	* array.c (gap_array_move_gap):
+	* array.h:
+	* array.h (Dynarr_declare):
+	* array.h (Dynarr_delete_object):
+	* array.h (gap_array_marker):
+	* buffer.c (MARKED_SLOT):
+	* buffer.c (Fgenerate_new_buffer_name):
+	* buffer.c (DEFVAR_BUFFER_LOCAL_1):
+	* buffer.h (struct buffer):
+	* bytecode.c (make_compiled_function_args):
+	* bytecode.c (UNUSED):
+	* callint.c (Fcall_interactively):
+	* casefiddle.c (casify_object):
+	* casefiddle.c (casify_region_internal):
+	* charset.h:
+	* chartab.c (clone_chartab_table):
+	* chartab.c (put_char_table):
+	* chartab.c (decode_char_table_range):
+	* cmds.c (Fpoint_at_bol):
+	* cmds.c (Fpoint_at_eol):
+	* cmds.c (internal_self_insert):
+	* console.c (delete_console_internal):
+	* console.c (Fset_input_mode):
+	* console.c (DEFVAR_CONSOLE_LOCAL_1):
+	* console.h:
+	* data.c (lisp_to_uint32_t):
+	* data.c (lisp_to_int32_t):
+	* data.c (rem_two_fixnum):
+	* data.c (Flsh):
+	* debug.c (FROB):
+	* device.c (Fmake_device):
+	* device.c (delete_device_internal):
+	* device.c (Fset_device_baud_rate):
+	* device.h:
+	* doc.c (extract_object_file_name):
+	* doc.c (Fsnarf_documentation):
+	* doc.c (verify_doc_mapper):
+	* doc.c (Fsubstitute_command_keys):
+	* doprnt.c (Fnumber_to_string):
+	* doprnt.c (emacs_doprnt):
+	* editfns.c (Finsert_char):
+	* editfns.c (save_restriction_restore):
+	* elhash.c (internal_array_hash):
+	* filelock.c (LOCK_PID_MAX):
+	* filelock.c (fill_in_lock_file_name):
+	* filelock.c (current_lock_owner):
+	* indent.c:
+	* indent.c (column_at_point):
+	* indent.c (string_column_at_point):
+	* indent.c (current_column):
+	* indent.c (Findent_to):
+	* indent.c (byte_spaces_at_point):
+	* indent.c (Fmove_to_column):
+	* indent.c (Fcompute_motion):
+	* indent.c (vertical_motion_1):
+	* indent.c (Fvertical_motion_pixels):
+	* lisp-disunion.h (XCHARVAL):
+	* lisp-disunion.h (wrap_pointer_1):
+	* lisp.h:
+	* lisp.h (ALLOCA):
+	* lisp.h (XSET_STRING_ASCII_BEGIN):
+	* lisp.h (CHECK_CHAR_COERCE_INT):
+	* lisp.h (LISP_HASH):
+	* lisp.h (struct gcpro):
+	* lisp.h (DECLARE_INLINE_HEADER):
+	* lrecord.h:
+	* lrecord.h (set_lheader_implementation):
+	* number.h:
+	* number.h (integer_signum):
+	* number.h (NATNUMP):
+	* print.c (debug_short_backtrace):
+	* search.c (find_before_next_newline):
+	* syntax.c (scan_words):
+	* syntax.h:
+	* sysdep.c:
+	* sysdep.c (wait_for_termination):
+	* sysdep.c (sys_subshell):
+	* sysdep.c (sys_suspend):
+	* sysdep.c (init_sigio_on_device):
+	* sysdep.c (qxe_readlink):
+	* sysfile.h:
+	* text.c (eifind_large_enough_buffer):
+	* text.h:
+	* text.h (ASSERT_ASCTEXT_ASCII_LEN):
+	* text.h (struct):
+	* text.h (EI_ALLOC):
+	* text.h (eicpy_lstr_off):
+	* text.h (eicpy_raw_fmt):
+	* text.h (eicpy_ascii_len):
+	* text.h (eicpy_ext_len):
+	* text.h (eimake_string_off):
+	* text.h (DECLARE_INLINE_HEADER):
+	* text.h (eicat_1):
+	* text.h (eicat_ascii):
+	* text.h (eicat_raw):
+	* text.h (eisub_1):
+	* text.h (eisub_ascii):
+	* text.h (EI_CASECHANGE):
+	* undo.c (truncate_undo_list):
+	* unicode.c (print_precedence_array):
+	Be more careful about integer types within the C code, e.g. not
+	using an int where a value represents a (possibly large) number of
+	bytes, or characters, especially relevant for values like fill
+	columns, which can usefully be set to most-positive-fixnum,
+	something the code up to now dealt with badly on a 64-bit build.
+	Issues flushed out using the -Wnarrowing GCC option.
+
+	* lisp.h (XCHAR_OR_CHAR_INT):
+	Provide an error-checking version of this to check uses with
+	fixnums where valid_ichar_p() is not true.
+
+	* lisp.h (GOOD_HASH):
+	Set this to a prime number just over 2^32 on sixty-four bit
+	architectures, of type Hashcode, an unsigned type, so modular
+	arithmetic is defined.
+
 2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:

@@ -2678,8 +2678,8 @@ eistr_casefiddle_1 (Ibyte *olddata, Bytecount len, Ibyte *newdata,
   return changedp ? newp - newdata : 0;
 }
 
-int
-eifind_large_enough_buffer (int oldbufsize, int needed_size)
+Bytecount
+eifind_large_enough_buffer (Bytecount oldbufsize, Bytecount needed_size)
 {
   while (oldbufsize < needed_size)
     {

@@ -266,7 +266,7 @@ extern int lrecord_uid_counter[];
   SLI_header->type = (imp)->lrecord_type_index;				\
   SLI_header->lisp_readonly = 0;					\
   SLI_header->free = 0;							\
-  SLI_header->uid = lrecord_uid_counter[(imp)->lrecord_type_index]++;   \
+  SLI_header->uid = lrecord_uid_counter[(imp)->lrecord_type_index]++;	\
 } while (0)
 #else /* not NEW_GC */
 #define set_lheader_implementation(header,imp) do {			\
@@ -671,7 +671,7 @@ void init_lrecord_stats (void);
 void inc_lrecord_stats (Bytecount size, const struct lrecord_header *h);
 void dec_lrecord_stats (Bytecount size_including_overhead, 
 			const struct lrecord_header *h);
-int lrecord_stats_heap_size (void);
+Bytecount lrecord_stats_heap_size (void);
 #endif /* ALLOC_TYPE_STATS */
 
 /* Tell mc-alloc how to call a finalizer. */
@@ -2094,10 +2094,10 @@ Lisp_Object noseeum_alloc_sized_lrecord (Bytecount size,
 MODULE_API Lisp_Object alloc_lrecord (const struct lrecord_implementation *imp);
 Lisp_Object noseeum_alloc_lrecord (const struct lrecord_implementation *imp);
 
-MODULE_API Lisp_Object alloc_lrecord_array (int elemcount,
+MODULE_API Lisp_Object alloc_lrecord_array (Elemcount elemcount,
 				 const struct lrecord_implementation *imp);
 MODULE_API Lisp_Object alloc_sized_lrecord_array (Bytecount size,
-						  int elemcount,
+						  Elemcount elemcount,
 						  const struct lrecord_implementation *imp);
 
 #endif /* NEW_GC */

@@ -989,7 +989,7 @@ non_ascii_charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
    to the Dynarr.  FAIL controls failure mode when charset conversion to
    Unicode is not possible. */
 DECLARE_INLINE_HEADER (
-int
+Bytecount
 charset_codepoint_to_dynarr (Lisp_Object charset, int c1, int c2,
 			     unsigned_char_dynarr *dst,
 			     enum converr USED_IF_MULE (fail))
