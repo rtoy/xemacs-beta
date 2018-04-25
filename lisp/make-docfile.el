@@ -245,16 +245,17 @@
                  ;; (expand-file-name "make-docfile" build-lib-src)
                  "make-docfile"
                  nil
+                 ;; Wouldn't it be nice to have streams as process input and
+                 ;; output.
                  (list t standard-error)
                  nil
-                 (append options processed))))
-    (if (equal status 0)
-        (message "%sSpawning make-docfile ...done"
-                 (buffer-substring nil nil standard-error))
-      (message "%sSpawning make-docfile ... error, failed with status %d."
-               (buffer-substring nil nil standard-error)
-               status))
-    (kill-emacs status)))
+                 (append options processed)))
+         (numeric-status (if (integerp status) status 1)))
+    (write-sequence (buffer-substring nil nil standard-error)
+                    'external-debugging-output)
+    (message "Spawning make-docfile ... %s"
+             (if (zerop numeric-status) "done" status))
+    (kill-emacs numeric-status)))
 
 (kill-emacs)
 
