@@ -57,7 +57,7 @@ Lisp_Object Qtext_conversion_error;
 Lisp_Object Qarith_error, Qrange_error, Qdomain_error;
 Lisp_Object Qsingularity_error, Qoverflow_error, Qunderflow_error;
 Lisp_Object Qintegerp, Qnatnump, Qnonnegativep, Qsymbolp;
-Lisp_Object Qlistp, Qtrue_list_p, Qweak_listp;
+Lisp_Object Qlistp, Qweak_listp;
 Lisp_Object Qconsp, Qsubrp;
 Lisp_Object Qcharacterp, Qstringp, Qarrayp, Qsequencep, Qvectorp;
 Lisp_Object Qchar_or_string_p, Qmarkerp, Qinteger_or_marker_p, Qbufferp;
@@ -188,15 +188,7 @@ Return t if the two args are the same Lisp object.
 {
   return EQ_WITH_EBOLA_NOTICE (object1, object2) ? Qt : Qnil;
 }
-
-DEFUN ("null", Fnull, 1, 1, 0, /*
-Return t if OBJECT is nil.
-*/
-       (object))
-{
-  return NILP (object) ? Qt : Qnil;
-}
-
+
 DEFUN ("consp", Fconsp, 1, 1, 0, /*
 Return t if OBJECT is a cons cell.  `nil' is not a cons cell.
 
@@ -208,45 +200,6 @@ a cons cell is.
   return CONSP (object) ? Qt : Qnil;
 }
 
-DEFUN ("atom", Fatom, 1, 1, 0, /*
-Return t if OBJECT is not a cons cell.  `nil' is not a cons cell.
-
-See the documentation for `cons' or the Lisp manual for more details on what
-a cons cell is.
-*/
-       (object))
-{
-  return CONSP (object) ? Qnil : Qt;
-}
-
-DEFUN ("listp", Flistp, 1, 1, 0, /*
-Return t if OBJECT is a list.  `nil' is a list.
-
-A list is either the Lisp object nil (a symbol), interpreted as the empty
-list in this context, or a cons cell whose CDR refers to either nil or a
-cons cell.  A "proper list" contains no cycles.
-*/
-       (object))
-{
-  return LISTP (object) ? Qt : Qnil;
-}
-
-DEFUN ("nlistp", Fnlistp, 1, 1, 0, /*
-Return t if OBJECT is not a list.  `nil' is a list.
-*/
-       (object))
-{
-  return LISTP (object) ? Qnil : Qt;
-}
-
-DEFUN ("true-list-p", Ftrue_list_p, 1, 1, 0, /*
-Return t if OBJECT is an acyclic, nil-terminated (ie, not dotted), list.
-*/
-       (object))
-{
-  return TRUE_LIST_P (object) ? Qt : Qnil;
-}
-
 DEFUN ("symbolp", Fsymbolp, 1, 1, 0, /*
 Return t if OBJECT is a symbol.
 
@@ -456,7 +409,7 @@ Return t if OBJECT is a nonnegative integer.
 }
 
 DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
-Return t if OBJECT is a nonnegative number.
+Return t if OBJECT is a nonnegative rational.
 */
        (object))
 {
@@ -470,16 +423,8 @@ Return t if OBJECT is a nonnegative number.
     ? Qt : Qnil;
 }
 
-DEFUN ("bitp", Fbitp, 1, 1, 0, /*
-Return t if OBJECT is a bit (0 or 1).
-*/
-       (object))
-{
-  return BITP (object) ? Qt : Qnil;
-}
-
 DEFUN ("numberp", Fnumberp, 1, 1, 0, /*
-Return t if OBJECT is a number (floating point or integer).
+Return t if OBJECT is a number (floating point or rational).
 */
        (object))
 {
@@ -1109,34 +1054,6 @@ arguments: (FIRST &rest ARGS)
 #endif /* WITH_NUMBER_TYPES */
 }
 
-DEFUN ("zerop", Fzerop, 1, 1, 0, /*
-Return t if NUMBER is zero.
-*/
-       (number))
-{
- retry:
-  if (FIXNUMP (number))
-    return EQ (number, Qzero) ? Qt : Qnil;
-#ifdef HAVE_BIGNUM
-  else if (BIGNUMP (number))
-    return bignum_sign (XBIGNUM_DATA (number)) == 0 ? Qt : Qnil;
-#endif
-#ifdef HAVE_RATIO
-  else if (RATIOP (number))
-    return ratio_sign (XRATIO_DATA (number)) == 0 ? Qt : Qnil;
-#endif
-  else if (FLOATP (number))
-    return XFLOAT_DATA (number) == 0.0 ? Qt : Qnil;
-#ifdef HAVE_BIGFLOAT
-  else if (BIGFLOATP (number))
-    return bigfloat_sign (XBIGFLOAT_DATA (number)) == 0 ? Qt : Qnil;
-#endif
-  else
-    {
-      number = wrong_type_argument (Qnumberp, number);
-      goto retry;
-    }
-}
 
 /* Convert between an unsigned 32-bit value and some Lisp value that preserves
    all its bits. Use an integer if the value will fit (that is, if the value
@@ -4429,7 +4346,6 @@ syms_of_data (void)
 
   DEFSYMBOL (Qlambda);
   DEFSYMBOL (Qlistp);
-  DEFSYMBOL (Qtrue_list_p);
   DEFSYMBOL (Qconsp);
   DEFSYMBOL (Qsubrp);
   DEFSYMBOL (Qsymbolp);
@@ -4466,13 +4382,7 @@ syms_of_data (void)
   DEFSUBR (Fdiv);
 #endif
   DEFSUBR (Feq);
-  DEFSUBR (Fnull);
-  Ffset (intern ("not"), intern ("null"));
-  DEFSUBR (Flistp);
-  DEFSUBR (Fnlistp);
-  DEFSUBR (Ftrue_list_p);
   DEFSUBR (Fconsp);
-  DEFSUBR (Fatom);
   DEFSUBR (Fcharacterp);
   DEFSUBR (Fchar_to_int);
   DEFSUBR (Fint_to_char);
@@ -4486,7 +4396,6 @@ syms_of_data (void)
   DEFSUBR (Fkeywordp);
   DEFSUBR (Fstringp);
   DEFSUBR (Fvectorp);
-  DEFSUBR (Fbitp);
   DEFSUBR (Fbit_vector_p);
   DEFSUBR (Farrayp);
   DEFSUBR (Fsequencep);
@@ -4517,7 +4426,6 @@ syms_of_data (void)
   DEFSUBR (Fleq);
   DEFSUBR (Fgeq);
   DEFSUBR (Fneq);
-  DEFSUBR (Fzerop);
   DEFSUBR (Fplus);
   DEFSUBR (Fminus);
   DEFSUBR (Ftimes);

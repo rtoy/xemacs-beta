@@ -1,5 +1,39 @@
 2018-04-25  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* subr.el (not): New.
+	* subr.el (null): New.
+	* subr.el (atom): New.
+	* subr.el (listp): New.
+	* subr.el (nlistp): New.
+	* subr.el (bitp): New.
+	* subr.el (zerop): New.
+	* subr.el (true-list-p): New.	
+	Move all these functions from C, they're not loop hotspots,
+	they're easily implemented in Lisp, and implementing them in C
+	costs less memory with NEWGC.
+	* bytecomp.el (byte-compile-throw):
+	#'null is no longer in C, don't include its code in
+	byte-compile-checks-on-load.
+	* dumped-lisp.el:
+	* dumped-lisp.el (preloaded-file-list):
+	* loadup.el (gc-cons-threshold):
+	* loadup.el (really-early-error-handler):
+	* loadup.el (fboundp):
+	* make-docfile.el (done):
+	* make-docfile.el (process-args):
+	* make-docfile.el (preloaded-file-list):
+	* make-docfile.el (site-file-list):
+	* packages.el (packages-add-suffix):
+	* packages.el (packages-list-autoloads-path):
+	* update-elc.el:
+	* update-elc.el (preloaded-file-list):
+	* update-elc.el (or):
+	* update-elc.el (featurep):
+	* update-elc.el (do-autoload-commands):
+	Don't use those functions when running a bare-metal XEmacs binary.
+
+2018-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* make-docfile.el (docfile-out-of-date):
 	#'call-process can return a non-integer if the underlying process
 	signaled, and exited for that reason. Handle this more gracefully.

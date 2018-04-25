@@ -318,4 +318,7 @@ in dumped-lisp.el and is not itself listed.")
 	))
 
 (setq preloaded-file-list
-      (mapcan #'(lambda (x) (if (listp x) x (list x))) preloaded-file-list))
+      (mapcan #'(lambda (x) (if (or (consp x) (eq x nil)) x (list x)))
+	      preloaded-file-list))
+
+;; dumped-lisp.el ends here

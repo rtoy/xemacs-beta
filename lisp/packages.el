@@ -178,10 +178,10 @@ is used instead of `load-path'."
 	   (message "No library %s in search path" library)))
     result))
 
-(defun packages-add-suffix (str)
-  (if (null (string-match "\\.el\\'" str))
-      (concatenate 'string str ".elc")
-    str))
+(defun packages-add-suffix (string)
+  (if (string-match-p "\\.el\\'" string)
+      string
+    (concatenate 'string string ".elc")))
 
 (defun packages-list-autoloads-path ()
   "List autoloads from precomputed load-path."

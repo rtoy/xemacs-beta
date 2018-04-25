@@ -70,7 +70,7 @@
 ;			     (if (file-newer-than-file-p src x)
 ;				 (progn
 ;				   (and (file-exists-p x)
-;					(null (file-writable-p x))
+;					(eq (file-writable-p x) nil)
 ;					(set-file-modes x (logior (file-modes x) 128)))
 ;				   src))))))
 ;		    ;; -batch gets filtered out.
@@ -164,7 +164,7 @@ differently depending on the presence of certain features, especially
 	 (setq exe-target "src/temacs.exe"
 	       dump-target "src/xemacs.exe"))
 	;; #### need better ways of getting config params
-	((not (memq 'pdump (emacs-run-status)))
+	((eq (memq 'pdump (emacs-run-status)) nil)
 	 (setq exe-target "src/temacs"
 	       dump-target "src/xemacs"))
 	(t
@@ -176,9 +176,9 @@ differently depending on the presence of certain features, especially
 
   ;; Not currently used.
 ;   (setq dump-target-out-of-date-wrt-exe-target
-; 	(cond ((not dump-target) t)
+; 	(cond ((eq dump-target nil) t)
 ; 	      (temacs-exe (file-newer-than-file-p temacs-exe dump-target))
-; 	      ((not data-file) t)
+; 	      ((eq data-file nil) t)
 ; 	      (t (file-newer-than-file-p dump-target data-file))))
 ;   (setq dump-target-exists (or (and temacs-exe dump-target)
 ; 			       (and data-file dump-target))))
@@ -229,7 +229,7 @@ differently depending on the presence of certain features, especially
 	   (arg-sans-extension (update-elc-chop-extension arg))
 	   (full-arg (locate-library arg-sans-extension))
 	   (full-arg-sans-extension
-	    (if (null full-arg)
+	    (if (eq full-arg nil)
 		(progn
 		  (print (format "Error: Library file %s not found" arg))
 		  (backtrace)
@@ -255,11 +255,11 @@ differently depending on the presence of certain features, especially
 		     (file-newer-than-file-p full-arg-elc dump-target)))
 	(setq dump-target-out-of-date-wrt-dump-files t))
 
-      (if (and (not (member (file-name-nondirectory arg)
-			    unbytecompiled-lisp-files))
-	       (not (member (file-name-nondirectory arg)
-			    additional-dump-dependencies))
-	       (not (member full-arg-el processed))
+      (if (and (eq (member (file-name-nondirectory arg)
+			   unbytecompiled-lisp-files) nil)
+	       (eq (member (file-name-nondirectory arg)
+			   additional-dump-dependencies) nil)
+	       (eq (member full-arg-el processed) nil)
 	       ;; no need to check for existence of either of the files
 	       ;; because of the definition of file-newer-than-file-p.
 	       (file-newer-than-file-p full-arg-el full-arg-elc))
@@ -281,11 +281,12 @@ differently depending on the presence of certain features, especially
 	  (let* ((full-arg (car all-files-in-dir)))
 	    ;; custom-load.el always gets regenerated so don't let that
 	    ;; trigger us.
-	    (when (and (not
+	    (when (and (eq
 			(member
 			 (file-name-nondirectory full-arg)
 			 lisp-files-ignored-when-checking-for-autoload-updating
-			 ))
+			 )
+			nil)
 		       (file-newer-than-file-p full-arg autoload-file))
 	      (if autoload-is-mule
 		  (setq need-to-rebuild-mule-autoloads t)
@@ -306,7 +307,7 @@ differently depending on the presence of certain features, especially
 	  ;; doesn't exist, need-to-rebuild-autoloads gets set above.  but
 	  ;; it's only one call, so it won't slow things down much and it keeps
 	  ;; the logic cleaner.
-	  (not (file-exists-p aa-lisp))
+	  (eq (file-exists-p aa-lisp) nil)
 	  ;; no need to check for file-exists of .elc due to definition
 	  ;; of file-newer-than-file-p
 	  (file-newer-than-file-p aa-lisp aac-lisp))
@@ -314,13 +315,13 @@ differently depending on the presence of certain features, especially
 
 (when (or need-to-rebuild-mule-autoloads
 	  ;; not necessary but ...  see comment above.
-	  (not (file-exists-p aa-lisp-mule))
+	  (eq (file-exists-p aa-lisp-mule) nil)
 	  ;; no need to check for file-exists of .elc due to definition
 	  ;; of file-newer-than-file-p
 	  (file-newer-than-file-p aa-lisp-mule aac-lisp-mule))
   (setq need-to-recompile-mule-autoloads t))
 
-(when (not (featurep 'mule))
+(unless (featurep 'mule)
   ;; sorry charlie.
   (setq need-to-rebuild-mule-autoloads nil
 	need-to-recompile-mule-autoloads nil))
@@ -350,14 +351,14 @@ differently depending on the presence of certain features, especially
   (condition-case nil
       (delete-file (expand-file-name "src/REBUILD_AUTOLOADS" build-directory))
     (file-error nil))
-  (cond ((and (not update-elc-files-to-compile)
-	      (not need-to-rebuild-autoloads)
-	      (not need-to-rebuild-mule-autoloads)
-	      (not need-to-recompile-autoloads)
-	      (not need-to-recompile-mule-autoloads))
+  (cond ((and (eq update-elc-files-to-compile nil)
+	      (eq need-to-rebuild-autoloads nil)
+	      (eq need-to-rebuild-mule-autoloads nil)
+	      (eq need-to-recompile-autoloads nil)
+	      (eq need-to-recompile-mule-autoloads nil))
 	 ;; (1) Nothing to do at all.
 	 )
-	((not update-elc-files-to-compile)
+	((eq update-elc-files-to-compile nil)
 	 ;; (2) We have no files to byte-compile, but we do need to
 	 ;;     regenerate and compile the auto-autoloads file, so signal
 	 ;;     update-elc-2 to do it.  This is much faster than loading

@@ -1,3 +1,25 @@
+2018-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c (Fatom, Flistp, Fnlistp, Fbitp, Fzerop, Ftrue_list_p):
+	Move all these functions to Lisp, since they are easily
+	implemented in Lisp, and having them in C necessitates extra space
+	in the dumped executable with NEWGC.
+	* data.c (Flistp):
+	* data.c (syms_of_data):
+	Remove various DEFSUBRs from here.
+
+	* data.c (Fnonnegativep):
+	Document that this returns t if OBJECT is a nonnegative rational,
+	rather than a number in general.
+	* data.c (Fnumberp):
+	Document that this returns t if OBJECT is a floating point or a
+	rational, rather than just an integer.
+	* data.c:
+
+	* lisp.h:
+	* tooltalk.c (tooltalk_message_callback):
+	Use Ffunctionp() here rather than re-implementing it.
+
 2018-04-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* abbrev.c (Fexpand_abbrev):

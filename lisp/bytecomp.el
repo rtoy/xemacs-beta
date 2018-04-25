@@ -4645,7 +4645,7 @@ optimized away--just byte compile and return the BODY."
 			       block))))
     (mapc 'byte-compile-form (cdr form))  ;; Push the arguments
     (byte-compile-out (get (car form) 'byte-opcode) 0)
-    (pushnew '(null (function-max-args 'throw)) byte-compile-checks-on-load
+    (pushnew '(eq (function-max-args 'throw) nil) byte-compile-checks-on-load
              :test #'equal)))
 
 ;;; top-level forms elsewhere

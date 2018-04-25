@@ -4330,4 +4330,59 @@ run-hook-with-args-until-success")
                             'file-name t)))))
       (define-coding-system-alias 'file-name file-name-alias))))
 
+;;-----------------------------------------------------
+;; Testing some used-to-be-primitives, now in subr.el
+;;-----------------------------------------------------
+
+(Assert (eq (atom nil) t))
+(Assert (eq (atom 0) t))
+(Assert (not (atom '(1 . 0))))
+(Assert (not (atom (make-circular-list 28 'a))))
+
+(Assert (eq (listp '(1 . 0)) t))
+(Assert (eq (listp nil) t))
+(Assert (not (listp '#:nil)))
+(Assert (not (listp [nil])))
+(Assert (eq (listp (make-circular-list 14 'b)) t))
+
+(Assert (bitp 1))
+(Assert (bitp 0))
+(Assert (not (bitp 2)))
+(Assert (not (bitp 0.0)))
+(Assert (not (bitp 1.0)))
+
+(Assert (zerop 0))
+(Assert (zerop 0.0))
+(Assert (not (zerop 1)))
+(Assert (not (zerop 1.0)))
+(Check-Error 'wrong-type-argument (zerop '#:0))
+(Check-Error 'wrong-type-argument (zerop '\0))
+(Check-Error 'wrong-type-argument (zerop [hello]))
+
+(Assert (char-int-p #x61))
+(Assert (char-int-p #x41))
+(Assert (char-int-p #xff))
+(Assert (not (char-int-p -1)))
+(Assert (not (char-int-p (1+ 1073741823))))
+(Assert (not (char-int-p (+ #x61 0.0))))
+(Assert (not (char-int-p "a")))
+
+(Assert (char-or-string-p ?A))
+(Assert (char-or-string-p "A"))
+(Assert (char-or-string-p "\x00"))
+(Assert (char-or-string-p ?\x00))
+(Assert (char-or-string-p #x00))
+(Assert (char-or-string-p (make-string 1024 ?z)))
+(Assert (char-or-string-p #x00))
+(Assert (not (char-or-string-p [?a])))
+(Assert (not (char-or-string-p -1)))
+(Assert (not (char-or-string-p (1+ 1073741823))))
+(Assert (not (char-or-string-p (+ ?A 0.0))))
+
+(Assert (true-list-p nil))
+(Assert (true-list-p '(a b c d)))
+(Assert (true-list-p (cons 'a nil)))
+(Assert (not (true-list-p [])))
+(Assert (not (true-list-p -1)))
+
 ;;; end of lisp-tests.el

@@ -230,6 +230,40 @@ Argument elements must be the integers zero or one, or the characters ?\\x00,
 ;; XEmacs; move these non-basic predicates that can be easily implemented in
 ;; Lisp from data.c.
 
+(defun null (object)
+  "Return t if OBJECT is nil."
+  (eq object nil))
+
+(defalias 'not #'null)
+
+(defun atom (object)
+  "Return t if OBJECT is not a cons cell.  `nil' is not a cons cell.
+
+See the documentation for `cons' or the Lisp manual for more details on what
+a cons cell is."
+  (not (consp object)))
+
+(defun listp (object)
+  "Return t if OBJECT is a list.  `nil' is a list.
+
+A list is either the Lisp object nil (a symbol), interpreted as the empty
+list in this context, or a cons cell whose CDR refers to either nil or a
+cons cell.
+
+A \"proper list\" contains no cycles.  A \"true list\" is a proper list
+which has `nil' as the CDR of its last cons cell.  See `true-list-p', an
+alternative, more expensive function, if these features are important for
+your use case."
+  (or (consp object) (eq object nil)))
+
+(defun nlistp (object)
+  "Return t if OBJECT is not a list.  `nil' is a list."
+  (not (or (consp object) (eq object nil))))
+
+(defun bitp (object)
+  "Return t if OBJECT is a bit (0 or 1)."
+  (or (eql object 0) (eql object 1)))
+
 (defun char-int-p (object)
   "Return t if OBJECT is an integer that can be converted into a character.
 See `char-int'."
@@ -268,7 +302,19 @@ confoundedness in older versions of E-Lisp."
   "Return t if OBJECT is a number, character or a marker."
   (or (numberp object) (characterp object) (markerp object)))
 
-;; Also previously in data.c. Replaced in most uses by #'list-length.
+(defun zerop (number)
+  "Return t if NUMBER is zero."
+  (= number 0))
+
+(defun true-list-p (object)
+  "Return t if OBJECT is an acyclic, nil-terminated list."
+  (let ((hare object) (tortoise object) (length 0))
+    (while (and (consp hare) (or (not (eq hare tortoise)) (eql length 0)))
+      (if (eql (logand length 1) 1) (setq tortoise (cdr tortoise)))
+      (setq hare (cdr hare)
+            length (1+ length)))
+    (eq hare nil)))
+
 (defun safe-length (list)
   "Return the length of a list, but avoid error or infinite loop.
 This function never gets an error.  If LIST is not really a list,

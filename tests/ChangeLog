@@ -1,3 +1,9 @@
+2018-04-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	Test various of the simple predicates just moved to subr.el from
+	data.c.
+
 2018-04-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/os-tests.el (two-to-the-thirty-second):
