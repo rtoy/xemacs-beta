@@ -85,7 +85,7 @@ with the exception of `loadup.el'.")
        ;; setting it low makes loadup incredibly fucking slow.
        ;; no need to do it when not dumping.
        (if (and purify-flag
-		(not (memq 'quick-build internal-error-checking)))
+		(eq (memq 'quick-build internal-error-checking) nil))
 	   30000 3000000)))
 
 ;; really-early-error-handler outputs a stack trace so let's not do it
@@ -156,7 +156,7 @@ with the exception of `loadup.el'.")
 	      (external-debugging-output "Fatal error during load, aborting")
 	      (kill-emacs 1))
 	    (setq files (cdr files)))
-	  (when (not (featurep 'toolbar))
+	  (unless (featurep 'toolbar)
 	    ;; else still define a few functions.
 	    (defun toolbar-button-p    (obj) "No toolbar support." nil)
 	    (defun toolbar-specifier-p (obj) "No toolbar support." nil))
@@ -289,7 +289,7 @@ with the exception of `loadup.el'.")
 ;; this file must be loaded each time Emacs is run.
 ;; So run the startup code now.
 
-(when (not (fboundp 'dump-emacs))
+(unless (fboundp 'dump-emacs)
   ;; Avoid loading loadup.el a second time!
   (setq command-line-args (cdr (cdr command-line-args)))
   (eval top-level))

@@ -58,7 +58,7 @@
 
 ;; First gather up the command line options.
 (let (done)
-  (while (and (null done) command-line-args)
+  (while (and (eq done nil) command-line-args)
     (let ((arg (car command-line-args)))
       (cond ((or (string-equal arg "-o") ; Specify DOC file name
 		 (string-equal arg "-a") ; Append to DOC file
@@ -70,7 +70,7 @@
 	    ((string-equal arg "-i") ; Set site files to scan
 	     (setq site-file-list (car (cdr command-line-args))))
 	    (t (setq done t)))
-      (if (null done)
+      (if (eq done nil)
 	  (setq command-line-args (cdr (cdr command-line-args)))))))
 (setq options (nreverse options))
 
@@ -114,8 +114,8 @@
 	    (process-args (read buf)))
 	;; remove NEEDTODUMP and make-docfile.exe, convert .obj files into
 	;; .c files in the source directory.
-	(when (and (not (string-match "\\(NEEDTODUMP\\|\\.exe$\\)" arg))
-		   (not (member arg processed)))
+	(when (and (eq (string-match "\\(NEEDTODUMP\\|\\.exe$\\)" arg) nil)
+		   (eq (member arg processed) nil))
 	  (when (string-match "\\(.*\\)\\.obj$" arg)
 	    (setq arg (expand-file-name
 		       (concatenate
@@ -125,7 +125,7 @@
                          (subseq arg (match-beginning 1) (match-end 1)))
 			".c")
 		       source-src)))
-	  (if (and (null docfile-out-of-date)
+	  (if (and (eq docfile-out-of-date nil)
 		   (file-newer-than-file-p arg docfile))
 	      (setq docfile-out-of-date t))
 	  (setq processed (cons arg processed))))
@@ -163,7 +163,7 @@
     (setq arg0 (packages-add-suffix (car preloaded-file-list))
 	  arg (locate-library arg0)
           absolute arg)
-    (if (null arg)
+    (if (eq arg nil)
 	(progn
 	  (message "Error: dumped file %s does not exist" arg0)
 	  ;; Uncomment in case of difficulties
@@ -182,9 +182,9 @@
 	;; Use relative paths where possible, since this makes file lookup
 	;; in an installed XEmacs easier:
 	(setq arg arg0))
-      (if (null (member arg processed))
+      (if (eq (member arg processed) nil)
 	  (progn
-	    (if (and (null docfile-out-of-date)
+	    (if (and (eq docfile-out-of-date nil)
                      ;; We need to check the absolute path here:
 		     (file-newer-than-file-p absolute docfile))
 		(setq docfile-out-of-date t))
@@ -197,9 +197,9 @@
       (load site-file-list t t)
       (while site-load-packages
 	(let ((arg (car site-load-packages)))
-	  (if (null (member arg processed))
+	  (if (eq (member arg processed) nil)
 	      (progn
-		(if (and (null docfile-out-of-date)
+		(if (and (eq docfile-out-of-date nil)
 			 (file-newer-than-file-p arg docfile))
 		    (setq docfile-out-of-date t))
 		(setq processed (cons arg processed)))))
@@ -254,7 +254,7 @@
     (write-sequence (buffer-substring nil nil standard-error)
                     'external-debugging-output)
     (message "Spawning make-docfile ... %s"
-             (if (zerop numeric-status) "done" status))
+             (if (equal 0 numeric-status) "done" status))
     (kill-emacs numeric-status)))
 
 (kill-emacs)

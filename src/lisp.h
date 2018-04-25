@@ -2646,31 +2646,6 @@ do {								\
 }						\
 while (0)
 
-/* Return 1 if LIST is properly acyclic and nil-terminated, else 0. */
-DECLARE_INLINE_HEADER (
-int
-TRUE_LIST_P (Lisp_Object object)
-)
-{
-  Lisp_Object hare, tortoise;
-  EMACS_INT len;
-
-  for (hare = tortoise = object, len = 0;
-       CONSP (hare);
-       hare = XCDR (hare), len++)
-    {
-      if (len < CIRCULAR_LIST_SUSPICION_LENGTH)
-	continue;
-
-      if (len & 1)
-	tortoise = XCDR (tortoise);
-      else if (EQ (hare, tortoise))
-	return 0;
-    }
-
-  return NILP (hare);
-}
-
 /* Signal an error if LIST is not properly acyclic and nil-terminated. */
 #define CHECK_TRUE_LIST(list) do {			\
   Lisp_Object CTL_list = (list);			\
@@ -4661,7 +4636,6 @@ EXFUN (Fgeq, MANY);
 EXFUN (Fgtr, MANY);
 EXFUN (Findirect_function, 1);
 EXFUN (Fleq, MANY);
-EXFUN (Flistp, 1);
 EXFUN (Flss, MANY);
 EXFUN (Fmax, MANY);
 EXFUN (Fmin, MANY);
@@ -4727,7 +4701,7 @@ extern Lisp_Object Vfixnum_to_majuscule_ascii;
 extern Lisp_Object Qarrayp, Qbitp, Qchar_or_string_p, Qcharacterp,
     Qerror_conditions, Qerror_message, Qinteger_char_or_marker_p,
     Qinteger_or_char_p, Qinteger_or_marker_p, Qlambda, Qlistp, Qnatnump,
-    Qnonnegativep, Qnumber_char_or_marker_p, Qnumberp, Qquote, Qtrue_list_p;
+    Qnonnegativep, Qnumber_char_or_marker_p, Qnumberp, Qquote;
 extern MODULE_API Lisp_Object Qintegerp;
 
 extern Lisp_Object Qargs_out_of_range, Qarith_error, Qbeginning_of_buffer,

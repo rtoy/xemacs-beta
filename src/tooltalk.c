@@ -362,9 +362,7 @@ tooltalk_message_callback (Tt_message m, Tt_pattern p)
     va_run_hook_with_args (Qtooltalk_message_handler_hook, 2,
 			   message_, pattern);
 
-  if ((SYMBOLP (cb) && EQ (Qt, Ffboundp (cb))) ||
-      (CONSP (cb) && EQ (Qlambda, Fcar (cb)) &&
-       !NILP (Flistp (Fcar (Fcdr (cb))))))
+  if (!NILP (Ffunctionp (cb)))
     call2 (cb, message_, pattern);
   UNGCPRO;
 
