@@ -1,3 +1,11 @@
+2018-04-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (ignore):
+	* bytecomp.el (byte-compile-ignore): New.
+	Add a byte-compile method for #'ignore, marking all its arguments
+	as for-effect, and returning nil.
+
 2018-04-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* subr.el (not): New.
