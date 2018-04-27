@@ -4661,6 +4661,8 @@ optimized away--just byte compile and return the BODY."
 (byte-defop-compiler-1 defalias)
 (byte-defop-compiler-1 define-function)
 
+(byte-defop-compiler-1 ignore)
+
 (defun byte-compile-defun (form)
   ;; This is not used for file-level defuns with doc strings.
   (byte-compile-two-args ; Use this to avoid byte-compile-fset's warning.
@@ -4772,6 +4774,10 @@ optimized away--just byte compile and return the BODY."
     (if calls
 	(setq byte-compile-unresolved-functions
 	      (delete* calls byte-compile-unresolved-functions)))))
+
+(defun byte-compile-ignore (form)
+  (mapc #'byte-compile-form (cdr form) '#1=(t . #1#))
+  (unless for-effect (byte-compile-push-constant nil)))
 
 ;;; tags
 

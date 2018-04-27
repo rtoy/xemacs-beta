@@ -3265,6 +3265,13 @@ via the hepatic alpha-tocopherol transfer protein")))
       (Assert (not (funcall (intern "eq") #'bookend #'refer-to-bookend))
 	      "checking two mutually recursive functions compiled OK"))))
 
+(Assert (null (ignore)) "checking ignore gives nil, no arguments")
+(Assert (null (ignore 40 90.5 pi))
+	"checking ignore gives nil, three arguments")
+(let (value)
+  (Assert (eq 'hi (prog2 (ignore (setq value 'hi)) value))
+	  "checking side-effecting statements not deleted, ignore"))
+
 ;; Test macroexpand's handling of the ENVIRONMENT argument. We augmented it
 ;; quietly for about four months, and this was incorrect.
 
