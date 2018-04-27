@@ -1,3 +1,8 @@
+2018-04-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* make-case-conv.py:
+	Remove this file, replaced by lisp/mule/make-case-conv.el
+
 2017-11-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-case-conv.py:
