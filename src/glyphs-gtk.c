@@ -1357,7 +1357,7 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
   {
     XpmImage image;
     XpmInfo info;
-    char** data;
+    char **cdata;
 
     XpmCreateXpmImageFromBuffer ((char*) dstring, &image, &info);
 
@@ -1387,9 +1387,16 @@ gtk_xpm_instantiate (Lisp_Object image_instance, Lisp_Object instantiator,
 	  }
       }
 
-    XpmCreateDataFromXpmImage (&data, &image, &info);
+    XpmCreateDataFromXpmImage (&cdata, &image, &info);
+    XpmFreeXpmImage (&image);
+    XpmFreeXpmInfo (&info);
 
-    pixbuf = gdk_pixbuf_new_from_xpm_data ((const char **)data);
+    pixbuf = gdk_pixbuf_new_from_xpm_data ((const char **)cdata);
+
+    if (cdata != NULL)
+      {
+        XpmFree (cdata);
+      }
   }
 
   if (color_symbols)
