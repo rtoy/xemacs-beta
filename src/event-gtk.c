@@ -1884,27 +1884,20 @@ gtk_reset_key_mapping (struct device *d)
 	continue;
 
       {
-	Extbyte *name = XKeysymToString (keysym[0]);
 	Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[0]);
-	if (name)
+	if (!NILP (sym))
 	  {
-	    Fputhash (build_extstring (name, Qx_keysym_encoding),
-		      Qsans_modifiers, hashtable);
 	    Fputhash (sym, Qsans_modifiers, hashtable);
 	  }
       }
 
       for (j = 1; j < keysyms_per_code; j++)
 	{
-	  if (keysym[j] != keysym[0] &&
-	      keysym[j] != NoSymbol)
+	  if (keysym[j] != keysym[0] && keysym[j] != NoSymbol)
 	    {
-	      Extbyte *name = XKeysymToString (keysym[j]);
 	      Lisp_Object sym = gtk_keysym_to_emacs_keysym (keysym[j]);
-	      if (name && NILP (Fgethash (sym, hashtable, Qnil)))
+	      if (!NILP (sym) && NILP (Fgethash (sym, hashtable, Qnil)))
 		{
-		  Fputhash (build_extstring (name, Qx_keysym_encoding),
-			    Qt, hashtable);
 		  Fputhash (sym, Qt, hashtable);
 		}
 	    }
