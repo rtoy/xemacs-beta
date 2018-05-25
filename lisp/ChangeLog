@@ -1,3 +1,12 @@
+2018-05-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* events.el:
+	* events.el (key-or-mouse-event-p): New.
+	* events.el (timeout-or-eval-event-p): New.
+	* events.el (char-or-event-p): New.
+	Make these available, the C code has been calling them from
+	wrong_type_argument() for years, despite their not existing.
+
 2018-04-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:
