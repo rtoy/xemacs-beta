@@ -1,3 +1,10 @@
+2018-05-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* doc.c (Fsnarf_documentation):
+	If the symbol being examined is an alias for a compiled function,
+	and that compiled function already has documentation information,
+	don't override that.
+
 2018-05-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Fix some leaks in the GTK code.

@@ -930,6 +930,15 @@ when doc strings are referred to in the dumped Emacs.
                              not an int (a string, say) leave it alone. */
                           if (!FIXNUMP (old))
                             goto weird;
+
+#ifdef COMPILED_FUNCTION_ANNOTATION_HACK
+                          if (!EQ (sym, compiled_function_annotation (f)))
+                            {
+                              /* We don't want to set the information for the
+                                 alias as the compiled function's details. */
+                              goto weird; 
+                            }
+#endif
                         }
 
                       /* This may be a function or variable where we want
