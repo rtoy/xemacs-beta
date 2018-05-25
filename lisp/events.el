@@ -102,6 +102,21 @@ A misc-user event is a user event that is not a keypress or mouse click;
 normally this means a menu selection or scrollbar action."
   (and (event-live-p object) (eq 'misc-user (event-type object))))
 
+(defun key-or-mouse-event-p (object)
+  "Return t if OBJECT is a key press, a mouse event, or a misc-user event."
+  (and (event-live-p object)
+       (member* (event-type object) '(key-press button-press button-release
+                                      motion misc-user)) t))
+
+(defun timeout-or-eval-event-p (object)
+  "Return t if OBJECT is a timeout, a misc-user, or an eval event."
+  (and (event-live-p object)
+       (member* (event-type object) '(timeout misc-user eval)) t))
+
+(defun char-or-event-p (object)
+  "Return t if OBJECT is an event, a character, or a `char-int'."
+  (or (eventp object) (char-or-char-int-p object)))
+
 ;; You could just as easily use event-glyph but we include this for
 ;; consistency.
 
