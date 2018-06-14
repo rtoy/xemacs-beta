@@ -1,3 +1,10 @@
+2018-06-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* test-harness.el (test-harness-from-buffer):
+	Use the correct number of #'format arguments in calls to
+	Print-Failure here, avoiding log chatter when XEmacs warns about
+	too many arguments to #'format.
+
 2018-05-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* events.el:
