@@ -2012,9 +2012,13 @@ via the hepatic alpha-tocopherol transfer protein")))
   (when (featurep 'bignum)
     (assert (not (evenp most-positive-fixnum)) t
       "In the unlikely event that most-positive-fixnum is even, rewrite this.")
-    (Assert (equal (multiple-value-list (truncate (+ most-positive-fixnum 2.0)))
-                   (list (+ most-positive-fixnum 2) 0.0))
-            "checking a bug in single-argument truncate's remainder fixed")
+    (Assert (or (> most-positive-fixnum (expt 2.0 53))
+		(equal (multiple-value-list
+			   ;; This behaved badly if a float truncated to a
+			   ;; bignum.
+			   (truncate (+ most-positive-fixnum 2.0)))
+		       (list (+ most-positive-fixnum 2) 0.0)))
+	    "checking a bug in single-argument truncate's remainder fixed")
     (Assert-rounding (1+ most-positive-fixnum) (* 2 most-positive-fixnum)
       :one-floor-result `(,(1+ most-positive-fixnum) 0)
       :two-floor-result `(0 ,(1+ most-positive-fixnum))
@@ -2748,9 +2752,9 @@ via the hepatic alpha-tocopherol transfer protein")))
      (set-face-background-pixmap
       'left-margin
       `[xbm :data (20 ,(* 2 most-positive-fixnum) "random-text")])))
-  (Check-Error args-out-of-range
-               (move-to-column (1+ most-positive-fixnum)))
-  (Check-Error args-out-of-range
+  (Assert (< (move-to-column (1+ most-positive-fixnum)) most-positive-fixnum)
+	  "checking #'move-to-column doesn't choke on a positive bignum")
+  (Check-Error wrong-type-argument
                (move-to-column (1- most-negative-fixnum)))
   (stop-profiling)
   (when (< most-positive-fixnum (lsh 1 32))

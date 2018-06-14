@@ -423,19 +423,21 @@ is used in a loop."
 		#'(lambda (error-info)
 		    (if (eq 'cl-assertion-failed (car error-info))
 			(progn
-			  (Print-Failure
-			   (if ,failing-case
-			       "Assertion failed: %S; failing case = %S"
-			     "Assertion failed: %S")
-			   ,description ,failing-case)
+			  (Print-Failure 
+			   ,(if failing-case
+				"Assertion failed: %S; failing case = %S"
+			      "Assertion failed: %S")
+			   ,description
+			   ,@(if failing-case (list failing-case)))
 			  (incf assertion-failures)
 			  (test-harness-assertion-failure-do-debug error-info)
 			  nil)
 		      (Print-Failure
-		       (if ,failing-case
-			   "%S ==> error: %S; failing case =  %S"
-			 "%S ==> error: %S")
-		       ,description error-info ,failing-case)
+		       ,(if failing-case
+			    "%S ==> error: %S; failing case =  %S"
+			  "%S ==> error: %S")
+		       ,description error-info
+		       ,@(if failing-case (list failing-case)))
 		      (incf other-failures)
 		      (test-harness-unexpected-error-do-debug error-info)
 		      nil))
