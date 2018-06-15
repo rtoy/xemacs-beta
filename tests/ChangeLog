@@ -5,6 +5,9 @@
 	recently, to our case tables, has changed the logic of when
 	Boyer-Moore versus simple search for the particular search strings
 	in this file. Update it.
+	* automated/regexp-tests.el (log-warning-suppressed-classes): 
+	Bind this variable when checking the 100-repetition backreference
+	code too, silencing chatter on make check
 
 2018-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
