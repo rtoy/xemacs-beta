@@ -188,26 +188,30 @@
      (goto-char (point-min))
      (Assert (search-forward "Fleiss"))
      (delete-region (point-min) (point-max))
-     (insert "\n\nDer ber\xfchmte deutsche Flei\xdf\n\n")
+     (insert "\n\nDer ber\xfchmte \u00BBdeutsche\u00AB Flei\xdf\n\n")
      (goto-char (point-min))
-     (Assert (search-forward "Flei\xdf"))
-     (Assert (eq 'boyer-moore search-algorithm-used))
+     (Assert (search-forward "\u00BBdeutsche\u00AB"))
+     (Assert (eq 'boyer-moore search-algorithm-used)
+	     "Boyer-Moore not used with a Latin-1 buffer")
      (delete-region (point-min) (point-max))
      (when (featurep 'mule)
-       (insert "\n\nDer ber\xfchmte deutsche Flei\xdf\n\n")
+       (insert "\n\nDer ber\xfchmte deutsche Fleiss\n\n")
        (goto-char (point-min))
        (Assert 
-        (search-forward (format "Fle%c\xdf"
+        (search-forward (format "Fle%css"
                                 (make-char 'latin-iso8859-9 #xfd))))
-       (Assert (eq 'boyer-moore search-algorithm-used))
+       (Assert
+	(eq 'boyer-moore search-algorithm-used)
+	"Boyer-Moore not used with a Latin-1 buffer, Latin-9 search string")
        (insert (make-char 'latin-iso8859-9 #xfd))
        (goto-char (point-min))
-       (Assert (search-forward "Flei\xdf"))
-       (Assert (eq 'simple-search search-algorithm-used)) 
-       (goto-char (point-min))
-       (Assert (search-forward (format "Fle%c\xdf"
-                                       (make-char 'latin-iso8859-9 #xfd))))
+       (Assert (search-forward "Fleiss"))
        (Assert (eq 'simple-search search-algorithm-used))
+       (goto-char (point-min))
+       (Assert (search-forward (format "Fle%css"
+                                       (make-char 'latin-iso8859-9 #xfd))))
+       (Assert (eq 'simple-search search-algorithm-used)
+	       "simple search not used with a Latin 9 dotless i, case equivalents with differing byte lengths")
        (setq newcase (copy-case-table (standard-case-table)))
        (put-case-table-pair (make-char 'ethiopic #x23 #x23)
 			    (make-char 'ethiopic #x23 #x25)
@@ -227,13 +231,15 @@
 		      (string (make-char 'ethiopic #x23 #x25))
 		      nil t)
 		     3))
-	 (Assert (eq 'simple-search search-algorithm-used))
+	 (Assert (eq 'simple-search search-algorithm-used)
+		 "simple search not used with multidimensional character with case and repeated octets")
 	 (goto-char (point-min))
 	 (Assert (eql (search-forward
 		      (string (make-char 'ethiopic #x23 #x27))
 		      nil t)
 		     nil))
-	 (Assert (eq 'boyer-moore search-algorithm-used)))))))
+	 (Assert (eq 'boyer-moore search-algorithm-used)
+		 "Boyer-Moore not used with multidimensional character with no repeated octets and no case"))))))
 
 ;; XEmacs bug of long standing.
 
@@ -241,3 +247,5 @@
   (insert "foo\201bar")
   (goto-char (point-min))
   (Assert (eq (search-forward "\201" nil t) 5)))
+
+;; end of search-tests.el

@@ -1,3 +1,11 @@
+2018-06-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/search-tests.el:
+	The introduction of an uppercase sharp s to Unicode and, more
+	recently, to our case tables, has changed the logic of when
+	Boyer-Moore versus simple search for the particular search strings
+	in this file. Update it.
+
 2018-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el:
