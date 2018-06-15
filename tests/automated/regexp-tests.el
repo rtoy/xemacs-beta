@@ -628,15 +628,16 @@ appropriately, ASCII digits" limit)))))
  work, %s" limit script))))))))
   (probe-backref-limits 1 9 10 50 100 150 200 255 (fail . 500)))
 
-(Assert
- (equal
-  (replace-regexp-in-string #r"\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(a\)\101"
-                            #r"\101000" "aa01bb")
-  ;; Gives "a01000bb" under GNU, where there are no backreferences greater
-  ;; than nine, and "aa01bb" before support for backreferences greater than 99
-  ;; was added.
-  "a00001bb") 
- "checking high-numbered backreference in replacing code")
+(let ((log-warning-suppressed-classes (cons 'regex log-warning-suppressed-classes)))
+  (Assert
+   (equal
+    (replace-regexp-in-string #r"\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(\)\(a\)\101"
+			      #r"\101000" "aa01bb")
+    ;; Gives "a01000bb" under GNU, where there are no backreferences greater
+    ;; than nine, and "aa01bb" before support for backreferences greater
+    ;; than 99 was added.
+    "a00001bb")
+   "checking high-numbered backreference in replacing code"))
 
 ;; Not very comprehensive tests of skip-chars-forward, skip-chars-background: 
 
