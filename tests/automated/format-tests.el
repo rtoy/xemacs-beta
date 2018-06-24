@@ -711,4 +711,6 @@
 	     (format (concat "%" (number-to-string most-positive-fixnum) "d")
 		     1))
 
+(Check-Error syntax-error (format "%\000" 42))
+
 ;; end of format-tests.el

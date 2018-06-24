@@ -654,7 +654,6 @@ arguments: (NUMBER &optional (RADIX 10) RADIX_TABLE)
 }
 
 #define VALID_FLAGS "-+ #0&~!"
-#define VALID_CONVERTERS "dic" "ouxXp" "feEgG" "sS" "b"
 #define INT_CONVERTERS "dicoxXbp"
 #define DOUBLE_CONVERTERS "feEgG"
 #define STRING_CONVERTERS "sS"
@@ -1402,6 +1401,12 @@ parse_doprnt_spec (printf_spec_dynarr *specs,
                 {
                   ch = 'd';
                 }
+            }
+
+          if (ch == 0)
+            {
+              Dynarr_free (specs);
+              syntax_error ("Invalid converter character", make_char (ch));
             }
 
 	  spec.converter = ch;
