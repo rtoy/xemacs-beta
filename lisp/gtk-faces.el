@@ -40,6 +40,8 @@
    gtk-font-selection-dialog-cancel-button gtk-widget-show-all
    gtk-main gtk-style-info))
 
+(globally-declare-boundp '(gtk-major-version gtk-fallback-font-name))
+
 (eval-when-compile
   (defmacro gtk-style-munge-face (face attribute value)
     (let ((func (intern (format "face-%s" (eval attribute)))))

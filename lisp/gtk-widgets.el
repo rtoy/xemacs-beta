@@ -1569,15 +1569,7 @@
 (gtk-import-function nil gtk_widget_unref GtkWidget)
 (gtk-import-function nil gtk_widget_destroy GtkWidget)
 (gtk-import-function nil gtk_widget_unparent GtkWidget)
-(gtk-import-function nil gtk_widget_show GtkWidget)
 (gtk-import-function nil gtk_widget_show_now GtkWidget)
-(gtk-import-function nil gtk_widget_hide GtkWidget)
-(gtk-import-function nil gtk_widget_show_all GtkWidget)
-(gtk-import-function nil gtk_widget_hide_all GtkWidget)
-(gtk-import-function nil gtk_widget_map GtkWidget)
-(gtk-import-function nil gtk_widget_unmap GtkWidget)
-(gtk-import-function nil gtk_widget_realize GtkWidget)
-(gtk-import-function nil gtk_widget_unrealize GtkWidget)
 
 (gtk-import-function nil gtk_widget_queue_draw GtkWidget)
 (gtk-import-function nil gtk_widget_queue_draw_area GtkWidget gint gint gint gint)
@@ -1609,8 +1601,6 @@
 (gtk-import-function nil gtk_widget_popup GtkWidget gint gint)
 (gtk-import-function nil gtk_widget_grab_focus GtkWidget)
 (gtk-import-function nil gtk_widget_grab_default GtkWidget)
-(gtk-import-function nil gtk_widget_set_name GtkWidget GtkString)
-(gtk-import-function GtkString gtk_widget_get_name GtkWidget)
 (gtk-import-function nil gtk_widget_set_state GtkWidget GtkStateType)
 (gtk-import-function nil gtk_widget_set_sensitive GtkWidget gboolean)
 (gtk-import-function nil gtk_widget_set_app_paintable GtkWidget gboolean)
@@ -1693,7 +1683,6 @@
 
 
 (gtk-import-function GType gtk_window_get_type)
-(gtk-import-function GtkWidget gtk_window_new GtkWindowType)
 (gtk-import-function nil gtk_window_set_title GtkWindow GtkString)
 (gtk-import-function nil gtk_window_set_wmclass GtkWindow GtkString GtkString)
 (gtk-import-function nil gtk_window_set_policy GtkWindow gint gint gint)

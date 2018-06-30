@@ -28,7 +28,7 @@
  '(gtk-initial-argv-list gtk-initial-geometry))
 
 (globally-declare-fboundp
- '(gtk-keysym-on-keyboard-p))
+ '(gtk-keysym-on-keyboard-p gtk-load-css))
 
 (defvar gtk-early-lisp-options-file "~/.xemacs/gtk-options.el"
   "Path where GTK-specific early options should be stored.

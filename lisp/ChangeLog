@@ -1,3 +1,17 @@
+2018-06-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* gtk-widgets.el:
+	Avoid duplicate function imports in this file.
+	* gtk-faces.el:
+	Silence warnings about unbound symbols within this file when
+	byte-compiling.
+	* gtk-file-dialog.el:
+	Silence warnings about #'gtk-dialog-get-content-area not being
+	#'fboundp.
+	* gtk-init.el:
+	Silence warnings about #'gtk-load-css not having a function
+	binding.
+
 2018-06-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* test-harness.el (test-harness-from-buffer):
