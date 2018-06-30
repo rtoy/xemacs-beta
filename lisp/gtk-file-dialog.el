@@ -40,7 +40,7 @@
  '(gtk-clist-clear
    gtk-clist-freeze gtk-clist-append
    gtk-clist-thaw gtk-combo-set-popdown-strings gtk-dialog-new
-   gtk-dialog-get-context-area gtk-dialog-get-action-area gtk-window-set-title
+   gtk-dialog-get-content-area gtk-dialog-get-action-area gtk-window-set-title
    gtk-button-new-with-label gtk-container-add gtk-signal-connect
    gtk-entry-get-text gtk-widget-destroy gtk-combo-new
    gtk-combo-disable-activate gtk-box-pack-start gtk-combo-entry
