@@ -673,9 +673,9 @@ check_window_subwindow_cache (struct window* w)
 
 
   assert (!NILP (w->subwindow_instance_cache));
-  elisp_maphash (check_instance_cache_mapper,
-		 w->subwindow_instance_cache,
-		 STORE_LISP_IN_VOID (window));
+  elisp_maphash_unsafe (check_instance_cache_mapper,
+                        w->subwindow_instance_cache,
+                        STORE_LISP_IN_VOID (window));
 }
 
 void

@@ -1,3 +1,9 @@
+2018-06-30  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* glyphs.c (check_window_subwindow_cache):
+	Use elisp_maphash_unsafe() here, we can't call Lisp, and the
+	copy_compress_hentries() is relatively expensive.
+
 2018-06-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* doprnt.c (parse_doprnt_spec):
