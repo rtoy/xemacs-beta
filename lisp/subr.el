@@ -82,7 +82,51 @@ ARGS is a list of the first N arguments to pass to FUNCTION.
 The result is a new function which does the same as FUNCTION, except that
 the first N arguments are fixed at the values with which this function
 was called."
-  `(lambda (&rest args) (apply ',function ,@(mapcar 'quote-maybe args) args)))
+  (if (and (eq 'lambda (car-safe function))
+           (< (length args) (or (function-max-args function)
+                                most-positive-fixnum)))
+      ;; XEmacs; for our constructed function, don't just use a (&rest args)
+      ;; arglist if there is an explicit lambda supplied. This allows the
+      ;; byte-compile-arglist-signagures-congruent-p check to be useful with
+      ;; the interpreted implementation of #'lexical-let.
+      (let* ((arglist (nth 1 function)) restp bindings body header)
+        (while (and arglist args)
+          (cond ((eq (car arglist) '&optional)
+                 (if restp
+                     (error 'syntax-error "&optional found after &rest"
+                            function))
+                 (if (null (cdr arglist))
+                     (error 'syntax-error "No argument name for &optional"
+                            function)))
+                ((eq (car arglist) '&rest)
+                 (if (null (cdr arglist))
+                     (error 'syntax-error "No argument name for &rest"
+                            function))
+                 (if (cdr (cdr arglist))
+                     (error 'syntax-error "Multiple arguments after &rest"
+                            function))
+                 (setq restp t))
+                (restp
+                 (setq bindings (cons (list (car arglist)
+                                            (and args
+                                                 (quote-maybe args)))
+                                      bindings)
+                       args nil))
+                (t
+                 (setq bindings (cons (list (car arglist)
+                                            (quote-maybe (car args)))
+                                      bindings)
+                       args (cdr args))))
+          (setq arglist (cdr arglist)))
+        (setq body (cddr function))
+        (when (stringp (car body))
+          (push (pop body) header))
+        (when (eq 'interactive (car-safe (car body)))
+          (push (pop body) header))
+        `(lambda ,arglist ,@(nreverse header)
+          (let ,(nreverse bindings) ,@body)))
+    `(lambda (&rest args)
+      (apply ',function ,@(mapcar 'quote-maybe args) args))))
 
 ;; FSF 21.2 has various basic macros here.  We don't because they're either
 ;; in cl*.el (which we dump and hence is always available) or built-in.
