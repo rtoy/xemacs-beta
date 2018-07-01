@@ -11,6 +11,10 @@
 	we've been supplied an explicit lambda. Parse the supplied arglist
 	and construct one that reflects it, something that allows the byte
 	compiler to give more useful warnings with labels.
+	Do the check for the number of args passed correctly.
+	If we haven't been supplied an explicit lambda, use an uninterned
+	symbol for the argument list name, avoiding problems with dynamic
+	scope.
 
 2018-06-30  Aidan Kehoe  <kehoea@parhasard.net>
 

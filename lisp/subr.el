@@ -83,7 +83,7 @@ The result is a new function which does the same as FUNCTION, except that
 the first N arguments are fixed at the values with which this function
 was called."
   (if (and (eq 'lambda (car-safe function))
-           (< (length args) (or (function-max-args function)
+           (<= (length args) (or (function-max-args function)
                                 most-positive-fixnum)))
       ;; XEmacs; for our constructed function, don't just use a (&rest args)
       ;; arglist if there is an explicit lambda supplied. This allows the
@@ -125,8 +125,8 @@ was called."
           (push (pop body) header))
         `(lambda ,arglist ,@(nreverse header)
           (let ,(nreverse bindings) ,@body)))
-    `(lambda (&rest args)
-      (apply ',function ,@(mapcar 'quote-maybe args) args))))
+    `(lambda (&rest #1=#:args)
+      (apply ',function ,@(mapcar 'quote-maybe args) #1#))))
 
 ;; FSF 21.2 has various basic macros here.  We don't because they're either
 ;; in cl*.el (which we dump and hence is always available) or built-in.
