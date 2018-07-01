@@ -746,7 +746,7 @@ If this is nil, no message will be displayed.")
     ;; Actually using hooks within Emacs is bad for future maintenance. --rms.
     ;;
     ;; In this case, I completely agree. --ben
-    (if (featurep 'menubar)
+    (if (and (not noninteractive) (featurep 'menubar))
 	(init-menubar-at-startup))
     ;;
     ;; We have normality, I repeat, we have normality.  Anything you still

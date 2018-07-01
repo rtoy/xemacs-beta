@@ -1,5 +1,21 @@
 2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* easymenu.el:
+	* easymenu.el (easy-menu-do-define):
+	* easymenu.el (easy-menu-change):
+	* easymenu.el (easy-menu-add):
+	* easymenu.el (easy-menu-remove):
+	* easymenu.el (easy-menu-add-item):
+	* easymenu.el (easy-menu-item-present-p):
+	* easymenu.el (easy-menu-remove-item):
+	* lisp-mode.el (emacs-lisp-mode):
+	* lisp-mode.el (lisp-interaction-mode):
+	* startup.el (command-line):
+	If running noninteractively (e.g. byte-compiling Lisp when
+	building), don't bother to add menubar entries.
+
+2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-extra.el (cl-macroexpand-all):
 	Use #'apply-partially to create closures with lambdas and lexical
 	variables.
