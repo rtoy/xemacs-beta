@@ -1,3 +1,17 @@
+2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-extra.el (cl-macroexpand-all):
+	Use #'apply-partially to create closures with lambdas and lexical
+	variables.
+	* cl-macs.el (apply-partially):
+	#'function-max-args can give nil, handle this OK.
+	#'error doesn't take a format string, correct calls to it.
+	* subr.el (apply-partially):
+	Don't use a (&rest args) arglist for the constructed function if
+	we've been supplied an explicit lambda. Parse the supplied arglist
+	and construct one that reflects it, something that allows the byte
+	compiler to give more useful warnings with labels.
+
 2018-06-30  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* gtk-widgets.el:

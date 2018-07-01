@@ -570,27 +570,12 @@ This also does some trivial optimizations to make the form prettier."
 	       (if (and cl-closure-vars (eq (car form) 'function)
 			(cl-expr-contains-any body cl-closure-vars))
 		   (let* ((new (mapcar 'gensym cl-closure-vars))
-			  (sub (pairlis cl-closure-vars new)) (decls nil))
-		     (while (or (stringp (car body))
-				(eq (car-safe (car body)) 'interactive))
-		       (push (list 'quote (pop body)) decls))
+			  (sub (pairlis cl-closure-vars new)))
 		     (put (car (last cl-closure-vars)) 'used t)
-		     (append
-		      (list 'list '(quote lambda) '(quote (&rest --cl-rest--)))
-		      (sublis sub (nreverse decls))
-		      (list
-		       (list* 'list '(quote apply)
-			      ;; XEmacs: put a quote before the function
-			      (list 'list '(quote quote)
-				    (list 'function
-					  (list* 'lambda
-						 (append new (cadadr form))
-						 (sublis sub body))))
-			      (nconc (mapcar (function
-					      (lambda (x)
-						(list 'list '(quote quote) x)))
-					     cl-closure-vars)
-				     '((quote --cl-rest--)))))))
+                     `(apply-partially
+                       #'(lambda ,(append new (cadadr form))
+                           ,@(sublis sub body))
+                       ,@cl-closure-vars))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
            ;; This is a bit of a hack; special-case symbols with bindings as
            ;; labels.

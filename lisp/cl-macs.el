@@ -3561,7 +3561,7 @@ non-standard :if and :if-not keywords at compile time."
                (eq 'lambda (car-safe (nth 1 (nth 0 args)))))
       (setq lambda (nth 1 (nth 0 args))
             arglist (nth 1 lambda))
-      (when (> count (function-max-args lambda))
+      (when (> count (or (function-max-args lambda) most-positive-fixnum))
         (byte-compile-warn
          "attempt to apply-partially %S with too many arguments" lambda)
         (return-from apply-partially form))
@@ -3569,15 +3569,15 @@ non-standard :if and :if-not keywords at compile time."
 	(cond ((eq (car arglist) '&optional)
 	       (if restp
                    (error 'syntax-error
-                          "&optional found after &rest in %S" lambda))
+                          "&optional found after &rest" lambda))
 	       (if (null (cdr arglist))
-		   (error 'syntax-error "nothing after &optional in %S"
+                   (error 'syntax-error "No argument name for &optional"
                           lambda)))
-	      ((eq (car arglist) '&rest)
+              ((eq (car arglist) '&rest)
 	       (if (null (cdr arglist))
-		   (error 'syntax-error "nothing after &rest in %S" lambda))
+                   (error 'syntax-error "No argument name for &rest" lambda))
 	       (if (cdr (cdr arglist))
-		   (error 'syntax-error "multiple vars after &rest in %S"
+                   (error 'syntax-error "Multiple arguments after &rest"
                           lambda))
 	       (setq restp t))
 	      (restp
