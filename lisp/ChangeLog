@@ -1,5 +1,11 @@
 2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-extra.el (cl-macroexpand-all):
+	Only close around variables that are actually *used* in the
+	lambda, when dealing with lambdas and lexical scope.
+
+2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* easymenu.el:
 	* easymenu.el (easy-menu-do-define):
 	* easymenu.el (easy-menu-change):

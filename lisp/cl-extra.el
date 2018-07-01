@@ -569,13 +569,15 @@ This also does some trivial optimizations to make the form prettier."
                     (body (cl-macroexpand-body (cddadr form) env)))
 	       (if (and cl-closure-vars (eq (car form) 'function)
 			(cl-expr-contains-any body cl-closure-vars))
-		   (let* ((new (mapcar 'gensym cl-closure-vars))
-			  (sub (pairlis cl-closure-vars new)))
+		   (let* ((closed (remove* nil cl-closure-vars :key
+                                           #'(lambda (y)
+                                               (cl-expr-contains body y))))
+                          (new (mapcar 'gensym closed))
+			  (sub (pairlis closed new)))
 		     (put (car (last cl-closure-vars)) 'used t)
-                     `(apply-partially
-                       #'(lambda ,(append new (cadadr form))
-                           ,@(sublis sub body))
-                       ,@cl-closure-vars))
+                     `(apply-partially #'(lambda ,(append new (cadadr form))
+                                           ,@(sublis sub body))
+                                       ,@closed))
 		 (list (car form) (list* 'lambda (cadadr form) body))))
            ;; This is a bit of a hack; special-case symbols with bindings as
            ;; labels.
