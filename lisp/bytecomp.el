@@ -3165,11 +3165,29 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 	      (map nil
 		   (function*
 		    (lambda ((function . nargs))
-                      (let ((value (plist-get plist function not-present)))
+                      (let ((value (plist-get plist function not-present))
+                            list)
                         (when (and (not (eq value not-present))
                                    (byte-compile-constp value))
+                          (setq value (eval value))
+                          (when (and (symbolp value)
+                                     (get value
+                                          'byte-compile-label-calls)
+                                     (not (assq
+                                           value
+                                           byte-compile-function-environment)))
+                            (setq list byte-compile-function-environment)
+                            (while list
+                              (when (and
+                                     (symbolp (caar list))
+                                     (eq value
+                                         (get (caar list)
+                                              'byte-compile-data-placeholder)))
+                                (setq value (caar list)
+                                      list nil))
+                              (setq list (cdr list))))
                           (byte-compile-callargs-warn
-                           (cons (eval value)
+                           (cons value
                                  (member*
                                   nargs
                                   ;; Dummy arguments. There's no need for

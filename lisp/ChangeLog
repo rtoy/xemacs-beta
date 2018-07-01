@@ -1,5 +1,9 @@
 2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-normal-call):
+	When examining the :test, :key, etc arguments, be aware that a
+	quoted symbol may be a data placeholder, and take that into
+	account before warning.
 	* cl-extra.el (cl-macroexpand-all):
 	Only close around variables that are actually *used* in the
 	lambda, when dealing with lambdas and lexical scope.
