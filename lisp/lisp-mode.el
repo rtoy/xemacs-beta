@@ -317,8 +317,7 @@ if that value is non-nil."
   (setq major-mode 'emacs-lisp-mode
 	mode-popup-menu emacs-lisp-mode-popup-menu
 	mode-name "Emacs-Lisp")
-  (if (and (featurep 'menubar)
-           current-menubar)
+  (if (and (featurep 'menubar) (not noninteractive) current-menubar)
       (progn
 	;; make a local copy of the menubar, so our modes don't
 	;; change the global menubar
@@ -397,7 +396,7 @@ if that value is non-nil."
   (setq mode-name "Lisp Interaction")
   (setq mode-popup-menu lisp-interaction-mode-popup-menu)
   (if (and (featurep 'menubar)
-           current-menubar)
+           current-menubar (not noninteractive))
       (progn
 	;; make a local copy of the menubar, so our modes don't
 	;; change the global menubar

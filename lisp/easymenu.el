@@ -151,7 +151,7 @@ is a list of menu items, as above."
      (easy-menu-do-define (quote ,symbol) ,maps ,doc ,menu)))
 
 (defun easy-menu-do-define (symbol maps doc menu)
-  (when (featurep 'menubar)
+  (when (and (featurep 'menubar) (not noninteractive))
     (set symbol menu)
     (fset symbol `(lambda (e)
 		    ,doc
@@ -161,7 +161,7 @@ is a list of menu items, as above."
 		    (popup-menu ,symbol)))))
 
 (defun easy-menu-change (&rest args)
-  (when (featurep 'menubar)
+  (when (and (featurep 'menubar) (not noninteractive))
     (apply 'add-menu args)))
 
 (defvar easy-menu-all-popups nil 
@@ -190,7 +190,7 @@ non-default value for `mode-popup-menu' that existed when
 ;  		   "easy-menu-all-popups is %s")
 ;  	   menu mode-popup-menu (current-buffer) 
 ;  	   (default-value 'mode-popup-menu) easy-menu-all-popups)
-  (when (featurep 'menubar)
+  (when (and (featurep 'menubar) (not noninteractive))
     ;; Save the existing mode-popup-menu, if it's been changed.
     (when (and (eql (length easy-menu-all-popups) 0)
 	       (not (equal (default-value 'mode-popup-menu) mode-popup-menu)))
@@ -220,7 +220,7 @@ non-default value for `mode-popup-menu' that existed when
 
 (defun easy-menu-remove (menu)
   "Remove MENU from the current menu bar."
-  (when (featurep 'menubar)
+  (when (and (featurep 'menubar) (not noninteractive))
     (setq 
      ;; Remove this menu from the list of popups we know about. 
      easy-menu-all-popups (delete* menu easy-menu-all-popups)
@@ -260,7 +260,7 @@ submenu is then traversed recursively with the remaining elements of PATH.
 ITEM is either defined as in `easy-menu-define', a menu defined earlier
 by `easy-menu-define' or `easy-menu-create-menu' or an item returned
 from `easy-menu-item-present-p' or `easy-menu-remove-item'."
-  (when (featurep 'menubar)
+  (when (and (featurep 'menubar) (not noninteractive))
     (add-menu-button path item before (easy-menu-normalize menu))))
 
 (defun easy-menu-item-present-p (menu path name)
@@ -269,7 +269,7 @@ MENU and PATH are defined as in `easy-menu-add-item'.
 NAME should be a string, the name of the element to be looked for.
 
 The return value can be used as an argument to `easy-menu-add-item'."
-  (if (featurep 'menubar)
+  (if (and (featurep 'menubar) (not noninteractive))
       (car (find-menu-item (or (easy-menu-normalize menu) current-menubar)
 			   (append path (list name))))
     nil))
@@ -280,7 +280,7 @@ MENU and PATH are defined as in `easy-menu-add-item'.
 NAME should be a string, the name of the element to be removed.
 
 The return value can be used as an argument to `easy-menu-add-item'."
-  (when (featurep 'menubar)
+  (when (and (featurep 'menubar) (not noninteractive))
     (delete-menu-item (append path (list name))
 		      (easy-menu-normalize menu))))
 
