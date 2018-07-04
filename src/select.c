@@ -463,7 +463,7 @@ get_selection_raw_time (Lisp_Object selection)
 {
   Lisp_Object local_value = assq_no_quit (selection, Vselection_alist);  
 
-  return Fnth (make_fixnum (2), local_value);
+  return Fcar (Fnthcdr (make_fixnum (2), local_value));
 }
 
 /* Get the timestamp of the given selection */

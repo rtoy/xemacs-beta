@@ -62,7 +62,7 @@ Non-nil when the current emacs is XEmacs.")
 
 ;; Can't make this constant for now because it causes an error in
 ;; update-elc.el. 
-(defvar source-lisp (file-name-directory (expand-file-name (nth 2 command-line-args))) "\
+(defvar source-lisp (file-name-directory (expand-file-name (car (nthcdr 2 command-line-args)))) "\
 Root of tree containing the Lisp source code for the current build. 
 Differs from `lisp-directory' if this XEmacs has been installed. ")
 
