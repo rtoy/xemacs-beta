@@ -444,7 +444,7 @@ SUBR must be a built-in function.
 }
 
 DEFUN ("special-operator-p", Fspecial_operator_p, 1, 1, 0, /*
-Return whether SUBR is a special operator.
+Return whether OBJECT is a special operator.
 
 A special operator is a built-in function (a subr, that is a function
 implemented in C, not Lisp) which does not necessarily evaluate all its
@@ -457,10 +457,10 @@ all its arguments, the portable (across emacs variants, and across Lisp
 implementations) way to go about it is to write a macro instead.  See
 `defmacro' and `backquote'.
 */
-       (subr))
+       (object))
 {
-  subr = indirect_function (subr, 0);
-  return (SUBRP (subr) && XSUBR (subr)->max_args == UNEVALLED) ? Qt : Qnil;
+  object = indirect_function (object, 0);
+  return (SUBRP (object) && XSUBR (object)->max_args == UNEVALLED) ? Qt : Qnil;
 }
 
 DEFUN ("setplist", Fsetplist, 2, 2, 0, /*
