@@ -60,14 +60,6 @@ Lisp_Object Qmapl, Qmapcon, Qmaplist, Qbase64_conversion_error;
 
 Lisp_Object Vpath_separator;
 
-DEFUN ("identity", Fidentity, 1, 1, 0, /*
-Return the argument unchanged.
-*/
-       (arg))
-{
-  return arg;
-}
-
 DEFUN ("random", Frandom, 0, 1, 0, /*
 Return a pseudo-random number.
 All fixnums are equally likely.  On most systems, this is 31 bits' worth.
@@ -627,16 +619,6 @@ Take cdr N times on LIST, and return the result.
 	}
     }
   return tail;
-}
-
-DEFUN ("nth", Fnth, 2, 2, 0, /*
-Return the Nth element of LIST.
-N counts from zero.  If LIST is not that long, nil is returned.
-*/
-       (n, list))
-{
-  /* This function can GC */
-  return Fcar (Fnthcdr (n, list));
 }
 
 DEFUN ("last", Flast, 1, 2, 0, /*
@@ -2971,7 +2953,6 @@ syms_of_fns (void)
 
   DEFERROR_STANDARD (Qbase64_conversion_error, Qconversion_error);
 
-  DEFSUBR (Fidentity);
   DEFSUBR (Frandom);
   DEFSUBR (Flist_length);
   DEFSUBR (Fstring_equal);
@@ -2981,7 +2962,6 @@ syms_of_fns (void)
   DEFSUBR (Fcopy_sequence);
   DEFSUBR (Fcopy_alist);
   DEFSUBR (Fnthcdr);
-  DEFSUBR (Fnth);
   DEFSUBR (Flast);
   DEFSUBR (Fbutlast);
   DEFSUBR (Fnbutlast);

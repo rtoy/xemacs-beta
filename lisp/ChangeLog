@@ -1,3 +1,15 @@
+2018-07-04  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* loadup.el (source-lisp):
+	* make-docfile.el (source-lisp):
+	* update-elc.el (source-lisp):
+	#'nth no longer available on a bare-metal XEmacs, use its
+	implementation.
+	* subr.el:
+	* subr.el (identity): New.
+	* subr.el (nth): New.
+	Move these functions here from fns.c.
+
 2018-07-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el (byte-compile-normal-call):

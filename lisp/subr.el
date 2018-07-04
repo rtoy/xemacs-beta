@@ -371,6 +371,16 @@ which is at least the number of distinct elements."
       (setq hare (cdr hare)
             length (1+ length)))
     length))
+
+;; Some more, this time from fns.c
+(defun identity (arg)
+  "Return the argument unchanged."
+  arg)
+
+(defun nth (n list)
+  "Return the Nth element of LIST.
+N counts from zero.  If LIST is not that long, nil is returned."
+  (car (nthcdr n list)))
 
 ;;;; Keymap support.
 ;; XEmacs: removed to keymap.el

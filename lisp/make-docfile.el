@@ -46,7 +46,7 @@
 (defvar build-directory (expand-file-name ".." invocation-directory))
 (defvar build-lib-src (expand-file-name "lib-src" build-directory))
 (defvar source-lisp (file-name-directory (expand-file-name
-					  (nth 2 command-line-args))))
+					  (car (nthcdr 2 command-line-args)))))
 (defvar source-src (expand-file-name "../src" source-lisp))
 
 (defun message (fmt &rest args)

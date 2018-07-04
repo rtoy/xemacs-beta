@@ -1424,7 +1424,7 @@ arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
   /* This function can GC */
   if (!NILP (Vmacro_declaration_function))
     {
-      Lisp_Object declare = Fnth (make_fixnum (2), args);
+      Lisp_Object declare = Fcar (Fnthcdr (make_fixnum (2), args));
 
       /* Sigh. This GNU interface is incompatible with the CL declare macro,
          and the latter is much older.
@@ -1440,7 +1440,7 @@ arguments: (NAME ARGLIST &optional DOCSTRING &rest BODY)
 
       if (STRINGP (declare))
         {
-          declare = Fnth (make_fixnum (3), args);
+          declare = Fcar (Fnthcdr (make_fixnum (3), args));
         }
 
       if (CONSP (declare) && EQ (Qdeclare, XCAR (declare)))

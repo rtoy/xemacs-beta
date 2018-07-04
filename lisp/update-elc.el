@@ -80,7 +80,7 @@
 (defvar build-directory (expand-file-name ".." invocation-directory))
 
 (defvar source-lisp (file-name-directory (expand-file-name
- 					  (nth 2 command-line-args))))
+ 					  (car (nthcdr 2 command-line-args)))))
 
 (defvar source-lisp-mule (expand-file-name "mule" source-lisp))
 (defvar source-directory (expand-file-name ".." source-lisp))
