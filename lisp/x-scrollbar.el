@@ -32,7 +32,13 @@
 ;;; Code:
 
 (globally-declare-fboundp
- '(x-init-specifier-from-resources x-get-resource))
+ (unless (valid-device-type-p 'x) 
+   '(x-init-specifier-from-resources x-get-resource)))
+
+(globally-declare-boundp
+ (unless (featurep 'scrollbar)
+   '(scrollbar-width scrollbar-height scrollbar-on-top-p
+     scrollbar-on-left-p)))
 
 (defun x-init-scrollbar-from-resources (locale)
   (x-init-specifier-from-resources

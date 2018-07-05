@@ -64,6 +64,9 @@
 
 ;;; Code:
 
+(globally-declare-fboundp (unless (featurep 'menubar) '(popup-menu)))
+(globally-declare-fboundp (unless (featurep 'mouse) '(mouse-set-point)))
+
 (defgroup hyper-apropos nil
   "Hypertext emacs lisp documentation interface."
   :group 'docs

@@ -49,6 +49,9 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'menubar) '(menu-split-long-menu)))
+
 (require 'cus-face)
 (require 'wid-edit)
 (require 'easymenu)

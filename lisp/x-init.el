@@ -31,10 +31,19 @@
 ;;; Code:
 
 (globally-declare-fboundp
- '(x-server-vendor x-init-specifier-from-resources init-mule-x-win))
+ (unless (valid-device-type-p 'x)
+   '(x-server-vendor x-init-specifier-from-resources init-mule-x-win
+     x-keysym-hash-table)))
 
 (globally-declare-boundp
- '(x-initial-argv-list x-app-defaults-directory))
+ (unless (valid-device-type-p 'x)
+   '(x-initial-argv-list x-app-defaults-directory)))
+
+(globally-declare-boundp
+ (unless (featurep 'toolbar)
+   '(top-toolbar-height bottom-toolbar-height left-toolbar-width
+     right-toolbar-width top-toolbar-border-width bottom-toolbar-border-width
+     left-toolbar-border-width right-toolbar-border-width)))
 
 ;; If you want to change this variable, this is the place you must do it.
 ;; Do not set it to a string containing periods.  X doesn't like that.

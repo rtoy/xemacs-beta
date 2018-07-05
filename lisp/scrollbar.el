@@ -28,6 +28,13 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'scrollbar) '(scrollbar-set-hscroll)))
+
+(globally-declare-boundp
+ (unless (featurep 'scrollbar)
+   '(vertical-scrollbar-visible-p horizontal-scrollbar-visible-p)))
+
 ;; added for the options menu - dverna
 (defcustom scrollbars-visible-p t
   "Whether the scrollbars are globally visible.

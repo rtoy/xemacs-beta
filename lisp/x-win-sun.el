@@ -63,7 +63,11 @@
 ;;; Code:
 
 (globally-declare-fboundp
- '(x-keysym-on-keyboard-sans-modifiers-p))
+ (unless (valid-device-type-p 'x) '(x-keysym-on-keyboard-sans-modifiers-p)))
+
+(globally-declare-boundp
+ (unless (valid-device-type-p 'x)
+   '(x-us-keymap-first-keycode x-us-keymap-description)))
 
 (defun x-win-init-sun (device)
 

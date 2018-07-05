@@ -39,6 +39,12 @@
 ;; or run interpreted, but not when the compiled code is loaded.
 (eval-when-compile (require 'help-macro))
 
+(globally-declare-boundp
+ (unless (featurep 'menubar) '(last-popup-menu-event)))
+
+(globally-declare-fboundp
+ (unless (featurep 'toolbar) '(toolbar-button-callback)))
+
 (require 'loadhist) ;; For symbol-file. 
 
 (defgroup help nil

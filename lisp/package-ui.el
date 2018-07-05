@@ -22,6 +22,14 @@
 
 ;;; Synched up with: Not in FSF
 
+(globally-declare-fboundp
+ (unless (featurep 'menubar)
+   '(set-menubar-dirty-flag popup-menu popup-up-p set-buffer-menubar
+     add-submenu)))
+
+(globally-declare-boundp (unless (featurep 'menubar) '(current-menubar)))
+
+
 (require 'package-get)		;; which, in turn, requires 'package-admin
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

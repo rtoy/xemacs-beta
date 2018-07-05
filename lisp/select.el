@@ -31,6 +31,11 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'window-system)
+   '(default-mouse-track-next-move-rect
+     mouse-track-activate-rectangular-selection)))
+
 ;; We prefer UTF8_STRING to COMPOUND_TEXT because, even though the latter
 ;; gives us more information when taking data from other XEmacs invocations,
 ;; Mozilla will happily give us broken COMPOUND_TEXT where a non-broken

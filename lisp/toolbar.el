@@ -29,6 +29,16 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'toolbar)
+   '(set-default-toolbar-position set-toolbar-button-down-flag
+     toolbar-button-enabled-p toolbar-button-callback)))
+
+(globally-declare-boundp
+ (unless (featurep 'toolbar)
+   '(default-toolbar-visible-p toolbar-buttons-captioned-p)))
+
+
 (defcustom toolbar-visible-p ;; added for the options menu - dverna apr. 98
   (specifier-instance default-toolbar-visible-p)
   "*Whether the default toolbar is globally visible.

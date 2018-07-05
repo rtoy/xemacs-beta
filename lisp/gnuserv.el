@@ -81,6 +81,12 @@
 
 ;;; Code:
 
+(globally-declare-boundp (unless (featurep 'menubar) '(current-menubar)))
+
+(globally-declare-fboundp
+ (unless (featurep 'menubar)
+   '(set-buffer-menubar add-menu-button delete-menu-item)))
+
 (defgroup gnuserv nil
   "The gnuserv suite of programs to talk to Emacs from outside."
   :group 'environment

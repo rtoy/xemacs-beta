@@ -556,15 +556,14 @@ This is intended to be called from `make-charset'."
   ;; should specify short-form tags, which will have CATEGORY added to make
   ;; them full-form.
   (loop for (class parents doc) in stuff
-    for parents = (or parents category)
-    for parents = (if (listp parents) parents (list parents))
-    do
-    (define-charset-tag
-      (intern (format "%s/%s" class category))
-      :parent (loop for par in parents
-		collect (if (eq par category) category
-			  (intern (format "%s/%s" par category))))
-      :doc-string doc)))
+    do (progn (setq parents (or parents category)
+		    parents (if (listp parents) parents (list parents)))
+	      (define-charset-tag
+		(intern (format "%s/%s" class category))
+		:parent (loop for par in parents
+			  collect (if (eq par category) category
+				    (intern (format "%s/%s" par category))))
+		:doc-string doc))))
 
 ;; define classes of scripts
 

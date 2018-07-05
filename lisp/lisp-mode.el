@@ -33,6 +33,11 @@
 
 ;;; Code:
 
+(globally-declare-boundp (unless (featurep 'menubar) '(current-menubar)))
+
+(globally-declare-fboundp
+ (unless (featurep 'menubar) '(set-buffer-menubar add-submenu)))
+
 (defgroup lisp nil
   "Lisp support, including Emacs Lisp."
   :group 'languages

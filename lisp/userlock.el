@@ -31,6 +31,9 @@
 
 ;;; Code:
 
+(globally-declare-fboundp (unless (featurep 'dialog) '(make-dialog-box)))
+(globally-declare-fboundp (unless (featurep 'window-system) '(popup-up-p)))
+
 (define-error 'file-locked "File is locked" 'file-error) ; XEmacs
 
 (defun ask-user-about-lock-minibuf (filename other-user)

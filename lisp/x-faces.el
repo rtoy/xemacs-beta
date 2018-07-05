@@ -192,7 +192,7 @@ If it fails, it returns nil."
     (x-make-font-bold-core font device)))
 
 (defun x-make-font-bold-xft (font &optional device)
-  (let ((pattern (fc-font-match (or device (default-x-device))
+  (let ((pattern (fc-font-match (or device (default-device 'x))
 				(fc-name-parse font))))
     (if pattern
 	(let ((size (fc-pattern-get-size pattern 0))
@@ -236,7 +236,7 @@ If it fails, it returns nil."
     (x-make-font-unbold-core font device)))
   
 (defun x-make-font-unbold-xft (font &optional device)
-  (let ((pattern (fc-font-match (or device (default-x-device))
+  (let ((pattern (fc-font-match (or device (default-device 'x))
 				(fc-name-parse font))))
     (when pattern
       (fc-pattern-del-weight pattern)
@@ -266,7 +266,7 @@ If it fails, it returns nil."
     (x-make-font-italic-core font device)))
 
 (defun x-make-font-italic-xft (font &optional device)
-  (let ((pattern (fc-font-match (or device (default-x-device))
+  (let ((pattern (fc-font-match (or device (default-device 'x))
 				(fc-name-parse font))))
     (if pattern
       (let ((size (fc-pattern-get-size pattern 0))
@@ -320,7 +320,7 @@ If it fails, it returns nil."
     (x-make-font-unitalic-core font device)))
   
 (defun x-make-font-unitalic-xft (font &optional device)
-  (let ((pattern (fc-font-match (or device (default-x-device))
+  (let ((pattern (fc-font-match (or device (default-device 'x))
 				(fc-name-parse font))))
     (when pattern
       (fc-pattern-del-slant pattern)
@@ -387,7 +387,7 @@ X fonts can be specified (by the user) in either pixels or 10ths of points,
 
 ;; this is unbelievable &*@#
 (defun x-font-size-xft (font)
-  (let ((pattern (fc-font-match (default-x-device)
+  (let ((pattern (fc-font-match (default-device 'x)
 				(fc-name-parse font))))
     (when pattern
       (let ((pixelsize (fc-pattern-get-pixelsize pattern 0)))
@@ -519,7 +519,7 @@ Otherwise, it returns the next smaller version of this font that is defined."
     (x-find-smaller-font-core font device)))
 
 (defun x-find-xft-font-of-size (font new-size-proc &optional device)
-  (let* ((pattern (fc-font-match (or device (default-x-device))
+  (let* ((pattern (fc-font-match (or device (default-device 'x))
 				 (fc-name-parse font))))
     (when pattern
       (let ((size (fc-pattern-get-size pattern 0)))

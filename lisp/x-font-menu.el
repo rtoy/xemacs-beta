@@ -36,32 +36,19 @@
   (require 'fontconfig))
 
 (globally-declare-boundp
- '(x-font-regexp
-   x-font-regexp-foundry-and-family
-   x-font-regexp-spacing))
+ (unless (valid-device-type-p 'x)
+   '(x-font-regexp x-font-regexp-foundry-and-family x-font-regexp-spacing)))
 
-(globally-declare-boundp
- '(charset-registries
-   fc-find-available-font-families
-   fc-find-available-weights-for-family
-   fc-font-match
-   fc-font-slant-translate-from-string
-   fc-font-slant-translate-to-string
-   fc-font-weight-translate-from-string
-   fc-font-weight-translate-to-string
-   fc-name-parse
-   fc-name-unparse
-   fc-pattern-add-family
-   fc-pattern-add-size
-   fc-pattern-add-slant
-   fc-pattern-add-weight
-   fc-pattern-get-family
-   fc-pattern-get-size
-   fc-pattern-get-slant
-   fc-pattern-get-successp
-   fc-pattern-get-weight
-   make-fc-pattern
-   xlfd-font-name-p))
+(globally-declare-fboundp
+ (unless (featurep 'font-mgr)
+   '(fc-find-available-weights-for-family fc-find-available-font-families
+     xlfd-font-name-p fc-font-match fc-name-parse fc-pattern-get-family
+     fc-pattern-get-successp fc-pattern-get-weight fc-pattern-get-size
+     fc-pattern-get-slant fc-font-weight-translate-to-string
+     fc-font-slant-translate-to-string make-fc-pattern fc-pattern-add-family
+     fc-pattern-add-weight fc-font-weight-translate-from-string
+     fc-pattern-add-size fc-pattern-add-slant
+     fc-font-slant-translate-from-string fc-name-unparse)))
 
 (defvar x-font-menu-registry-encoding nil
   "Registry and encoding to use with font menu fonts.")

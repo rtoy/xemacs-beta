@@ -29,6 +29,12 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'mouse) '(mouse-bury-buffer mouse-unbury-buffer)))
+
+(globally-declare-fboundp
+ (unless (featurep 'menubar) '(popup-menu-and-execute-in-window)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;                     General mouse modeline stuff                    ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

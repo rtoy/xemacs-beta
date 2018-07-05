@@ -39,6 +39,13 @@
 ;; yes-or-no-p-dialog-box, but such code is difficult to write and test.
 
 ;;; Code:
+
+(globally-declare-fboundp
+ (unless (featurep 'dialog) '(make-dialog-box-internal)))
+
+(globally-declare-boundp
+ (unless (featurep 'dialog) '(dialog-frame-plist)))
+
 (defun yes-or-no-p-dialog-box (prompt)
   "Ask user a yes-or-no question with a popup dialog box.
 Return t if the answer is \"yes\".

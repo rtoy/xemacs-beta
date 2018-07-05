@@ -25,6 +25,8 @@
 
 ;;; Commentary:
 
+(globally-declare-fboundp (unless (featurep 'dialog) '(make-dialog-box)))
+
 ;;
 ;; Simple search dialog
 ;;

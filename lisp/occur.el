@@ -23,6 +23,12 @@
 
 ;;; Synched up with: FSF 22.0.50.1 (CVS)
 
+(globally-declare-fboundp
+ (unless (featurep 'window-system) '(mouse-set-point)))
+
+(globally-declare-boundp
+ (unless (featurep 'window-system) '(mode-motion-hook)))
+
 (require 'next-error)
 (defun query-replace-descr (string)
   (mapconcat 'isearch-text-char-description string ""))

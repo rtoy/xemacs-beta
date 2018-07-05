@@ -37,6 +37,12 @@
 
 ;;; Code:
 
+(globally-declare-fboundp (unless (featurep 'mouse) '(mouse-set-point)))
+
+(globally-declare-boundp
+ (unless (featurep 'mouse) '(mouse-yank-at-point mouse-track-rectangle-p)))
+
+
 (defun move-to-column-force (column)
   "Move to column COLUMN in current line.
 Differs from `move-to-column' in that it creates or modifies whitespace

@@ -37,6 +37,11 @@
 
 ;;; Code:
 
+(globally-declare-boundp
+ (unless (featurep 'mouse)
+   '(mouse-track-up-time mouse-track-multi-click-time
+     mouse-track-click-count)))
+
 (require 'custom)
 
 ;; XEmacs; I don't feel it's reasonable to support a minor mode for the mouse

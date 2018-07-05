@@ -32,6 +32,8 @@
 
 ;; This file is dumped with XEmacs.
 
+(globally-declare-fboundp (unless (featurep 'dialog) '(make-dialog-box)))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;                          generic printing code                        ;;

@@ -39,6 +39,13 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (valid-device-type-p 'x) '(x-keysym-hash-table)))
+
+(globally-declare-boundp
+ (unless (valid-device-type-p 'x)
+   '(x-us-keymap-first-keycode x-us-keymap-description)))
+
 (defun x-win-init-xfree86 (device)
 
   ;; We know this keyboard is an XFree86 keyboard. As such, we can predict

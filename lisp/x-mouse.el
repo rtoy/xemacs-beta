@@ -30,7 +30,14 @@
 ;;; Code:
 
 (globally-declare-fboundp
- '(x-store-cutbuffer x-get-resource))
+ (unless (valid-device-type-p 'x) '(x-store-cutbuffer x-get-resource)))
+
+(globally-declare-fboundp
+ (unless (featurep 'mouse)
+   '(mouse-set-point mouse-yank insert-selection mouse-track)))
+
+(globally-declare-boundp
+ (unless (featurep 'mouse) '(mouse-yank-at-point)))
 
 ;;(define-key global-map 'button2 'x-set-point-and-insert-selection)
 ;; This is reserved for use by Hyperbole.

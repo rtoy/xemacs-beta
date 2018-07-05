@@ -1,5 +1,127 @@
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Silence an extensive list of byte compile warnings, chiefly
+	through use of #'globally-declare-fboundp and
+	#'globally-declare-boundp.
+
+	Also prefer (default-device 'x) to (default-x-device), since the
+	former always exists when byte compiling.
+
+	* autoload.el:
+	* autoload.el (make-autoload):
+	* autoload.el (autoload-make-autoload-operators): New.
+	* autoload.el (autoload-make-autoload-complex-operators): New.
+	Be a bit better about silencing byte compile warnings regarding
+	autoload-make-autoload-operators here
+
+	* behavior.el:
+	* behavior.el (unless):
+	* buff-menu.el:
+	* buff-menu.el (unless):
+	* cmdloop.el:
+	* cmdloop.el (unless):
+	* cmdloop.el (yes-or-no-p):
+	* cmdloop.el (y-or-n-p):
+	* cus-edit.el:
+	* cus-edit.el (unless):
+	* custom.el (custom-theme-reset-internal-face):
+	* custom.el (custom-define-hook):
+	* dialog-items.el:
+	* dialog-items.el (unless):
+	* dialog.el:
+	* easymenu.el:
+	* easymenu.el (unless):
+	* font-menu.el:
+	* font-menu.el (unless):
+	* font.el:
+	* font.el (fontconfig):
+	* font.el (font-xft-font-regexp):
+	* font.el (font-xft-font-regexp)): New.
+	* font.el (x-font-build-cache):
+	* font.el (xft-font-create-object):
+	* fontconfig.el (fc-try-font):
+	* fontconfig.el (fc-find-available-font-families):
+	* fontconfig.el (fc-find-available-weights-for-family):
+	* gnuserv.el:
+	* gnuserv.el (unless):
+	* gtk-faces.el:
+	* gtk-faces.el (unless):
+	* gtk-faces.el (gtk-convert-font-from-xlfd):
+	* help.el:
+	* help.el (unless):
+	* help.el (help):
+	* hyper-apropos.el:
+	* hyper-apropos.el (unless):
+	* info.el:
+	* info.el (unless):
+	* lisp-mode.el:
+	* lisp-mode.el (unless):
+	* menubar-items.el:
+	* menubar-items.el (unless):
+	* menubar.el:
+	* menubar.el (unless):
+	* minibuf.el:
+	* minibuf.el (unless):
+	* minibuf.el (insert-default-directory):
+	* mode-motion.el:
+	* mode-motion.el (mouse):
+	* modeline.el:
+	* modeline.el (unless):
+	* mouse.el:
+	* mouse.el (unless):
+	* mouse.el (shift):
+	* msw-select.el:
+	* msw-select.el (unless):
+	* mule/mule-charset.el (do-define-charset-tags):
+	* mule/mule-charset.el (script):
+	* mwheel.el:
+	* mwheel.el (unless):
+	* occur.el:
+	* occur.el (unless):
+	* package-ui.el:
+	* package-ui.el (unless):
+	* picture.el:
+	* picture.el (unless):
+	* printer.el:
+	* printer.el (unless):
+	* scrollbar.el:
+	* scrollbar.el (unless):
+	* select.el:
+	* select.el (unless):
+	* startup.el:
+	* startup.el (unless):
+	* toolbar-items.el:
+	* toolbar-items.el (unless):
+	* toolbar.el:
+	* toolbar.el (unless):
+	* userlock.el:
+	* userlock.el (unless):
+	* userlock.el (ask-user-about-lock-minibuf):
+	* wid-edit.el:
+	* wid-edit.el (unless):
+	* x-faces.el (x-make-font-bold-xft):
+	* x-faces.el (x-make-font-unbold-xft):
+	* x-faces.el (x-make-font-italic-xft):
+	* x-faces.el (x-make-font-unitalic-xft):
+	* x-faces.el (x-font-size-xft):
+	* x-faces.el (x-find-xft-font-of-size):
+	* x-font-menu.el:
+	* x-font-menu.el (unless):
+	* x-init.el:
+	* x-init.el (unless):
+	* x-mouse.el:
+	* x-mouse.el (unless):
+	* x-scrollbar.el:
+	* x-scrollbar.el (unless):
+	* x-scrollbar.el (x-init-scrollbar-from-resources):
+	* x-win-sun.el:
+	* x-win-sun.el (unless):
+	* x-win-sun.el (x-win-init-sun):
+	* x-win-xfree86.el:
+	* x-win-xfree86.el (unless):
+
+2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* cl-macs.el (defsubst*):
 	Document that within BODY the variable names within ARGLIST may
 	not have dynamic binding.
