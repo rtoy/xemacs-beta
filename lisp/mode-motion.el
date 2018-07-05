@@ -28,6 +28,8 @@
 
 ;;; Code:
 
+(require 'mouse)
+
 (defvar mode-motion-hook nil
   "Function or functions which are called whenever the mouse moves.
 Each function must take a single argument of the motion event.

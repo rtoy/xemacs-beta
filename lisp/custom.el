@@ -42,6 +42,7 @@
 (provide 'custom)
 
 (autoload 'custom-declare-face "cus-face")
+(autoload 'custom-theme-reset-internal-face "cus-face")
 
 (require 'widget)
 

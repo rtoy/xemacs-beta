@@ -30,17 +30,23 @@
 ;; This file is dumped with XEmacs (when GTK support is compiled in).
 
 (globally-declare-fboundp
- '(gtk-init-pointers
-   gtk-font-selection-dialog-new
-   gtk-widget-set-sensitive gtk-font-selection-dialog-apply-button
-   gtk-signal-connect gtk-main-quit
-   gtk-font-selection-dialog-ok-button
-   gtk-font-selection-dialog-get-font-name gtk-widget-destroy
-   font-menu-set-font font-family font-size
-   gtk-font-selection-dialog-cancel-button gtk-widget-show-all
-   gtk-main gtk-style-info))
+ (unless (valid-device-type-p 'gtk)
+   '(gtk-init-pointers
+     gtk-font-selection-dialog-new
+     gtk-widget-set-sensitive gtk-font-selection-dialog-apply-button
+     gtk-signal-connect gtk-main-quit
+     gtk-font-selection-dialog-ok-button
+     gtk-font-selection-dialog-get-font-name gtk-widget-destroy
+     font-menu-set-font font-family font-size
+     gtk-font-selection-dialog-cancel-button gtk-widget-show-all
+     gtk-main gtk-style-info)))
 
-(globally-declare-boundp '(gtk-major-version gtk-fallback-font-name))
+(globally-declare-boundp
+ (unless (valid-device-type-p 'gtk)
+   '(gtk-major-version gtk-fallback-font-name)))
+
+(autoload 'x-font-xlfd-font-name-p "x-faces")
+(autoload 'x-font-size "x-faces")
 
 (eval-when-compile
   (defmacro gtk-style-munge-face (face attribute value)
@@ -198,6 +204,7 @@
           (weight (match-string 1 font))
           (slant (match-string 2 font))
           (size (x-font-size font)))
+      (defvar x-font-regexp-foundry-and-family)
       (if (string-match x-font-regexp-foundry-and-family font)
           (setq family (capitalize (match-string 1 font)))
         (setq family gtk-fallback-font-name))

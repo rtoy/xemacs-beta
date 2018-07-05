@@ -52,6 +52,14 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'menubar)
+   '(menu-split-long-menu-and-sort submenu-generate-accelerator-spec
+     menu-split-long-menu add-menu-button menu-item-generate-accelerator-spec
+     set-menubar)))
+
+(globally-declare-boundp (unless (featurep 'menubar) '(current-menubar)))
+
 (defun Menubar-items-truncate-history (list count label-length)
   "Truncate a history LIST to first COUNT items.
 Return a list of (label value) lists with labels truncated to last

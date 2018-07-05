@@ -82,6 +82,13 @@
 
 ;;; Code:
 
+(globally-declare-boundp (unless (featurep 'menubar) '(current-menubar)))
+
+(globally-declare-fboundp
+ (unless (featurep 'menubar)
+   '(set-buffer-menubar add-menu delete-menu-item add-menu-button
+     find-menu-item)))
+
 ;; ;;;###autoload
 (defmacro easy-menu-define (symbol maps doc menu)
   "Define a menu bar submenu in maps MAPS, according to MENU.

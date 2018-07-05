@@ -47,6 +47,10 @@
 
 ;;; Code:
 
+(globally-declare-fboundp (unless (featurep 'mouse) '(mouse-set-point)))
+
+(globally-declare-fboundp (unless (featurep 'menubar) '(popup-menu)))
+
 ;;;Trying to preserve the old window configuration works well in
 ;;;simple scenarios, when you enter the buffer menu, use it, and exit it.
 ;;;But it does strange things when you switch back to the buffer list buffer

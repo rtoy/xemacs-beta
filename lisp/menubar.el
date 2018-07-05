@@ -32,6 +32,13 @@
 
 ;;; Code:
 
+(globally-declare-boundp
+ (unless (featurep 'menubar)
+   '(current-menubar menu-accelerator-map popup-menu-titles)))
+
+(globally-declare-fboundp
+ (unless (featurep 'menubar) '(compare-menu-text popup-menu popup-up-p)))
+
 (defgroup menu nil
   "Input from the menus."
   :group 'environment)

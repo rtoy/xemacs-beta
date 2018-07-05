@@ -317,6 +317,16 @@
 (eval-when-compile
   (condition-case nil (require 'browse-url) (error nil)))
 
+(globally-declare-fboundp
+ (unless (featurep 'toolbar) '(toolbar-make-button-list)))
+
+(globally-declare-boundp
+ (unless (featurep 'toolbar) '(toolbar-info-frame default-toolbar
+			       toolbar-icon-directory)))
+
+(globally-declare-fboundp (unless (featurep 'menubar) '(popup-menu)))
+(globally-declare-boundp (unless (featurep 'menubar) '(popup-menu-titles)))
+
 (defgroup info nil
   "The info package for Emacs."
   :group 'help

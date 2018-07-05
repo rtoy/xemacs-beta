@@ -65,6 +65,12 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'toolbar) '(init-toolbar-location init-toolbar)))
+
+(globally-declare-fboundp
+ (unless (featurep 'menubar) '(init-menubar-at-startup)))
+
 (setq top-level '(normal-top-level))
 
 (defvar command-line-processed nil "t once command line has been processed")

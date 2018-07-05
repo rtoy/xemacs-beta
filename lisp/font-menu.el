@@ -117,6 +117,12 @@
 ;;;  "-dt-interface user-medium-r-normal-s-14-120-75-75-m-120-jisx0208.1983-0"
 ;;;  "-dt-interface user-medium-r-normal-s-14-120-75-75-m-60-jisx0201.1976-0")
 
+(globally-declare-fboundp
+ (unless (featurep 'menubar)
+   '(menu-split-long-menu menu-item-strip-accelerator-spec enable-menu-item
+     disable-menu-item select-toggle-menu-item deselect-toggle-menu-item
+     submenu-generate-accelerator-spec)))
+
 ;;;###autoload
 (defcustom font-menu-ignore-scaled-fonts nil
   "*If non-nil, the font menu shows only bitmap fonts.

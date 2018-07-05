@@ -30,6 +30,9 @@
 
 ;;; Code:
 
+(globally-declare-boundp
+ (unless (featurep 'mouse) '(mouse-track-rectangle-p)))
+
 (defun mswindows-paste-clipboard ()
   "Insert the current contents of the mswindows clipboard at point,
 replacing the active selection if there is one."

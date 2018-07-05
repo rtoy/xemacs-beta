@@ -40,10 +40,18 @@
 
 (require 'cl)
 
+(globally-declare-fboundp
+ (unless (featurep 'window-system)
+   '(mode-motion-highlight-internal default-mouse-track-beginning-of-word
+     default-mouse-track-end-of-word make-dialog-frame insert-gui-button
+     make-gui-button get-dialog-box-response)))
+
+(globally-declare-boundp
+ (unless (featurep 'window-system) '(mode-motion-hook)))
+
 (defgroup minibuffer nil
   "Controlling the behavior of the minibuffer."
   :group 'environment)
-
 
 (defcustom insert-default-directory t
  "*Non-nil means when reading a filename start with default dir in minibuffer."

@@ -31,6 +31,15 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'window-system)
+   '(make-gui-button get-popup-menu-response mouse-set-point)))
+
+(globally-declare-boundp
+ (unless (featurep 'window-system)
+   '(help-echo-owns-message gui-button-shadow-thickness)))
+
+
 (require 'widget)
 
 ;; XEmacs: autoload of `finder-commentary' is redundant.

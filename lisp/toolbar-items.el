@@ -35,6 +35,17 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'dialog) '(make-dialog-box)))
+
+(globally-declare-fboundp
+ (unless (featurep 'toolbar) '(toolbar-make-button-list)))
+
+(globally-declare-boundp
+ (unless (featurep 'toolbar)
+   '(default-toolbar initial-toolbar-spec toolbar-icon-directory)))
+
+
 (defgroup toolbar nil
   "Configure XEmacs Toolbar functions and properties"
   :group 'environment)

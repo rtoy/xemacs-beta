@@ -165,6 +165,10 @@
 
 ;;; Code:
 
+(globally-declare-fboundp
+ (unless (featurep 'menubar)
+   '(submenu-generate-accelerator-spec menu-split-long-menu menu-sort-menu)))
+
 ;; Hash table mapping behavior names to property lists, with entries for
 ;; :group, :custom-group, :short-doc, :require, :enable, :disable,
 ;; and :commands.

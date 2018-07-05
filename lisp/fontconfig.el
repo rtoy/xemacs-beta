@@ -474,7 +474,7 @@ A new object is allocated and returned."
 FONT may be a fontconfig pattern object or a fontconfig font name (a string).
 Optional DEVICE is the device object to query, defaulting to the currently
 selected device."
-  (fc-list-fonts-pattern-objects (or device (default-x-device))
+  (fc-list-fonts-pattern-objects (or device (default-device 'x))
 				 (if (fc-pattern-p font) 
 				     font
 				   (fc-name-parse font))
@@ -488,7 +488,7 @@ selected device."
 
 (defun fc-find-available-font-families (&optional device filter-fun)
   "Find all available font families."
-  (let ((device (or device (default-x-device)))
+  (let ((device (or device (default-device 'x)))
 	(pattern (make-fc-pattern))
 	(objectset '("family" "style")))
     (let* ((all-fonts
@@ -503,7 +503,7 @@ selected device."
 
 (defun fc-find-available-weights-for-family (family &optional style device)
   "Find available weights for font FAMILY."
-  (let* ((device (or device (default-x-device)))
+  (let* ((device (or device (default-device 'x)))
 	 (pattern (make-fc-pattern))
 	 (objectset '("weight")))
     (fc-pattern-add-family pattern family)

@@ -228,36 +228,35 @@ the section of autoloads for a file.")
 ; package.
 (ignore-errors (require 'autoload-operators))
 
-; As autoload-operators is new, provide stopgap measure for a while.
-(if (not (boundp 'autoload-make-autoload-operators))
-    (progn
-      (defvar autoload-make-autoload-operators
-	'(defun define-skeleton defmacro define-derived-mode define-generic-mode
-	  easy-mmode-define-minor-mode easy-mmode-define-global-mode
-	  define-minor-mode defun* defmacro*)
-	"`defun'-like operators that use `autoload' to load the library.")
-      
-      (defvar autoload-make-autoload-complex-operators
-	'(easy-mmode-define-minor-mode easy-mmode-define-global-mode
-	  define-minor-mode)
-	"`defun'-like operators to macroexpand before using `autoload'.")
-      
-      (put 'autoload 'doc-string-elt 3)
-      (put 'defun    'doc-string-elt 3)
-      (put 'defun*   'doc-string-elt 3)
-      (put 'defvar   'doc-string-elt 3)
-      (put 'defcustom 'doc-string-elt 3)
-      (put 'defconst 'doc-string-elt 3)
-      (put 'defmacro 'doc-string-elt 3)
-      (put 'defmacro* 'doc-string-elt 3)
-      (put 'defsubst 'doc-string-elt 3)
-      (put 'define-skeleton 'doc-string-elt 2)
-      (put 'define-derived-mode 'doc-string-elt 4)
-      (put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
-      (put 'define-minor-mode 'doc-string-elt 2)
-      (put 'define-generic-mode 'doc-string-elt 7)
-      ;; defin-global-mode has no explicit docstring.
-      (put 'easy-mmode-define-global-mode 'doc-string-elt 1000)))
+; As autoload-operators is new, provide stopgap measure for a
+; while. This defvar won't override the value from
+; autoload-operators.el, if that has been loaded.
+(defvar autoload-make-autoload-operators
+  '(defun define-skeleton defmacro define-derived-mode define-generic-mode
+    easy-mmode-define-minor-mode easy-mmode-define-global-mode
+    define-minor-mode defun* defmacro*))
+
+(defvar autoload-make-autoload-complex-operators
+  '(easy-mmode-define-minor-mode easy-mmode-define-global-mode
+    define-minor-mode))
+
+(unless (featurep 'autoload-operators)
+  (put 'autoload 'doc-string-elt 3)
+  (put 'defun    'doc-string-elt 3)
+  (put 'defun*   'doc-string-elt 3)
+  (put 'defvar   'doc-string-elt 3)
+  (put 'defcustom 'doc-string-elt 3)
+  (put 'defconst 'doc-string-elt 3)
+  (put 'defmacro 'doc-string-elt 3)
+  (put 'defmacro* 'doc-string-elt 3)
+  (put 'defsubst 'doc-string-elt 3)
+  (put 'define-skeleton 'doc-string-elt 2)
+  (put 'define-derived-mode 'doc-string-elt 4)
+  (put 'easy-mmode-define-minor-mode 'doc-string-elt 2)
+  (put 'define-minor-mode 'doc-string-elt 2)
+  (put 'define-generic-mode 'doc-string-elt 7)
+  ;; defin-global-mode has no explicit docstring.
+  (put 'easy-mmode-define-global-mode 'doc-string-elt 1000))
 
 (defun make-autoload (form file)
   "Turn FORM into an autoload or defvar for source file FILE.

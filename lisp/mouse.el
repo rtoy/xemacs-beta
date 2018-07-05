@@ -39,6 +39,15 @@
 
 ;;; Code:
 
+(globally-declare-boundp
+ (unless (featurep 'toolbar)
+   '(toolbar-active last-pressed-toolbar-button toolbar-help-enabled)))
+
+(globally-declare-fboundp
+ (unless (featurep 'toolbar)
+   '(toolbar-button-help-string release-previous-toolbar-button
+     press-toolbar-button toolbar-button-enabled-p)))
+
 (provide 'mouse)
 
 (global-set-key 'button1 'mouse-track)
