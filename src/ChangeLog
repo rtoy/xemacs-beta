@@ -1,5 +1,11 @@
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* menubar.c (Fcompare_menu_text):
+	Make this function more Mule-clean, don't give the wrong answer
+	when there are zero characters within the strings to be compared.
+
+2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* menubar.c:
 	* menubar.c (vars_of_menubar):
 	Move #'normalize-menu-text to Lisp, it's not called much and the
