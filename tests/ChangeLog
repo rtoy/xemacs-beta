@@ -1,5 +1,8 @@
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* automated/lisp-tests.el (featurep):
+	Basic tests of compare-menu-text.
+
 	* automated/extent-tests.el:
 	#'normalize-menu-text is now available even on builds without the
 	menubar feature, test it even then.

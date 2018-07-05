@@ -333,28 +333,57 @@ Also treat %% as a single %.  Return < 0 if STRING1 is less than STRING2,
 */
        (string1, string2))
 {
-  Ibyte *p;
-  Ibyte *q;
+  const Ibyte *p, *pend;
+  const Ibyte *q, *qend;
 
   CHECK_STRING (string1);
   CHECK_STRING (string2);
 
   p = XSTRING_DATA (string1);
+  pend = p + XSTRING_LENGTH (string1);
   q = XSTRING_DATA (string2);
+  qend = q + XSTRING_LENGTH (string2);
 
   for (;;)
     {
       Ichar val;
-      if (*p == '%' && *(p + 1) == '%')
-	p++;
-      else if (*p == '%' && *(p + 1) == '_')
-	p += 2;
-      if (*q == '%' && *(q + 1) == '%')
-	q++;
-      else if (*q == '%' && *(q + 1) == '_')
-	q += 2;
-      if (!*p || !*q)
-	return make_fixnum (*p - *q);
+
+      if ((p + ichar_len ('%')) < pend && itext_ichar_eql (p, '%'))
+        {
+          if (itext_ichar_eql (p + ichar_len ('%'), '%'))
+            {
+              p += ichar_len ('%');
+            }
+          else if (itext_ichar_eql (p + ichar_len ('%'), '_'))
+            {
+              p += ichar_len ('%');
+              p += ichar_len ('_');
+            }
+        }
+
+      if (p == pend)
+        {
+          return make_fixnum (- itext_ichar (q));
+        }
+
+      if ((q + ichar_len ('%')) < qend && itext_ichar_eql (q, '%'))
+        {
+          if (itext_ichar_eql (q + ichar_len ('%'), '%'))
+            {
+              q += ichar_len ('%');
+            }
+          else if (itext_ichar_eql (q + ichar_len ('%'), '_'))
+            {
+              q += ichar_len ('%');
+              q += ichar_len ('_');
+            }
+        }
+
+      if (q == qend)
+        {
+          return make_fixnum (itext_ichar (p));
+        }
+
       val = DOWNCASE (0, itext_ichar (p)) - DOWNCASE (0, itext_ichar (q));
       if (val)
 	return make_fixnum (val);

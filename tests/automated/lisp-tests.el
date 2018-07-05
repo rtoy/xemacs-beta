@@ -4396,4 +4396,20 @@ run-hook-with-args-until-success")
 (Assert (not (true-list-p [])))
 (Assert (not (true-list-p -1)))
 
+;;-----------------------------------------------------
+;; Testing compare-menu-text
+;;-----------------------------------------------------
+
+(when (featurep 'menubar)
+  (Assert (eql 0 (compare-menu-text "a" "a")))
+  (Assert (eql 0 (compare-menu-text "%_a" "a")))
+  (Assert (eql 0 (compare-menu-text "a%" "a%%")))
+  (Assert (eql (- ?b ?a) (compare-menu-text "b" "a")))
+  (Assert (eql (- ?a ?b) (compare-menu-text "a" "b")))
+  ;; This used to give zero, since the function assumed a zero char was the
+  ;; end of the string as in C.
+  (Assert (eql (- ?b) (compare-menu-text "a\000" "a\000bcdef"))))
+
+;; See extent-tests.el for normalize-menu-text, checked in passing.
+
 ;;; end of lisp-tests.el
