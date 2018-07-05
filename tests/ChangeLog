@@ -1,3 +1,9 @@
+2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/extent-tests.el:
+	#'normalize-menu-text is now available even on builds without the
+	menubar feature, test it even then.
+
 2018-06-24  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/format-tests.el:

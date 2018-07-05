@@ -36,6 +36,10 @@
 
 ;;; Code:
 
+;; We use normalize-menu-text even if the menubar files aren't dumped. Make
+;; sure XEmacs knows where to find it:
+(autoload 'normalize-menu-text "menubar")
+
 (defun map-y-or-n-p (prompter actor list &optional help action-alist
 			      no-cursor-in-echo-area)
   "Ask a series of boolean questions.
