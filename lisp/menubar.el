@@ -164,6 +164,38 @@ See `current-menubar' for a description of the syntax of a menubar."
 
 ;;; basic menu manipulation functions
 
+(defun normalize-menu-text (name) 
+  "Convert NAME, a menu string, into menu normal form. 
+ 
+Menu item names should be converted to normal form before being compared. 
+This removes %_'s (accelerator indications) and converts %% to %.  The 
+returned string may be the same string as the original.
+
+See `compare-menu-text', which does this comparison without creating new
+strings, and so is free in terms of garbage-collection."
+  (let (stream (position 0) (last 0) (length (length name))) 
+    (while (setq position (position ?% name :start position)) 
+      (incf position) 
+      (when (< position length) 
+        (cond 
+          ((eql ?% (aref name position)) 
+           (write-sequence name (or stream 
+                                    (setq stream (make-string-output-stream))) 
+                           :start last :end position) 
+           (setq last (1+ position) 
+                 position last)) 
+          ((eql ?_ (aref name position)) 
+           (write-sequence name (or stream 
+                                    (setq stream (make-string-output-stream))) 
+                           :start last :end (1- position)) 
+           (setq last (1+ position) 
+                 position last)) 
+          (t (incf position))))) 
+    (if (not stream) 
+        name 
+      (write-sequence name stream :start last) 
+      (get-output-stream-string stream))))
+
 (defun menu-item-text (item &optional normalize)
   "Return the text that is displayed for a menu item.
 If ITEM is a string (unselectable text), it is returned; otherwise,
@@ -884,8 +916,5 @@ MENU-DESC."
        (define-key menu-accelerator-map [kp-right] 'menu-right)
        (define-key menu-accelerator-map [kp-enter] 'menu-select)
        (define-key menu-accelerator-map "\C-g" 'menu-quit)))
-
-
-(provide 'menubar)
 
 ;;; menubar.el ends here

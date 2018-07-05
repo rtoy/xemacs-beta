@@ -1,3 +1,11 @@
+2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* map-ynp.el (normalize-menu-text): Add an autoload for this
+	function, now it's available in Lisp when C menubar support isn't
+	available. 
+	* menubar.el (normalize-menu-text): Implement this function, moved
+	from C.
+
 2018-07-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* loadup.el (source-lisp):

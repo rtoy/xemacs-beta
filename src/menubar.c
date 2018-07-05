@@ -41,6 +41,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "specifier.h"
 #include "window-impl.h"
 #include "lstream.h"
+#include "text.h"
 
 int menubar_show_keybindings;
 Lisp_Object Vmenubar_configuration;
@@ -362,94 +363,6 @@ Also treat %% as a single %.  Return < 0 if STRING1 is less than STRING2,
     }
 }
 
-DEFUN ("normalize-menu-text", Fnormalize_menu_text, 1, 1, 0, /*
-Convert a menu item name string into normal form, and return the new string.
-Menu item names should be converted to normal form before being compared.
-This removes %_'s (accelerator indications) and converts %% to %.
-The returned string may be the same string as the original.
-*/
-       (name))
-{
-  const Ibyte *name_data, *pend, *lastp;
-  Lisp_Object stream = Qnil;
-
-  CHECK_STRING (name);
-
-  name_data = lastp = XSTRING_DATA (name);
-  pend = name_data + XSTRING_LENGTH (name);
-
-  while (name_data < pend)
-    {
-      name_data = (const Ibyte *) memchr (name_data, '%', pend - name_data);
-
-      if (!name_data)
-        {
-          break;
-        }
-
-      name_data += ichar_len ('%');
-
-      if (name_data >= pend)
-        {
-          break;
-        }
-
-      if (itext_ichar_eql (name_data, '%'))
-        {
-          /* Allow `%%' to mean `%'.  */
-          if (NILP (stream))
-            {
-              /* Writing to this cannot GC. */
-              stream = make_resizing_buffer_output_stream ();
-            }
-
-          Lstream_write_with_extents (XLSTREAM (stream), name, 
-				      lastp - XSTRING_DATA (name),
-                                      name_data - lastp);
-
-          name_data += ichar_len ('%');
-          lastp = name_data;
-        }
-      else if (itext_ichar_eql (name_data, '_'))
-        {
-          if (NILP (stream))
-            {
-              stream = make_resizing_buffer_output_stream ();
-            }
-
-          Lstream_write_with_extents (XLSTREAM (stream), name,
-				      lastp - XSTRING_DATA (name),
-                                      name_data - lastp -
-                                      ichar_len ('%'));
-
-          name_data += ichar_len ('_');
-          lastp = name_data;
-        }
-      else
-        {
-          INC_IBYTEPTR (name_data);
-          INC_IBYTEPTR (name_data);
-          /* No need to modify LASTP. */
-	}
-    }
-
-  if (NILP (stream))
-    {
-      /* No %_ or %% encountered. */
-      return name;
-    }
-
-  if (lastp < pend)
-    {
-      Lstream_write_with_extents (XLSTREAM (stream), name,
-                                  lastp - XSTRING_DATA (name), pend - lastp);
-    }
-
-  name = resizing_buffer_to_lisp_string (XLSTREAM (stream));
-  Lstream_delete (XLSTREAM (stream));
-  return name;
-}
-
 void
 syms_of_menubar (void)
 {
@@ -468,7 +381,6 @@ syms_of_menubar (void)
 
   DEFSUBR (Fpopup_menu);
   DEFSUBR (Fcompare_menu_text);
-  DEFSUBR (Fnormalize_menu_text);
   DEFSUBR (Fmenu_find_real_submenu);
 }
 

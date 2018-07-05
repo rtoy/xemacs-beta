@@ -1,3 +1,11 @@
+2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar.c:
+	* menubar.c (vars_of_menubar):
+	Move #'normalize-menu-text to Lisp, it's not called much and the
+	occasional use of the function in builds without C menubar support
+	is much more practical with it in Lisp.
+
 2018-07-04  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* eval.c (Fdefmacro):
