@@ -1,5 +1,17 @@
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cl-macs.el (defsubst*):
+	Document that within BODY the variable names within ARGLIST may
+	not have dynamic binding.
+	Don't check BODY for side effects, our check is inaccurate and the
+	result was used, inaccurately, within cl-defsubst-expand to decide
+	whether argument names needed binding.
+	* cl-macs.el (cl-defsubst-expand):
+	Don't bind arguments using let if the UNSAFE argument is supplied,
+	that gives byte-compile warnings that don't help anyone.
+
+2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* map-ynp.el (normalize-menu-text): Add an autoload for this
 	function, now it's available in Lisp when C menubar support isn't
 	available. 

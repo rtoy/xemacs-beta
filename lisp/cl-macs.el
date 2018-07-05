@@ -3161,15 +3161,18 @@ and then returning foo."
 
 (defmacro defsubst* (name arglist &optional docstring &rest body)
   "Define NAME as a function.
+
 Like `defun', except the function is automatically declared `inline',
 ARGLIST allows full Common Lisp conventions, and BODY is implicitly
-surrounded by (block NAME ...)."
+surrounded by (block NAME ...).
+
+`defsubst*' also has the caveat that, within BODY, there is no guarantee that
+the symbols within ARGLIST will have dynamic bindings, they may have a lexical
+expansion only."
   (let* ((argns (cl-arglist-args arglist)) (p argns)
          (exec-body (if (or (stringp docstring) (null docstring))
                         body
-                      (cons docstring body)))
-	 (pbody (cons 'progn exec-body))
-	 (unsafe (not (cl-safe-expr-p pbody))))
+                      (cons docstring body))))
     (while (and p (eq (cl-expr-contains arglist (car p)) 1)) (pop p))
     (list 'progn
 	  (if (or p (memq '&rest arglist))
@@ -3182,14 +3185,15 @@ surrounded by (block NAME ...)."
 		    (cons '&cl-quote arglist))
 		  (list* 'cl-defsubst-expand (list 'quote argns)
 			 (list 'quote (list* 'block name exec-body))
-			 (not (or unsafe (cl-expr-access-order pbody argns)))
-			 (and (memq '&key arglist) 'cl-whole) unsafe argns)))
+                         (not (cl-expr-access-order (cons 'progn exec-body)
+                                                    argns))
+                         (and (memq '&key arglist) 'cl-whole) nil argns)))
 	  (list* 'defun* name arglist docstring body))))
 
-(defun cl-defsubst-expand (argns body simple whole unsafe &rest argvs)
+(defun cl-defsubst-expand (argns body simple whole ignored &rest argvs)
   (if (and whole (not (cl-safe-expr-p (cons 'progn argvs))))
       whole
-    (if (cl-simple-exprs-p argvs)
+    (if (and (not simple) (cl-simple-exprs-p argvs))
         (setq simple t))
     (let* ((symbol-macros nil)
            (lets (mapcan #'(lambda (argn argv)
@@ -3197,24 +3201,28 @@ surrounded by (block NAME ...)."
                                  (progn 
 				   ;; Avoid infinite loop on symbol macro
 				   ;; expansion:
-				   (or (block find
+				   (if (block find
                                          (subst nil argn argvs :test
                                                 #'(lambda (elt tree)
                                                     ;; Give nil if argn is
                                                     ;; in argvs somewhere:
 						    (if (eq elt tree)
 							(return-from find)))))
-                                       (let ((copy-symbol (copy-symbol argn)))
-                                         ;; Rename ARGN within BODY so it
-                                         ;; doesn't conflict with its value
-                                         ;; in the including scope:
-                                         (setq body
-                                               (cl-macroexpand-all
-                                                body `((,(eq-hash argn)
-                                                        ,copy-symbol t)))
-                                               argn copy-symbol)))
-                                   (push (list argn argv t) symbol-macros)
-                                   (and unsafe (list (list argn argv))))
+                                       ;; No infinite loop going to happen,
+                                       ;; use a symbol macro in the normal
+                                       ;; way:
+                                       (push (list argn argv t) symbol-macros)
+                                     (let ((copy-symbol (copy-symbol argn)))
+                                       ;; Rename ARGN within BODY now so it
+                                       ;; doesn't conflict with its value in
+                                       ;; the including scope:
+                                       (setq body
+                                             (cl-macroexpand-all
+                                              body `((,(eq-hash argn)
+                                                      ,copy-symbol t))))
+                                       (push (list copy-symbol argv t)
+                                             symbol-macros)))
+                                   nil)
                                (list (list argn argv))))
                          argns argvs)))
       `(let ,lets
