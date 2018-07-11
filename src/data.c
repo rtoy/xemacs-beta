@@ -4039,6 +4039,14 @@ Return non-nil if OBJECT is an ephemeron.
                                                     (objekt));          \
               }                                                         \
                                                                         \
+            if (sizeof (c_type) >= SIZEOF_EMACS_INT &&                  \
+                (c_type) (-1) > 0 &&                                    \
+                bignum_fits_emacs_uint_p (XBIGNUM_DATA (objekt)))       \
+              {                                                         \
+                return (c_type) bignum_to_emacs_uint (XBIGNUM_DATA      \
+                                                    (objekt));          \
+              }                                                         \
+                                                                        \
             if (sizeof (c_type) >= sizeof (long long) &&                \
                 bignum_fits_llong_p (XBIGNUM_DATA (objekt)))            \
               {                                                         \
@@ -4046,6 +4054,7 @@ Return non-nil if OBJECT is an ephemeron.
               }                                                         \
                                                                         \
             if (sizeof (c_type) >= sizeof (long long) &&                \
+                (c_type) (-1) > 0 &&                                    \
                 bignum_fits_ullong_p (XBIGNUM_DATA (objekt)))           \
               {                                                         \
                 return (c_type) bignum_to_ullong (XBIGNUM_DATA (objekt)); \
@@ -4066,11 +4075,12 @@ Return non-nil if OBJECT is an ephemeron.
       {                                                                 \
         EMACS_INT ival = XREALFIXNUM (objekt);                          \
                                                                         \
-        if (sizeof (c_type) >= sizeof (EMACS_INT) ?                     \
-            ((c_type) ival < min_lisp_to_c_type ||                      \
-             (c_type) ival > max_lisp_to_c_type) :                      \
-            (ival < (EMACS_INT) min_lisp_to_c_type ||                   \
-             ival > (EMACS_INT) max_lisp_to_c_type))                    \
+        if (((c_type)(-1) > 0 && ival < 0) ||                           \
+            (sizeof (c_type) >= sizeof (EMACS_INT) ?                    \
+             ((c_type) ival < min_lisp_to_c_type ||                     \
+              (c_type) ival > max_lisp_to_c_type) :                     \
+             (ival < (EMACS_INT) min_lisp_to_c_type ||                  \
+              ival > (EMACS_INT) max_lisp_to_c_type)))                  \
           {                                                             \
             args_out_of_range_3 (objekt,                                \
                                  make_float (min_lisp_to_c_type),       \
@@ -4100,8 +4110,8 @@ Return non-nil if OBJECT is an ephemeron.
                                                                         \
       while (value)                                                     \
 	{                                                               \
-	  value = value >> 16;                                          \
 	  result = Fcons (make_fixnum (value & 0xFFFF), result);        \
+	  value = value >> 16;                                          \
 	}                                                               \
                                                                         \
       if (negative)                                                     \
@@ -4224,9 +4234,14 @@ Return non-nil if OBJECT is an ephemeron.
   }                                                                     \
   visibility Lisp_Object c_type##_to_lisp (c_type)
 
-DEFINE_C_INTEGER_TYPE_LISP_CONVERSION (extern, OFF_T);
+/* Definitions for lisp_to_OFF_T, OFF_T_to_lisp: */
+DEFINE_C_INTEGER_TYPE_LISP_CONVERSION (extern, OFF_T); 
 
+/* Definitions for lisp_to_uid_t, uid_t_to_lisp: */
 DEFINE_C_INTEGER_TYPE_LISP_CONVERSION (extern, uid_t);
+
+/* Definitions for lisp_to_uid_t, uid_t_to_lisp: */
+DEFINE_C_INTEGER_TYPE_LISP_CONVERSION (extern, gid_t);
 
 /************************************************************************/
 /*                            initialization                            */
