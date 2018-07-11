@@ -100,18 +100,21 @@ DECLARE_LISP_OBJECT (bignum, Lisp_Bignum);
 
 #if SIZEOF_EMACS_INT == SIZEOF_LONG
 # define bignum_fits_emacs_int_p(b) bignum_fits_long_p(b)
+# define bignum_fits_emacs_uint_p(b) bignum_fits_ulong_p(b)
 # define bignum_to_emacs_int(b) bignum_to_long(b)
 # define bignum_to_emacs_uint(b) bignum_to_ulong(b)
 # define bignum_set_emacs_int bignum_set_long
 # define make_bignum_emacs_uint(b) make_bignum_un(b)
 #elif SIZEOF_EMACS_INT == SIZEOF_INT
 # define bignum_fits_emacs_int_p(b) bignum_fits_int_p(b)
+# define bignum_fits_emacs_uint_p(b) bignum_fits_uint_p(b)
 # define bignum_to_emacs_int(b) bignum_to_int(b)
 # define bignum_to_emacs_uint(b) bignum_to_uint(b)
 # define bignum_set_emacs_int bignum_set_long
 # define make_bignum_emacs_uint(b) make_bignum_un(b)
 #else
 # define bignum_fits_emacs_int_p(b) bignum_fits_llong_p(b)
+# define bignum_fits_emacs_uint_p(b) bignum_fits_ullong_p(b)
 # define bignum_to_emacs_int(b) bignum_to_llong(b)
 # define bignum_to_emacs_uint(b) bignum_to_ullong(b)
 # define bignum_set_emacs_int bignum_set_llong
@@ -442,6 +445,9 @@ extern OFF_T lisp_to_OFF_T (Lisp_Object);
 
 extern Lisp_Object uid_t_to_lisp (uid_t);
 extern uid_t lisp_to_uid_t (Lisp_Object);
+
+extern Lisp_Object gid_t_to_lisp (gid_t);
+extern gid_t lisp_to_gid_t (Lisp_Object);
 
 #ifdef WITH_NUMBER_TYPES
 

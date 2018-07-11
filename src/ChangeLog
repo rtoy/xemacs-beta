@@ -1,3 +1,16 @@
+2018-07-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* data.c:
+	* data.c (LISP_INTEGER_TO_C_TYPE):
+	* data.c (C_TYPE_TO_LISP_INTEGER):
+	* number.h:
+	* number.h (bignum_fits_emacs_uint_p):
+	Correct a couple of bugs in lisp_to_uid_t() on bignum, non-bignum
+	builds.
+	Provide lisp_to_gid_t(), gid_t_to_lisp() too, not yet used.
+	Add a couple of comments to make grepping for the definitions
+	easier.
+
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* menubar.c (Fcompare_menu_text):
