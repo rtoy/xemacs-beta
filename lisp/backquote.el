@@ -186,14 +186,26 @@ This is an extremely rare thing to need to do in lisp."
 
 ;;; This does the expansion from table 2.
 (defun bq-process-2 (code)
-  (cond ((vectorp code)
-	 (let* ((dflag-d (bq-process-2 (append code nil))))
-	   (cons 'vector (bq-process-1 (car dflag-d) (cdr dflag-d)))))
-	((atom code)
-	 (cond ((null code) (cons nil nil))
-	       ((or (numberp code) (eq code t))
-		(cons t code))
-	       (t (cons 'quote code))))
+  (cond ((atom code)
+	 (cond ((null code)
+                (cons nil nil))
+               ((vectorp code)
+                (let* ((dflag-d (bq-process-2 (append code nil)))
+                       (dflag (car dflag-d))
+                       (d (cdr dflag-d)))
+                  (cond
+                    ((memq dflag '(quote nil))
+                     (cons t code))
+                    ((eq dflag 'list)
+                     (cons 'vector d))
+                    ((eq dflag 'append)
+                     ;; The idea for this is from GNU, thank you GNU. I don't
+                     ;; like #'vconcat much, it's not very CL, but it does fit
+                     ;; this use case, and there is no prospect of our
+                     ;; removing it.
+                     (cons 'vconcat d))
+                    (t (cons 'vector* (bq-process-1 dflag d))))))
+               (t (cons 'quote code))))
 	((eq (car code) bq-at-marker)
 	 (cons bq-at-flag (nth 1 code)))
 	((eq (car code) bq-dot-marker)
@@ -249,7 +261,7 @@ This is an extremely rare thing to need to do in lisp."
   (cond ((atom code)
 	 (cond ((null code)
 		(cons nil nil))
-	       ((or (numberp code) (eq code 't))
+	       ((eq code t)
 		(cons t code))
 	       (t (cons bq-comma-flag code))))
 	((eq (car code) 'quote)
@@ -262,13 +274,12 @@ This is an extremely rare thing to need to do in lisp."
 
 ;;; This handles table 1.
 (defun bq-process-1 (flag thing)
-  (cond ((or (eq flag bq-comma-flag)
-	     (memq flag '(t nil)))
+  (cond ((eq flag bq-comma-flag)
 	 thing)
-	((eq flag 'quote)
-	 (list  'quote thing))
-	((eq flag 'vector)
-	 (list 'apply '(function vector) thing))
+	((memq flag '(quote t nil))
+         (quote-maybe thing))
+	((eq flag 'vector*)
+         (list 'apply '(function vector) thing))
 	(t (cons flag thing))))
 
 (provide 'backquote)
