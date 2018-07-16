@@ -1,3 +1,18 @@
+2018-07-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* backquote.el (bq-process-2):
+	Be better about handling vectors here; pass through constants,
+	call #'vector, #'vconcat directly at runtime if appropriate. Call
+	#'atom (which translates to bytecode) rather than #'vectorp first
+	within this function.
+	New #'bq-process-2 flag, vector*, which means "call apply
+	#'vector in the old way"
+	* backquote.el (bq-comma):
+	Don't check for numberp here, leave that to #'bq-process-1.
+	* backquote.el (bq-process-1):
+	Implement vector*.  Call #'quote-maybe when appropriate, giving
+	more readable output.
+
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Silence an extensive list of byte compile warnings, chiefly
