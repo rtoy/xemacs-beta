@@ -1,5 +1,18 @@
 2018-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* backquote.el (bq-process):
+	* backquote.el (bq-process-2):
+	* backquote.el (bq-comma):
+	* backquote.el (bq-process-1):
+	Style improvements in this file:
+	1. Give structured errors on encountering invalid syntax.
+	2. Call member* when interpreted, which #'memq was doing anyway,
+	and which will translate to the memq bytecode in the old way when
+	compiled.
+	3. Indent if statements as Emacs Lisp, not Common Lisp.
+
+2018-07-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* backquote.el (bq-process-2):
 	Be better about handling vectors here; pass through constants,
 	call #'vector, #'vconcat directly at runtime if appropriate. Call
