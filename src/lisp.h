@@ -2823,7 +2823,7 @@ DECLARE_MODULE_API_LISP_OBJECT (string, Lisp_String);
 /* WARNING: If you modify an existing string, you must call
    bump_string_modiff() afterwards. */
 #define XSET_STRING_ASCII_BEGIN(s, val) \
-  ((void) (XSTRING (s)->u.v.ascii_begin = (val) & MAX_STRING_ASCII_BEGIN))
+  ((void) (XSTRING (s)->u.v.ascii_begin = min (val, MAX_STRING_ASCII_BEGIN)))
 #define XSTRING_FORMAT(s) FORMAT_DEFAULT
 
 #define XSTRING_MODIFFP(s) (XSTRING (s)->u.v.modiffp + 0)
