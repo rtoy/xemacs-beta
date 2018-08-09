@@ -1,3 +1,10 @@
+2018-08-09  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lisp.h (XSET_STRING_ASCII_BEGIN):
+	Whoops, this behaved incorrectly with large strings, thank you the
+	debug build. Non-debug builds had a performance issue, not a
+	correctness issue.
+
 2018-07-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:
