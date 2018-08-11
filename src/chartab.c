@@ -2523,8 +2523,7 @@ vars_of_chartab (void)
 #endif /* MEMORY_USAGE_STATS */
 
   /* DO NOT staticpro this.  It works just like Vweak_hash_tables. */
-  Vall_syntax_tables = Qnil;
-  dump_add_weak_object_chain (&Vall_syntax_tables);
+  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_syntax_tables);
 
   /* The value at level 4 is not 2^32 - 1.  With 32-bit EMACS_INTs, it's
      2^30 - 1 because characters are only 30 bits wide. */

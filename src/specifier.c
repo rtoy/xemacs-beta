@@ -4017,8 +4017,7 @@ vars_of_specifier (void)
 
   /* Do NOT mark through this, or specifiers will never be GC'd.
      This is the same deal as for weak hash tables. */
-  Vall_specifiers = Qnil;
-  dump_add_weak_object_chain (&Vall_specifiers);
+  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_specifiers);
 
   Vuser_defined_tags = Qnil;
   staticpro (&Vuser_defined_tags);

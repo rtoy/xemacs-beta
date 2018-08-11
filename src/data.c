@@ -3193,7 +3193,7 @@ Markers and characters are converted to integers.
    remove them.  This is analogous to weak hash tables; see the explanation
    there for more info. */
 
-static Lisp_Object Vall_weak_lists; /* Gemarke es nicht!!! */
+Lisp_Object Vall_weak_lists; /* Gemarke es nicht!!! */
 
 static Lisp_Object encode_weak_list_type (enum weak_list_type type);
 
@@ -4475,18 +4475,14 @@ syms_of_data (void)
 void
 vars_of_data (void)
 {
-  /* This must not be staticpro'd */
-  Vall_weak_lists = Qnil;
-  dump_add_weak_object_chain (&Vall_weak_lists);
+  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_weak_lists);
 
-  Vall_ephemerons = Qnil;
-  dump_add_weak_object_chain (&Vall_ephemerons);
+  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_ephemerons);
 
   Vfinalize_list = Qnil;
   staticpro (&Vfinalize_list);
 
-  Vall_weak_boxes = Qnil;
-  dump_add_weak_object_chain (&Vall_weak_boxes);
+  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_weak_boxes);
 
   DEFVAR_CONST_INT ("most-negative-fixnum", &Vmost_negative_fixnum /*
 The fixnum closest in value to negative infinity.

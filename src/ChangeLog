@@ -5,6 +5,34 @@
 	debug build. Non-debug builds had a performance issue, not a
 	correctness issue.
 
+2018-08-11  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* emacs.c (main_1):
+	vars_of_specifier() uses the weak list infrastructure, and so it
+	needs to be called after vars_of_data() so that the Vall_weak_lists
+	object chain is initialised correctly.
+	* lrecord.h:
+	* lrecord.h (DUMP_ADD_WEAK_OBJECT_CHAIN):
+	New #define, check that an object chain variable is the NULL
+	pointer (as will be the case at early startup if it has not yet
+	been used), then initialise it to Qnil and call
+	dump_add_weak_object_chain(&var). Avoids the bug just fixed in
+	main_1().
+	* chartab.c (vars_of_chartab):
+	Use it.
+	* data.c:
+	Make Vall_weak_lists available to elhash.c, which has some code
+	that needs to modify it very early.
+	* data.c (vars_of_data):
+	Use it.
+	* elhash.c:
+	* elhash.c (syms_of_elhash):
+	Call DUMP_ADD_WEAK_OBJECT_CHAIN() as appropriate. Set
+	Vall_weak_lists Qnull_pointer after creating a weak list; the
+	initial value will be corrupt.
+	* specifier.c (vars_of_specifier):
+	Call DUMP_ADD_WEAK_OBJECT_CHAIN() here.
+
 2018-07-11  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* data.c:

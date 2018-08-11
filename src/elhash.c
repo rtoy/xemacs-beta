@@ -2832,6 +2832,8 @@ hash_table_objects_create (void)
   OBJECT_HAS_METHOD (hash_table, nsubst_structures_descend);
 }
 
+extern Lisp_Object Vall_weak_lists;
+
 void
 syms_of_elhash (void)
 {
@@ -2840,11 +2842,14 @@ syms_of_elhash (void)
   xhash_table (Vobarray)->next_weak = Qunbound;
 
   /* This must NOT be staticpro'd */
-  Vall_weak_hash_tables = Qnil;
-  dump_add_weak_object_chain (&Vall_weak_hash_tables);
+  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_weak_hash_tables);
  
   staticpro (&Vhash_table_test_weak_list);
   Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
+  /* syms_of_elhash() is called *very* early, don't confuse the weak list code
+     in data.c. See also the other code to correct this in
+     vars_of_elhash(). */
+  Vall_weak_lists = Qnull_pointer;
 
   DEFSYMBOL (Qeq);
   DEFSYMBOL (Qeql);
