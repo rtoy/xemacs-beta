@@ -2223,6 +2223,13 @@ void dump_add_weak_object_chain (Lisp_Object *);
 #define dump_add_weak_object_chain(varaddr) DO_NOTHING
 #endif
 
+#define DUMP_ADD_WEAK_OBJECT_CHAIN(var) do {                            \
+    /* Don't add to the chain before marking it for dumping! */         \
+    gc_checking_assert (EQ (var, Qnull_pointer));                       \
+    var = Qnil;                                                         \
+    dump_add_weak_object_chain (&var);                                  \
+  } while (0)
+
 /* Nonzero means Emacs has already been initialized.
    Used during startup to detect startup of dumped Emacs.  */
 extern MODULE_API int initialized;

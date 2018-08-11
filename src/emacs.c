@@ -2067,9 +2067,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Now allow Fprovide() statements to be made. */
       init_provide_once ();
 
-      /* Do that before any specifier creation (esp. vars_of_glyphs()) */
-      vars_of_specifier ();
-
       vars_of_abbrev ();
       vars_of_alloc ();
       vars_of_buffer ();
@@ -2081,6 +2078,8 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_cmds ();
       vars_of_console ();
       vars_of_data ();
+      vars_of_specifier ();
+
 #ifdef DEBUG_XEMACS
       vars_of_debug ();
       vars_of_tests ();
