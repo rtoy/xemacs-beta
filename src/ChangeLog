@@ -1,5 +1,39 @@
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Use an explicit weak list object for the weak hash tables, too.
+	* device.c:
+	* device.c (clear_all_console_local_caches): New. Provided so the
+	weak list code doesn't think various subwindow_instance_cache weak
+	hash tables are reachable at dump time.
+	* elhash.c:
+	* elhash.c (struct Lisp_Hash_Table):
+	Remove the next_weak chain pointer, it's not used for non-weak
+	hash tables, and we've moved to an explicit weak list object for
+	weak hash tables.
+	* elhash.c (make_general_lisp_hash_table):
+	Use the explicit weak list object.
+	* elhash.c (Fcopy_hash_table):
+	Ditto.
+	* elhash.c (finish_marking_weak_hash_tables):
+	Simplify, using the explicit weak list infrastructure.
+	* elhash.c (prune_weak_hash_tables):
+	Ditto.
+	* elhash.c (syms_of_elhash):
+	This can be simplified now we're using the explicit weak list
+	infrastructure.
+	* elhash.c (vars_of_elhash):
+	Ditto.
+	* glyphs.c:
+	* glyphs.c (clear_all_subwindow_instance_caches): New.
+	Clear a window's subwindow instance caches when dumping, so pdump
+	doesn't have to try to dump an image instance.
+	* glyphs.c (clear_frame_subwindow_instance_caches): New. When
+	handed a frame, clear its subwindow instance caches.
+	* glyphs.h:
+	Declare clear_frame_subwindow_instance_caches(). 
+
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Use an explicit weak list object for the syntax table and
 	specifier chains, no need for separate code and slots in the
 	chartab and specifier objects.

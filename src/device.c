@@ -35,6 +35,7 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include "events.h"
 #include "faces.h"
 #include "frame-impl.h"
+#include "glyphs.h"
 #include "keymap.h"
 #include "fontcolor.h"
 #include "redisplay.h"
@@ -457,10 +458,35 @@ set_default_device (Lisp_Object type, Lisp_Object device)
   Vdefault_device_plist = Fplist_put (Vdefault_device_plist, type, device);
 }
 
+static void
+clear_all_console_local_caches (void)
+{
+  Lisp_Object concons;
+
+  CONSOLE_LOOP (concons)
+    {
+      Lisp_Object console = XCAR (concons);
+      
+      LIST_LOOP_2 (device, CONSOLE_DEVICE_LIST (XCONSOLE (console)))
+        {
+          Lisp_Object frmcons;
+          struct device *d = XDEVICE (device);
+
+          d->image_instance_cache = Qnil;
+
+          DEVICE_FRAME_LOOP (frmcons, d)
+            {
+              clear_frame_subwindow_instance_caches (XFRAME (XCAR (frmcons)));
+            }
+        }
+    }
+}
+
 void
 clear_default_devices (void)
 {
   Vdefault_device_plist = Qnil;
+  clear_all_console_local_caches ();
 }
 
 static Lisp_Object

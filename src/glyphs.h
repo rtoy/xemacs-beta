@@ -1191,6 +1191,8 @@ void reset_frame_subwindow_instance_cache (struct frame* f);
 int unmap_subwindow_instance_cache_mapper (Lisp_Object key,
 					   Lisp_Object value, void* finalize);
 
+void clear_frame_subwindow_instance_caches (struct frame*);
+
 struct expose_ignore
 {
 #ifdef NEW_GC
