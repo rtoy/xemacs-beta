@@ -65,13 +65,19 @@ The characters copied are inserted in the buffer before point."
 
 
 ;;; Weak boxes, formerly in data.c, but never used enough to merit a C
-;;; implementation.
+;;; implementation. There is minimal performance and GC impact to this Lisp
+;;; implementation (GC performance actually improves, as in the vast majority
+;;; of the time, when there are no weak boxes, prune_weak_boxes() isn't
+;;; called.) In debugging terms, however, there is no error on attempting to
+;;; print readably, as the C implementation gave, and the print method isn't
+;;; as pretty as it was with the C version.
 
-(autoload 'all-weak-boxes-list "misc")
+;; Quiet the compiler about calls to this:
+(autoload 'weak-box-ref-1 "misc")
 
 (defun weak-box-p (object)
   "Return non-nil if OBJECT is a weak box."
-  (and (vectorp object) (eql (length object) 1)
+  (and (vectorp object) (eql (length object) 3)
        (eq 'cl-weak-box (aref object 0))))
 
 (defun make-weak-box (contents)
@@ -80,23 +86,28 @@ The weak box is a reference to CONTENTS which may be extracted with
 `weak-box-ref'.  However, the weak box does not contribute to the
 reachability of CONTENTS.  When CONTENTS is garbage-collected,
 `weak-box-ref' will return NIL."
-  (caar (set-weak-list-list
-         (load-time-value
-          (progn
-            (defvar #1=#:all-weak-boxes (make-weak-list 'assoc))
-            (defalias 'all-weak-boxes-list
-                ;; If the weak box code is actually used, this #'copy-list
-                ;; might be an issue in terms of GC. It isn't, currently, and
-                ;; so the protection against other callers modifying the list
-                ;; out from under the feet of our code is preferred.
-                #'(lambda () (copy-list (weak-list-list #1#))))
-            #1#))
-         (acons (vector 'cl-weak-box) contents (all-weak-boxes-list)))))
+  (symbol-macrolet ((all-weak-boxes #:all-weak-boxes))
+    (defvar all-weak-boxes)
+    (caar (set-weak-list-list
+           (load-time-value
+            (progn
+              (setq all-weak-boxes (make-weak-list 'assoc))
+              (defalias 'weak-box-ref-1
+                  #'(lambda (weak-box)
+                      (cdr (assq weak-box (weak-list-list all-weak-boxes)))))
+              all-weak-boxes))
+           ;; The #'eq-hash call isn't necessary, but it does mean that weak
+           ;; boxes that refer to distinct objects print distinctly. The
+           ;; #'type-of call is intended to give us a bit more context as to
+           ;; what's going on, without the need to fire up GDB to convert the
+           ;; eq-hash to an address.
+           (acons (vector 'cl-weak-box (type-of contents) (eq-hash contents))
+                  contents (weak-list-list all-weak-boxes))))))
 
 (defun weak-box-ref (weak-box)
   "Return the contents of weak box WEAK-BOX.
 If the contents have been GCed, return NIL."
   (check-argument-type 'weak-box-p weak-box)
-  (cdr (assq weak-box (all-weak-boxes-list))))
+  (weak-box-ref-1 weak-box))
 
 ;;; misc.el ends here
