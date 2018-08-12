@@ -157,8 +157,6 @@ struct Lisp_Hash_Table
   htentry *hentries;
   Lisp_Object test;
   enum hash_table_weakness weakness;
-  Lisp_Object next_weak;     /* Used to chain together all of the weak
-			        hash tables.  Don't mark through this. */
 };
 
 #define CLEAR_HTENTRY(htentry)   \
@@ -704,7 +702,6 @@ const struct memory_description hash_table_description[] = {
   { XD_INT,	   offsetof (Lisp_Hash_Table, weakness) },
   { XD_UNION,	   offsetof (Lisp_Hash_Table, hentries), XD_INDIRECT (1, 0),
     { &htentry_union_description } },
-  { XD_LO_LINK,    offsetof (Lisp_Hash_Table, next_weak) },
   { XD_LISP_OBJECT,offsetof (Lisp_Hash_Table, test) },
   { XD_END }
 };
@@ -787,10 +784,11 @@ make_general_lisp_hash_table (Lisp_Object test,
   /* We leave room for one never-occupied sentinel htentry at the end.  */
   ht->hentries = allocate_hash_table_entries (ht->size + 1);
 
-  if (weakness == HASH_TABLE_NON_WEAK)
-    ht->next_weak = Qunbound;
-  else
-    ht->next_weak = Vall_weak_hash_tables, Vall_weak_hash_tables = hash_table;
+  if (weakness != HASH_TABLE_NON_WEAK)
+    {
+      XWEAK_LIST_LIST (Vall_weak_hash_tables)
+        = Fcons (hash_table, XWEAK_LIST_LIST (Vall_weak_hash_tables));
+    }
 
   return hash_table;
 }
@@ -1265,11 +1263,10 @@ The keys and values will not themselves be copied.
   /* We leave room for one never-occupied sentinel htentry at the end.  */
   ht->hentries = allocate_hash_table_entries (ht_old->size + 1);
   memcpy (ht->hentries, ht_old->hentries, (ht_old->size + 1) * sizeof (htentry));
-
-  if (! EQ (ht->next_weak, Qunbound))
+  if (ht->weakness != HASH_TABLE_NON_WEAK)
     {
-      ht->next_weak = Vall_weak_hash_tables;
-      Vall_weak_hash_tables = obj;
+      XWEAK_LIST_LIST (Vall_weak_hash_tables)
+        = Fcons (hash_table, XWEAK_LIST_LIST (Vall_weak_hash_tables));
     }
 
   return obj;
@@ -2170,20 +2167,20 @@ PACKAGE defaults to the value of `obarray'.
 int
 finish_marking_weak_hash_tables (void)
 {
-  Lisp_Object hash_table;
   int did_mark = 0;
 
-  for (hash_table = Vall_weak_hash_tables;
-       !NILP (hash_table);
-       hash_table = XHASH_TABLE (hash_table)->next_weak)
+  LIST_LOOP_2 (hash_table, XWEAK_LIST_LIST (Vall_weak_hash_tables))
     {
       const Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
       const htentry *e = ht->hentries;
       const htentry *sentinel = e + ht->size;
 
-      if (! marked_p (hash_table))
-	/* The hash table is probably garbage.  Ignore it. */
-	continue;
+      if (!marked_p (hash_table))
+        {
+	  /* This hash table itself is garbage, let prune_weak_lists() remove
+             it. */
+          continue;
+	}
 
       /* Now, scan over all the pairs.  For all pairs that are
 	 half-marked, we may need to mark the other half if we're
@@ -2264,43 +2261,27 @@ finish_marking_weak_hash_tables (void)
 void
 prune_weak_hash_tables (void)
 {
-  Lisp_Object hash_table, prev = Qnil;
-  for (hash_table = Vall_weak_hash_tables;
-       !NILP (hash_table);
-       hash_table = XHASH_TABLE (hash_table)->next_weak)
+  LIST_LOOP_2 (hash_table, XWEAK_LIST_LIST (Vall_weak_hash_tables))
     {
-      if (! marked_p (hash_table))
-	{
-	  /* This hash table itself is garbage.  Remove it from the list. */
-	  if (NILP (prev))
-	    Vall_weak_hash_tables = XHASH_TABLE (hash_table)->next_weak;
-	  else
-	    XHASH_TABLE (prev)->next_weak = XHASH_TABLE (hash_table)->next_weak;
-	}
-      else
-	{
-	  /* Now, scan over all the pairs.  Remove all of the pairs
-	     in which the key or value, or both, is unmarked
-	     (depending on the weakness of the hash table). */
-	  Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
-	  htentry *entries = ht->hentries;
-	  htentry *sentinel = entries + ht->size;
-	  htentry *e;
+      /* Now, scan over all the pairs.  Remove all of the pairs
+         in which the key or value, or both, is unmarked
+         (depending on the weakness of the hash table). */
+      Lisp_Hash_Table *ht = XHASH_TABLE (hash_table);
+      htentry *entries = ht->hentries;
+      htentry *sentinel = entries + ht->size;
+      htentry *e;
 
-	  for (e = entries; e < sentinel; e++)
-	    if (!HTENTRY_CLEAR_P (e))
-	      {
-	      again:
-		if (!marked_p (e->key) || !marked_p (e->value))
-		  {
-		    remhash_1 (ht, entries, e);
-		    if (!HTENTRY_CLEAR_P (e))
-		      goto again;
-		  }
-	      }
-
-	  prev = hash_table;
-	}
+      for (e = entries; e < sentinel; e++)
+        if (!HTENTRY_CLEAR_P (e))
+          {
+          again:
+            if (!marked_p (e->key) || !marked_p (e->value))
+              {
+                remhash_1 (ht, entries, e);
+                if (!HTENTRY_CLEAR_P (e))
+                  goto again;
+              }
+          }
     }
 }
 
@@ -2837,13 +2818,6 @@ extern Lisp_Object Vall_weak_lists;
 void
 syms_of_elhash (void)
 {
-  /* This was set incorrectly since init_elhash_once_early() was called before
-     Qunbound had a useful value. */
-  xhash_table (Vobarray)->next_weak = Qunbound;
-
-  /* This must NOT be staticpro'd */
-  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_weak_hash_tables);
- 
   staticpro (&Vhash_table_test_weak_list);
   Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
   /* syms_of_elhash() is called *very* early, don't confuse the weak list code
@@ -2969,6 +2943,10 @@ vars_of_elhash (void)
 
   Vhash_table_test_weak_list = make_weak_list (WEAK_LIST_KEY_ASSOC);
   XWEAK_LIST_LIST (Vhash_table_test_weak_list) = weak_list_list;
+
+  gc_checking_assert (EQ (Vall_weak_hash_tables, Qnull_pointer));
+  Vall_weak_hash_tables = make_weak_list (WEAK_LIST_SIMPLE);
+  staticpro (&Vall_weak_hash_tables);
 
 #ifdef MEMORY_USAGE_STATS
   OBJECT_HAS_PROPERTY

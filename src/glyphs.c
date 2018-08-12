@@ -4594,6 +4594,25 @@ reset_frame_subwindow_instance_cache (struct frame* f)
     }
 }
 
+static void
+clear_all_subwindow_instance_caches (struct window *w)
+{
+  if (!NILP (w->next)) clear_all_subwindow_instance_caches (XWINDOW (w->next));
+  if (!NILP (w->vchild)) clear_all_subwindow_instance_caches (XWINDOW (w->vchild));
+  if (!NILP (w->hchild)) clear_all_subwindow_instance_caches (XWINDOW (w->hchild));
+
+  /* Setting w->subwindow_instance_cache to Qnil trips some assertion failures
+     elsewhere on shutdown. */
+  Fclrhash (w->subwindow_instance_cache);
+}
+
+/* Used when dumping, so no image instances need to be dumped. */
+void
+clear_frame_subwindow_instance_caches (struct frame* f)
+{
+  clear_all_subwindow_instance_caches (XWINDOW (f->root_window));
+}
+
 /*****************************************************************************
  *                           subwindow exposure ignorance                    *
  *****************************************************************************/
