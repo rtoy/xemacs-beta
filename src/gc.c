@@ -2152,9 +2152,6 @@ gc_finish_mark (void)
      method */
   prune_weak_hash_tables ();
   prune_weak_lists ();
-  prune_specifiers ();
-  prune_syntax_tables ();
-
   prune_ephemerons ();
   prune_weak_boxes ();
 }

@@ -2378,11 +2378,10 @@ update_syntax_table (Lisp_Object USED_IF_MIRROR_TABLE (table))
   assert (XCHAR_TABLE (table)->mirror_table_p);
   if (EQ (nonmirror, Vstandard_syntax_table))
     {
-      Lisp_Object syntab;
-
-      for (syntab = Vall_syntax_tables; !NILP (syntab);
-	   syntab = XCHAR_TABLE (syntab)->next_table)
-	update_just_this_syntax_table (syntab);
+      LIST_LOOP_2 (syntab, XWEAK_LIST_LIST (Vall_syntax_tables))
+        {
+          update_just_this_syntax_table (syntab);
+        }
     }
   else
     update_just_this_syntax_table (nonmirror);

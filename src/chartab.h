@@ -183,7 +183,6 @@ struct Lisp_Char_Table
   
   enum char_table_type type;
 
-  Lisp_Object next_table; /* DO NOT mark through this. */
 #ifdef MIRROR_TABLE
   /* stuff used for syntax tables */
   Lisp_Object mirror_table; /* points to mirror table for this table
@@ -224,7 +223,6 @@ DECLARE_LISP_OBJECT (char_table, Lisp_Char_Table);
 #endif /* (not) MULE */
 #define XCHAR_TABLE_CATEGORY_P(ct) CHAR_TABLE_CATEGORY_P (XCHAR_TABLE (ct))
 
-#define XCHAR_TABLE_NEXT_TABLE(ct) (XCHAR_TABLE (ct)->next_table)
 #ifdef MIRROR_TABLE
 #define XCHAR_TABLE_MIRROR_TABLE(ct) (XCHAR_TABLE (ct)->mirror_table)
 #define XCHAR_TABLE_DIRTY(ct) (XCHAR_TABLE (ct)->dirty)

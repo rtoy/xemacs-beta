@@ -222,11 +222,6 @@ struct Lisp_Specifier
   NORMAL_LISP_OBJECT_HEADER header;
   struct specifier_methods *methods;
 
-  /* we keep a chained list of all current specifiers, for GC cleanup
-     purposes.  Do NOT mark through this, or specifiers will never
-     be GC'd. */
-  Lisp_Object next_specifier;
-
   /* This is a straight list of instantiators. */
   Lisp_Object global_specs;
 
