@@ -1,3 +1,11 @@
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* misc.el:
+	* misc.el (weak-box-p): New.
+	* misc.el (make-weak-box): New.
+	* misc.el (weak-box-ref): New.
+	Move all these functions here from data.c.
+
 2018-07-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* backquote.el (bq-process):

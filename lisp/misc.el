@@ -63,4 +63,40 @@ The characters copied are inserted in the buffer before point."
 				 (+ n (point)))))))
     (insert string)))
 
+
+;;; Weak boxes, formerly in data.c, but never used enough to merit a C
+;;; implementation.
+
+(autoload 'all-weak-boxes-list "misc")
+
+(defun weak-box-p (object)
+  "Return non-nil if OBJECT is a weak box."
+  (and (vectorp object) (eql (length object) 1)
+       (eq 'cl-weak-box (aref object 0))))
+
+(defun make-weak-box (contents)
+  "Return a new weak box from value CONTENTS.
+The weak box is a reference to CONTENTS which may be extracted with
+`weak-box-ref'.  However, the weak box does not contribute to the
+reachability of CONTENTS.  When CONTENTS is garbage-collected,
+`weak-box-ref' will return NIL."
+  (caar (set-weak-list-list
+         (load-time-value
+          (progn
+            (defvar #1=#:all-weak-boxes (make-weak-list 'assoc))
+            (defalias 'all-weak-boxes-list
+                ;; If the weak box code is actually used, this #'copy-list
+                ;; might be an issue in terms of GC. It isn't, currently, and
+                ;; so the protection against other callers modifying the list
+                ;; out from under the feet of our code is preferred.
+                #'(lambda () (copy-list (weak-list-list #1#))))
+            #1#))
+         (acons (vector 'cl-weak-box) contents (all-weak-boxes-list)))))
+
+(defun weak-box-ref (weak-box)
+  "Return the contents of weak box WEAK-BOX.
+If the contents have been GCed, return NIL."
+  (check-argument-type 'weak-box-p weak-box)
+  (cdr (assq weak-box (all-weak-boxes-list))))
+
 ;;; misc.el ends here

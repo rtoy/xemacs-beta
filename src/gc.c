@@ -2146,14 +2146,15 @@ gc_finish_mark (void)
   ;
 #endif /* not USE_KKCC */
 
-  /* And prune (this needs to be called after everything else has been
-     marked and before we do any sweeping). */
-  /* #### this is somewhat ad-hoc and should probably be an object
-     method */
+  /* And prune (this needs to be called after everything else has been marked
+     and before we do any sweeping). If you're considering whether you would
+     like to add a prune function for a new object type you have added,
+     consider implementing the mark-and-prune approach as a weak list first of
+     all, and only if that doesn't work or is uneconomic of memory, consider
+     adding another entry here.  */
   prune_weak_lists ();
   prune_weak_hash_tables ();
   prune_ephemerons ();
-  prune_weak_boxes ();
 }
 
 #ifdef NEW_GC

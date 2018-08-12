@@ -3416,28 +3416,6 @@ void define_structure_type_keyword (struct structure_type *st,
 						     Lisp_Object value,
 						     Error_Behavior errb));
 
-/*---------------------------- weak boxes ------------------------------*/
-
-struct weak_box
-{
-  NORMAL_LISP_OBJECT_HEADER header;
-  Lisp_Object value;
-
-  Lisp_Object next_weak_box; /* don't mark through this! */
-};
-
-void prune_weak_boxes (void);
-Lisp_Object make_weak_box (Lisp_Object value);
-Lisp_Object weak_box_ref (Lisp_Object value);
-
-DECLARE_LISP_OBJECT (weak_box, struct weak_box);
-#define XWEAK_BOX(x) XRECORD (x, weak_box, struct weak_box)
-#define XSET_WEAK_BOX(x, v) (XWEAK_BOX (x)->value = (v))
-#define wrap_weak_box(p) wrap_record (p, weak_box)
-#define WEAK_BOXP(x) RECORDP (x, weak_box)
-#define CHECK_WEAK_BOX(x) CHECK_RECORD (x, weak_box)
-#define CONCHECK_WEAK_BOX(x) CONCHECK_RECORD (x, weak_box)
-
 /*--------------------------- ephemerons ----------------------------*/
 
 struct ephemeron 
