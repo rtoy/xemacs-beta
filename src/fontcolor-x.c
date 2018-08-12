@@ -833,7 +833,7 @@ x_font_instance_properties (Lisp_Font_Instance *f)
       Lisp_Object name, value;
       Atom atom = props [i].name;
       Ibyte *name_str = 0;
-      Bytecount name_len;
+      Bytecount name_len = 0;
       Extbyte *namestrext = XGetAtomName (dpy, atom);
 
       if (namestrext)
