@@ -1,5 +1,18 @@
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* data.c:
+	* data.c (syms_of_data):
+	* data.c (vars_of_data):
+	* gc.c (gc_finish_mark):
+	* gc.c (gc_finalize):
+	* lisp.h:
+	* lrecord.h (enum lrecord_type):
+	Remove the weak-box implementation from C. It was never used
+	enough to merit being in C, and it is easily implemented in Lisp
+	using the weak list infrastructure.
+
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* gc.c (gc_finish_mark):
 	Move prune_weak_lists() before prune_weak_hash_tables(), so the
 	latter doesn't encounter garbage hash tables.

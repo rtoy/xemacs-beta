@@ -3637,135 +3637,6 @@ Change the list contained in a weak-list object.
   return new_list;
 }
 
-
-/************************************************************************/
-/*                              weak boxes                              */
-/************************************************************************/
-
-static Lisp_Object Vall_weak_boxes; /* Gemarke es niemals ever!!! */
-
-void
-prune_weak_boxes (void)
-{
-  Lisp_Object rest, prev = Qnil;
-  int removep = 0;
-
-  for (rest = Vall_weak_boxes;
-       !NILP(rest);
-       rest = XWEAK_BOX (rest)->next_weak_box)
-    {
-      if (! (marked_p (rest)))
-	/* This weak box itself is garbage. */
-	removep = 1;
-
-       if (! marked_p (XWEAK_BOX (rest)->value))
-	 {
-	   XSET_WEAK_BOX (rest, Qnil);
-	   removep = 1;
-	 }
-
-       if (removep)
-	 {
-	   /* Remove weak box from list. */
-	   if (NILP (prev))
-	     Vall_weak_boxes = XWEAK_BOX (rest)->next_weak_box;
-	   else
-	     XWEAK_BOX (prev)->next_weak_box = XWEAK_BOX (rest)->next_weak_box;
-	   removep = 0;
-	 }
-       else
-	 prev = rest;
-    }
-}
-
-static Lisp_Object
-mark_weak_box (Lisp_Object UNUSED (obj))
-{
-  return Qnil;
-}
-
-static void
-print_weak_box (Lisp_Object obj, Lisp_Object printcharfun, int escapeflag)
-{
-  if (print_readably)
-    {
-      printing_unreadable_lisp_object (obj, 0);
-    }
-
-  write_ascstring (printcharfun, "#<weak-box ");
-  print_internal (XWEAK_BOX (obj)->value, printcharfun, escapeflag);
-  write_fmt_string (printcharfun, " 0x%x>", LISP_OBJECT_UID (obj));
-}
-
-static int
-weak_box_equal (Lisp_Object obj1, Lisp_Object obj2, int depth, int foldcase)
-{
-  struct weak_box *wb1 = XWEAK_BOX (obj1);
-  struct weak_box *wb2 = XWEAK_BOX (obj2);
-
-  return (internal_equal_0 (wb1->value, wb2->value, depth + 1, foldcase));
-}
-
-static Hashcode
-weak_box_hash (Lisp_Object obj, int depth, Boolint equalp)
-{
-  struct weak_box *wb = XWEAK_BOX (obj);
-
-  return internal_hash (wb->value, depth + 1, equalp);
-}
-
-Lisp_Object
-make_weak_box (Lisp_Object value)
-{
-  Lisp_Object result = ALLOC_NORMAL_LISP_OBJECT (weak_box);
-  struct weak_box *wb = XWEAK_BOX (result);
-
-  wb->value = value;
-  result = wrap_weak_box (wb);
-  wb->next_weak_box = Vall_weak_boxes;
-  Vall_weak_boxes = result;
-  return result;
-}
-
-static const struct memory_description weak_box_description[] = {
-  { XD_LO_LINK, offsetof (struct weak_box, value) },
-  { XD_END}
-};
-
-DEFINE_NODUMP_LISP_OBJECT ("weak-box", weak_box, mark_weak_box,
-			   print_weak_box, 0, weak_box_equal,
-			   weak_box_hash, weak_box_description,
-			   struct weak_box);
-
-DEFUN ("make-weak-box", Fmake_weak_box, 1, 1, 0, /*
-Return a new weak box from value CONTENTS.
-The weak box is a reference to CONTENTS which may be extracted with
-`weak-box-ref'.  However, the weak box does not contribute to the
-reachability of CONTENTS.  When CONTENTS is garbage-collected,
-`weak-box-ref' will return NIL.
-*/
-       (value))
-{
-  return make_weak_box (value);
-}
-
-DEFUN ("weak-box-ref", Fweak_box_ref, 1, 1, 0, /*
-Return the contents of weak box WEAK-BOX.
-If the contents have been GCed, return NIL.
-*/
-       (weak_box))
-{
-  return XWEAK_BOX (weak_box)->value;
-}
-
-DEFUN ("weak-box-p", Fweak_boxp, 1, 1, 0, /*
-Return non-nil if OBJECT is a weak box.
-*/
-       (object))
-{
-  return WEAK_BOXP (object) ? Qt : Qnil;
-}
-
 /************************************************************************/
 /*                              ephemerons                              */
 /************************************************************************/
@@ -4357,7 +4228,6 @@ syms_of_data (void)
 {
   INIT_LISP_OBJECT (weak_list);
   INIT_LISP_OBJECT (ephemeron);
-  INIT_LISP_OBJECT (weak_box);
 
   DEFSYMBOL (Qlambda);
   DEFSYMBOL (Qlistp);
@@ -4467,9 +4337,6 @@ syms_of_data (void)
   DEFSUBR (Fmake_ephemeron);
   DEFSUBR (Fephemeron_ref);
   DEFSUBR (Fephemeronp);
-  DEFSUBR (Fmake_weak_box);
-  DEFSUBR (Fweak_box_ref);
-  DEFSUBR (Fweak_boxp);
 }
 
 void
@@ -4481,8 +4348,6 @@ vars_of_data (void)
 
   Vfinalize_list = Qnil;
   staticpro (&Vfinalize_list);
-
-  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_weak_boxes);
 
   DEFVAR_CONST_INT ("most-negative-fixnum", &Vmost_negative_fixnum /*
 The fixnum closest in value to negative infinity.

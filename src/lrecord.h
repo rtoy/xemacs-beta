@@ -395,7 +395,6 @@ enum lrecord_type
   lrecord_type_tooltalk_message,	/* Lisp_Tooltalk_Message */
   lrecord_type_tooltalk_pattern,	/* Lisp_Tooltalk_Pattern */
   lrecord_type_vector,			/* Lisp_Vector */
-  lrecord_type_weak_box,		/* struct weak_box */
   lrecord_type_weak_list,		/* struct weak_list */
   lrecord_type_window,			/* struct window */
   lrecord_type_window_mirror,		/* struct window_mirror */
