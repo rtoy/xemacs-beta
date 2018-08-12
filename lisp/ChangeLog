@@ -1,6 +1,18 @@
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* misc.el:
+	* misc.el (weak-box-p):
+	* misc.el (make-weak-box):
+	* misc.el (weak-box-ref):
+	Improve the implementation here; make #'weak-box-ref free in terms
+	of garbage, make weak boxes that reference distinct objects print
+	distinctly, give information as to the type of CONTENTS stored.
+	Document some more on the performance and debugging implications
+	of the Lisp implementation.
+
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* misc.el:
 	* misc.el (weak-box-p): New.
 	* misc.el (make-weak-box): New.
 	* misc.el (weak-box-ref): New.
