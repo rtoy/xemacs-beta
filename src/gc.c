@@ -2150,8 +2150,8 @@ gc_finish_mark (void)
      marked and before we do any sweeping). */
   /* #### this is somewhat ad-hoc and should probably be an object
      method */
-  prune_weak_hash_tables ();
   prune_weak_lists ();
+  prune_weak_hash_tables ();
   prune_ephemerons ();
   prune_weak_boxes ();
 }

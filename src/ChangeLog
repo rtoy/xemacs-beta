@@ -1,5 +1,11 @@
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* gc.c (gc_finish_mark):
+	Move prune_weak_lists() before prune_weak_hash_tables(), so the
+	latter doesn't encounter garbage hash tables.
+
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Use an explicit weak list object for the weak hash tables, too.
 	* device.c:
 	* device.c (clear_all_console_local_caches): New. Provided so the
