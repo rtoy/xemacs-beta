@@ -1,5 +1,10 @@
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* fontcolor-x.c (x_font_instance_properties):
+	Initialise name_len here to quieten the compiler.
+
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* data.c:
 	* data.c (syms_of_data):
 	* data.c (vars_of_data):
