@@ -1145,7 +1145,6 @@ static const struct memory_description char_table_description[] = {
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, table) },
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, parent) },
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, default_) },
-  { XD_LO_LINK,     offsetof (Lisp_Char_Table, next_table) },
 #ifdef MIRROR_TABLE
   { XD_LISP_OBJECT, offsetof (Lisp_Char_Table, mirror_table) },
 #endif /* MIRROR_TABLE */
@@ -1157,31 +1156,6 @@ DEFINE_DUMPABLE_LISP_OBJECT ("char-table", char_table,
 			     char_table_equal, char_table_hash,
 			     char_table_description,
 			     Lisp_Char_Table);
-
-/* WARNING: All functions of this nature need to be written extremely
-   carefully to avoid crashes during GC.  Cf. prune_specifiers()
-   and prune_weak_hash_tables(). */
-
-void
-prune_syntax_tables (void)
-{
-  Lisp_Object rest, prev = Qnil;
-
-  for (rest = Vall_syntax_tables;
-       !NILP (rest);
-       rest = XCHAR_TABLE (rest)->next_table)
-    {
-      if (! marked_p (rest))
-	{
-	  /* This table is garbage.  Remove it from the list. */
-	  if (NILP (prev))
-	    Vall_syntax_tables = XCHAR_TABLE (rest)->next_table;
-	  else
-	    XCHAR_TABLE (prev)->next_table =
-	      XCHAR_TABLE (rest)->next_table;
-	}
-    }
-}
 
 static void
 decode_char_table_range (Lisp_Object range, struct chartab_range *outrange)
@@ -1361,13 +1335,12 @@ make_char_table (Lisp_Object type, int internal_p)
   else
     ct->mirror_table = Qnil;
 #endif /* MIRROR_TABLE */
-  ct->next_table = Qnil;
   ct->parent = Qnil;
   ct->default_ = Qnil;
   if (ty == CHAR_TABLE_TYPE_SYNTAX)
     {
-      ct->next_table = Vall_syntax_tables;
-      Vall_syntax_tables = obj;
+      XWEAK_LIST_LIST (Vall_syntax_tables)
+        = Fcons (obj, XWEAK_LIST_LIST (Vall_syntax_tables));
     }
   Freset_char_table (obj);
   return obj;
@@ -1484,12 +1457,10 @@ as CHAR-TABLE.  The values will not themselves be copied.
   else
     ctnew->mirror_table = Qnil;
 #endif /* MIRROR_TABLE */
-
-  ctnew->next_table = Qnil;
   if (ctnew->type == CHAR_TABLE_TYPE_SYNTAX)
     {
-      ctnew->next_table = Vall_syntax_tables;
-      Vall_syntax_tables = obj;
+      XWEAK_LIST_LIST (Vall_syntax_tables)
+        = Fcons (obj, XWEAK_LIST_LIST (Vall_syntax_tables));
     }
   return obj;
 }
@@ -2522,8 +2493,8 @@ vars_of_chartab (void)
     (char_table, memusage_stats_list, list2 (Qt, Qpage_tables));
 #endif /* MEMORY_USAGE_STATS */
 
-  /* DO NOT staticpro this.  It works just like Vweak_hash_tables. */
-  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_syntax_tables);
+  staticpro (&Vall_syntax_tables);
+  Vall_syntax_tables = make_weak_list (WEAK_LIST_SIMPLE);
 
   /* The value at level 4 is not 2^32 - 1.  With 32-bit EMACS_INTs, it's
      2^30 - 1 because characters are only 30 bits wide. */

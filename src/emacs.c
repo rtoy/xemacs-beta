@@ -2067,8 +2067,9 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       /* Now allow Fprovide() statements to be made. */
       init_provide_once ();
 
-      vars_of_abbrev ();
+      vars_of_data ();
       vars_of_alloc ();
+      vars_of_abbrev ();
       vars_of_buffer ();
       vars_of_bytecode ();
       vars_of_callint ();
@@ -2077,7 +2078,6 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       vars_of_cmdloop ();
       vars_of_cmds ();
       vars_of_console ();
-      vars_of_data ();
       vars_of_specifier ();
 
 #ifdef DEBUG_XEMACS

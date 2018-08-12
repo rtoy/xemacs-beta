@@ -95,9 +95,7 @@ static const struct sized_memory_description sted_description = {
 static Lisp_Object Vspecifier_type_list;
 
 static Lisp_Object Vcached_specifiers;
-/* Do NOT mark through this, or specifiers will never be GC'd. */
 static Lisp_Object Vall_specifiers;
-
 static Lisp_Object Vunlock_ghost_specifiers;
 
 /* #### The purpose of this is to check for inheritance loops
@@ -207,13 +205,9 @@ cleanup_assoc_list (Lisp_Object list)
 void
 cleanup_specifiers (void)
 {
-  Lisp_Object rest;
-
-  for (rest = Vall_specifiers;
-       !NILP (rest);
-       rest = XSPECIFIER (rest)->next_specifier)
+  LIST_LOOP_2 (elt, XWEAK_LIST_LIST (Vall_specifiers))
     {
-      Lisp_Specifier *sp = XSPECIFIER (rest);
+      Lisp_Specifier *sp = XSPECIFIER (elt);
       /* This effectively changes the specifier specs.
 	 However, there's no need to call
 	 recompute_cached_specifier_everywhere() or the
@@ -234,20 +228,16 @@ cleanup_specifiers (void)
 void
 kill_specifier_buffer_locals (Lisp_Object buffer)
 {
-  Lisp_Object rest;
-
-  for (rest = Vall_specifiers;
-       !NILP (rest);
-       rest = XSPECIFIER (rest)->next_specifier)
+  LIST_LOOP_2 (elt, XWEAK_LIST_LIST (Vall_specifiers))
     {
-      Lisp_Specifier *sp = XSPECIFIER (rest);
+      Lisp_Specifier *sp = XSPECIFIER (elt);
 
       /* Make sure we're actually going to be changing something.
 	 Fremove_specifier() always calls
 	 recompute_cached_specifier_everywhere() (#### but should
 	 be smarter about this). */
       if (!NILP (assq_no_quit (buffer, sp->buffer_specs)))
-	Fremove_specifier (rest, buffer, Qnil, Qnil);
+	Fremove_specifier (elt, buffer, Qnil, Qnil);
     }
 }
 
@@ -283,38 +273,10 @@ mark_specifier (Lisp_Object obj)
    converted to live ones again if the dead object is in a window
    configuration.  Therefore, for windows, "no longer in use"
    corresponds to when the window object is garbage-collected.
-   We now use weak lists for this purpose.
+   We now use weak lists for this purpose. 
 
-*/
-
-void
-prune_specifiers (void)
-{
-  Lisp_Object rest, prev = Qnil;
-
-  for (rest = Vall_specifiers;
-       !NILP (rest);
-       rest = XSPECIFIER (rest)->next_specifier)
-    {
-      if (! marked_p (rest))
-	{
-	  Lisp_Specifier* sp = XSPECIFIER (rest);
-	  /* A bit of assertion that we're removing both parts of the
-	     magic one altogether */
-	  assert (!MAGIC_SPECIFIER_P (sp)
-		  || (BODILY_SPECIFIER_P (sp) && marked_p (sp->fallback))
-		  || (GHOST_SPECIFIER_P (sp) && marked_p (sp->magic_parent)));
-	  /* This specifier is garbage.  Remove it from the list. */
-	  if (NILP (prev))
-	    Vall_specifiers = sp->next_specifier;
-	  else
-	    XSPECIFIER (prev)->next_specifier = sp->next_specifier;
-	}
-      else
-	prev = rest;
-    }
-}
-
+   [old prune_specifiers () elided.] */
+
 static Lisp_Object specifier_get_external_inst_list (Lisp_Object specifier,
                                                      Lisp_Object locale,
                                                      enum spec_locale_type,
@@ -483,7 +445,6 @@ static const struct sized_memory_description specifier_extra_description_map[]
 const struct memory_description specifier_description[] = {
   { XD_BLOCK_PTR,  offsetof (Lisp_Specifier, methods), 1,
     { &specifier_methods_description } },
-  { XD_LO_LINK,     offsetof (Lisp_Specifier, next_specifier) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, global_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, device_specs) },
   { XD_LISP_OBJECT, offsetof (Lisp_Specifier, frame_specs) },
@@ -593,9 +554,9 @@ make_specifier_internal (struct specifier_methods *spec_meths,
   sp->fallback = Qnil;
   sp->magic_parent = Qnil;
   sp->caching = 0;
-  sp->next_specifier = Vall_specifiers;
 
-  Vall_specifiers = specifier;
+  XWEAK_LIST_LIST (Vall_specifiers)
+    = Fcons (specifier, XWEAK_LIST_LIST (Vall_specifiers));
 
   if (call_create_meth)
     {
@@ -4015,9 +3976,8 @@ vars_of_specifier (void)
   Vcached_specifiers = Qnil;
   staticpro (&Vcached_specifiers);
 
-  /* Do NOT mark through this, or specifiers will never be GC'd.
-     This is the same deal as for weak hash tables. */
-  DUMP_ADD_WEAK_OBJECT_CHAIN (Vall_specifiers);
+  Vall_specifiers = make_weak_list (WEAK_LIST_SIMPLE);
+  staticpro (&Vall_specifiers);
 
   Vuser_defined_tags = Qnil;
   staticpro (&Vuser_defined_tags);

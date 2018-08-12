@@ -1,3 +1,35 @@
+2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Use an explicit weak list object for the syntax table and
+	specifier chains, no need for separate code and slots in the
+	chartab and specifier objects.
+	* chartab.c:
+	* chartab.c (prune_syntax_tables): Removed.
+	* chartab.c (decode_char_table_range):
+	* chartab.c (make_char_table):
+	* chartab.c (Fcopy_char_table):
+	* chartab.c (vars_of_chartab):
+	Vall_syntax_tables is now an explicit weak list object.
+	* chartab.h:
+	* chartab.h (struct Lisp_Char_Table):
+	Remove the next_table chain element from this struct.
+	* emacs.c (main_1):
+	Move vars_of_data() even earlier in the startup sequence, so 
+	Vall_weak_lists is available.
+	* gc.c (gc_finish_mark):
+	No longer call prune_specifiers(), prune_syntax_tables().
+	* specifier.c:
+	* specifier.c (cleanup_specifiers):
+	* specifier.c (kill_specifier_buffer_locals):
+	* specifier.c (make_specifier_internal):
+	* specifier.c (vars_of_specifier):
+	* specifier.h (struct Lisp_Specifier):
+	Remove prune_specifiers and the next_specifier element in the
+	struct.
+	* syntax.c (update_syntax_table):
+	Loop through the weak list list of Vall_syntax_tables, rather than
+	chaining through the next_table slot.
+
 2018-08-09  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lisp.h (XSET_STRING_ASCII_BEGIN):
