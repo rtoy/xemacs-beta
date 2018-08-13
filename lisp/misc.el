@@ -77,7 +77,7 @@ The characters copied are inserted in the buffer before point."
 
 (defun weak-box-p (object)
   "Return non-nil if OBJECT is a weak box."
-  (and (vectorp object) (eql (length object) 3)
+  (and (vectorp object) (eql (length object) 2)
        (eq 'cl-weak-box (aref object 0))))
 
 (defun make-weak-box (contents)
@@ -88,21 +88,21 @@ reachability of CONTENTS.  When CONTENTS is garbage-collected,
 `weak-box-ref' will return NIL."
   (symbol-macrolet ((all-weak-boxes #:all-weak-boxes))
     (defvar all-weak-boxes)
-    (caar (set-weak-list-list
-           (load-time-value
-            (progn
-              (setq all-weak-boxes (make-weak-list 'assoc))
-              (defalias 'weak-box-ref-1
-                  #'(lambda (weak-box)
-                      (cdr (assq weak-box (weak-list-list all-weak-boxes)))))
-              all-weak-boxes))
-           ;; The #'eq-hash call isn't necessary, but it does mean that weak
-           ;; boxes that refer to distinct objects print distinctly. The
-           ;; #'type-of call is intended to give us a bit more context as to
-           ;; what's going on, without the need to fire up GDB to convert the
-           ;; eq-hash to an address.
-           (acons (vector 'cl-weak-box (type-of contents) (eq-hash contents))
-                  contents (weak-list-list all-weak-boxes))))))
+    (let ((vector
+           (caar (set-weak-list-list
+                  (load-time-value
+                   (progn
+                     (defalias 'weak-box-ref-1
+                         #'(lambda (weak-box)
+                             (cdr (assq weak-box
+                                        (weak-list-list all-weak-boxes)))))
+                     (setq all-weak-boxes (make-weak-list 'assoc))))
+                  (acons (vector 'cl-weak-box nil)
+                         contents (weak-list-list all-weak-boxes))))))
+      ;; The second element of the vector is the eq hash of the vector itself,
+      ;; to ensure that distinct weak boxes print distinctly.
+      (aset vector 1 (eq-hash vector))
+      vector)))
 
 (defun weak-box-ref (weak-box)
   "Return the contents of weak box WEAK-BOX.
