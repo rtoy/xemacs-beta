@@ -1,3 +1,10 @@
+2018-08-13  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* misc.el (make-weak-box):
+	Have distinct weak boxes print distinctly; remove information on
+	the type of the one-time contents from the weak box, it doesn't
+	add anything and will be inaccurate once the contents are nil.
+
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* misc.el:
