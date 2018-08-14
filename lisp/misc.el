@@ -96,7 +96,10 @@ reachability of CONTENTS.  When CONTENTS is garbage-collected,
                          #'(lambda (weak-box)
                              (cdr (assq weak-box
                                         (weak-list-list all-weak-boxes)))))
-                     (setq all-weak-boxes (make-weak-list 'assoc))))
+                     ;; Use defvar so calls to #'make-weak-box when it is
+                     ;; interpreted don't reset all-weak-boxes every time.
+                     (defvar all-weak-boxes (make-weak-list 'assoc))
+                     all-weak-boxes))
                   (acons (vector 'cl-weak-box nil)
                          contents (weak-list-list all-weak-boxes))))))
       ;; The second element of the vector is the eq hash of the vector itself,

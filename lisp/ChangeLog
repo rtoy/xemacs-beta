@@ -1,3 +1,9 @@
+2018-08-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* misc.el (make-weak-box):
+	Make this code work when run compiled too, not that it will come
+	up much.
+
 2018-08-13  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* misc.el (make-weak-box):
