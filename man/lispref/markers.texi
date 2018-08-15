@@ -348,7 +348,8 @@ marker object.
 
 @defun marker-position marker
 This function returns the position that @var{marker} points to, or
-@code{nil} if it points nowhere.
+@code{nil} if it points nowhere. This operation is O(N) where @var{N} is
+the number of characters in the buffer; avoid it if you can.
 @end defun
 
 @defun marker-buffer marker

@@ -1,3 +1,9 @@
+2018-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/markers.texi (Information from Markers):
+	Document an important algorithmic consideration with
+	#'marker-position.
+
 2017-11-23  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* internals/internals.texi (A Summary of the Various XEmacs Modules):

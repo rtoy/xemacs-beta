@@ -382,6 +382,176 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 #endif /* WITH_NUMBER_TYPES */
 }
 
+#ifdef MULE
+#define MAX_ICHAR_LEN_FORMAT(fmt) (ichar_len_fmt (CHAR_CODE_LIMIT - 1, fmt))
+#else
+#define MAX_ICHAR_LEN_FORMAT(buf) MAX_ICHAR_LEN
+#endif
+
+/* Given POS, the Bytebpos corresponding to MARKER, return the smallest
+   Charbpos it can represent, which represents the situation where all the
+   characters are of length MAX_ICHAR_LEN.  */
+#define LOWER_CHAR_BOUND(marker, pos)                                   \
+  (pos / MAX_ICHAR_LEN_FORMAT (BUF_FORMAT (XMARKER (marker)->buf)))
+
+static Boolint
+bytecode_gtr (Lisp_Object obj1, Lisp_Object obj2)
+{
+  if (MARKERP (obj1) && FIXNUMP (obj2))
+    {
+      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
+
+      /* (POS1 / MAX_ICHAR_LEN) is a lower bound on OBJ1's character length,
+         we may be able to give a result without an O(N) operation. */
+      if (cpos1min > XREALFIXNUM (obj2))
+        {
+          return 1;
+        }
+      /* Similarly, POS1 is an upper limit on OBJ1's character offset, and if
+         it is less than or equal to OBJ2, OBJ1's character offset cannot be
+         greater than OBJ2. */
+      if (pos1 <= XREALFIXNUM (obj2))
+        {
+          return 0;
+        }
+    }
+  else if (FIXNUMP (obj1) && MARKERP (obj2))
+    {
+      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
+
+      /* The byte marker position is an upper limit on the character marker
+         position, we may be able to compare without O(N) lossage. */
+      if (XREALFIXNUM (obj1) > pos2)
+        {
+          return 1;
+        }
+      if (XREALFIXNUM (obj2) <= cpos2min)
+        {
+          return 0;
+        }
+    }
+
+  /* It is common to compare a marker to the result of (point) or (point-max),
+     which are both fixnums; the above optimizations have some value given
+     that. In a big buffer, e.g a two-thousand message VM buffer, an O(N)
+     operation becoming an O(1) operation is a significant improvement! A
+     similar optimization would be possible for markers in different buffers,
+     but that is done sufficiently rarely that I don't feel it's worth it. */
+
+  /* FALLTHROUGH */
+  return bytecode_arithcompare (obj1, obj2) > 0;
+}
+
+static Boolint
+bytecode_lss (Lisp_Object obj1, Lisp_Object obj2)
+{
+  /* See bytecode_gtr() for the reasoning for the following. */
+  if (MARKERP (obj1) && FIXNUMP (obj2))
+    {
+      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
+
+      if (pos1 < XFIXNUM (obj2))
+        {
+          return 1;
+        }
+      if (cpos1min >= XFIXNUM (obj2))
+        {
+          return 0;
+        }
+    }
+  else if (FIXNUMP (obj1) && MARKERP (obj2))
+    {
+      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
+
+      if (XFIXNUM (obj1) < cpos2min)
+        {
+          return 1;
+        }
+      if (XFIXNUM (obj1) >= pos2)
+        {
+          return 0;
+        }
+    }
+  /* FALLTHROUGH */
+  return bytecode_arithcompare (obj1, obj2) < 0;
+}
+
+static Boolint
+bytecode_leq (Lisp_Object obj1, Lisp_Object obj2)
+{
+  /* See bytecode_gtr() for the reasoning for the following. */
+  if (MARKERP (obj1) && FIXNUMP (obj2))
+    {
+      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
+
+      if (pos1 <= XREALFIXNUM (obj2))
+        {
+          return 1;
+        }
+      if (cpos1min > XREALFIXNUM (obj2))
+        {
+          return 0;
+        }
+    }
+  else if (FIXNUMP (obj1) && MARKERP (obj2))
+    {
+      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
+
+      if (XREALFIXNUM (obj1) <= cpos2min)
+        {
+          return 1;
+        }
+      if (XREALFIXNUM (obj1) > pos2)
+        {
+          return 0;
+        }
+    }
+
+  return bytecode_arithcompare (obj1, obj2) <= 0;
+}
+
+static Boolint
+bytecode_geq (Lisp_Object obj1, Lisp_Object obj2)
+{
+  /* See bytecode_gtr() for the reasoning for the following. */
+  if (MARKERP (obj1) && FIXNUMP (obj2))
+    {
+      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
+
+      if (cpos1min >= XREALFIXNUM (obj2))
+        {
+          return 1;
+        }
+      if (pos1 < XREALFIXNUM (obj2))
+        {
+          return 0;
+        }
+    }
+  else if (FIXNUMP (obj1) && MARKERP (obj2))
+    {
+      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
+
+      if (XREALFIXNUM (obj1) >= pos2)
+        {
+          return 1;
+        }
+      if (XREALFIXNUM (obj1) < cpos2min)
+        {
+          return 0;
+        }
+    }
+
+  return bytecode_arithcompare (obj1, obj2) >= 0;
+}
+
 static Lisp_Object
 bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 {
@@ -393,15 +563,11 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	switch (opcode)
 	  {
 	  case Bmax:
-	    return make_fixnum (marker_position
-				((byte_marker_position (obj1)
-				  < byte_marker_position (obj2)) ?
-				 obj2 : obj1));
+	    return byte_marker_position (obj1) < byte_marker_position (obj2)
+	      ? obj2 : obj1;
 	  case Bmin:
-	    return make_fixnum (marker_position
-				((byte_marker_position (obj1)
-				  > byte_marker_position (obj2)) ?
-				 obj2 : obj1));
+	    return byte_marker_position (obj1) > byte_marker_position (obj2)
+	      ? obj2 : obj1;
 	  default:
 	    obj1 = make_fixnum (marker_position (obj1));
 	    obj2 = make_fixnum (marker_position (obj2));
@@ -555,7 +721,26 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 
   if      (FIXNUMP    (obj1)) ival1 = XFIXNUM  (obj1);
   else if (CHARP   (obj1)) ival1 = XCHAR (obj1);
-  else if (MARKERP (obj1)) ival1 = marker_position (obj1);
+  else if (MARKERP (obj1))
+    {
+      if (MARKERP (obj2)
+	  && (XMARKER (obj1)->buffer == XMARKER (obj2)->buffer))
+	{
+	  if (opcode == Bmax)
+	    {
+	      return byte_marker_position (obj1) < byte_marker_position (obj2)
+		? obj2 : obj1;
+	    }
+	  else if (opcode == Bmin)
+	    {
+	      return byte_marker_position (obj1) > byte_marker_position (obj2)
+		? obj2 : obj1;
+	    }
+	  /* Otherwise, convert to a fixnum in the normal way. */
+	}
+      ival1 = marker_position (obj1);
+    }
+
   else if (FLOATP  (obj1)) ival1 = 0, float_p = 1;
   else
     {
@@ -1249,28 +1434,28 @@ execute_optimized_program (const Opbyte *program,
 	case Bgtr:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) > 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_gtr (TOP, arg) ? Qt : Qnil;
 	    break;
 	  }
 
 	case Blss:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) < 0 ? Qt : Qnil;
+            TOP_LVALUE = bytecode_lss (TOP, arg) ? Qt : Qnil;
 	    break;
 	  }
 
 	case Bleq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) <= 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_leq (TOP, arg) ? Qt : Qnil;
 	    break;
 	  }
 
 	case Bgeq:
 	  {
 	    Lisp_Object arg = POP;
-	    TOP_LVALUE = bytecode_arithcompare (TOP, arg) >= 0 ? Qt : Qnil;
+	    TOP_LVALUE = bytecode_geq (TOP, arg) ? Qt : Qnil;
 	    break;
 	  }
 

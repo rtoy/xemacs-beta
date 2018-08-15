@@ -1,3 +1,11 @@
+2018-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* automated/lisp-tests.el:
+	1. #'max, #'min can now return markers, accept that.
+	2. Gross checks of comparison of fixnums and markers for
+	correctness, now we have made some bytecode changes to help with
+	that. 
+
 2018-07-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* automated/lisp-tests.el (featurep):

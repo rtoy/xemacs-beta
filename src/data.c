@@ -2453,8 +2453,10 @@ arguments: (FIRST &rest ARGS)
 DEFUN ("max", Fmax, 1, MANY, 0, /*
 Return largest of all the arguments.
 All arguments must be real numbers, characters or markers.
-The value is always a number; markers and characters are converted
-to numbers.
+
+Markers in distinct buffers will be converted to fixnums, but markers in the
+same buffer will be compared without conversion, and may be returned as the
+value. Characters are always converted to fixnums, and are never returned.
 
 arguments: (FIRST &rest ARGS)
 */
@@ -2467,35 +2469,38 @@ arguments: (FIRST &rest ARGS)
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
   if (CHARP (args[0]))
     args[0] = make_fixnum (XCHAR (args[0]));
-  else if (MARKERP (args[0]))
-    args[0] = make_fixnum (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
-      switch (promote_args (args + maxindex, args + i))
+      switch (promote_args_lazy (args + maxindex, args + i))
 	{
-	case FIXNUM_T:
+        case LAZY_MARKER_T:
+          if (byte_marker_position (args[maxindex])
+	      < byte_marker_position (args[i]))
+	    maxindex = i;
+	  break;
+	case LAZY_FIXNUM_T:
 	  if (XREALFIXNUM (args[maxindex]) < XREALFIXNUM (args[i]))
 	    maxindex = i;
 	  break;
 #ifdef HAVE_BIGNUM
-	case BIGNUM_T:
+	case LAZY_BIGNUM_T:
 	  if (bignum_lt (XBIGNUM_DATA (args[maxindex]),
 			 XBIGNUM_DATA (args[i])))
 	    maxindex = i;
 	  break;
 #endif
 #ifdef HAVE_RATIO
-	case RATIO_T:
+	case LAZY_RATIO_T:
 	  if (ratio_lt (XRATIO_DATA (args[maxindex]), XRATIO_DATA (args[i])))
 	    maxindex = i;
 	  break;
 #endif
-	case FLOAT_T:
+	case LAZY_FLOAT_T:
 	  if (XFLOAT_DATA (args[maxindex]) < XFLOAT_DATA (args[i]))
 	    maxindex = i;
 	  break;
 #ifdef HAVE_BIGFLOAT
-	case BIGFLOAT_T:
+	case LAZY_BIGFLOAT_T:
 	  if (bigfloat_lt (XBIGFLOAT_DATA (args[maxindex]),
 			   XBIGFLOAT_DATA (args[i])))
 	    maxindex = i;
@@ -2505,52 +2510,85 @@ arguments: (FIRST &rest ARGS)
     }
   return args[maxindex];
 #else /* !WITH_NUMBER_TYPES */
-  EMACS_INT imax;
-  double dmax;
-  Lisp_Object *args_end = args + nargs;
-  int_or_double iod;
+  REGISTER int i, maxindex = 0;
+  Lisp_Object max_so_far;
 
-  number_char_or_marker_to_int_or_double (*args++, &iod);
-  if (iod.int_p)
-    imax = iod.c.ival;
-  else
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+  if (CHARP (args[0]))
+    args[0] = make_fixnum (XCHAR (args[0]));
+  max_so_far = args[0];
+  for (i = 1; i < nargs; i++)
     {
-      dmax = iod.c.dval;
-      goto max_floats;
-    }
+      EMACS_INT ival1, ival2;
+      int float_p;
+      Lisp_Object obj2 = args[i]; 
 
-  while (args < args_end)
-    {
-      number_char_or_marker_to_int_or_double (*args++, &iod);
-      if (iod.int_p)
-	{
-	  if (imax < iod.c.ival) imax = iod.c.ival;
-	}
+ retry:
+      float_p = 0;
+
+      if (FIXNUMP (max_so_far)) ival1 = XFIXNUM (max_so_far);
+      else if (CHARP (max_so_far)) ival1 = XCHAR (max_so_far);
+      else if (MARKERP (max_so_far))
+        {
+          if (MARKERP (obj2)
+              && (XMARKER (max_so_far)->buffer == XMARKER (obj2)->buffer))
+            {
+              if (byte_marker_position (max_so_far)
+                  < byte_marker_position (obj2))
+                {
+                  max_so_far = obj2;
+                }
+              continue;
+            }
+	  /* Otherwise, convert to a fixnum in the normal way. */
+          ival1 = marker_position (max_so_far);
+        }
+      else if (FLOATP (max_so_far)) ival1 = 0, float_p = 1;
       else
-	{
-	  dmax = (double) imax;
-	  if (dmax < iod.c.dval) dmax = iod.c.dval;
-	  goto max_floats;
+        {
+          max_so_far = wrong_type_argument (Qnumber_char_or_marker_p,
+                                            max_so_far);
+          goto retry;
+        }
+
+      if (FIXNUMP (obj2)) ival2 = XFIXNUM  (obj2);
+      else if (CHARP (obj2)) ival2 = XCHAR (obj2);
+      else if (MARKERP (obj2)) ival2 = marker_position (obj2);
+      else if (FLOATP  (obj2)) ival2 = 0, float_p = 1;
+      else
+        {
+          obj2 = wrong_type_argument (Qnumber_char_or_marker_p, obj2);
+          goto retry;
+        }
+
+      if (!float_p)
+        {
+          if (ival1 < ival2) max_so_far = make_fixnum (ival2);
+        }
+      else
+        {
+          double dval1 = FLOATP (max_so_far) ? XFLOAT_DATA (max_so_far)
+            : (double) ival1;
+          double dval2 = FLOATP (obj2) ? XFLOAT_DATA (obj2) : (double) ival2;
+          if (dval1 < dval2)
+            {
+              max_so_far = FLOATP (obj2) ? obj2 : make_float (dval2);
+            }
 	}
     }
 
-  return make_fixnum (imax);
-
- max_floats:
-  while (args < args_end)
-    {
-      double dval = number_char_or_marker_to_double (*args++);
-      if (dmax < dval) dmax = dval;
-    }
-  return make_float (dmax);
+  return max_so_far;
 #endif /* WITH_NUMBER_TYPES */
 }
 
 DEFUN ("min", Fmin, 1, MANY, 0, /*
 Return smallest of all the arguments.
 All arguments must be numbers, characters or markers.
-The value is always a number; markers and characters are converted
-to numbers.
+
+Markers in distinct buffers will be converted to fixnums, but markers in the
+same buffer will be compared without conversion, and may be returned as the
+value. Characters are always converted to fixnums, and are never returned.
 
 arguments: (FIRST &rest ARGS)
 */
@@ -2563,36 +2601,39 @@ arguments: (FIRST &rest ARGS)
     args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
   if (CHARP (args[0]))
     args[0] = make_fixnum (XCHAR (args[0]));
-  else if (MARKERP (args[0]))
-    args[0] = make_fixnum (marker_position (args[0]));
   for (i = 1; i < nargs; i++)
     {
-      switch (promote_args (args + minindex, args + i))
+      switch (promote_args_lazy (args + minindex, args + i))
 	{
-	case FIXNUM_T:
+        case LAZY_MARKER_T:
+	  if (byte_marker_position (args[minindex])
+              > byte_marker_position (args[i]))
+	    minindex = i;
+	  break;
+	case LAZY_FIXNUM_T:
 	  if (XREALFIXNUM (args[minindex]) > XREALFIXNUM (args[i]))
 	    minindex = i;
 	  break;
 #ifdef HAVE_BIGNUM
-	case BIGNUM_T:
+	case LAZY_BIGNUM_T:
 	  if (bignum_gt (XBIGNUM_DATA (args[minindex]),
 			 XBIGNUM_DATA (args[i])))
 	    minindex = i;
 	  break;
 #endif
 #ifdef HAVE_RATIO
-	case RATIO_T:
+	case LAZY_RATIO_T:
 	  if (ratio_gt (XRATIO_DATA (args[minindex]),
 			XRATIO_DATA (args[i])))
 	    minindex = i;
 	  break;
 #endif
-	case FLOAT_T:
+	case LAZY_FLOAT_T:
 	  if (XFLOAT_DATA (args[minindex]) > XFLOAT_DATA (args[i]))
 	    minindex = i;
 	  break;
 #ifdef HAVE_BIGFLOAT
-	case BIGFLOAT_T:
+	case LAZY_BIGFLOAT_T:
 	  if (bigfloat_gt (XBIGFLOAT_DATA (args[minindex]),
 			   XBIGFLOAT_DATA (args[i])))
 	    minindex = i;
@@ -2602,44 +2643,75 @@ arguments: (FIRST &rest ARGS)
     }
   return args[minindex];
 #else /* !WITH_NUMBER_TYPES */
-  EMACS_INT imin;
-  double dmin;
-  Lisp_Object *args_end = args + nargs;
-  int_or_double iod;
+  REGISTER int i;
+  Lisp_Object min_so_far;
 
-  number_char_or_marker_to_int_or_double (*args++, &iod);
-  if (iod.int_p)
-    imin = iod.c.ival;
-  else
+  while (!(CHARP (args[0]) || MARKERP (args[0]) || REALP (args[0])))
+    args[0] = wrong_type_argument (Qnumber_char_or_marker_p, args[0]);
+  if (CHARP (args[0]))
+    args[0] = make_fixnum (XCHAR (args[0]));
+  min_so_far = args[0];
+  for (i = 1; i < nargs; i++)
     {
-      dmin = iod.c.dval;
-      goto min_floats;
-    }
+      EMACS_INT ival1, ival2;
+      int float_p;
+      Lisp_Object obj2 = args[i]; 
 
-  while (args < args_end)
-    {
-      number_char_or_marker_to_int_or_double (*args++, &iod);
-      if (iod.int_p)
-	{
-	  if (imin > iod.c.ival) imin = iod.c.ival;
-	}
+ retry:
+      float_p = 0;
+
+      if (FIXNUMP (min_so_far)) ival1 = XFIXNUM (min_so_far);
+      else if (CHARP (min_so_far)) ival1 = XCHAR (min_so_far);
+      else if (MARKERP (min_so_far))
+        {
+          if (MARKERP (obj2)
+              && (XMARKER (min_so_far)->buffer == XMARKER (obj2)->buffer))
+            {
+              if (byte_marker_position (min_so_far)
+                  > byte_marker_position (obj2))
+                {
+                  min_so_far = obj2;
+                }
+              continue;
+            }
+	  /* Otherwise, convert to a fixnum in the normal way. */
+          ival1 = marker_position (min_so_far);
+        }
+      else if (FLOATP (min_so_far)) ival1 = 0, float_p = 1;
       else
-	{
-	  dmin = (double) imin;
-	  if (dmin > iod.c.dval) dmin = iod.c.dval;
-	  goto min_floats;
+        {
+          min_so_far = wrong_type_argument (Qnumber_char_or_marker_p,
+                                            min_so_far);
+          goto retry;
+        }
+
+      if (FIXNUMP (obj2)) ival2 = XFIXNUM  (obj2);
+      else if (CHARP (obj2)) ival2 = XCHAR (obj2);
+      else if (MARKERP (obj2)) ival2 = marker_position (obj2);
+      else if (FLOATP  (obj2)) ival2 = 0, float_p = 1;
+      else
+        {
+          obj2 = wrong_type_argument (Qnumber_char_or_marker_p, obj2);
+          goto retry;
+        }
+
+      if (!float_p)
+        {
+          if (ival1 > ival2) min_so_far = make_fixnum (ival2);
+        }
+      else
+        {
+          double dval1 = FLOATP (min_so_far) ? XFLOAT_DATA (min_so_far)
+            : (double) ival1;
+          double dval2 = FLOATP (obj2) ? XFLOAT_DATA (obj2) : (double) ival2;
+          if (dval1 > dval2)
+            {
+              min_so_far = FLOATP (obj2) ? obj2 : make_float (dval2);
+            }
 	}
     }
 
-  return make_fixnum (imin);
-
- min_floats:
-  while (args < args_end)
-    {
-      double dval = number_char_or_marker_to_double (*args++);
-      if (dmin > dval) dmin = dval;
-    }
-  return make_float (dmin);
+  return min_so_far;
 #endif /* WITH_NUMBER_TYPES */
 }
 

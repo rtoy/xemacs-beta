@@ -1,3 +1,31 @@
+2018-08-15  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Calls to marker_position() are O(N), reduce them in bytecode.
+	* buffer.h:
+	* bytecode.c:
+	* bytecode.c (bytecode_gtr):
+	* bytecode.c (bytecode_lss):
+	* bytecode.c (bytecode_leq):
+	* bytecode.c (bytecode_geq):
+	* bytecode.c (bytecode_arithop):
+	* data.c:
+	* data.c (Fmax):
+	* data.c (Fmin):
+	* insdel.c (init_buffer_text):
+	* number.h:
+	* number.h (promote_args_lazy):
+	1. In bytecode and in interpreted code, if #'max, #'min are
+	supplied marker arguments, return a marker result if they can be
+	compared without converting to fixnums.
+	2. In bytecode, when doing arithmetic comparisons between markers
+	and fixnums, uses the fact the the byte marker position is always
+	the inclusive upper bound on the character marker position, and
+	that (byte_marker_position(OBJ) / MAX_ICHAR_LEN) is the inclusive
+	lower bound, to convert O(N) operations to O(1) for a decent
+	proportion of comparisons like (< MARKER (point-max)).
+	3. Buffer format is actually fixed at compile time, make decisions
+	regarding that easier for the compiler.
+
 2018-08-12  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* fontcolor-x.c (x_font_instance_properties):

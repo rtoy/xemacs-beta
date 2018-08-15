@@ -1801,7 +1801,7 @@ init_buffer_text (struct buffer *b)
       b->text->cached_bytepos = 1;
 
       /* &&#### Set to FORMAT_8_BIT_FIXED when that code is working */
-      BUF_FORMAT (b) = FORMAT_DEFAULT;
+      /* BUF_FORMAT (b) = FORMAT_DEFAULT; */
 #endif /* MULE */
       b->text->line_number_cache = Qnil;
 
