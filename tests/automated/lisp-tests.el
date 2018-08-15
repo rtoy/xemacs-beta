@@ -3308,13 +3308,30 @@ via the hepatic alpha-tocopherol transfer protein")))
 		   ,(concat "checking #'< correct with long arguments list, "
 			    context))
 	   (map-plist #'(lambda (object1 object2)
-			  (Assert (> object1 object2)
+			  (Assert (and (> object1 object2)
+                                       (not (> object2 object1)))
 				  ,(concat 
 				    "checking markers correctly ordered, >, "
 				    context))
-			  (Assert (< object2 object1)
+			  (Assert (and (< object2 object1)
+                                       (not (< object1 object2)))
 				  ,(concat
 				    "checking markers correctly ordered, <, "
+				    context))
+			  (Assert (and (>= object1 object2)
+                                       (not (>= object2 object1)))
+				  ,(concat 
+				    "checking markers correctly ordered, >=, "
+				    context))
+			  (Assert (and (<= object2 object1)
+                                       (not (<= object1 object2)))
+				  ,(concat
+				    "checking markers correctly ordered, <=, "
+				    context))
+			  (Assert (and (<= object2 object1)
+                                       (not (<= object1 object2)))
+				  ,(concat
+				    "checking markers correctly ordered, <=, "
 				    context)))
 		      markers)
 	   ;; OK, so up to this point there has been no need for byte-char
@@ -3328,18 +3345,43 @@ via the hepatic alpha-tocopherol transfer protein")))
 			   (= (min object1 object2) object2)
 			   ,(concat
 			     "checking min, correct, two markers, " context))
-			  ;; It is probably reasonable to change this design
-			  ;; decision.
+			  ;; XEmacs; changed design decision, don't convert
+			  ;; markers to fixnums unless absolutely necessary,
+			  ;; that is an O(N) operation.
 			  (Assert
-			   (fixnump (max object1 object2))
+			   (markerp (max object1 object2))
 			   ,(concat
-			     "checking fixnum conversion as documented, max, "
-			     context))
+			     "checking no unnecessary fixnum conversion"
+                             ", max, " context))
 			  (Assert
-			   (fixnump (min object1 object2))
+			   (markerp (min object1 object2))
 			   ,(concat
-			     "checking fixnum conversion as documented, min, "
-			     context)))
+			     "checking no unnecessary fixnum conversion"
+                             ", min, " context))
+			  (Assert (and (> object1 (marker-position object2))
+                                       (not (> (marker-position object2)
+                                               object1)))
+				  ,(concat 
+				    "checking #'> correct, marker, fixnum "
+				    context))
+			  (Assert (and (< object2 (marker-position object1))
+                                       (not (< (marker-position object1)
+                                               object2)))
+				  ,(concat
+				    "checking #'< correct, marker, fixnum "
+				    context))
+			  (Assert (and (>= object1 (marker-position object2))
+                                       (not (>= (marker-position object2)
+                                                object1)))
+				  ,(concat 
+				    "checking #'>= correct, marker, fixnum "
+				    context))
+			  (Assert (and (<= object2 (marker-position object1))
+                                       (not (<= (marker-position object1)
+                                                object2)))
+				  ,(concat
+				    "checking #'<= correct, marker, fixnum "
+				    context)))
 	              markers))))
     (with-temp-buffer
       (loop for ii from 0 to 100

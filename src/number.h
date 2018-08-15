@@ -454,14 +454,12 @@ extern gid_t lisp_to_gid_t (Lisp_Object);
 /* promote_args() *always* converts a marker argument to a fixnum.
 
    Unfortunately, for a marker with byte position N, getting the (character)
-   marker position is O(N). Getting the character position isn't necessary
-   for bytecode_arithcompare() if two markers being compared are in the same
-   buffer, comparing the byte position is enough.
+   marker position is O(N). Getting the character position isn't always
+   necessary for bytecode_arithcompare(), if they are in the same buffer,
+   comparing the byte position is enough.
 
    Similarly, min and max don't necessarily need to have their arguments
-   converted from markers, though we have always promised up to this point
-   that the result is a fixnum rather than a marker, and that's what we're
-   continuing to do. */
+   converted from markers. */
 
 DECLARE_INLINE_HEADER (
 enum lazy_number_type

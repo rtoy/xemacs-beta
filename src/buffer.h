@@ -345,9 +345,9 @@ for (mps_bufcons = Qunbound,					\
 #define BYTE_BUF_PT(buf) ((buf)->pt + 0)
 #define BUF_PT(buf) ((buf)->bufpt + 0)
 
-/* Internal format of buffer.  */
+/* Internal format of buffer. Always FORMAT_DEFAULT currently. */
 #ifdef MULE
-#define BUF_FORMAT(buf) ((buf)->text->format)
+#define BUF_FORMAT(buf) FORMAT_DEFAULT /* ((buf)->text->format) */
 #else
 #define BUF_FORMAT(buf) FORMAT_DEFAULT
 #endif
