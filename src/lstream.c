@@ -2090,7 +2090,7 @@ lisp_buffer_reader (Lstream *stream, Ibyte *data, Bytecount size)
 	  *p = '\n';
     }
 
-  set_byte_marker_position (str->start, end);
+  set_byte_marker_position (str->start, end, wrap_buffer (buf));
   return size;
 }
 
@@ -2107,7 +2107,7 @@ lisp_buffer_writer (Lstream *stream, const Ibyte *data,
 
   pos = marker_position (str->start);
   pos += buffer_insert_raw_string_1 (buf, pos, data, size, 0);
-  set_marker_position (str->start, pos);
+  Fset_marker (str->start, make_fixnum (pos), wrap_buffer (buf));
   return size;
 }
 
@@ -2128,7 +2128,7 @@ lisp_buffer_write_with_extents (Lstream *stream, Lisp_Object string,
                                                                  position,
                                                                  len),
                                  0);
-  set_marker_position (str->start, pos);
+  Fset_marker (str->start, make_fixnum (pos), wrap_buffer (buf));
   return len;
 }
 
@@ -2138,16 +2138,16 @@ lisp_buffer_rewinder (Lstream *stream)
   struct lisp_buffer_stream *str =
     LISP_BUFFER_STREAM_DATA (stream);
   struct buffer *buf = XBUFFER (str->buffer);
-  long pos = marker_position (str->orig_start);
+  Bytebpos pos = byte_marker_position (str->orig_start);
   if (!BUFFER_LIVE_P (buf))
     return -1; /* Fut. */
-  if (pos > BUF_ZV (buf))
-    pos = BUF_ZV (buf);
-  if (pos < marker_position (str->orig_start))
-    pos = marker_position (str->orig_start);
-  if (MARKERP (str->end) && pos > marker_position (str->end))
-    pos = marker_position (str->end);
-  set_marker_position (str->start, pos);
+  if (pos > BYTE_BUF_ZV (buf))
+    pos = BYTE_BUF_ZV (buf);
+  if (pos < byte_marker_position (str->orig_start))
+    pos = byte_marker_position (str->orig_start);
+  if (MARKERP (str->end) && pos > byte_marker_position (str->end))
+    pos = byte_marker_position (str->end);
+  set_byte_marker_position (str->start, pos, wrap_buffer (buf));
   return 0;
 }
 

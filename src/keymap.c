@@ -2678,8 +2678,7 @@ get_relevant_keymaps (Lisp_Object keys, Lisp_Object position, int max_maps,
     }
   else if (MARKERP (position) && !NILP (Fmarker_buffer (position)))
     {
-      get_relevant_extent_keymaps (Fmarker_position (position),
-                                   Fmarker_buffer (position),
+      get_relevant_extent_keymaps (position, Fmarker_buffer (position),
                                    Qnil, &closure);
     }
   else if (EVENTP (position))

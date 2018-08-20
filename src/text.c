@@ -4246,10 +4246,40 @@ get_buffer_pos_char (struct buffer *b, Lisp_Object pos, unsigned int flags)
 Bytebpos
 get_buffer_pos_byte (struct buffer *b, Lisp_Object pos, unsigned int flags)
 {
-  Charbpos bpos = get_buffer_pos_char (b, pos, flags);
-  if (bpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
-    return -1;
-  return charbpos_to_bytebpos (b, bpos);
+  if (MARKERP (pos) && XMARKER (pos)->buffer == b)
+    {
+      /* Does not GC */
+      Bytebpos ind;
+      Bytebpos min_allowed, max_allowed;
+
+      ind = byte_marker_position (pos);
+      min_allowed
+        = flags & GB_ALLOW_PAST_ACCESSIBLE ? BYTE_BUF_BEG (b)
+        : BYTE_BUF_BEGV (b);
+      max_allowed
+        = flags & GB_ALLOW_PAST_ACCESSIBLE ? BYTE_BUF_Z (b) : BYTE_BUF_ZV (b);
+
+      if (ind < min_allowed || ind > max_allowed)
+        {
+          if (flags & GB_COERCE_RANGE)
+            ind = ind < min_allowed ? min_allowed : max_allowed;
+          else if (flags & GB_NO_ERROR_IF_BAD)
+            ind = -1;
+          else
+            {
+              args_out_of_range (wrap_buffer (b), pos);
+            }
+        }
+
+      return ind;
+    }
+  else
+    {
+      Charbpos bpos = get_buffer_pos_char (b, pos, flags);
+      if (bpos < 0) /* could happen with GB_NO_ERROR_IF_BAD */
+        return -1;
+      return charbpos_to_bytebpos (b, bpos);
+    }
 }
 
 /* Return a pair of buffer positions representing a range of text,
@@ -4311,17 +4341,58 @@ get_buffer_range_byte (struct buffer *b, Lisp_Object from, Lisp_Object to,
 		       Bytebpos *from_out, Bytebpos *to_out,
 		       unsigned int flags)
 {
-  Charbpos s, e;
+  if (MARKERP (from) && XMARKER (from)->buffer == b
+      && MARKERP (to) && XMARKER (to)->buffer == b)
+    {
+      /* Does not GC */
+      Bytebpos min_allowed, max_allowed;
 
-  get_buffer_range_char (b, from, to, &s, &e, flags);
-  if (s >= 0)
-    *from_out = charbpos_to_bytebpos (b, s);
-  else /* could happen with GB_NO_ERROR_IF_BAD */
-    *from_out = -1;
-  if (e >= 0)
-    *to_out = charbpos_to_bytebpos (b, e);
+      min_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
+        BYTE_BUF_BEG (b) : BYTE_BUF_BEGV (b);
+      max_allowed = (flags & GB_ALLOW_PAST_ACCESSIBLE) ?
+        BYTE_BUF_Z (b) : BYTE_BUF_ZV (b);
+
+      if (NILP (from) && (flags & GB_ALLOW_NIL))
+        *from_out = min_allowed;
+      else
+        *from_out = get_buffer_pos_byte (b, from, flags | GB_NO_ERROR_IF_BAD);
+
+      if (NILP (to) && (flags & GB_ALLOW_NIL))
+        *to_out = max_allowed;
+      else
+        *to_out = get_buffer_pos_byte (b, to, flags | GB_NO_ERROR_IF_BAD);
+
+      if ((*from_out < 0 || *to_out < 0) && !(flags & GB_NO_ERROR_IF_BAD))
+        {
+          args_out_of_range_3 (wrap_buffer (b), from, to);
+        }
+
+      if (*from_out >= 0 && *to_out >= 0 && *from_out > *to_out)
+        {
+          if (flags & GB_CHECK_ORDER)
+            invalid_argument_2 ("start greater than end", from, to);
+          else
+            {
+              Bytebpos temp = *from_out;
+              *from_out = *to_out;
+              *to_out = temp;
+            }
+        }
+    }
   else
-    *to_out = -1;
+    {
+      Charbpos s, e;
+
+      get_buffer_range_char (b, from, to, &s, &e, flags);
+      if (s >= 0)
+        *from_out = charbpos_to_bytebpos (b, s);
+      else /* could happen with GB_NO_ERROR_IF_BAD */
+        *from_out = -1;
+      if (e >= 0)
+        *to_out = charbpos_to_bytebpos (b, e);
+      else
+        *to_out = -1;
+    }
 }
 
 static Charcount

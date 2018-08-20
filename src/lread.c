@@ -264,13 +264,14 @@ readchar (Lisp_Object readcharfun)
   else if (MARKERP (readcharfun))
     {
       Ichar c;
-      Charbpos mpos = marker_position (readcharfun);
+      Bytebpos mpos = byte_marker_position (readcharfun);
       struct buffer *inbuffer = XMARKER (readcharfun)->buffer;
 
-      if (mpos >= BUF_ZV (inbuffer))
+      if (mpos >= BYTE_BUF_ZV (inbuffer))
 	return -1;
       c = BUF_FETCH_CHAR (inbuffer, mpos);
-      set_marker_position (readcharfun, mpos + 1);
+      INC_BYTEBPOS (inbuffer, mpos);
+      set_byte_marker_position (readcharfun, mpos, wrap_buffer (inbuffer));
       return c;
     }
   else
@@ -309,7 +310,19 @@ unreadchar (Lisp_Object readcharfun, Ichar c)
 #endif
     }
   else if (MARKERP (readcharfun))
-    set_marker_position (readcharfun, marker_position (readcharfun) - 1);
+    {
+      Bytebpos mpos = byte_marker_position (readcharfun);
+      struct buffer *buf = XMARKER (readcharfun)->buffer;
+
+      DEC_BYTEBPOS (buf, mpos);
+
+      set_byte_marker_position (readcharfun,
+                                /* This is extra-conservative, no code
+                                   actually unreads without having read
+                                   anything. */
+                                max (mpos, BYTE_BUF_BEG (buf)),
+                                wrap_buffer (buf));
+    }
   else
     call1 (readcharfun, make_char (c));
 }

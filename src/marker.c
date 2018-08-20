@@ -175,83 +175,154 @@ check_marker_circularities (struct buffer *buf)
 
 #endif
 
-static Lisp_Object
-set_marker_internal (Lisp_Object marker, Lisp_Object position,
-		     Lisp_Object buffer, int restricted_p)
+static Bytebpos
+fixup_set_marker_args (Lisp_Object marker, Lisp_Object position,
+                       Bytebpos byteno, Lisp_Object buffer,
+                       Boolint restricted_p, struct buffer **buffer_out,
+                       Boolint *pointp_out)
 {
-  Charbpos charno;
   struct buffer *b;
-  Lisp_Marker *m;
-  int point_p;
+  Boolint point_p;
+  Charbpos charno;
 
   CHECK_MARKER (marker);
+  point_p = *pointp_out = POINT_MARKER_P (marker);
 
-  point_p = POINT_MARKER_P (marker);
-
-  /* If position is nil or a marker that points nowhere,
-     make this marker point nowhere.  */
-  if (NILP (position) ||
+  /* If position is nil or a marker that points nowhere, make this marker
+     point nowhere. */
+  if ((NILP (position) && -1 == byteno) ||
       (MARKERP (position) && !XMARKER (position)->buffer))
     {
       if (point_p)
-	invalid_operation ("Can't make point-marker point nowhere",
-			   marker);
-      if (XMARKER (marker)->buffer)
-	unchain_marker (marker);
-      return marker;
+        {
+          invalid_operation ("Can't make point-marker point nowhere",
+			     marker);
+        }
+
+      /* This is a signal that the marker should not point anyhere, none of
+	 the other _out variables need to be set. */
+      *buffer_out = NULL;
+      return -1;
     }
 
-  CHECK_FIXNUM_COERCE_MARKER (position);
   if (NILP (buffer))
-    b = current_buffer;
+    {
+      b = *buffer_out = current_buffer;
+    }
   else
     {
       CHECK_BUFFER (buffer);
-      b = XBUFFER (buffer);
-      /* If buffer is dead, set marker to point nowhere.  */
+      b = *buffer_out = XBUFFER (buffer);
+
       if (!BUFFER_LIVE_P (XBUFFER (buffer)))
-	{
+        {
 	  if (point_p)
-	    invalid_operation
-	      ("Can't move point-marker in a killed buffer", marker);
-	  if (XMARKER (marker)->buffer)
-	    unchain_marker (marker);
-	  return marker;
-	}
+            {
+              invalid_operation ("Can't move point-marker into killed buffer",
+				 marker);
+            }
+
+          *buffer_out = NULL;
+          return -1;
+        }
     }
 
-  charno = XFIXNUM (position);
-  m = XMARKER (marker);
+  if (point_p && XMARKER (marker)->buffer != b)
+    {
+      invalid_operation ("Can't change buffer of point-marker", marker);
+    }
 
+  if (byteno != -1)
+    {
+      if (restricted_p)
+        {
+          if (byteno < BYTE_BUF_BEGV (b)) byteno = BYTE_BUF_BEGV (b);
+          if (byteno > BYTE_BUF_ZV (b)) byteno = BYTE_BUF_ZV (b);
+        }
+      else
+        {
+          if (byteno < BYTE_BUF_BEG (b)) byteno = BYTE_BUF_BEG (b);
+          if (byteno > BYTE_BUF_Z (b)) byteno = BYTE_BUF_Z (b);
+        }
+
+      return byteno;
+    }
+
+  if (MARKERP (position) && XMARKER (position)->buffer == b)
+    {
+      text_checking_assert (-1 == byteno);
+      byteno = membpos_to_bytebpos (b, XMARKER (position)->membpos);
+
+      if (restricted_p)
+        {
+          if (byteno < BYTE_BUF_BEGV (b)) byteno = BYTE_BUF_BEGV (b);
+          if (byteno > BYTE_BUF_ZV (b)) byteno = BYTE_BUF_ZV (b);
+        }
+
+      /* No need to do the usual restriction to valid buffer positions, since
+         we know POSITION is valid within BUFFER. */
+
+      return byteno;
+    }
+
+  CHECK_FIXNUM_COERCE_MARKER (position);
+  charno = XFIXNUM (position);
   if (restricted_p)
     {
-      if (charno < BUF_BEGV (b)) charno = BUF_BEGV (b);
-      if (charno > BUF_ZV (b)) charno = BUF_ZV (b);
+      if (charno < BUF_BEGV (b)) 
+        {
+          return BYTE_BUF_BEGV (b);
+        }
+      if (charno > BUF_ZV (b))
+        {
+          return BYTE_BUF_ZV (b);
+        }
     }
   else
     {
-      if (charno < BUF_BEG (b)) charno = BUF_BEG (b);
-      if (charno > BUF_Z (b)) charno = BUF_Z (b);
+      if (charno < BUF_BEG (b)) 
+        {
+          return BYTE_BUF_BEG (b);
+        }
+      if (charno > BUF_Z (b))
+        {
+          return BYTE_BUF_Z (b);
+        }
+    }
+  
+  return charbpos_to_bytebpos (b, charno);
+}
+
+static Lisp_Object
+set_marker_internal (Lisp_Object marker, Bytebpos byteno, struct buffer *b,
+		     Boolint point_p)
+{
+  Lisp_Marker *m;
+
+  m = XMARKER (marker);
+
+  if (NULL == b)
+    {
+      /* Make this marker point nowhere. */
+      if (m->buffer)
+        {
+          unchain_marker (marker);
+        }
+
+      return marker;
     }
 
   if (point_p)
     {
-#ifndef moving_point_by_moving_its_marker_is_a_bug
-      BUF_SET_PT (b, charno);	/* this will move the marker */
-#else  /* It's not a feature, so it must be a bug */
-      invalid_operation ("DEBUG: attempt to move point via point-marker",
-			 marker);
-#endif
+      BYTE_BUF_SET_PT (b, byteno);	/* this will move the marker */
     }
   else
     {
-      m->membpos = charbpos_to_membpos (b, charno);
+      m->membpos = bytebpos_to_membpos (b, byteno);
     }
 
   if (m->buffer != b)
     {
-      if (point_p)
-	invalid_operation ("Can't change buffer of point-marker", marker);
       if (m->buffer != 0)
 	unchain_marker (marker);
       m->buffer = b;
@@ -264,7 +335,31 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
 
   return marker;
 }
+ 
+/* Set the byte position of MARKER, a marker object, to BYTENO in
+   BUFFER. MARKER must be a marker object, BUFFER must be a valid buffer, and
+   BYTENO must be a valid byte position within BUFFER. MARKER may not be
+   BUFFER's point marker. */
+Lisp_Object
+set_byte_marker_position (Lisp_Object marker, Bytebpos byteno,
+			  Lisp_Object buffer)
+{
+#ifdef ERROR_CHECK_STRUCTURES
+  struct buffer *b;
+  Boolint point_p = 0;
+  Bytebpos old_byteno = byteno;
 
+  /* For the type, range checking. */
+  byteno = fixup_set_marker_args (marker, Qnil, byteno, buffer, 0, &b,
+                                  &point_p);
+
+  structure_checking_assert (!point_p);
+  structure_checking_assert (byteno == old_byteno);
+  structure_checking_assert (b == XBUFFER (buffer));
+#endif
+
+  return set_marker_internal (marker, byteno, XBUFFER (buffer), 0);
+}
 
 DEFUN ("set-marker", Fset_marker, 2, 3, 0, /*
 Move MARKER to position POSITION in BUFFER.
@@ -282,9 +377,15 @@ The return value is MARKER.
 */
        (marker, position, buffer))
 {
-  return set_marker_internal (marker, position, buffer, 0);
-}
+  struct buffer *b;
+  Bytebpos byteno = -1;
+  Boolint point_p;
 
+  byteno = fixup_set_marker_args (marker, position, -1, buffer, 0, &b,
+                                  &point_p);
+
+  return set_marker_internal (marker, byteno, b, point_p);
+}
 
 /* This version of Fset_marker won't let the position
    be outside the visible part.  */
@@ -292,9 +393,14 @@ Lisp_Object
 set_marker_restricted (Lisp_Object marker, Lisp_Object position,
 		       Lisp_Object buffer)
 {
-  return set_marker_internal (marker, position, buffer, 1);
-}
+  struct buffer *b;
+  Bytebpos byteno = -1;
+  Boolint point_p;
 
+  byteno = fixup_set_marker_args (marker, position, -1, buffer, 1, &b,
+                                  &point_p);
+  return set_marker_internal (marker, byteno, b, point_p);
+}
 
 /* This is called during garbage collection,
    so we must be careful to ignore and preserve mark bits,
@@ -357,29 +463,6 @@ marker_position (Lisp_Object marker)
     invalid_argument ("Marker does not point anywhere", Qunbound);
 
   return bytebpos_to_charbpos (buf, byte_marker_position (marker));
-}
-
-void
-set_byte_marker_position (Lisp_Object marker, Bytebpos pos)
-{
-  Lisp_Marker *m = XMARKER (marker);
-  struct buffer *buf = m->buffer;
-
-  if (!buf)
-    invalid_argument ("Marker does not point anywhere", Qunbound);
-
-  m->membpos = bytebpos_to_membpos (buf, pos);
-}
-
-void
-set_marker_position (Lisp_Object marker, Charbpos pos)
-{
-  struct buffer *buf = XMARKER (marker)->buffer;
-
-  if (!buf)
-    invalid_argument ("Marker does not point anywhere", Qunbound);
-
-  set_byte_marker_position (marker, charbpos_to_bytebpos (buf, pos));
 }
 
 static Lisp_Object

@@ -491,7 +491,8 @@ output_string (Lisp_Object function, const Ibyte *nonreloc,
 			      marker_position (function), nonreloc, reloc,
 			      offset, len, -1, 0);
       set_byte_marker_position (function,
-				byte_marker_position (function) + len);
+				byte_marker_position (function) + len,
+                                wrap_buffer (XMARKER (function)->buffer));
       UNGCPRO;
       return len; /* We will have errored on failure. */
     }
