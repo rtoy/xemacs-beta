@@ -138,14 +138,6 @@ An empty string will return the constant `nil'.
 }
 
 
-static Lisp_Object
-buildmark (Charbpos val, Lisp_Object buffer)
-{
-  Lisp_Object mark = Fmake_marker ();
-  Fset_marker (mark, make_fixnum (val), buffer);
-  return mark;
-}
-
 DEFUN ("point", Fpoint, 0, 1, 0, /*
 Return value of point, as an integer.
 Beginning of buffer is position (point-min).
@@ -203,19 +195,19 @@ Return value of POSITION, as an integer.
 static Lisp_Object
 region_limit (int beginningp, struct buffer *b)
 {
-  Lisp_Object m;
-
 #if 0 /* FSFmacs */
   if (!NILP (Vtransient_mark_mode) && NILP (Vmark_even_if_inactive)
       && NILP (b->mark_active))
     Fsignal (Qmark_inactive, Qnil);
 #endif
-  m = Fmarker_position (b->mark);
-  if (NILP (m)) invalid_operation ("There is no region now", Qunbound);
-  if (!!(BUF_PT (b) < XFIXNUM (m)) == !!beginningp)
+  if (XMARKER (b->mark)->buffer == NULL)
+    {
+      invalid_operation ("There is no region now", Qunbound);
+    }
+  if (!!(BYTE_BUF_PT (b) < byte_marker_position (b->mark)) == !!beginningp)
     return make_fixnum (BUF_PT (b));
   else
-    return m;
+    return Fmarker_position (b->mark);
 }
 
 DEFUN ("region-beginning", Fregion_beginning, 0, 1, 0, /*
@@ -439,7 +431,8 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return buildmark (BUF_BEGV (b), wrap_buffer (b));
+  return set_byte_marker_position (Fmake_marker (), BYTE_BUF_BEGV (b),
+                                   wrap_buffer (b));
 }
 
 DEFUN ("point-max", Fpoint_max, 0, 1, 0, /*
@@ -463,7 +456,8 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return buildmark (BUF_ZV (b), wrap_buffer (b));
+  return set_byte_marker_position (Fmake_marker (), BYTE_BUF_ZV (b),
+                                   wrap_buffer (b));
 }
 
 DEFUN ("following-char", Ffollowing_char, 0, 1, 0, /*
@@ -2149,8 +2143,8 @@ save_restriction_save (struct buffer *buf)
 
      But that was clearly before the advent of marker-insertion-type. --ben */
 
-  Fset_marker (bottom, make_fixnum (BUF_BEGV (buf)), wrap_buffer (buf));
-  Fset_marker (top, make_fixnum (BUF_ZV (buf)), wrap_buffer (buf));
+  set_byte_marker_position (bottom, BYTE_BUF_BEGV (buf), wrap_buffer (buf));
+  set_byte_marker_position (top, BYTE_BUF_ZV (buf), wrap_buffer (buf));
   Fset_marker_insertion_type (top, Qt);
 
   return noseeum_cons (wrap_buffer (buf), noseeum_cons (bottom, top));
@@ -2167,29 +2161,35 @@ save_restriction_restore (Lisp_Object data)
   /* someone could have killed the buffer in the meantime ... */
   if (BUFFER_LIVE_P (buf))
     {
-      Charbpos start = marker_position (XCAR (markers));
-      Charbpos end = marker_position (XCDR (markers));
-      Bytebpos byte_start = charbpos_to_bytebpos (buf, start);
-      Bytebpos byte_end = charbpos_to_bytebpos (buf, end);
+      Bytebpos byte_start = byte_marker_position (XCAR (markers));
+      Bytebpos byte_end = byte_marker_position (XCDR (markers));
+      Bytebpos clipped;
 
-      if (BUF_BEGV (buf) != start)
+      if (BYTE_BUF_BEGV (buf) != byte_start)
 	{
 	  local_clip_changed = 1;
-	  SET_BOTH_BUF_BEGV (buf, start, byte_start);
+	  SET_BOTH_BUF_BEGV (buf, bytebpos_to_charbpos (buf, byte_start),
+                             byte_start);
 	  narrow_line_number_cache (buf);
 	}
-      if (BUF_ZV (buf) != end)
+      if (BYTE_BUF_ZV (buf) != byte_end)
 	{
 	  local_clip_changed = 1;
-	  SET_BOTH_BUF_ZV (buf, end, byte_end);
+	  SET_BOTH_BUF_ZV (buf, bytebpos_to_charbpos (buf, byte_end),
+                           byte_end);
 	}
 
       if (local_clip_changed)
 	MARK_CLIP_CHANGED;
 
       /* If point is outside the new visible range, move it inside. */
-      BUF_SET_PT (buf, charbpos_clip_to_bounds (BUF_BEGV (buf), BUF_PT (buf),
-						BUF_ZV (buf)));
+      clipped = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (buf),
+                                         BYTE_BUF_PT (buf),
+                                         BYTE_BUF_ZV (buf));
+      if (clipped != BYTE_BUF_PT (buf))
+        {
+          BYTE_BUF_SET_PT (buf, clipped);
+        }
     }
 
   /* Free all the junk we allocated, so that a `save-restriction' comes
@@ -2314,11 +2314,10 @@ transpose_markers (Charbpos start1, Charbpos end1, Charbpos start2, Charbpos end
 	    mpos += diff;
 	  else
 	    mpos -= amt2;
-	  set_marker_position (marker, mpos);
+	  Fset_marker (marker, make_fixnum (mpos), wrap_buffer (buf));
 	}
     }
 }
-
 #endif /* 0 */
 
 DEFUN ("transpose-regions", Ftranspose_regions, 4, 5, 0, /*

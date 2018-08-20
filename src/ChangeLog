@@ -1,3 +1,46 @@
+2018-08-20  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* callint.c (check_mark):
+	* callint.c (Fcall_interactively):
+	* editfns.c:
+	* editfns.c (Fpoint):
+	* editfns.c (region_limit):
+	* editfns.c (Fpoint_min_marker):
+	* editfns.c (Fpoint_max_marker):
+	* editfns.c (save_restriction_save):
+	* editfns.c (save_restriction_restore):
+	* editfns.c (transpose_markers):
+	* fileio.c:
+	* fileio.c (restore_point_unwind):
+	* keymap.c (get_relevant_keymaps):
+	* lisp.h:
+	* lread.c (readchar):
+	* lread.c (unreadchar):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.c (lisp_buffer_writer):
+	* lstream.c (lisp_buffer_write_with_extents):
+	* lstream.c (lisp_buffer_rewinder):
+	* lstream.c (lisp_buffer_marker):
+	* marker.c:
+	* marker.c (fixup_set_marker_args):
+	* marker.c (set_marker_internal):
+	* marker.c (set_byte_marker_position):
+	* marker.c (Fset_marker):
+	* marker.c (set_marker_restricted):
+	* marker.c (copy_marker_1):
+	* print.c (output_string):
+	* text.c (get_buffer_pos_byte):
+	* text.c (get_buffer_range_byte):
+	Further reduce unnecessary marker byte-char conversion.
+	In particular:
+	-- Make #'copy-marker consistently O(1) with a marker argument.
+	-- Make #'set-marker O(1) with a marker POSITION.
+	-- Make set_marker_restricted O(1).
+	-- Avoid any byte-char conversions with get_buffer_pos_byte ()
+	with a marker POS.
+	-- Avoid any byte-char conversions with get_buffer_range_byte ()
+	with a marker FROM and a marker TO.
+
 2018-08-15  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Calls to marker_position() are O(N), reduce them in bytecode.

@@ -220,7 +220,7 @@ quotify_args (Lisp_Object expr)
   return expr;
 }
 
-static Charbpos
+static Bytebpos
 check_mark (void)
 {
   Lisp_Object tem;
@@ -232,7 +232,7 @@ check_mark (void)
   if (NILP (tem) || (XBUFFER (tem) != current_buffer))
     invalid_operation ("The mark is not set now", Qunbound);
 
-  return marker_position (current_buffer->mark);
+  return byte_marker_position (current_buffer->mark);
 }
 
 static Lisp_Object
@@ -827,12 +827,12 @@ when reading the arguments.
             }
 	  case 'r':		/* Region, point and mark as 2 args. */
 	    {
-	      Charbpos tem = check_mark ();
-	      args[argnum] = (BUF_PT (current_buffer) < tem
+	      Bytebpos tem = check_mark ();
+	      args[argnum] = (BYTE_BUF_PT (current_buffer) < tem
 			      ? Fcopy_marker (current_buffer->point_marker, Qt)
 			      : current_buffer->mark);
 	      varies[argnum] = Qregion_beginning;
-	      args[++argnum] = (BUF_PT (current_buffer) > tem
+	      args[++argnum] = (BYTE_BUF_PT (current_buffer) > tem
 				? Fcopy_marker (current_buffer->point_marker,
 						Qt)
 				: current_buffer->mark);

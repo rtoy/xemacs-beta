@@ -195,7 +195,7 @@ delete_stream_unwind (Lisp_Object stream)
 static Lisp_Object
 restore_point_unwind (Lisp_Object point_marker)
 {
-  BUF_SET_PT (current_buffer, marker_position (point_marker));
+  BYTE_BUF_SET_PT (current_buffer, byte_marker_position (point_marker));
   return Fset_marker (point_marker, Qnil, Qnil);
 }
 
