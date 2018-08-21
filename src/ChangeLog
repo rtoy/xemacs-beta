@@ -1,3 +1,15 @@
+2018-08-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lread.c (readchar):
+	Fix my bug here, BYTE_BUF_FETCH_CHAR() is the macro to use with a
+	Bytebpos, using BUF_FETCH_CHAR () gives a bug with byte marker
+	position.
+	* editfns.c (save_restriction_restore):
+	Work around what is almost certainly a compiler bug here, store
+	the result of bytebpos_to_charbpos (BUF, BYTE_START) in a local
+	variable, instead of passing it as an argument directly, avoiding
+	incorrect calculated values for the character position.
+
 2018-08-20  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* callint.c (check_mark):

@@ -269,7 +269,7 @@ readchar (Lisp_Object readcharfun)
 
       if (mpos >= BYTE_BUF_ZV (inbuffer))
 	return -1;
-      c = BUF_FETCH_CHAR (inbuffer, mpos);
+      c = BYTE_BUF_FETCH_CHAR (inbuffer, mpos);
       INC_BYTEBPOS (inbuffer, mpos);
       set_byte_marker_position (readcharfun, mpos, wrap_buffer (inbuffer));
       return c;

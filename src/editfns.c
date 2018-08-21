@@ -2167,16 +2167,16 @@ save_restriction_restore (Lisp_Object data)
 
       if (BYTE_BUF_BEGV (buf) != byte_start)
 	{
+          Charbpos cstart = bytebpos_to_charbpos (buf, byte_start);
 	  local_clip_changed = 1;
-	  SET_BOTH_BUF_BEGV (buf, bytebpos_to_charbpos (buf, byte_start),
-                             byte_start);
+	  SET_BOTH_BUF_BEGV (buf, cstart, byte_start);
 	  narrow_line_number_cache (buf);
 	}
       if (BYTE_BUF_ZV (buf) != byte_end)
 	{
+          Charbpos cend = bytebpos_to_charbpos (buf, byte_end);
 	  local_clip_changed = 1;
-	  SET_BOTH_BUF_ZV (buf, bytebpos_to_charbpos (buf, byte_end),
-                           byte_end);
+	  SET_BOTH_BUF_ZV (buf, cend, byte_end);
 	}
 
       if (local_clip_changed)
