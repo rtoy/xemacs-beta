@@ -170,6 +170,15 @@ This is a naive implementation in Lisp.  "
       (set-buffer-modified-p nil)
       (kill-buffer nil)))
   (delete-file existing-file-name))
+
+;; Make sure #'read isn't confused by a marker STREAM in a variable-length
+;; buffer.
+
+(with-temp-buffer
+  (insert "\xe4quivalent")
+  (goto-char (point-min))
+  (Assert (eq (read (copy-marker (point)))
+              (intern (concat (list ?\xe4) "quivalent")))))
   
 ;;-----------------------------------------------------------------
 ;; Test string modification functions that modify the length of a char.
