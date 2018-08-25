@@ -836,15 +836,18 @@ This means, in other words, variables defined with a `:version' keyword."
 
 (defun customize-version-lessp (version1 version2)
   (let (major1 major2 minor1 minor2)
-    (string-match "\\([0-9]+\\)[.]\\([0-9]+\\)" version1)
-    (setq major1 (read (match-string 1 version1)))
-    (setq minor1 (read (match-string 2 version1)))
-    (string-match "\\([0-9]+\\)[.]\\([0-9]+\\)" version2)
-    (setq major2 (read (match-string 1 version2)))
-    (setq minor2 (read (match-string 2 version2)))
-    (or (< major1 major2)
-	(and (= major1 major2)
-	     (< minor1 minor2)))))
+    (save-match-data
+      (string-match "\\([0-9]+\\)[.]\\([0-9]+\\)" version1)
+      (setq major1 (parse-integer version1 :start (match-beginning 1)
+                                 :end (match-end 1))
+            minor1 (parse-integer version1 :start (match-beginning 2)
+                                 :end (match-end 2)))
+      (string-match "\\([0-9]+\\)[.]\\([0-9]+\\)" version2)
+      (setq major2 (parse-integer version2 :start (match-beginning 1)
+                                 :end (match-end 1))
+            minor2 (parse-integer version2 :start (match-beginning 2)
+                                  :end (match-end 2)))
+      (or (< major1 major2) (and (eql major1 major2) (< minor1 minor2))))))
 
 ;;;###autoload
 (defalias 'customize-variable-other-window 'customize-option-other-window)

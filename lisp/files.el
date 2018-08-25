@@ -545,23 +545,33 @@ and ignores this variable."
 ;that really does change some file names to canonicalize certain
 ;patterns and to guarantee valid names."
 (defun convert-standard-filename (filename)
-  "Convert a standard file's name to something suitable for the current OS."
-  (if (eq system-type 'windows-nt)
-      (let ((name (copy-sequence filename))
-	    (start 0))
-	;; leave ':' if part of drive specifier
- 	(if (and (> (length name) 1)
- 		 (eq (aref name 1) ?:))
-	    (setq start 2))
-	;; destructively replace invalid filename characters with !
-	(while (string-match "[?*:<>|\"\000-\037]" name start)
-	  (aset name (match-beginning 0) ?!)
-	  (setq start (match-end 0)))
-	;; FSF: [convert directory separators to Windows format ...]
-	;; unneeded in XEmacs.
-	name)
-    filename))
+  "Convert a standard FILENAME to something suitable for the current OS."
+  ;; See below for the non-windows-nt code that is equivalent to
+  ;; #'identity.
+  (let ((name (copy-sequence filename))
+	(start 0) match-beginning)
+    ;; leave ':' if part of drive specifier
+    (if (and (> (length name) 1) (eq (aref name 1) ?:))
+	(setq start 2))
+    ;; destructively replace invalid filename characters with !
+    (while (setq match-beginning
+                     (string-match-p "[?*:<>|\"\000-\037]" name start))
+      (aset name match-beginning ?!)
+      (setq start (1+ match-beginning)))
+    ;; FSF: [convert directory separators to Windows format ...]
+    ;; unneeded in XEmacs.
+    name))
 
+(when (and (not (eq system-type 'windows-nt))
+	   (compiled-function-p (symbol-function 'convert-standard-filename)))
+  (fset 'convert-standard-filename
+	(make-byte-code
+	 (compiled-function-arglist (symbol-function 'identity))
+	 (compiled-function-instructions (symbol-function 'identity))
+	 (compiled-function-constants (symbol-function 'identity))
+	 (compiled-function-stack-depth (symbol-function 'identity))
+	 (compiled-function-doc-string
+	  (symbol-function 'convert-standard-filename)))))
 
 (defun pwd ()
   "Show the current default directory."
@@ -584,7 +594,8 @@ of the same functionality is available as `split-path', which see."
   (and cd-path
        (let (cd-list (cd-start 0) cd-colon)
 	 (setq cd-path (concat cd-path path-separator))
-	 (while (setq cd-colon (string-match path-separator cd-path cd-start))
+	 (while (setq cd-colon
+                      (string-match-p path-separator cd-path cd-start))
 	   (setq cd-list
 		 (nconc cd-list
 			(list (if (= cd-start cd-colon)
@@ -1784,7 +1795,7 @@ and we don't even do that unless it would come from the file name."
 		(if (and (null mode)
 			 (save-excursion ; XEmacs
 			   (goto-char (point-min))
-			   (looking-at "#!")))
+			   (looking-at-p "#!")))
 		    (let ((firstline
 			   (buffer-substring
 			    (point-min)
@@ -1831,17 +1842,19 @@ for current buffer."
 	  (not (let ((temp inhibit-first-line-modes-regexps)
 		     (name (if buffer-file-name
 			       (file-name-sans-versions buffer-file-name)
-			     (buffer-name))))
+			     (buffer-name)))
+                     match-beginning)
 		 (while (let ((sufs inhibit-first-line-modes-suffixes))
 			  (while (and sufs (not
-					    (string-match (car sufs) name)))
+					    (setq match-beginning
+                                                  (string-match-p (car sufs)
+                                                                  name))))
 			    (setq sufs (cdr sufs)))
 			  sufs)
-		   (setq name (substring name 0 (match-beginning 0))))
-		 (while (and temp
-			     (not (string-match-p (car temp) name)))
-		   (setq temp (cdr temp))
-		   temp))))
+		   (setq name (substring name 0 match-beginning)))
+		 (while (and temp (not (string-match-p (car temp) name)))
+		   (setq temp (cdr temp)))
+                 temp)))
       (progn
         ;; Look for variables in the -*- line.
         (hack-local-variables-prop-line force)
@@ -1930,7 +1943,7 @@ for current buffer."
 	      (forward-line 1))
 	    ;; Skip the prefix, if any.
 	    (if prefix
-		(if (looking-at prefix)
+		(if (looking-at-p prefix)
 		    (forward-char prefixlen)
 		  (error "Local variables entry is missing the prefix")))
 	    ;; Find the variable name; strip whitespace.
@@ -1951,7 +1964,7 @@ for current buffer."
 		(setq val (read (current-buffer)))
 		(skip-chars-backward "\n")
 		(skip-chars-forward " \t")
-		(or (if suffix (looking-at suffix) (eolp))
+		(or (if suffix (looking-at-p suffix) (eolp))
 		    (error "Local variables entry is terminated incorrectly"))
 		;; Set the variable.  "Variables" mode and eval are funny.
                 (hack-one-local-variable var val))))))))
@@ -1972,7 +1985,7 @@ for current buffer."
 		   ;; put them in the first line of
 		   ;; such a file without screwing up
 		   ;; the interpreter invocation.
-		   (end-of-line (and (looking-at "^#!") 2))
+		   (end-of-line (and (looking-at-p "^#!") 2))
 		   (point))))
 	;; Parse the -*- line into the `result' alist.
 	(cond ((not (search-forward "-*-" end t))
@@ -2696,12 +2709,11 @@ and directory use different drive names) then it returns FILENAME."
 			       ".."
 			     (concat "../" ancestor))))
 	  ;; Now ancestor is empty, or .., or ../.., etc.
-	  (if (string-match (concat "^" (regexp-quote directory)) fname)
+	  (if (string-match-p (concat "^" (regexp-quote directory)) fname)
 	      ;; We matched within FNAME's directory part.
 	      ;; Add the rest of FNAME onto ANCESTOR.
-	      (let ((rest (substring fname (match-end 0))))
-		(if (and (equal ancestor ".")
-			 (not (equal rest "")))
+	      (let ((rest (substring fname (length directory))))
+		(if (and (equal ancestor ".") (not (equal rest "")))
 		    ;; But don't bother with ANCESTOR if it would give us `./'.
 		    rest
 		  (concat (file-name-as-directory ancestor) rest)))
@@ -3461,7 +3473,7 @@ Revert only if they differ."
 	    ((or noconfirm
 		 (and (not (buffer-modified-p))
 		      (dolist (rx revert-without-query found)
-			(when (string-match rx file-name)
+			(when (string-match-p rx file-name)
 			  (setq found t))))
 		 ;; If we might perform an optimized revert then we
 		 ;; want to delay prompting in case we don't need to
@@ -3769,7 +3781,7 @@ Then you'll be asked about a number of files to recover."
     (declare-fboundp (dired (cons auto-save-list-dir files)))
     (save-excursion
       (goto-char (point-min))
-      (or (looking-at "Move to the session you want to recover,")
+      (or (looking-at-p "Move to the session you want to recover,")
 	  (let ((inhibit-read-only t))
 	    (delete-matching-lines "^[ \t]*total.*$")
 	    (insert "Move to the session you want to recover,\n"
@@ -4025,9 +4037,10 @@ default directory.  However, if FULL is non-nil, they are absolute."
 	 ;; A list of all dirs that DIRPART specifies.
 	 ;; This can be more than one dir
 	 ;; if DIRPART contains wildcards.
-	 (dirs (if (and dirpart (string-match "[[*?]" dirpart))
-		   (mapcar 'file-name-as-directory
-			   (file-expand-wildcards (directory-file-name dirpart)))
+	 (dirs (if (and dirpart (string-match-p "[[*?]" dirpart))
+		   (mapcar #'file-name-as-directory
+			   (file-expand-wildcards
+                            (directory-file-name dirpart)))
 		 (list dirpart)))
 	 contents)
     (while dirs
@@ -4087,42 +4100,42 @@ the parts of the pattern which don't include wildcard characters are
 quoted with double quotes.
 Existing quote characters in PATTERN are left alone, so you can pass
 PATTERN that already quotes some of the special characters."
-  (save-match-data
-    (cond
-     ((memq system-type '(ms-dos windows-nt))
-      ;; DOS/Windows don't allow `"' in file names.  So if the
-      ;; argument has quotes, we can safely assume it is already
-      ;; quoted by the caller.
-      (if (or (string-match-p "[\"]" pattern)
-	      ;; We quote [&()#$'] in case their shell is a port of a
-	      ;; Unixy shell.  We quote [,=+] because stock DOS and
-	      ;; Windows shells require that in some cases, such as
-	      ;; passing arguments to batch files that use positional
-	      ;; arguments like %1.
-	      (not (string-match-p "[ \t;&()#$',=+]" pattern)))
-
-	  pattern
-	(let ((result "\"")
-	      (beg 0)
-	      end)
-	  (while (string-match "[*?]+" pattern beg)
-	    (setq end (match-beginning 0)
-		  result (concat result (substring pattern beg end)
-				 "\""
-				 (substring pattern end (match-end 0))
-				 "\"")
-		  beg (match-end 0)))
-	  (concat result (substring pattern beg) "\""))))
-     (t
-      (let ((beg 0))
-	(while (string-match "[ \t\n;<>&|()#$]" pattern beg)
-	  (setq pattern
-		(concat (substring pattern 0 (match-beginning 0))
-			"\\"
-			(substring pattern (match-beginning 0)))
-		beg (1+ (match-end 0)))))
-      pattern))))
-
+  (cond
+    ((memq system-type '(ms-dos windows-nt))
+     ;; DOS/Windows don't allow `"' in file names.  So if the
+     ;; argument has quotes, we can safely assume it is already
+     ;; quoted by the caller.
+     (if (or (find ?\" pattern)
+             ;; We quote [&()#$'] in case their shell is a port of a
+             ;; Unixy shell.  We quote [,=+] because stock DOS and
+             ;; Windows shells require that in some cases, such as
+             ;; passing arguments to batch files that use positional
+             ;; arguments like %1.
+             (not (string-match-p "[ \t;&()#$',=+]" pattern)))
+         pattern
+       (let ((result "\"")
+             (beg 0)
+             end)
+         (save-match-data
+           (while (string-match "[*?]+" pattern beg)
+             (setq end (match-beginning 0)
+                   result (concat result (substring pattern beg end)
+                                  "\""
+                                  (substring pattern end (match-end 0))
+                                  "\"")
+                   beg (match-end 0)))
+           (concat result (substring pattern beg) "\"")))))
+    (t
+     (let ((start 0) stream beg)
+       (while (setq beg (string-match-p "[ \t\n;<>&|()#$]" pattern start))
+         (write-sequence pattern (or stream
+                                     (setq stream
+                                           (make-string-output-stream)))
+                         :start start :end beg)
+         (write-sequence "\\" stream)
+         (write-char (aref pattern beg) stream)
+         (setq start (1+ beg)))
+       (if stream (get-output-stream-string stream) pattern)))))
 
 (defvar insert-directory-program "ls"
   "Absolute or relative name of the `ls' program used by `insert-directory'.")
@@ -4233,9 +4246,9 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 		  (member "--dired" switches))
 	    (save-excursion
 	      (forward-line -2)
-	      (when (looking-at "//SUBDIRED//")
+	      (when (looking-at-p "//SUBDIRED//")
 		(forward-line -1))
-	      (if (looking-at "//DIRED//")
+	      (if (looking-at-p "//DIRED//")
 		  (setq result 0))))
 
 	  (when (and (not (eq 0 result))
@@ -4296,10 +4309,10 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 		       (member "--dired" switches))
 		  (string-match-p "--dired\\>" switches))
 	  (forward-line -2)
-	  (when (looking-at "//SUBDIRED//")
+	  (when (looking-at-p "//SUBDIRED//")
 	    (delete-region (point) (progn (forward-line 1) (point)))
 	    (forward-line -1))
-	  (if (looking-at "//DIRED//")
+	  (if (looking-at-p "//DIRED//")
 	      (let ((end (line-end-position))
 		    (linebeg (point))
 		    error-lines)
@@ -4343,7 +4356,7 @@ If WILDCARD, it also runs the shell specified by `shell-file-name'."
 	    ;; "//DIRED-OPTIONS//"-line, but no "//DIRED//"-line
 	    ;; and we went one line too far back (see above).
 	    (forward-line 1))
-	  (if (looking-at "//DIRED-OPTIONS//")
+	  (if (looking-at-p "//DIRED-OPTIONS//")
 	      (delete-region (point) (progn (forward-line 1) (point))))))))))
 
 (defun insert-directory-adj-pos (pos error-lines)

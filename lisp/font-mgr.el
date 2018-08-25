@@ -234,8 +234,7 @@ match other font-listing APIs."
 
 (defun xlfd-font-name-p (fontname)
   "Check whether the string FONTNAME is a XLFD font name."
-  (save-match-data
-    (string-match xft-xlfd-font-regexp fontname)))
+  (string-match-p xft-xlfd-font-regexp fontname))
 
 ;; FcPatternPrint: there is no point in having wrappers fc-pattern-print,
 ;; Ffc_pattern_print since this function prints to stdout.

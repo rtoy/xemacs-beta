@@ -71,7 +71,8 @@ from the search."
 		  (reverse-dirs '()))
 	      (while raw-entries
 		(if (not (and exclude-regexp
-			      (string-match exclude-regexp (car raw-entries))))
+			      (string-match-p
+                               exclude-regexp (car raw-entries))))
 		    (setq reverse-dirs
 			  (cons (expand-file-name (car raw-entries) directory)
 				reverse-dirs)))
