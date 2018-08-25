@@ -229,15 +229,15 @@ You may want to redefine `byte-compile-dest-file' if you change this.")
 	(funcall handler 'byte-compiler-base-file-name filename)
       filename)))
 
-(unless (fboundp 'byte-compile-dest-file)
-  ;; The user may want to redefine this along with emacs-lisp-file-regexp,
-  ;; so only define it if it is undefined.
-  (defun byte-compile-dest-file (filename)
-    "Convert an Emacs Lisp source file name to a compiled file name."
-    (setq filename (byte-compiler-base-file-name filename))
-    (setq filename (file-name-sans-versions filename))
-    (if (string-match emacs-lisp-file-regexp filename)
-	(concat (substring filename 0 (match-beginning 0)) ".elc")
+;; The user may want to redefine this along with emacs-lisp-file-regexp,
+;; so only define it if it is undefined.
+(defun-when-void byte-compile-dest-file (filename)
+  "Convert an Emacs Lisp source file name to a compiled file name."
+  (setq filename (byte-compiler-base-file-name filename))
+  (setq filename (file-name-sans-versions filename))
+  (let ((match-beginning (string-match-p emacs-lisp-file-regexp filename)))
+    (if match-beginning
+        (concat (substring filename 0 match-beginning) ".elc")
       (concat filename ".elc"))))
 
 ;; This can be the 'byte-compile property of any symbol.

@@ -189,7 +189,7 @@ If this is 0, then the full buffer name will be shown."
 Omit buffers based on the value of `buffers-tab-omit-list', which
 see."
   (let ((regexp (mapconcat 'concat buffers-tab-omit-list "\\|")))
-    (not (null (string-match regexp (buffer-name buf))))))
+    (not (null (string-match-p regexp (buffer-name buf))))))
 
 (defun buffers-tab-switch-to-buffer (buffer)
   "For use as a value for `buffers-tab-switch-to-buffer-function'."
@@ -220,10 +220,10 @@ This selects buffers by major mode `buffers-tab-grouping-regexp'."
 	       (and buffers-tab-grouping-regexp
 		    (find-if #'(lambda (x)
 				 (or
-				  (and (string-match x mode1)
-				       (string-match x mode2))
-				  (and (string-match x modenm1)
-				       (string-match x modenm2))))
+				  (and (string-match-p x mode1)
+				       (string-match-p x mode2))
+				  (and (string-match-p x modenm1)
+				       (string-match-p x modenm2))))
 			     buffers-tab-grouping-regexp)))
 	   t)
 	  (t nil))))

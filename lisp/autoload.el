@@ -367,19 +367,22 @@ marked by `generate-autoload-cookie' (which see).
 If FILE is being visited in a buffer, the contents of the buffer
 are used."
   (interactive "fGenerate autoloads for file: ")
-  (cond ((string-match "\\.el$" file)
-	 (generate-autoload-type-section
-	  file
-	  (replace-in-string (file-name-nondirectory file) "\\.elc?$" "")
-	  nil #'generate-lisp-file-autoloads-1))
-	;; #### jj, are C++ modules possible?
-	((string-match "\\.c$" file)
-	 (generate-autoload-type-section
-	  file
-	  (replace-in-string (file-name-nondirectory file) "\\.c$" "")
-	  t #'generate-c-file-autoloads-1))
-	(t
-	 (error 'wrong-type-argument file "not a C or Elisp source file"))))
+  (let* ((file-name-nondirectory (file-name-nondirectory file))
+         (extension (position ?. file-name-nondirectory :from-end t)))
+    (unless extension
+      (error 'wrong-type-argument file
+             "no suffix, cannot identify file type"))
+    (cond ((not (mismatch ".el" file-name-nondirectory :start2 extension))
+           (generate-autoload-type-section
+            file (subseq file-name-nondirectory 0 extension) nil
+            #'generate-lisp-file-autoloads-1))
+          ;; #### jj, are C++ modules possible?
+          ((not (mismatch ".c" file-name-nondirectory :start2 extension))
+           (generate-autoload-type-section
+            file (subseq file-name-nondirectory 0 extension)
+            t #'generate-c-file-autoloads-1))
+          (t (error 'wrong-type-argument file
+                    "not a C or Elisp source file")))))
 
 (defun* generate-autoload-type-section (file load-name literal fun-to-call)
   "Insert at point an autoload-type section for FILE.
@@ -668,17 +671,22 @@ are used."
 If FILE is being visited in a buffer, the contents of the buffer
 are used."
   (interactive "fGenerate custom defines for file: ")
-  (cond ((string-match "\\.el$" file)
-	 (generate-autoload-type-section
-	  file
-	  (replace-in-string (file-name-nondirectory file) "\\.elc?$" "")
-	  nil #'generate-custom-defines-1))
-	((string-match "\\.c$" file)
-	 ;; no way to generate custom-defines for C files (currently?),
-	 ;; but cannot signal an error.
-	 nil)
-	(t
-	 (error 'wrong-type-argument file "not a C or Elisp source file"))))
+  (let* ((file-name-nondirectory (file-name-nondirectory file))
+         (extension (position ?. file-name-nondirectory :from-end t)))
+    (cond ((and extension
+                (not (mismatch ".el" file-name-nondirectory
+                               :start2 extension)))
+           (generate-autoload-type-section
+            file (subseq file-name-nondirectory 0 extension) nil
+            #'generate-custom-defines-1))
+          ((and extension
+                (not (mismatch ".c" file-name-nondirectory
+                               :start2 extension)))
+           ;; no way to generate custom-defines for C files (currently?),
+           ;; but cannot signal an error.
+           nil)
+          (t
+           (error 'wrong-type-argument file "not a C or Elisp source file")))))
 
 (defun* generate-custom-defines-1 (outbuf load-name trim-name)
   "Insert at point in OUTBUF a custom-define section for an Elisp file.

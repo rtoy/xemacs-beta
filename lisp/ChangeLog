@@ -1,7 +1,44 @@
+2018-08-25  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* autoload.el (generate-file-autoloads):
+	* autoload.el (generate-custom-defines):
+	* autoload.el (generate-custom-defines-1):
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-dest-file): New.
+	* bytecomp.el (byte-compile-inline-expand):
+	* disass.el (disassemble-1):
+	* files.el:
+	* files.el (parse-colon-path):
+	* files.el (set-auto-mode):
+	* files.el (hack-local-variables):
+	* files.el (hack-local-variables-last-page):
+	* files.el (hack-local-variables-prop-line):
+	* files.el (file-relative-name):
+	* files.el (revert-buffer):
+	* files.el (recover-session):
+	* files.el (file-expand-wildcards):
+	* files.el (shell-quote-wildcard-pattern):
+	* files.el (insert-directory):
+	* files.el (insert-directory-adj-pos):
+	* find-paths.el (paths-find-recursive-path):
+	* font-lock.el (font-lock-lisp-like):
+	* font-lock.el (font-lock-match-java-declarations):
+	* font-mgr.el:
+	* font-mgr.el (xlfd-font-name-p):
+	* gutter-items.el (buffers-tab-omit-some-buffers):
+	* gutter-items.el (select-buffers-tab-buffers-by-mode):
+	Call #'string-match, #'looking-at much less often, preferring
+	#'string-match-p and #'looking-at-p instead for fewer side-effects.
+	* cus-edit.el:
+	* cus-edit.el (customize-version-lessp):
+	Use the much cheaper #'parse-integer instead of #'read here.
+	* files.el (convert-standard-filename):
+	Redefine this to act as identity on non-windows-nt systems.
+
 2018-08-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* misc.el (make-weak-box):
-	Make this code work when run compiled too, not that it will come
+	Make this code work when run interpreted too, not that it will come
 	up much.
 
 2018-08-13  Aidan Kehoe  <kehoea@parhasard.net>

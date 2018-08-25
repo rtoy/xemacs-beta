@@ -1616,7 +1616,7 @@ buffer modifications are performed or a buffer is reverted.")
       (get mode 'font-lock-lisp-like)
     ;; If the property is not specified, guess.  Similar logic exists
     ;; in add-log, but I think this encompasses more modes.
-    (string-match "lisp\\|scheme" (symbol-name mode))))
+    (string-match-p "lisp\\|scheme" (symbol-name mode))))
 
 ;; fontify-syntactically-region used to use syntactically-sectionize, which
 ;; was supposedly much faster than the FSF version because it was written in
@@ -3098,16 +3098,14 @@ The name is assumed to begin with a capital letter.")
 	(goto-char (match-end 0)))
     (and
      (looking-at java-font-lock-identifier-regexp)
-     (save-match-data
-       (not (string-match java-font-lock-type-regexp
+     (not (string-match-p java-font-lock-type-regexp
 			  (buffer-substring (match-beginning 1)
-					    (match-end 1)))))
-     (save-match-data
-       (save-excursion
-	 (goto-char (match-beginning 1))
-	 (not (looking-at
+					    (match-end 1))))
+     (save-excursion
+       (goto-char (match-beginning 1))
+       (not (looking-at-p
 	       (concat java-font-lock-class-name-regexp
-		       "\\s *\\(\\[\\s *\\]\\s *\\)*\\<")))))
+		       "\\s *\\(\\[\\s *\\]\\s *\\)*\\<"))))
      (save-match-data
        (condition-case nil
 	   (progn
