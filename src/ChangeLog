@@ -1,3 +1,13 @@
+2018-08-26  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecode.c:
+	* text.h:
+	* text.h (MAX_ICHAR_LEN_FORMAT): Move this here from
+	bytecode.c. Don't implement it as ichar_len_fmt (CHAR_CODE_LIMIT -
+	1, FMT), since that chokes when error-checking is turned
+	on--CHAR_CODE_LIMIT - 1 is not guaranteed to be a valid Ichar on
+	old-mule.
+
 2018-08-21  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* lread.c (readchar):

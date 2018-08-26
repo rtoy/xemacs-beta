@@ -382,12 +382,6 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 #endif /* WITH_NUMBER_TYPES */
 }
 
-#ifdef MULE
-#define MAX_ICHAR_LEN_FORMAT(fmt) (ichar_len_fmt (CHAR_CODE_LIMIT - 1, fmt))
-#else
-#define MAX_ICHAR_LEN_FORMAT(buf) MAX_ICHAR_LEN
-#endif
-
 /* Given POS, the Bytebpos corresponding to MARKER, return the smallest
    Charbpos it can represent, which represents the situation where all the
    characters are of length MAX_ICHAR_LEN.  */

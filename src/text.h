@@ -380,6 +380,7 @@ unicode_error_octet_code_p (int code)
 #define ibyte_first_byte_p(ptr) ((void) (ptr), 1)
 #define byte_ascii_p(byte) ((void) (byte), 1)
 #define MAX_ICHAR_LEN 1
+#define MAX_ICHAR_LEN_FORMAT(fmt) ((void) (fmt), 1)
 /* Exclusive upper bound on character codes. */
 #define CHAR_CODE_LIMIT 0x100 
 #define ichar_ascii_p(c) ((void) (c), 1)
@@ -951,6 +952,31 @@ ichar_len_fmt (Ichar c, Internal_Format fmt)
     {
     case FORMAT_DEFAULT:
       return ichar_len (c);
+    case FORMAT_16_BIT_FIXED:
+      return 2;
+    case FORMAT_32_BIT_FIXED:
+      return 4;
+    default:
+      text_checking_assert (fmt == FORMAT_8_BIT_FIXED);
+      return 1;
+    }
+}
+
+/* Return the maximum length of any Ichar in the specified string format, in
+   octets. */
+DECLARE_INLINE_HEADER (
+Bytecount
+MAX_ICHAR_LEN_FORMAT (Internal_Format fmt)
+)
+{
+  /* I implemented this initially as ichar_len_fmt (CHAR_CODE_LIMT - 1, FMT),
+     but that fails with error checking on old-mule, since CHAR_CODE_LIMIT - 1
+     is not guaranteed to be an existing character, only a potential
+     character. */
+  switch (fmt)
+    {
+    case FORMAT_DEFAULT:
+      return MAX_ICHAR_LEN;
     case FORMAT_16_BIT_FIXED:
       return 2;
     case FORMAT_32_BIT_FIXED:
