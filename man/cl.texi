@@ -588,9 +588,9 @@ macros that are defined.
 @defmac eval-when (situations...) forms...
 This form controls when the body @var{forms} are evaluated.
 The @var{situations} list may contain any set of the symbols
-@code{compile}, @code{load}, and @code{eval} (or their long-winded
-ANSI equivalents, @code{:compile-toplevel}, @code{:load-toplevel},
-and @code{:execute}).
+@code{:compile-toplevel}, @code{:load-toplevel}, and @code{:execute},
+or their shorter, deprecated equivalents, @code{compile}, @code{load},
+and @code{eval}.
 
 The @code{eval-when} form is handled differently depending on
 whether or not it is being compiled as a top-level form.
@@ -600,15 +600,16 @@ or buffers of code, and it appears either literally at the
 top level of the file or inside a top-level @code{progn}.
 
 For compiled top-level @code{eval-when}s, the body @var{forms} are
-executed at compile-time if @code{compile} is in the @var{situations}
-list, and the @var{forms} are written out to the file (to be executed
-at load-time) if @code{load} is in the @var{situations} list.
+executed at compile-time if @code{:compile-toplevel} is in the
+@var{situations} list, and the @var{forms} are written out to the file
+(to be executed at load-time) if @code{:load-toplevel} is in the
+@var{situations} list.
 
-For non-compiled-top-level forms, only the @code{eval} situation is
+For non-compiled-top-level forms, only the @code{:execute} situation is
 relevant.  (This includes forms executed by the interpreter, forms
 compiled with @code{byte-compile} rather than @code{byte-compile-file},
 and non-top-level forms.)  The @code{eval-when} acts like a
-@code{progn} if @code{eval} is specified, and like @code{nil}
+@code{progn} if @code{:execute} is specified, and like @code{nil}
 (ignoring the body @var{forms}) if not.
 
 The rules become more subtle when @code{eval-when}s are nested;
@@ -619,40 +620,40 @@ Some simple examples:
 
 @example
 ;; Top-level forms in foo.el:
-(eval-when (compile)           (setq foo1 'bar))
-(eval-when (load)              (setq foo2 'bar))
-(eval-when (compile load)      (setq foo3 'bar))
-(eval-when (eval)              (setq foo4 'bar))
-(eval-when (eval compile)      (setq foo5 'bar))
-(eval-when (eval load)         (setq foo6 'bar))
-(eval-when (eval compile load) (setq foo7 'bar))
+(eval-when (:compile-toplevel)                         (setq foo1 'bar))
+(eval-when (:load-toplevel)                            (setq foo2 'bar))
+(eval-when (:compile-toplevel :load-toplevel)          (setq foo3 'bar))
+(eval-when (:execute)                                  (setq foo4 'bar))
+(eval-when (:execute :compile-toplevel)                (setq foo5 'bar))
+(eval-when (:execute :load-toplevel)                   (setq foo6 'bar))
+(eval-when (:execute :compile-toplevel :load-toplevel) (setq foo7 'bar))
 @end example
 
 When @file{foo.el} is compiled, these variables will be set during
 the compilation itself:
 
 @example
-foo1  foo3  foo5  foo7      ; `compile'
+foo1  foo3  foo5  foo7      ; `:compile-toplevel'
 @end example
 
 When @file{foo.elc} is loaded, these variables will be set:
 
 @example
-foo2  foo3  foo6  foo7      ; `load'
+foo2  foo3  foo6  foo7      ; `:load-toplevel'
 @end example
 
 And if @file{foo.el} is loaded uncompiled, these variables will
 be set:
 
 @example
-foo4  foo5  foo6  foo7      ; `eval'
+foo4  foo5  foo6  foo7      ; `:execute
 @end example
 
 If these seven @code{eval-when}s had been, say, inside a @code{defun},
 then the first three would have been equivalent to @code{nil} and the
 last four would have been equivalent to the corresponding @code{setq}s.
 
-Note that @code{(eval-when (load eval) @dots{})} is equivalent
+Note that @code{(eval-when (:load-toplevel :execute) @dots{})} is equivalent
 to @code{(progn @dots{})} in all contexts.  The compiler treats
 certain top-level forms, like @code{defmacro} (sort-of) and
 @code{require}, as if they were wrapped in @code{(eval-when

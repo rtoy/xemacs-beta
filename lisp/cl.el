@@ -237,10 +237,8 @@ See `member*' for the meaning of :test, :test-not and :key."
   nil)
 
 (defmacro declaim (&rest specs)
-  (let ((body (mapcar (function (lambda (x) (list 'proclaim (list 'quote x))))
-		      specs)))
-    (if (cl-compiling-file) (list* 'eval-when '(compile load eval) body)
-      (cons 'progn body))))   ; avoid loading cl-macs.el for eval-when
+  (list* 'eval-when '(:compile-toplevel :load-toplevel :execute)
+         (mapcar #'(lambda (x) `(proclaim ',x)) specs)))
 
 ;;; Symbols.
 

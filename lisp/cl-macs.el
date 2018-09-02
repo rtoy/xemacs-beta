@@ -573,41 +573,7 @@ results will be the same."
     (cl-do-arglist (or args '(&aux)) expr)
     (nconc (list 'let* (nreverse bind-lets)) (nreverse bind-forms) body)))
 
-;;; The `eval-when' form.
-
-(defvar cl-not-toplevel nil)
-
-;;;###autoload
-(defmacro eval-when (when &rest body)
-  "Control when BODY is evaluated.
-If `compile' is in WHEN, BODY is evaluated when compiled at top-level.
-If `load' is in WHEN, BODY is evaluated when loaded after top-level compile.
-If `eval' is in WHEN, BODY is evaluated when interpreted or at non-top-level.
-
-arguments: ((&rest WHEN) &body BODY)"
-  (if (and (fboundp 'cl-compiling-file) (cl-compiling-file)
-	   (not cl-not-toplevel) (not (boundp 'for-effect)))  ; horrible kludge
-      (let ((comp (or (memq 'compile when) (memq :compile-toplevel when)))
-	    (cl-not-toplevel t))
-	(if (or (memq 'load when) (memq :load-toplevel when))
-	    (if comp (cons 'progn (mapcar 'cl-compile-time-too body))
-	      (list* 'if nil nil body))
-	  (progn (if comp (eval (cons 'progn body))) nil)))
-    (and (or (memq 'eval when) (memq :execute when))
-	 (cons 'progn body))))
-
-(defun cl-compile-time-too (form)
-  (or (and (symbolp (car-safe form)) (get (car-safe form) 'byte-hunk-handler))
-      (setq form (macroexpand
-		  form (cons '(eval-when) byte-compile-macro-environment))))
-  (cond ((eq (car-safe form) 'progn)
-	 (cons 'progn (mapcar 'cl-compile-time-too (cdr form))))
-	((eq (car-safe form) 'eval-when)
-	 (let ((when (nth 1 form)))
-	   (if (or (memq 'eval when) (memq :execute when))
-	       (list* 'eval-when (cons 'compile when) (cddr form))
-	     form)))
-	(t (eval form) form)))
+;;; XEmacs; #'eval-when has been moved to bytecomp-runtime.el and bytecomp.el.
 
 ;;; Conditional control structures.
 
@@ -1983,7 +1949,7 @@ going to be expanded as a macro, then the BODY forms are executed and must
 return a list of five elements: a temporary-variables list, a value-forms
 list, a store-variables list (of length one), a store-form, and an access-
 form.  See `defsetf' for a simpler way to define most setf-methods."
-  (append '(eval-when (compile load eval))
+  (append '(eval-when (:compile-toplevel :load-toplevel :execute))
 	  (if (stringp (car body))
 	      (list (list 'put (list 'quote name) '(quote setf-documentation)
 			  (pop body))))
@@ -2961,7 +2927,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 				   (list 'and pred-form print-func)))
 		       'custom-print-functions) forms))
     (push (list 'setq tag-symbol (list 'list (list 'quote tag))) forms)
-    (push (list* 'eval-when '(compile load eval)
+    (push (list* 'eval-when '(:compile-toplevel :load-toplevel :execute)
 		    (list 'put (list 'quote name) '(quote cl-struct-slots)
 			  (list 'quote descs))
 		    (list 'put (list 'quote name) '(quote cl-struct-type)
@@ -3008,7 +2974,7 @@ copier, a `NAME-p' predicate, and setf-able `NAME-SLOT' accessors."
 (defmacro deftype (name arglist &rest body)
   "Define NAME as a new data type.
 The type name can then be used in `typecase', `check-type', etc."
-  (list 'eval-when '(compile load eval)
+  (list 'eval-when '(:compile-toplevel :load-toplevel :execute)
 	(cl-transform-function-property
 	 name 'cl-deftype-handler (cons (list* '&cl-defs ''('*) arglist) body))))
 
@@ -3131,7 +3097,7 @@ and then returning foo."
   (let ((p (if (listp args) args (list '&rest args))) (res nil))
     (while (consp p) (push (pop p) res))
     (setq args (nconc (nreverse res) (and p (list '&rest p)))))
-  (list 'eval-when '(compile load eval)
+  (list 'eval-when '(:compile-toplevel :load-toplevel :execute)
 	(cl-transform-function-property
 	 func 'cl-compiler-macro
 	 (cons (if (memq '&whole args) (delete* '&whole args)
