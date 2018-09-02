@@ -207,6 +207,27 @@ and when interpreted."
   ;; Remember, it's magic.
   (cons 'progn body))
 
+;;; The `eval-when' form. XEmacs; this has been moved from cl-macs.el.
+(defmacro eval-when (when &rest body)
+  "Control when BODY is evaluated.
+
+If :compile-toplevel is in WHEN, BODY is evaluated when compiled at
+top-level (roughly, when it is an outermost form in a file).
+If :load-toplevel is in WHEN, BODY is evaluated when loaded after
+top-level compile.
+If :execute is in WHEN, BODY is evaluated when interpreted or at
+non-top-level.
+
+The symbols `compile', `load' and `eval' are accepted as synonyms for
+:compile-toplevel, :load-toplevel and :execute, respectively.
+
+arguments: ((&rest WHEN) &body BODY)"
+  (if (set-difference when '(:compile-toplevel :load-toplevel :execute
+			     compile load eval))
+      (error 'syntax-error "not a valid value for WHEN" when))
+  (if (or (member* :execute when) (member* 'eval when))
+      (cons 'progn body)))
+
 ;;; From Emacs 20.
 (put 'eval-when-feature 'lisp-indent-hook 1)
 (defmacro eval-when-feature (feature &rest body)

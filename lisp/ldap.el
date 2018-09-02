@@ -36,7 +36,7 @@
 (globally-declare-fboundp '(ldapp ldap-open ldap-close ldap-add ldap-modify
 				  ldap-delete))
 
-(eval-when '(load)
+(eval-when (:load-toplevel)
   (if (not (fboundp 'ldap-open))
       (error "No LDAP support compiled in this XEmacs")))
 

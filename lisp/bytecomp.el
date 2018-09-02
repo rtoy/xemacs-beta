@@ -166,8 +166,9 @@
 ;;;  o  Forms like ((lambda ...) ...) are open-coded.
 ;;;
 ;;;  o  The form `eval-when-compile' is like `progn', except that the body
-;;;     is evaluated at compile-time.  When it appears at top-level, this
-;;;     is analogous to the Common Lisp idiom (eval-when (compile) ...).
+;;;     is evaluated at compile-time.  When it appears at top-level, this is
+;;;     analogous to the Common Lisp idiom (eval-when (:compile-toplevel)
+;;;     ...).
 ;;;     When it does not appear at top-level, it is similar to the
 ;;;     Common Lisp #. reader macro (but not in interpreted code).
 ;;;
@@ -460,7 +461,7 @@ easily determined from the input file.")
 	;; shouldn't be shadowed when calling #'byte-compile-eval, since
 	;; such code is interpreted, not compiled.
 	;; #### Consider giving this a docstring and a top-level value.
-	(byte-compile-no-shadow '(load-time-value labels flet)))
+	(byte-compile-no-shadow '(load-time-value labels flet eval-when)))
     (unwind-protect
 	(loop
 	  for (sym . def) in byte-compile-macro-environment
@@ -479,6 +480,8 @@ easily determined from the input file.")
 
 (defvar for-effect) ; ## Kludge!  This should be an arg, not a special.
 
+(defvar byte-compile-eval-when-seen nil)
+
 (defconst byte-compile-initial-macro-environment
   `((byte-compiler-options
       . ,#'(lambda (&rest forms)
@@ -490,6 +493,47 @@ easily determined from the input file.")
       . ,#'(lambda (&rest body)
 	     (byte-compile-eval (cons 'progn body))
 	     (cons 'progn body)))
+    (eval-when
+        . ,(symbol-macrolet ((wrapper '#:eval-when-wrapper))
+            (put wrapper 'byte-compile
+                 #'(lambda (form)
+                     (when (member :execute (cadadr form))
+                       (byte-compile-body-do-effect (cddr form)))))
+            (put wrapper 'byte-hunk-handler
+                 #'(lambda (form)
+                     (let ((when (cadadr form)))
+                       (when (member :compile-toplevel when)
+                         (let ((byte-compile-macro-environment
+                                (acons wrapper
+                                       #'(lambda (when &rest body)
+                                           (if (memq :execute (cadr when))
+                                               (cons 'progn body)))
+                                       byte-compile-macro-environment)))
+                           (byte-compile-eval (cons 'progn (cddr form)))))
+                       (when (and (member :load-toplevel when)
+                                  (not byte-compile-eval-when-seen))
+                         (let ((byte-compile-eval-when-seen t))
+                           (mapc 'byte-compile-file-form (cddr form))))
+                       ;; Do nothing if it is just :execute.
+                       nil)))
+            #'(lambda (when &rest body)
+                ;; It's tempting to attempt to implement this purely with a
+                ;; byte-hunk-handler, and leave the non-toplevel expansion to
+                ;; the macro in bytecomp-runtime.el. That chokes on the output
+                ;; of defstruct as used in gnuserv.el, which is likely a bug
+                ;; in defstruct or the defsetf code used by it.
+                (and (set-difference
+                      when '(:compile-toplevel :load-toplevel :execute
+                             compile load eval))
+                     (error 'syntax-error "not a valid value for WHEN" when))
+                (list* wrapper
+                       (list 'quote (sublis
+                                     ;; Make the logic within the byte compile
+                                     ;; handlers a little simpler:
+                                     '((load . :load-toplevel)
+                                       (compile . :compile-toplevel)
+                                       (eval . :execute))
+                                     when)) body))))
     (the .
       ,#'(lambda (type form)
 	   (if (cl-const-expr-p form)

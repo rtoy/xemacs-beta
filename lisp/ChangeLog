@@ -1,3 +1,30 @@
+2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp-runtime.el:
+	* bytecomp-runtime.el (eval-when): Move the runtime part of this
+	here from cl-macs.el.
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-eval):
+	* bytecomp.el (byte-compile-eval-when-seen): New.
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Implement the bulk of #'eval-when in the compiler, where it belongs.
+	* cl-macs.el:
+	* cl-macs.el (cl-not-toplevel): Removed.
+	* cl-macs.el (eval-when): Removed.
+	* cl-macs.el (arguments): Removed.
+	* cl-macs.el (cl-compile-time-too): Removed.
+	* cl-macs.el (define-setf-method):
+	* cl-macs.el (defstruct):
+	* cl-macs.el (deftype):
+	* cl-macs.el (define-compiler-macro):
+	* cl.el (declaim):
+	Use the ANSI CL syntax for the stages in WHEN with #'eval-when.
+	No need to worry about delaying loading cl-macs.el when using that
+	syntax.
+	* cl.el (cl-random-time):
+	* ldap.el (:load-toplevel):
+	Correct the syntax of this #'eval-when call.
+
 2018-08-25  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* autoload.el (generate-file-autoloads):
