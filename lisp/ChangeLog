@@ -1,5 +1,34 @@
 2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* byte-optimize.el:
+	* byte-optimize.el (:execute):
+	* bytecomp.el (:execute):
+	* cl-extra.el:
+	* cl-extra.el (:execute):
+	* cl-extra.el (streamp):
+	* cl-macs.el:
+	* cus-face.el:
+	* cus-face.el (:compile-toplevel):
+	* easy-mmode.el:
+	* help.el:
+	* help.el (:execute):
+	* info.el (:compile-toplevel):
+	* info.el (unless):
+	* regexp-opt.el (regexp-opt-group):
+	* syntax-ppss.el (font-lock-beginning-of-syntax-function):
+	* syntax-ppss.el (syntax-ppss-depth):
+	* wid-browse.el:
+	* wid-browse.el (widget-browse):
+	* x-init.el (:compile-toplevel):
+	Now #'eval-when is in bytecomp-runtime, use it in those places
+	where it is clearer than #'eval-when-compile.
+	Many of the places #'eval-when-compile were used were actually
+	unnecessary; remove them.
+	* bytecomp-runtime.el (eval-when):
+	Document #'eval-when in a little more detail.
+
+2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp.el (byte-compile-initial-macro-environment):
 	Correct a comment here, there's no bug in defstruct or defsetf.
 

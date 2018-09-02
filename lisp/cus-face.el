@@ -39,8 +39,7 @@
 (require 'custom)
 
 ;; To elude the warnings for font functions.
-(eval-when-compile
-  (require 'font))
+(eval-when (:compile-toplevel) (or (featurep 'font) (require 'font)))
 
 ;;; Declaring a face.
 

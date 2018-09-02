@@ -5180,24 +5180,23 @@ exist."
 ;; To avoid "lisp nesting exceeds max-lisp-eval-depth" when bytecomp compiles
 ;; itself, compile some of its most used recursive functions (at load time).
 ;;
-(eval-when-compile
- (or (compiled-function-p (symbol-function 'byte-compile-form))
-     (let ((byte-optimize nil) ; do it fast
-	   (byte-compile-warnings nil))
-       (map nil (if noninteractive
-		    #'byte-compile
-		  #'(lambda (x)
-		      (message "compiling %s..." x)
-		      (byte-compile x)
-		      (message "compiling %s...done" x)))
-	    '(byte-compile-normal-call
-	      byte-compile-form
-	      byte-compile-body
-	      ;; Inserted some more than necessary, to speed it up.
-	      byte-compile-top-level
-	      byte-compile-out-toplevel
-	      byte-compile-constant
-	      byte-compile-variable-ref)))))
+(eval-when (:execute)
+  (let ((byte-optimize nil) ; do it fast
+        (byte-compile-warnings nil))
+    (map nil (if noninteractive
+                 #'byte-compile
+               #'(lambda (x)
+                   (message "compiling %s..." x)
+                   (byte-compile x)
+                   (message "compiling %s...done" x)))
+         '(byte-compile-normal-call
+           byte-compile-form
+           byte-compile-body
+           ;; Inserted some more than necessary, to speed it up.
+           byte-compile-top-level
+           byte-compile-out-toplevel
+           byte-compile-constant
+           byte-compile-variable-ref))))
 
 ;;; Some packages byte-compile with -no-autoloads, so this is necessary:
 (autoload 'cl-compile-time-init "cl-macs")

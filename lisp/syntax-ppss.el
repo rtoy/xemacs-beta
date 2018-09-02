@@ -45,8 +45,6 @@
 
 ;; Note: PPSS stands for `parse-partial-sexp state'
 
-(eval-when-compile (require 'cl))
-
 (defvar font-lock-beginning-of-syntax-function)
 
 (defsubst syntax-ppss-depth (ppss)

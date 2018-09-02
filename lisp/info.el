@@ -314,7 +314,7 @@
 ;; Use the new macro `with-search-caps-disable-folding'
 
 ;; Code:
-(eval-when-compile
+(eval-when (:compile-toplevel)
   (condition-case nil (require 'browse-url) (error nil)))
 
 (globally-declare-fboundp

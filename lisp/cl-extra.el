@@ -45,8 +45,6 @@
 
 
 ;;; Code:
-;; XEmacs addition
-(eval-when-compile (require 'obsolete))
 
 ;;; Type coercion.
 
@@ -646,7 +644,7 @@ This also does some trivial optimizations to make the form prettier."
 ;; XEmacs addition; force cl-macs to be available from here on when
 ;; compiling files to be dumped.  This is more reasonable than forcing other
 ;; files to do the same, multiple times.
-(eval-when-compile (or (cl-compiling-file) (load "cl-macs")))
+(eval-when (:execute) (load "cl-macs"))
 
 ;; XEmacs, functions from Common Lisp.
 (defun streamp (object)

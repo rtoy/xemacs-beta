@@ -37,7 +37,7 @@
 
 ;; Get the macro make-help-screen when this is compiled,
 ;; or run interpreted, but not when the compiled code is loaded.
-(eval-when-compile (require 'help-macro))
+(eval-when (:execute :compile-toplevel) (require 'help-macro))
 
 (globally-declare-boundp
  (unless (featurep 'menubar) '(last-popup-menu-event)))
