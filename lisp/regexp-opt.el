@@ -150,9 +150,6 @@ in REGEXP."
 
 ;;; Workhorse functions.
 
-(eval-when-compile
-  (require 'cl))
-
 (defun regexp-opt-group (strings &optional paren lax)
   "Return a regexp to match a string in STRINGS.
 If PAREN non-nil, output regexp parentheses around returned regexp.

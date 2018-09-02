@@ -221,6 +221,14 @@ non-top-level.
 The symbols `compile', `load' and `eval' are accepted as synonyms for
 :compile-toplevel, :load-toplevel and :execute, respectively.
 
+A top-level `eval-when' where :compile-toplevel is in WITH, differs from
+`eval-when-compile' in that the latter is also run when
+interpreted. `eval-when-compile' also allows non-top-level code to be run at
+compile time, something the Common Lisp form does not.
+
+A top-level `eval-when' where :execute, and only :execute, is in WITH, is a
+mechanism to have code run when interpreted, and only when interpreted.
+
 arguments: ((&rest WHEN) &body BODY)"
   (if (set-difference when '(:compile-toplevel :load-toplevel :execute
 			     compile load eval))

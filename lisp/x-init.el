@@ -137,8 +137,8 @@ it was previously unaware of, the predicate will take note of it, though."
                  (x-keysym-hash-table device))
 	t)))
 
-(eval-when-compile
-  (load "x-win-sun"     nil t)
+(eval-when (:compile-toplevel)
+  (load "x-win-sun" nil t)
   (load "x-win-xfree86" nil t))
 
 (defun x-initialize-keyboard (device)

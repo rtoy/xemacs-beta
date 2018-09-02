@@ -54,8 +54,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
 ;;; This file uses two functions that did not exist in some versions of
 ;;; XEmacs: propertize and replace-regexp-in-string.  We provide these
 ;;; functions here for such XEmacsen.

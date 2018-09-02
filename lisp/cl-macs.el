@@ -2038,7 +2038,8 @@ Example: (defsetf nth (n x) (v) (list 'setcar (list 'nthcdr n x) v))."
 	      call)))))
 
 ;;; Some standard place types from Common Lisp.
-(eval-when-compile (defvar ignored-arg)) ; XEmacs: warning suppression
+; XEmacs: warning suppression
+(eval-when (:compile-toplevel) (defvar ignored-arg))
 (defsetf aref aset)
 (defsetf car setcar)
 (defsetf cdr setcdr)

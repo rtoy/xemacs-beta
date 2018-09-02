@@ -2152,24 +2152,22 @@
 ;; To avoid "lisp nesting exceeds max-lisp-eval-depth" when this file compiles
 ;; itself, compile some of its most used recursive functions (at load time).
 ;;
-(eval-when-compile
- (or (compiled-function-p (symbol-function 'byte-optimize-form))
-     (assq 'byte-code (symbol-function 'byte-optimize-form))
-     (let ((byte-optimize nil)
-	   (byte-compile-warnings nil))
-       (mapcar
-	#'(lambda (x)
-	    (or noninteractive (message "compiling %s..." x))
-	    (byte-compile x)
-	    (or noninteractive (message "compiling %s...done" x)))
-	'(byte-optimize-form
-	  byte-optimize-body
-	  byte-optimize-predicate
-	  byte-optimize-binary-predicate
-	  ;; Inserted some more than necessary, to speed it up.
-	  byte-optimize-form-code-walker
-	  byte-optimize-lapcode))))
- nil)
+(eval-when (:execute)
+  (let ((byte-optimize nil)
+        (byte-compile-warnings nil))
+    (map nil (if noninteractive
+                 #'byte-compile
+               #'(lambda (x)
+                   (message "compiling %s..." x)
+                   (byte-compile x)
+                   (message "compiling %s...done" x)))
+         '(byte-optimize-form
+           byte-optimize-body
+           byte-optimize-predicate
+           byte-optimize-binary-predicate
+           ;; Inserted some more than necessary, to speed it up.
+           byte-optimize-form-code-walker
+           byte-optimize-lapcode))))
 
 ;; END SYNC WITH 20.7.
 
