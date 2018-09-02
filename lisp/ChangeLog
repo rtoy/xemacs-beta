@@ -1,5 +1,10 @@
 2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* bytecomp.el (byte-compile-initial-macro-environment):
+	Correct a comment here, there's no bug in defstruct or defsetf.
+
+2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* bytecomp-runtime.el:
 	* bytecomp-runtime.el (eval-when): Move the runtime part of this
 	here from cl-macs.el.

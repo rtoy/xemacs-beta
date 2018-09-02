@@ -517,11 +517,14 @@ easily determined from the input file.")
                        ;; Do nothing if it is just :execute.
                        nil)))
             #'(lambda (when &rest body)
-                ;; It's tempting to attempt to implement this purely with a
-                ;; byte-hunk-handler, and leave the non-toplevel expansion to
-                ;; the macro in bytecomp-runtime.el. That chokes on the output
-                ;; of defstruct as used in gnuserv.el, which is likely a bug
-                ;; in defstruct or the defsetf code used by it.
+                ;; It is almost possible to implement #'eval-when with a
+                ;; combination of the macro in bytecomp-runtime.el and a
+                ;; byte-hunk-handler, with nothing in
+                ;; byte-compile-initial-macro-environment. It fails because
+                ;; our #'macroexpand keeps expanding until there is a
+                ;; non-macro result, which means #'byte-compile-file-form
+                ;; can't intervene and call the byte-hunk-handler at the
+                ;; appropriate time.
                 (and (set-difference
                       when '(:compile-toplevel :load-toplevel :execute
                              compile load eval))
