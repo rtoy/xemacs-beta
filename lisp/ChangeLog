@@ -1,3 +1,19 @@
+2018-09-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cl-macs.el (cl-const-expr-p):
+	Recognise that keywords are constant symbols within this
+	function.
+	* byte-optimize.el:
+	* byte-optimize.el (byte-compile-trueconstp): Removed.
+	* byte-optimize.el (byte-optimize-car):
+	* byte-optimize.el (byte-optimize-cdr):
+	* byte-optimize.el (byte-optimize-or):
+	* byte-optimize.el (byte-optimize-if):
+	* byte-optimize.el (byte-optimize-letX):
+	Use `byte-compile-constp' instead in the places this macro was
+	used, which recognises that keywords are constant symbols too, and
+	so reduces the number of places this bug can happen.
+
 2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el:

@@ -656,14 +656,6 @@
 ;;;
 ;;; It is now safe to optimize code such that it introduces new bindings.
 
-;; I'd like this to be a defsubst, but let's not be self-referential...
-(defmacro byte-compile-trueconstp (form)
-  ;; Returns non-nil if FORM is a non-nil constant.
-  `(cond ((consp ,form) (eq (car ,form) 'quote))
-	 ((not (symbolp ,form)))
-	 ((eq ,form t))
-	 ((keywordp ,form))))
-
 ;; If the function is being called with constant numeric args,
 ;; evaluate as much as possible at compile-time.  This optimizer
 ;; assumes that the function is associative, like + or *.
@@ -873,13 +865,11 @@
 (defun byte-optimize-car (form)
   (let ((arg (cadr form)))
     (cond
-     ((and (byte-compile-trueconstp arg)
-	   (not (and (consp arg)
-		     (eq (car arg) 'quote)
-		     (listp (cadr arg)))))
-      (byte-compile-warn
-       "taking car of a constant: %s" arg)
-      form)
+      ((not arg)) ;; Return nil if called on nil
+      ((and (byte-compile-constp arg)
+            (not (and (eq (car-safe arg) 'quote) (listp (cadr arg)))))
+       (byte-compile-warn "taking car of a non-list constant: %s" arg)
+       form)
      ((and (eq (car-safe arg) 'cons)
 	   (eq (length arg) 3))
       `(prog1 ,(nth 1 arg) ,(nth 2 arg)))
@@ -891,14 +881,12 @@
 (defun byte-optimize-cdr (form)
   (let ((arg (cadr form)))
     (cond
-     ((and (byte-compile-trueconstp arg)
-	   (not (and (consp arg)
-		     (eq (car arg) 'quote)
-		     (listp (cadr arg)))))
-      (byte-compile-warn
-       "taking cdr of a constant: %s" arg)
-      form)
-     ((and (eq (car-safe arg) 'cons)
+      ((not arg)) ;; Return nil if called on nil
+      ((and (byte-compile-constp arg)
+            (not (and (consp arg) (eq (car arg) 'quote) (listp (cadr arg)))))
+       (byte-compile-warn "taking cdr of a non-list constant: %s" arg)
+       form)
+      ((and (eq (car-safe arg) 'cons)
 	    (eq (length arg) 3))
        `(progn ,(nth 1 arg) ,(nth 2 arg)))
       ((eq (car-safe arg) 'list)
@@ -1009,9 +997,8 @@
   ;; constant cannot be multiple.
   (let ((rest form))
     (while (cdr (setq rest (cdr rest)))
-      (if (byte-compile-trueconstp (car rest))
-	  (setq form (copy-sequence form)
-		rest (setcdr (memq (car rest) form) nil))))
+      (if (and (car rest) (byte-compile-constp (car rest)))
+	  (setq form (ldiff form (cdr rest)))))
     (if (cdr (cdr form))
 	(byte-optimize-predicate form)
       (nth 1 form))))
@@ -1042,17 +1029,17 @@
 ;; BEGIN SYNC WITH 20.7.
 
 (defun byte-optimize-if (form)
-  ;; (if <true-constant> <then> <else...>) ==> <then>
   ;; (if <false-constant> <then> <else...>) ==> (progn <else...>)
+  ;; (if <true-constant> <then> <else...>) ==> <then>
   ;; (if <test> nil <else...>) ==> (if (not <test>) (progn <else...>))
   ;; (if <test> <then> nil) ==> (if <test> <then>)
   (let ((clause (nth 1 form)))
-    (cond ((byte-compile-trueconstp clause)
-	   (nth 2 form))
-	  ((null clause)
+    (cond ((null clause)
 	   (if (nthcdr 4 form)
 	       (cons 'progn (nthcdr 3 form))
 	     (nth 3 form)))
+          ((byte-compile-constp clause)
+	   (nth 2 form))
 	  ((nth 2 form)
 	   (if (equal '(nil) (nthcdr 3 form))
 	       (list 'if clause (nth 2 form))
@@ -1206,8 +1193,8 @@
 					      most-positive-fixnum)
 					     ((null (cadr object))
 					      most-positive-fixnum)
-					     ((byte-compile-trueconstp
-					       (cadr object))
+					     ((byte-compile-constp
+                                               (cadr object))
 					      (mod (sxhash (cadr object))
 						   most-positive-fixnum))
 					     (t 0))))))
