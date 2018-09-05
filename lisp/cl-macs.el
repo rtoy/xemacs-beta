@@ -108,7 +108,7 @@
 	     (and (memq (car x) '(function function*))
 		  (or (symbolp (nth 1 x))
 		      (and (eq (car-safe (nth 1 x)) 'lambda) 'func)))))
-	((symbolp x) (and (memq x '(nil t)) t))
+	((symbolp x) (or (and (memq x '(nil t)) t) (keywordp x)))
 	(t t)))
 
 (defun cl-const-exprs-p (xs)
