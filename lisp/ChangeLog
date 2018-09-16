@@ -1,3 +1,9 @@
+2018-09-16  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* alist.el: Remove this.
+	It's indifferent to poor code, nothing uses it in core, and the
+	file is in APEL already.
+
 2018-09-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl-macs.el (cl-const-expr-p):
