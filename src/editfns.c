@@ -468,10 +468,10 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) >= BUF_ZV (b))
+  if (BYTE_BUF_PT (b) >= BYTE_BUF_ZV (b))
     return Qzero;             /* #### Gag me! */
   else
-    return make_char (BUF_FETCH_CHAR (b, BUF_PT (b)));
+    return make_char (BYTE_BUF_FETCH_CHAR (b, BYTE_BUF_PT (b)));
 }
 
 DEFUN ("preceding-char", Fpreceding_char, 0, 1, 0, /*
@@ -482,10 +482,15 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  if (BUF_PT (b) <= BUF_BEGV (b))
+  if (BYTE_BUF_PT (b) <= BYTE_BUF_BEGV (b))
     return Qzero;             /* #### Gag me! */
   else
-    return make_char (BUF_FETCH_CHAR (b, BUF_PT (b) - 1));
+    {
+      Bytebpos bpos = BYTE_BUF_PT (b);
+      DEC_BYTEBPOS (b, bpos);
+
+      return make_char (BYTE_BUF_FETCH_CHAR (b, bpos));
+    }
 }
 
 DEFUN ("bobp", Fbobp, 0, 1, 0, /*
@@ -496,7 +501,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return BUF_PT (b) == BUF_BEGV (b) ? Qt : Qnil;
+  return BYTE_BUF_PT (b) == BYTE_BUF_BEGV (b) ? Qt : Qnil;
 }
 
 DEFUN ("eobp", Feobp, 0, 1, 0, /*
@@ -507,15 +512,28 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return BUF_PT (b) == BUF_ZV (b) ? Qt : Qnil;
+  return BYTE_BUF_PT (b) == BYTE_BUF_ZV (b) ? Qt : Qnil;
 }
 
-int
+static Boolint
+byte_beginning_of_line_p (struct buffer *b, Bytebpos bpt)
+{
+  if (bpt <= BYTE_BUF_BEGV (b))
+    {
+      return 1;
+    }
+
+  DEC_BYTEBPOS (b, bpt);
+  return BYTE_BUF_FETCH_CHAR (b, bpt) == '\n';
+}
+
+/* #### Rework redisplay.c and the window code to use
+   byte_beginning_of_line_p() instead of this! */
+Boolint
 beginning_of_line_p (struct buffer *b, Charbpos pt)
 {
   return pt <= BUF_BEGV (b) || BUF_FETCH_CHAR (b, pt - 1) == '\n';
 }
-
 
 DEFUN ("bolp", Fbolp, 0, 1, 0, /*
 Return t if point is at the beginning of a line.
@@ -524,7 +542,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return beginning_of_line_p (b, BUF_PT (b)) ? Qt : Qnil;
+  return byte_beginning_of_line_p (b, BYTE_BUF_PT (b)) ? Qt : Qnil;
 }
 
 DEFUN ("eolp", Feolp, 0, 1, 0, /*
@@ -535,7 +553,8 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return (BUF_PT (b) == BUF_ZV (b) || BUF_FETCH_CHAR (b, BUF_PT (b)) == '\n')
+  return (BYTE_BUF_PT (b) == BYTE_BUF_ZV (b) ||
+          BYTE_BUF_FETCH_CHAR (b, BYTE_BUF_PT (b)) == '\n')
     ? Qt : Qnil;
 }
 
@@ -549,12 +568,12 @@ If BUFFER is nil, the current buffer is assumed.
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Charbpos n = (NILP (pos) ? BUF_PT (b) :
-	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
+  Bytebpos bn = (NILP (pos) ? BYTE_BUF_PT (b) :
+                get_buffer_pos_byte (b, pos, GB_NO_ERROR_IF_BAD));
 
-  if (n < 0 || n == BUF_ZV (b))
+  if (bn < 0 || bn == BYTE_BUF_ZV (b))
     return Qnil;
-  return make_char (BUF_FETCH_CHAR (b, n));
+  return make_char (BYTE_BUF_FETCH_CHAR (b, bn));
 }
 
 DEFUN ("char-before", Fchar_before, 0, 2, 0, /*
@@ -567,14 +586,15 @@ If BUFFER is nil, the current buffer is assumed.
        (pos, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  Charbpos n = (NILP (pos) ? BUF_PT (b) :
-	      get_buffer_pos_char (b, pos, GB_NO_ERROR_IF_BAD));
+  Bytebpos bn = (NILP (pos) ? BYTE_BUF_PT (b) :
+                 get_buffer_pos_byte (b, pos, GB_NO_ERROR_IF_BAD));
 
-  n--;
-
-  if (n < BUF_BEGV (b))
+  if (bn <= BYTE_BUF_BEGV (b))
     return Qnil;
-  return make_char (BUF_FETCH_CHAR (b, n));
+
+  DEC_BYTEBPOS (b, bn);
+
+  return make_char (BYTE_BUF_FETCH_CHAR (b, bn));
 }
 
 
