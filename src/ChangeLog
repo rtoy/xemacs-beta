@@ -1,3 +1,24 @@
+2018-09-17  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* editfns.c (byte_beginning_of_line_p): New. Byte-oriented
+	equivalent of beginning_of_line_p().
+	* editfns.c (Ffollowing_char):
+	* editfns.c (Fpreceding_char):
+	* editfns.c (Fbobp):
+	* editfns.c (Feobp):
+	* editfns.c (Fbolp):
+	* editfns.c (Feolp):
+	* editfns.c (Fchar_after):
+	* editfns.c (Fchar_before):
+	Reduce calls to charbpos_to_bytebpos() in all these functions,
+	which a) will lead to fewer O(N) operations (often zero O(N)
+	operations) for a certain (rare) pattern of calls, and b)
+	eliminates the C function overhead all the time, which is of value
+	in itself, in these functions with byte codes.
+	* lisp.h:
+	Revise the declaration of beginning_of_line_p() to return a
+	Boolint.
+
 2018-08-26  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecode.c:
