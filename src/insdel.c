@@ -1160,7 +1160,8 @@ buffer_insert_string_1 (struct buffer *buf, Charbpos pos,
      in a consistent state.  Following code puts buffer in an inconsistent
      state and can be considered a "critical section". */
   
-  insert_invalidate_line_number_cache (buf, pos, nonreloc + offset, length);
+  insert_invalidate_line_number_cache (buf, bytepos, nonreloc + offset,
+                                       length);
 
   MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
     {
@@ -1445,7 +1446,7 @@ buffer_delete_range (struct buffer *buf, Charbpos from, Charbpos to, int flags)
 	}
     }
 
-  delete_invalidate_line_number_cache (buf, from, to);
+  delete_invalidate_line_number_cache (buf, byte_from, byte_to);
 
 #ifdef MULE
   /* Update our count of ASCII, 8-bit and 16-bit chars and the

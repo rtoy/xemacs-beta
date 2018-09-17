@@ -6009,6 +6009,9 @@ struct re_pattern_buffer;
 struct re_registers;
 Charbpos scan_buffer (struct buffer *, Ichar, Charbpos, Charbpos, EMACS_INT,
 		      EMACS_INT *, int);
+Bytebpos byte_scan_buffer (struct buffer *, Ichar, Bytebpos, Bytebpos ,
+                           EMACS_INT, EMACS_INT *, int);
+
 Charbpos find_next_newline (struct buffer *, Charbpos, int);
 Charbpos find_next_newline_no_quit (struct buffer *, Charbpos, int);
 Bytebpos byte_find_next_newline_no_quit (struct buffer *, Bytebpos, int);

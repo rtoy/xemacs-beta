@@ -103,7 +103,7 @@ narrow_line_number_cache (struct buffer *b)
   if (NILP (b->text->line_number_cache))
     return;
 
-  if (BUF_BEG (b) == BUF_BEGV (b))
+  if (BYTE_BUF_BEG (b) == BYTE_BUF_BEGV (b))
     /* The is the case Fwiden and save_restriction_restore.  Since we
        know the correct value, we can update it now.  */
     LINE_NUMBER_BEGV (b) = Qzero;
@@ -116,7 +116,7 @@ narrow_line_number_cache (struct buffer *b)
 
 /* Invalidate the line number cache positions that lie after POS. */
 static void
-invalidate_line_number_cache (struct buffer *b, Charbpos pos)
+invalidate_line_number_cache (struct buffer *b, Bytebpos pos)
 {
   EMACS_INT i, j;
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
@@ -134,7 +134,7 @@ invalidate_line_number_cache (struct buffer *b, Charbpos pos)
 	 at point, which is way losing.  Isn't there a way to make a
 	 marker impervious to Finsert_before_markers()??  Maybe I
 	 should convert the code to use extents.  */
-      if (marker_position (XCAR (ring[i])) >= pos)
+      if (byte_marker_position (XCAR (ring[i])) >= pos)
 	{
 	  /* Get the marker out of the way.  */
 	  Fset_marker (XCAR (ring[i]), Qnil, Qnil);
@@ -155,7 +155,7 @@ invalidate_line_number_cache (struct buffer *b, Charbpos pos)
 
    This will do nothing if the cache is uninitialized.  */
 void
-insert_invalidate_line_number_cache (struct buffer *b, Charbpos pos,
+insert_invalidate_line_number_cache (struct buffer *b, Bytebpos pos,
 				     const Ibyte *nonreloc, Bytecount length)
 {
   if (NILP (b->text->line_number_cache))
@@ -177,7 +177,8 @@ insert_invalidate_line_number_cache (struct buffer *b, Charbpos pos,
 
    This will do nothing if the cache is uninitialized.  */
 void
-delete_invalidate_line_number_cache (struct buffer *b, Charbpos from, Charbpos to)
+delete_invalidate_line_number_cache (struct buffer *b, Bytebpos from,
+                                     Bytebpos to)
 {
   if (NILP (b->text->line_number_cache))
     return;
@@ -187,7 +188,7 @@ delete_invalidate_line_number_cache (struct buffer *b, Charbpos from, Charbpos t
   else
     {
       EMACS_INT shortage;
-      scan_buffer (b, '\n', from, to, 1, &shortage, 0);
+      byte_scan_buffer (b, '\n', from, to, 1, &shortage, 0);
       if (!shortage)
 	invalidate_line_number_cache (b, from);
     }
@@ -202,12 +203,12 @@ delete_invalidate_line_number_cache (struct buffer *b, Charbpos from, Charbpos t
    BEG will be BUF_BEGV, and *LINE will be XFIXNUM (LINE_NUMBER_BEGV).
    This will initialize the cache, if necessary.  */
 static void
-get_nearest_line_number (struct buffer *b, Charbpos *beg, Charbpos pos,
+get_nearest_line_number (struct buffer *b, Bytebpos *beg, Bytebpos pos,
 			 EMACS_INT *line)
 {
   EMACS_INT i;
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
-  Charcount length = pos - *beg;
+  Bytecount length = pos - *beg;
 
   if (length < 0)
     length = -length;
@@ -215,8 +216,8 @@ get_nearest_line_number (struct buffer *b, Charbpos *beg, Charbpos pos,
   /* Find the ring entry closest to POS, if it is closer than BEG. */
   for (i = 0; i < LINE_NUMBER_RING_SIZE && CONSP (ring[i]); i++)
     {
-      Charbpos newpos = marker_position (XCAR (ring[i]));
-      Charcount howfar = newpos - pos;
+      Bytebpos newpos = byte_marker_position (XCAR (ring[i]));
+      Bytecount howfar = newpos - pos;
       if (howfar < 0)
 	howfar = -howfar;
       if (howfar < length)
@@ -230,7 +231,7 @@ get_nearest_line_number (struct buffer *b, Charbpos *beg, Charbpos pos,
 
 /* Add a (POS . LINE) pair to the ring, and rotate it. */
 static void
-add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
+add_position_to_cache (struct buffer *b, Bytebpos pos, EMACS_INT line)
 {
   Lisp_Object *ring = XVECTOR_DATA (LINE_NUMBER_RING (b));
   int i = LINE_NUMBER_RING_SIZE - 1;
@@ -244,8 +245,8 @@ add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
     ring[i] = ring[i - 1];
 
   /* ...and update it. */
-  ring[0] = Fcons (Fset_marker (Fmake_marker (), make_fixnum (pos),
-				wrap_buffer (b)),
+  ring[0] = Fcons (set_byte_marker_position (Fmake_marker (), pos,
+                                             wrap_buffer (b)),
 		   make_fixnum (line));
 }
 
@@ -266,17 +267,17 @@ add_position_to_cache (struct buffer *b, Charbpos pos, EMACS_INT line)
    If the calculation (with or without the cache lookup) required more
    than LINE_NUMBER_FAR characters of traversal, update the cache.  */
 EMACS_INT
-buffer_line_number (struct buffer *b, Charbpos pos, Boolint cachep,
+buffer_line_number (struct buffer *b, Bytebpos pos, Boolint cachep,
                     Boolint respect_narrowing)
 {
-  Charbpos beg = respect_narrowing ? BUF_BEGV (b) : BUF_BEG (b);
+  Bytebpos beg = respect_narrowing ? BYTE_BUF_BEGV (b) : BYTE_BUF_BEG (b);
   EMACS_INT cached_lines = 0;
   EMACS_INT shortage, line;
 
   if ((pos > beg ? pos - beg : beg - pos) <= LINE_NUMBER_FAR)
     cachep = 0;
 
-  if (cachep && (respect_narrowing || BUF_BEG (b) == BUF_BEGV (b)))
+  if (cachep && (respect_narrowing || BYTE_BUF_BEG (b) == BYTE_BUF_BEGV (b)))
     {
       if (NILP (b->text->line_number_cache))
 	allocate_line_number_cache (b);
@@ -286,13 +287,13 @@ buffer_line_number (struct buffer *b, Charbpos pos, Boolint cachep,
 	  LINE_NUMBER_BEGV (b) = Qzero;
 	  /* #### This has a side-effect of changing the cache.  */
 	  LINE_NUMBER_BEGV (b) =
-	    make_fixnum (buffer_line_number (b, BUF_BEGV (b), 1, 0));
+	    make_fixnum (buffer_line_number (b, BYTE_BUF_BEGV (b), 1, 0));
 	}
       cached_lines = XFIXNUM (LINE_NUMBER_BEGV (b));
       get_nearest_line_number (b, &beg, pos, &cached_lines);
     }
 
-  scan_buffer (b, '\n', beg, pos,
+  byte_scan_buffer (b, '\n', beg, pos,
                pos > beg ? MOST_POSITIVE_FIXNUM : -MOST_POSITIVE_FIXNUM,
 	       &shortage, 0);
 

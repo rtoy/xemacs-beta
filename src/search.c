@@ -702,7 +702,7 @@ newline_cache_on_off (struct buffer *buf)
 
    If ALLOW_QUIT is non-zero, call QUIT periodically. */
 
-static Bytebpos
+Bytebpos
 byte_scan_buffer (struct buffer *buf, Ichar target, Bytebpos st, Bytebpos en,
 		  EMACS_INT count, EMACS_INT *shortage, int allow_quit)
 {
