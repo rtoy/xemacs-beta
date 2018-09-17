@@ -7287,13 +7287,13 @@ window_line_number (struct window *w, int type)
   /* Be careful in the order of these tests. The first clause will
      fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
      This can occur when the frame title is computed really early */
-  Charbpos pos =
+  Bytebpos pos =
     ((EQ (DEVICE_SELECTED_FRAME (d), w->frame) &&
        (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
       EQ (DEVICE_CONSOLE (d), Vselected_console) &&
       XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d )
-     ? BUF_PT (b)
-     : marker_position (w->pointm[type]));
+     ? BYTE_BUF_PT (b)
+     : byte_marker_position (w->pointm[type]));
   EMACS_INT line;
 
   line = buffer_line_number (b, pos, 1, 1);

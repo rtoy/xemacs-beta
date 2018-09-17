@@ -1,5 +1,49 @@
 2018-09-17  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* buffer.c (Fline_number):
+	Adjust the call to buffer_line_number() here to use the Bytebpos.
+	* insdel.c (buffer_insert_string_1):
+	Adjust the call to insert_invalidate_line_number_cache() to use
+	the Bytebpos.
+	* insdel.c (buffer_delete_range):
+	Adjust the call to delete_invalidate_line_number_cache() to use
+	the Bytebpos.
+	* line-number.c (narrow_line_number_cache):
+	Check the byte positions rather than the character positions here,
+	for consistency.
+	* line-number.c (invalidate_line_number_cache):
+	Now POS is a bytebpos, use byte_marker_position(), rather than
+	marker_position(), so that inserting a newline is no longer O(S),
+	where S is the number of entries in the line number cache.
+	* line-number.c (insert_invalidate_line_number_cache):
+	Take FROM and TO as byte rather than character positions.
+	* line-number.c (delete_invalidate_line_number_cache):
+	Ditto.
+	* line-number.c (get_nearest_line_number):
+	Take BEG and POS as byte rather than character positions.
+	* line-number.c (add_position_to_cache):
+	Take POS as a byte position, which allows us to call
+	set_byte_marker_position() on our Fmake_marker() argument, an O(1)
+	operation.
+	* line-number.c (buffer_line_number):
+	Take POS as a byte position here.
+	* line-number.h:
+	* line-number.h (buffer_line_number):
+	* line-number.h (insert_invalidate_line_number_cache):
+	* line-number.h (delete_invalidate_line_number_cache):
+	Update the declaration for these functions to reflect Bytebpos
+	rather than Charbpos arguments.
+	* lisp.h:
+	Make byte_scan_buffer() available here.
+	* redisplay.c (window_line_number):
+	Adjust this so we're not doing marker_position() on the saved
+	point marker, potentially O(N) on the position in the buffer.
+	* search.c (byte_scan_buffer):
+	Make this non-static (ideally we would delete scan_buffer()
+	entirely).
+
+2018-09-17  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* editfns.c (byte_beginning_of_line_p): New. Byte-oriented
 	equivalent of beginning_of_line_p().
 	* editfns.c (Ffollowing_char):

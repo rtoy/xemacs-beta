@@ -21,10 +21,10 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 /* Synched up with: Not in FSF. */
 
 void narrow_line_number_cache (struct buffer *);
-void insert_invalidate_line_number_cache (struct buffer *, Charbpos,
+void insert_invalidate_line_number_cache (struct buffer *, Bytebpos,
 					  const Ibyte *, Bytecount);
-void delete_invalidate_line_number_cache (struct buffer *, Charbpos, Charbpos);
+void delete_invalidate_line_number_cache (struct buffer *, Bytebpos, Bytebpos);
 
-EMACS_INT buffer_line_number (struct buffer *, Charbpos, int, Boolint);
+EMACS_INT buffer_line_number (struct buffer *, Bytebpos, int, Boolint);
 
 #endif /* INCLUDED_line_number_h_ */

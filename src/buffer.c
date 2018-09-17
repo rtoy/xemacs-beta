@@ -1825,8 +1825,8 @@ line.
        (position, respect_narrowing, buffer_))
 {
   struct buffer *buf = decode_buffer (buffer_, 0);
-  Charbpos pos = (NILP (position) ? BUF_PT (buf) :
-		  get_buffer_pos_char (buf, position, GB_COERCE_RANGE));
+  Bytebpos pos = (NILP (position) ? BYTE_BUF_PT (buf) :
+		  get_buffer_pos_byte (buf, position, GB_COERCE_RANGE));
 
   return make_fixnum (buffer_line_number (buf, pos, 1,
                                           !NILP (respect_narrowing)) + 1);
