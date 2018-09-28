@@ -865,8 +865,7 @@
 (defun byte-optimize-car (form)
   (let ((arg (cadr form)))
     (cond
-      ((not arg)) ;; Return nil if called on nil
-      ((and (byte-compile-constp arg)
+      ((and (byte-compile-constp arg) arg
             (not (and (eq (car-safe arg) 'quote) (listp (cadr arg)))))
        (byte-compile-warn "taking car of a non-list constant: %s" arg)
        form)
@@ -881,8 +880,7 @@
 (defun byte-optimize-cdr (form)
   (let ((arg (cadr form)))
     (cond
-      ((not arg)) ;; Return nil if called on nil
-      ((and (byte-compile-constp arg)
+      ((and (byte-compile-constp arg) arg
             (not (and (consp arg) (eq (car arg) 'quote) (listp (cadr arg)))))
        (byte-compile-warn "taking cdr of a non-list constant: %s" arg)
        form)

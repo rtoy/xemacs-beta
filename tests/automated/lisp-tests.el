@@ -339,6 +339,44 @@ will be used to make debugging easier."
 (Assert (eql (safe-length nil) 0))
 
 ;;-----------------------------------------------------
+;; Test `car' and `cdr'
+;;-----------------------------------------------------
+
+(Check-Error wrong-number-of-arguments (car))
+(Check-Error wrong-number-of-arguments (car '(1 2) 'foo))
+(Check-Error wrong-type-argument (car '[1 2]))
+(Assert (eq (car '(a . b)) 'a) "checking #'car on a constant dotted pair")
+(Assert (eq (let ((pair '(b . a)))
+              (car pair))
+            'b) "checking #'car on a bound dotted pair")
+(Assert (eql (car '(200 200 4 0 9)) 200)
+        "checking #'car on a constant list")
+(Assert (eql (let ((list (list 200 200 4 0 9))) (car list))
+            200) "checking #'car on a bound list")
+(Assert (eql (car (list 200 200 4 0 9)) 200)
+	"checking #'car on a list constructed at runtime")
+
+(Check-Error wrong-number-of-arguments (cdr))
+(Check-Error wrong-number-of-arguments (cdr '(1 2) 'foo))
+(Check-Error wrong-type-argument (cdr '[1 2]))
+(Assert (eq (cdr '(a . b)) 'b) "checking #'cdr on a constant dotted pair")
+(Assert (eq (let ((pair '(b . a)))
+              (cdr pair))
+            'a) "checking #'cdr on a bound dotted pair")
+(Assert (equal (cdr '(200 200 4 0 9)) (list 200 4 0 9))
+        "checking #'cdr on a constant list")
+(Assert (equal (let ((list (list 200 200 4 0 9))) (cdr list))
+               '(200 4 0 9))
+        "checking #'cdr on a bound list")
+(Assert (equal (cdr (list 200 200 4 0 9))
+               '(200 4 0 9))
+	"checking #'cdr on a list constructed at runtime")
+(Assert (let* ((gensym (gensym))
+               (pair (cons 'a gensym)))
+          (eq (cdr pair) gensym))
+	"checking the result of #'cdr for #'eq-identity")
+
+;;-----------------------------------------------------
 ;; Arithmetic operations
 ;;-----------------------------------------------------
 
