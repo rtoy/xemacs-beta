@@ -1314,11 +1314,10 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 	   (put-nonduplicable-text-property opoint (point standard-output)
 					    'face face standard-output)))
 	((markerp standard-output)
-	 (let ((buf (marker-buffer standard-output))
-	       (pos (marker-position standard-output)))
+	 (let ((pos (copy-marker standard-output)))
 	   (princ object)
 	   (put-nonduplicable-text-property
-	    pos (marker-position standard-output) 'face face buf)))
+	    pos standard-output 'face face (marker-buffer standard-output))))
 	(t (princ object))))
 
 ;; replacement for `prin1' that puts the text in the specified face,
@@ -1330,11 +1329,10 @@ part of the documentation of internal subroutines, CL lambda forms, etc."
 	   (put-nonduplicable-text-property opoint (point standard-output)
 					    'face face standard-output)))
 	((markerp standard-output)
-	 (let ((buf (marker-buffer standard-output))
-	       (pos (marker-position standard-output)))
+	 (let ((pos (copy-marker standard-output)))
 	   (prin1 object)
 	   (put-nonduplicable-text-property
-	    pos (marker-position standard-output) 'face face buf)))
+	    pos standard-output 'face face (marker-buffer standard-output))))
 	(t (prin1 object))))
 
 (defvar help-symbol-regexp

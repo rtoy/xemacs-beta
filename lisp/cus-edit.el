@@ -1646,8 +1646,10 @@ and `face'."
   (let ((line (count-lines (point-min) (point)))
 	(column (current-column))
 	(pos (point))
-	(from (marker-position (widget-get widget :from)))
-	(to (marker-position (widget-get widget :to))))
+	(from (widget-get widget :from))
+	(to (widget-get widget :to)))
+    (check-type from marker)
+    (check-type to marker)
     (save-excursion
       (widget-value-set widget (widget-value widget))
       (custom-redraw-magic widget))

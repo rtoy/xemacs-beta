@@ -213,12 +213,12 @@ If `auto-fill-mode' is active, re-fill the region to fit the new margin."
     (if (bolp) (setq from (point)))
     (goto-char to)
     (setq to (point-marker)))
-  (alter-text-property from (marker-position to) 'left-margin ; XEmacs
+  (alter-text-property from to 'left-margin ; XEmacs
 		       (lambda (v) (max (- left-margin) (+ inc (or v 0)))))
-  (indent-rigidly from (marker-position to) inc) ; XEmacs
+  (indent-rigidly from to inc) ; XEmacs
   (if auto-fill-function
       (save-excursion
-	(fill-region from (marker-position to) nil t t))) ; XEmacs
+	(fill-region from to nil t t))) ; XEmacs
   (move-marker to nil))
 
 (defun decrease-left-margin (from to inc)

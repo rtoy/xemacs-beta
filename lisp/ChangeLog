@@ -1,3 +1,26 @@
+2018-10-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* code-files.el (insert-file-contents):
+	* cus-edit.el (custom-redraw):
+	* font-lock.el (font-lock-fontify-syntactically-region):
+	* help.el (Help-princ-face):
+	* help.el (Help-prin1-face):
+	* help.el (help-symbol-regexp):
+	* indent.el (increase-left-margin):
+	* indent.el (decrease-left-margin):
+	* info.el (Info-find-file-node):
+	* info.el (Info-cease-edit):
+	* mouse.el (default-mouse-track-deal-with-down-event):
+	* select.el (select-convert-to-lineno):
+	* select.el (select-convert-to-sourceloc):
+	* simple.el (kill-region):
+	* simple.el (pop-global-mark):
+	* simple.el (signal-error-on-buffer-boundary):
+	* wid-edit.el (widget-setup):
+	* window-xemacs.el (restore-saved-window-parameters):
+	Don't call #'marker-position in the core Lisp code, as we have
+	just advised in its docstring.
+
 2018-09-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* byte-optimize.el (byte-optimize-car):

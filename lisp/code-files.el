@@ -536,12 +536,12 @@ and `insert-file-contents-post-hook'."
 			  ;; convention of post-read-conversion.  We try to
 			  ;; support the old way.  #### Should we kill this?
 			  (funcall func (point) (marker-position endmark))
-			(funcall func (- (marker-position endmark) (point))))))
+			(funcall func (- endmark (point))))))
 		(if visit
 		    (progn
 		      (set-buffer-auto-saved)
 		      (set-buffer-modified-p nil)))))
-	  (setcar (cdr return-val) (- (marker-position endmark) (point))))
+	  (setcar (cdr return-val) (- endmark (point))))
 	;; now finally set the buffer's `buffer-file-coding-system' ...
 	(if (run-hook-with-args-until-success 'insert-file-contents-post-hook
 					      filename visit return-val)

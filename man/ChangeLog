@@ -1,3 +1,10 @@
+2018-10-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* lispref/compile.texi (Different Behavior):
+	Mention the unfortunate algorithmic complexity of
+	#'marker-position when cautioning about the behaviour of (+ MARKER
+	0).
+
 2018-09-02  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cl.texi (Time of Evaluation): Use the new-style

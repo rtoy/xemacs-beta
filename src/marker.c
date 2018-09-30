@@ -136,8 +136,22 @@ Return nil if MARKER points into a dead buffer or doesn't point anywhere.
 }
 
 DEFUN ("marker-position", Fmarker_position, 1, 1, 0, /*
-Return the position MARKER points at, as a character number.
+Return the buffer position to which MARKER points, as a fixnum.
+
 Return `nil' if marker doesn't point anywhere.
+
+Usually there is no need to call this function; if you are using
+marker positions in arithmetic or comparing them, markers are
+converted automatically as needed. Markers are stored internally as
+byte, not character positions, so in the worst case scenario
+`marker-position' is O(N) on the (possibly large) position in the
+buffer, and much of the time the C code can avoid this entirely given
+its knowledge of the relationship between byte and character
+positions.
+
+One of the few use cases for this function is when saving a buffer
+offset to an external file, when the integer value does need to be
+generated.
 */
        (marker))
 {

@@ -1205,7 +1205,7 @@ also works, because the behavior is emulated."
 		       (markerp default-mouse-track-previous-point)
 		       (eq (current-buffer)
 			   (marker-buffer default-mouse-track-previous-point)))
-		  (marker-position default-mouse-track-previous-point)
+		  (copy-marker default-mouse-track-previous-point)
 		(point)))
 	(default-mouse-track-set-point event default-mouse-track-window)
 	(if (not adjust)

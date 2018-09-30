@@ -522,13 +522,13 @@ mapping, which this function will extend."
 	  (set-window-buffer window
 			     (saved-window-buffer saved-window))
 	  (set-window-start window
-			    (marker-position (saved-window-start-marker saved-window))
+			    (saved-window-start-marker saved-window)
 			    t)
 	  (if (markerp (saved-window-point-marker saved-window))
 	      (set-window-point window
-				(marker-position (saved-window-point-marker saved-window))))
+				(saved-window-point-marker saved-window)))
 	  (set-marker (mark-marker t buffer)
-		      (marker-position (saved-window-mark-marker saved-window))
+		      (saved-window-mark-marker saved-window)
 		      buffer)
 	  (if (not (eq buffer (window-configuration-current-buffer configuration)))
 	      (goto-char (window-point window) buffer)))))
