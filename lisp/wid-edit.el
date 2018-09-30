@@ -1553,8 +1553,7 @@ When not inside a field, move to the previous button or field."
 	    widget-field-list (cons field widget-field-list))
       (let ((from (car (widget-get field :field-extent)))
 	    (to (cdr (widget-get field :field-extent))))
-	(widget-specify-field field
-			      (marker-position from) (marker-position to))
+	(widget-specify-field field from to)
 	(set-marker from nil)
 	(set-marker to nil))
       ;; If the field is placed within the inactive zone, deactivate it.

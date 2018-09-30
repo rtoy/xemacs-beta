@@ -1465,8 +1465,6 @@ to make one entry in the kill ring."
 ;       (if region-hack (zmacs-deactivate-region)))))
   ;; start and end can be markers but the rest of this function is
   ;; written as if they are only integers
-  (if (markerp start) (setq start (marker-position start)))
-  (if (markerp end) (setq end (marker-position end)))
   (or (and start end) (if zmacs-regions ;; rewritten for I18N3 snarfing
 			(error "The region is not active now")
 		      (error "The mark is not set now")))
@@ -2018,15 +2016,14 @@ The mark is activated unless DONT-ACTIVATE-REGION is non-nil."
   (or global-mark-ring
       (error "No global mark set"))
   (let* ((marker (car global-mark-ring))
-	 (buffer (marker-buffer marker))
-	 (position (marker-position marker)))
+	 (buffer (marker-buffer marker)))
     (setq global-mark-ring (nconc (cdr global-mark-ring)
 				  (list (car global-mark-ring))))
     (set-buffer buffer)
-    (or (and (>= position (point-min))
-	     (<= position (point-max)))
+    (or (and (>= marker (point-min))
+	     (<= marker (point-max)))
 	(widen))
-    (goto-char position)
+    (goto-char marker)
     (switch-to-buffer buffer)))
 
 

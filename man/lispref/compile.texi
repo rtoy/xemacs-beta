@@ -1097,8 +1097,11 @@ interpreter will issue an error, while the bytecode will not.
 If you're trying to use @samp{(+ @var{object} 0)} to convert
 @var{object} to integer, consider using an explicit conversion function,
 which is clearer and guaranteed to work.
-Instead of @samp{(+ @var{marker} 0)}, use @samp{(marker-position @var{marker})}.
 Instead of @samp{(+ @var{char} 0)}, use @samp{(char-int @var{char})}.
+Instead of @samp{(+ @var{marker} 0)}, you can write
+@samp{(marker-position @var{marker})}, but this has its own efficiency
+problems. You many not need to convert from a marker at all, since most
+of the primitives convert automatically; test your code!
 @end itemize
 
 For maximal equivalence between interpreted and compiled code, the

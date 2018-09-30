@@ -1,3 +1,9 @@
+2018-10-01  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* marker.c (Fmarker_position):
+	Advise not to use this function in its docstring; give an example
+	of a restricted use case where it is reasonable.
+
 2018-09-17  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* buffer.c (Fline_number):

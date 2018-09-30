@@ -781,7 +781,7 @@ node of a file of this name."
 	    ;; First get advice from tag table if file has one.
 	    ;; Also, if this is an indirect info file,
 	    ;; read the proper subfile into this buffer.
-	    (if (marker-position Info-tag-table-marker)
+	    (if (marker-buffer Info-tag-table-marker)
 		(let (foun found-mode (m Info-tag-table-marker))
 		  (save-excursion
 		    (set-buffer (marker-buffer Info-tag-table-marker))
@@ -3119,7 +3119,7 @@ Allowed only if variable `Info-enable-edit' is non-nil."
   (setq buffer-read-only t)
   ;; Make mode line update.
   (set-buffer-modified-p (buffer-modified-p))
-  (and (marker-position Info-tag-table-marker)
+  (and (marker-buffer Info-tag-table-marker)
        (buffer-modified-p)
        (message "Tags may have changed.  Use Info-tagify if necessary")))
 
