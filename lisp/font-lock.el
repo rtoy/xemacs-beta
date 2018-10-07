@@ -1640,18 +1640,21 @@ START should be at the beginning of a line."
     (goto-char start)
 
     (let ((lisp-like (font-lock-lisp-like major-mode))
-	  (cache font-lock-cache-position)
+	  (cache (and (marker-buffer font-lock-cache-position)
+                      font-lock-cache-position))
 	  state string beg depth)
       ;;
       ;; Find the state at the `beginning-of-line' before `start'.
-      (if (= start cache)
+      (if (and cache (= start cache)) ;; (goto-char start) above didn't error,
+				      ;; START is a buffer position of some
+				      ;; sort
 	  ;; Use the cache for the state of `start'.
 	  (setq state font-lock-cache-state)
 	;; Find the state of `start'.
 	(if (null font-lock-beginning-of-syntax-function)
 	    ;; Use the state at the previous cache position, if any, or
 	    ;; otherwise calculate from `point-min'.
-	    (if (or (null (marker-buffer cache)) (< start cache))
+	    (if (or (null cache) (< start cache))
 		(setq state (parse-partial-sexp (point-min) start))
 	      (setq state (parse-partial-sexp cache start nil nil
 					      font-lock-cache-state)))
