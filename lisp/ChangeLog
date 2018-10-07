@@ -1,3 +1,10 @@
+2018-10-07  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* font-lock.el (font-lock-fontify-syntactically-region):
+	Careful here, font-lock-cache-position can be a marker that
+	doesn't point anywhere; thanks for the bug report, Michael
+	Sperber!
+
 2018-10-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* code-files.el (insert-file-contents):
