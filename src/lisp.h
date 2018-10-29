@@ -5605,8 +5605,8 @@ EXFUN (Findent_to, 3);
 EXFUN (Fvertical_motion, 3);
 
 Charcount byte_spaces_at_point (struct buffer *, Bytebpos);
-Charcount column_at_point (struct buffer *, Charbpos, Charcount);
-Charcount string_column_at_point (Lisp_Object, Charbpos, Charcount);
+Charcount column_at_point (struct buffer *, Bytebpos, Charcount);
+Charcount string_column_at_point (Lisp_Object, Bytecount, Charcount);
 Charcount current_column (struct buffer *);
 void invalidate_current_column (void);
 Charbpos vmotion (struct window *, Charbpos, int, int *);

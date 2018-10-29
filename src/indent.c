@@ -55,7 +55,7 @@ static Charcount last_known_column;
 static struct buffer *last_known_column_buffer;
 
 /* Value of point when current_column was called */
-static Charbpos last_known_column_point;
+static Bytebpos last_known_column_point;
 
 /* Value of MODIFF when current_column was called */
 static int last_known_column_modified;
@@ -121,13 +121,13 @@ invalidate_current_column (void)
 }
 
 Charcount
-column_at_point (struct buffer *buf, Charbpos init_pos, Charcount cur_col)
+column_at_point (struct buffer *buf, Bytebpos init_pos, Charcount cur_col)
 {
   Charcount col;
   Charcount tab_seen;
   Charcount tab_width = XFIXNUM (buf->tab_width);
   Charcount post_tab;
-  Charbpos pos = init_pos;
+  Bytebpos pos = init_pos;
   Ichar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -135,11 +135,11 @@ column_at_point (struct buffer *buf, Charbpos init_pos, Charcount cur_col)
 
   while (1)
     {
-      if (pos <= BUF_BEGV (buf))
+      if (pos <= BYTE_BUF_BEGV (buf))
 	break;
 
-      pos--;
-      c = BUF_FETCH_CHAR (buf, pos);
+      DEC_BYTEBPOS (buf, pos);
+      c = BYTE_BUF_FETCH_CHAR (buf, pos);
       if (c == '\t')
 	{
 	  if (tab_seen)
@@ -158,7 +158,7 @@ column_at_point (struct buffer *buf, Charbpos init_pos, Charcount cur_col)
 	  /* #### FSFmacs looks at ctl_arrow, display tables.
 	     We need to do similar. */
 #if 0
-	  displayed_glyphs = glyphs_from_charbpos (sel_frame, buf,
+	  displayed_glyphs = glyphs_from_bytebpos (sel_frame, buf,
 						 XWINDOW (selected_window),
 						 pos, dp, 0, col, 0, 0, 0);
 	  col += (displayed_glyphs->columns
@@ -188,12 +188,12 @@ column_at_point (struct buffer *buf, Charbpos init_pos, Charcount cur_col)
 }
 
 Charcount
-string_column_at_point (Lisp_Object s, Charbpos init_pos, Charcount tab_width)
+string_column_at_point (Lisp_Object s, Bytecount init_pos, Charcount tab_width)
 {
   Charcount col;
   Charcount tab_seen;
   Charcount post_tab;
-  Charbpos pos = init_pos;
+  Bytecount pos = init_pos;
   Ichar c;
 
   if (tab_width <= 0 || tab_width > 1000) tab_width = 8;
@@ -204,8 +204,8 @@ string_column_at_point (Lisp_Object s, Charbpos init_pos, Charcount tab_width)
       if (pos <= 0)
 	break;
 
-      pos--;
-      c = string_ichar (s, pos);
+      pos = prev_string_index (s, pos);
+      c = itext_ichar (string_byte_addr (s, pos));
       if (c == '\t')
 	{
 	  if (tab_seen)
@@ -234,11 +234,11 @@ Charcount
 current_column (struct buffer *buf)
 {
   if (buf == last_known_column_buffer
-      && BUF_PT (buf) == last_known_column_point
+      && BYTE_BUF_PT (buf) == last_known_column_point
       && BUF_MODIFF (buf) == last_known_column_modified)
     return last_known_column;
 
-  return column_at_point (buf, BUF_PT (buf), 1);
+  return column_at_point (buf, BYTE_BUF_PT (buf), 1);
 }
 
 DEFUN ("current-column", Fcurrent_column, 0, 1, 0, /*
@@ -318,7 +318,7 @@ If BUFFER is nil, the current buffer is assumed.
 
   last_known_column_buffer = buf;
   last_known_column = mincol;
-  last_known_column_point = BUF_PT (buf);
+  last_known_column_point = BYTE_BUF_PT (buf);
   last_known_column_modified = BUF_MODIFF (buf);
 
   /* Not in FSF: */

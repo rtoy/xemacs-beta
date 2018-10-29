@@ -1,3 +1,18 @@
+2018-10-29  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* indent.c:
+	* indent.c (column_at_point):
+	* indent.c (string_column_at_point):
+	* indent.c (current_column):
+	* indent.c (Findent_to):
+	* lisp.h:
+	* redisplay.c (create_text_block):
+	* redisplay.c (create_string_text_block):
+	* redisplay.c (decode_mode_spec):
+	Adjust column_at_point(), string_column_at_point() to take byte
+	INIT_POS arguments, avoiding calls to BYTE_BUF_FETCH_CHAR() and
+	its relatively expensive char-byte conversion.
+
 2018-10-01  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* marker.c (Fmarker_position):
