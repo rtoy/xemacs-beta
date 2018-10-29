@@ -2982,17 +2982,27 @@ done:
 
   dl->cursor_elt = data.cursor_x;
   /* #### lossage lossage lossage! Fix this shit! */
-  if (data.byte_charpos > BYTE_BUF_ZV (b))
-    dl->end_charpos = BUF_ZV (b);
-  else
-    dl->end_charpos = bytebpos_to_charbpos (b, data.byte_charpos) - 1;
-  if (truncate_win)
-    data.dl->num_chars = column_at_point (b, dl->end_charpos, 0);
-  else
-    /* This doesn't correctly take into account tabs and control
-       characters but if the window isn't being truncated then this
-       value isn't going to end up being used anyhow. */
-    data.dl->num_chars = dl->end_charpos - dl->charpos;
+  {
+    Bytebpos end_bytebpos = data.byte_charpos;
+
+    if (data.byte_charpos > BYTE_BUF_ZV (b))
+      {
+        dl->end_charpos = BUF_ZV (b);
+        end_bytebpos = BYTE_BUF_ZV (b);
+      }
+    else
+      {
+        dl->end_charpos = bytebpos_to_charbpos (b, data.byte_charpos) - 1;
+        DEC_BYTEBPOS (b, end_bytebpos);
+      }
+    if (truncate_win)
+      data.dl->num_chars = column_at_point (b, end_bytebpos, 0);
+    else
+      /* This doesn't correctly take into account tabs and control
+         characters but if the window isn't being truncated then this
+         value isn't going to end up being used anyhow. */
+      data.dl->num_chars = dl->end_charpos - dl->charpos;
+  }
 
   /* #### handle horizontally scrolled line with text none of which
      was actually laid out. */
@@ -5234,22 +5244,32 @@ create_string_text_block (struct window *w, Lisp_Object disp_string,
 
   dl->cursor_elt = data.cursor_x;
   /* #### lossage lossage lossage! Fix this shit! */
-  if (data.byte_charpos > byte_string_zv)
-    dl->end_charpos = buffer_or_string_bytexpos_to_charxpos (disp_string,
-							     byte_string_zv);
-  else
-    dl->end_charpos =
-      buffer_or_string_bytexpos_to_charxpos (disp_string,
-					     data.byte_charpos) - 1;
-  if (truncate_win)
-    data.dl->num_chars =
-      string_column_at_point (disp_string, dl->end_charpos,
-			      b ? XFIXNUM (b->tab_width) : 8);
-  else
-    /* This doesn't correctly take into account tabs and control
-       characters but if the window isn't being truncated then this
-       value isn't going to end up being used anyhow. */
-    data.dl->num_chars = dl->end_charpos - dl->charpos;
+  {
+    Bytecount end_bytecount;
+
+    if (data.byte_charpos > byte_string_zv)
+      {
+        dl->end_charpos
+          = string_index_byte_to_char (disp_string, byte_string_zv);
+        end_bytecount = byte_string_zv;
+      }
+    else
+      {
+        end_bytecount = prev_string_index (disp_string, data.byte_charpos);
+        dl->end_charpos
+          = string_index_byte_to_char (disp_string, end_bytecount);
+      }
+
+    if (truncate_win)
+      data.dl->num_chars =
+        string_column_at_point (disp_string, end_bytecount,
+                                b ? XFIXNUM (b->tab_width) : 8);
+    else
+      /* This doesn't correctly take into account tabs and control
+         characters but if the window isn't being truncated then this
+         value isn't going to end up being used anyhow. */
+      data.dl->num_chars = dl->end_charpos - dl->charpos;
+  }
 
   /* #### handle horizontally scrolled line with text none of which
      was actually laid out. */
@@ -7345,11 +7365,12 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print the current column */
     case 'c':
       {
-	Charbpos pt = (w == XWINDOW (Fselected_window (Qnil)))
-		    ? BUF_PT (b)
-		    : marker_position (w->pointm[type]);
-	int col = column_at_point (b, pt, 1) + !!column_number_start_at_one;
-	Ibyte buf[DECIMAL_PRINT_SIZE (long)];
+	Bytebpos pt = (w == XWINDOW (Fselected_window (Qnil)))
+		    ? BYTE_BUF_PT (b)
+		    : byte_marker_position (w->pointm[type]);
+	Charcount col
+          = column_at_point (b, pt, 1) + !!column_number_start_at_one;
+	Ibyte buf[DECIMAL_PRINT_SIZE (col)];
 
 	Dynarr_add_many (mode_spec_ibyte_string, buf,
                          fixnum_to_string (buf, sizeof (buf), col, 10,
