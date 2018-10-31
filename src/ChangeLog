@@ -1,3 +1,20 @@
+2018-10-31  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_update_line):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay.c:
+	* redisplay.c (generate_display_line):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (redisplay_window):
+	Reduce the use of marker_position() in all these functions, using
+	byte marker positions instead, making redisplay consistently a
+	little faster and reducing unpredictable slowdowns on Mule.
+
+	* redisplay.c (decode_mode_spec):
+	Move the functionality window_line_number() into this function, no
+	need for a static buffer.
+
 2018-10-29  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* indent.c:

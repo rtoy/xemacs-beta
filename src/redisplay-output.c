@@ -1028,8 +1028,8 @@ redisplay_move_cursor (struct window *w, Charbpos new_point, int no_output_end)
     {
       w->last_point_x[CURRENT_DISP] = 0;
       w->last_point_y[CURRENT_DISP] = y;
-      Fset_marker (w->last_point[CURRENT_DISP], Qzero, w->buffer);
-
+      set_byte_marker_position (w->last_point[CURRENT_DISP],
+                                BYTE_BUF_BEG (w->buffer), w->buffer);
       rb = Dynarr_begin (db->runes);
       rb->cursor_type = CURSOR_ON;
       dl->cursor_elt = 0;
@@ -2315,10 +2315,12 @@ redisplay_update_line (struct window *w, int first_line, int last_line,
 
   w->last_modified[CURRENT_DISP] = w->last_modified[DESIRED_DISP];
   w->last_facechange[CURRENT_DISP] = w->last_facechange[DESIRED_DISP];
-  Fset_marker (w->last_point[CURRENT_DISP],
-	       Fmarker_position (w->last_point[DESIRED_DISP]), w->buffer);
-  Fset_marker (w->last_start[CURRENT_DISP],
-	       Fmarker_position (w->last_start[DESIRED_DISP]), w->buffer);
+  set_byte_marker_position (w->last_point[CURRENT_DISP],
+                            byte_marker_position (w->last_point[DESIRED_DISP]),
+                            w->buffer);
+  set_byte_marker_position (w->last_start[CURRENT_DISP],
+                            byte_marker_position (w->last_start[DESIRED_DISP]),
+                            w->buffer);
 
   /* We don't bother updating the vertical scrollbars here.  This
      gives us a performance increase while having minimal loss of
@@ -2489,18 +2491,20 @@ redisplay_output_window (struct window *w)
     }
 
   w->window_end_pos[CURRENT_DISP] = w->window_end_pos[DESIRED_DISP];
-  Fset_marker (w->start[CURRENT_DISP],
-	       make_fixnum (marker_position (w->start[DESIRED_DISP])),
-	       w->buffer);
-  Fset_marker (w->pointm[CURRENT_DISP],
-	       make_fixnum (marker_position (w->pointm[DESIRED_DISP])),
-	       w->buffer);
+  set_byte_marker_position (w->start[CURRENT_DISP],
+                            byte_marker_position (w->start[DESIRED_DISP]),
+                            w->buffer);
+  set_byte_marker_position (w->pointm[CURRENT_DISP],
+                            byte_marker_position (w->pointm[DESIRED_DISP]),
+                            w->buffer);
   w->last_modified[CURRENT_DISP] = w->last_modified[DESIRED_DISP];
   w->last_facechange[CURRENT_DISP] = w->last_facechange[DESIRED_DISP];
-  Fset_marker (w->last_start[CURRENT_DISP],
-	       Fmarker_position (w->last_start[DESIRED_DISP]), w->buffer);
-  Fset_marker (w->last_point[CURRENT_DISP],
-	       Fmarker_position (w->last_point[DESIRED_DISP]), w->buffer);
+  set_byte_marker_position (w->last_start[CURRENT_DISP],
+                            byte_marker_position (w->last_start[DESIRED_DISP]),
+                            w->buffer);
+  set_byte_marker_position (w->last_point[CURRENT_DISP],
+                            byte_marker_position (w->last_point[DESIRED_DISP]),
+                            w->buffer);
   w->last_point_x[CURRENT_DISP] = w->last_point_x[DESIRED_DISP];
   w->last_point_y[CURRENT_DISP] = w->last_point_y[DESIRED_DISP];
   w->shadow_thickness_changed = 0;
