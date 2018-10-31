@@ -920,6 +920,7 @@ generate_display_line (struct window *w, struct display_line *dl, int bounds,
   Charbpos ret_charpos;
   int overlay_width;
   struct buffer *b = XBUFFER (WINDOW_BUFFER (w));
+  Bytebpos byte_start_pos;
 
   /* If our caller hasn't already set the boundaries, then do so now. */
   if (!bounds)
@@ -941,13 +942,12 @@ generate_display_line (struct window *w, struct display_line *dl, int bounds,
 
   /* We aren't generating a modeline at the moment. */
   dl->modeline = 0;
-
+  byte_start_pos = charbpos_to_bytebpos (b, start_pos);
   /* Create a display block for the text region of the line. */
   {
     /* #### urk urk urk!!! Chuck fix this shit! */
     Bytebpos hacked_up_bytebpos =
-      create_text_block (w, dl, charbpos_to_bytebpos (b, start_pos),
-			 prop, type);
+      create_text_block (w, dl, byte_start_pos, prop, type);
     if (hacked_up_bytebpos > BYTE_BUF_ZV (b))
       ret_charpos = BUF_ZV (b) + 1;
     else
@@ -959,7 +959,7 @@ generate_display_line (struct window *w, struct display_line *dl, int bounds,
 
   if (MARKERP (Voverlay_arrow_position)
       && EQ (w->buffer, Fmarker_buffer (Voverlay_arrow_position))
-      && start_pos == marker_position (Voverlay_arrow_position)
+      && byte_start_pos == byte_marker_position (Voverlay_arrow_position)
       && (STRINGP (Voverlay_arrow_string)
 	  || GLYPHP (Voverlay_arrow_string)))
     {
@@ -5786,6 +5786,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   /* Don't define this in the loop where it is used because we
      definitely want its value to survive between passes. */
   prop_block_dynarr *prop = NULL;
+  Bytebpos byte_pointm;
 
   /* If we don't have any buffer change recorded but the modiff flag has
      been incremented, then fail.  I'm not sure of the exact circumstances
@@ -5795,10 +5796,12 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
       || XFIXNUM (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b))
     return 0;
 
+  byte_pointm = charbpos_to_bytebpos (b, pointm);
+
   /* If the cursor is moved we attempt to update it.  If we succeed we
      go ahead and proceed with the optimization attempt. */
   if (!EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
-      || pointm != marker_position (w->last_point[CURRENT_DISP]))
+      || byte_pointm != byte_marker_position (w->last_point[CURRENT_DISP]))
     {
       struct frame *f = XFRAME (w->frame);
       struct device *d = XDEVICE (f->device);
@@ -5860,7 +5863,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   if (line > dla_end)
     {
       if (EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
-	  && pointm == marker_position (w->last_point[CURRENT_DISP]))
+	  && byte_pointm == byte_marker_position (w->last_point[CURRENT_DISP]))
 	return 1;
       else
 	return 0;
@@ -5876,7 +5879,8 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   w->last_modified[DESIRED_DISP] = make_fixnum (BUF_MODIFF (b));
   w->last_facechange[DESIRED_DISP] = make_fixnum (BUF_FACECHANGE (b));
   Fset_marker (w->last_start[DESIRED_DISP], make_fixnum (startp), w->buffer);
-  Fset_marker (w->last_point[DESIRED_DISP], make_fixnum (pointm), w->buffer);
+  set_byte_marker_position (w->last_point[DESIRED_DISP],
+                            byte_pointm, w->buffer);
 
   first_line = last_line = line;
   while (line <= dla_end)
@@ -6284,8 +6288,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
   int echo_active = 0;
   int startp = 1;
   int pointm;
-  int old_startp = 1;
-  int old_pointm = 1;
+  Bytebpos old_startp = 1;
+  Bytebpos old_pointm = 1;
   int selected_in_its_frame;
   int selected_globally;
   int skip_output = 0;
@@ -6338,27 +6342,35 @@ redisplay_window (Lisp_Object window, int skip_selected)
   if (echo_active)
     {
       old_pointm = selected_globally
-		   ? BUF_PT (b)
-		   : marker_position (w->pointm[CURRENT_DISP]);
-      pointm = 1;
+		   ? BYTE_BUF_PT (b)
+		   : byte_marker_position (w->pointm[CURRENT_DISP]);
+      pointm = BUF_BEG (the_buffer);
+      set_byte_marker_position (w->pointm[DESIRED_DISP], BYTE_BUF_BEG (b),
+                                the_buffer);
     }
   else
     {
       if (selected_globally)
 	{
 	  pointm = BUF_PT (b);
+          set_byte_marker_position (w->pointm[DESIRED_DISP], BYTE_BUF_PT (b),
+                                    the_buffer);
+
 	}
       else
 	{
-	  pointm = marker_position (w->pointm[CURRENT_DISP]);
+	  Bytebpos byte_pointm
+            = byte_marker_position (w->pointm[CURRENT_DISP]);
 
-	  if (pointm < BUF_BEGV (b))
-	    pointm = BUF_BEGV (b);
-	  else if (pointm > BUF_ZV (b))
-	    pointm = BUF_ZV (b);
+	  if (byte_pointm < BYTE_BUF_BEGV (b))
+	    byte_pointm = BYTE_BUF_BEGV (b);
+	  else if (byte_pointm > BYTE_BUF_ZV (b))
+	    byte_pointm = BYTE_BUF_ZV (b);
+          set_byte_marker_position (w->pointm[DESIRED_DISP], byte_pointm,
+                                    the_buffer);
+          pointm = bytebpos_to_charbpos (b, byte_pointm);
 	}
     }
-  Fset_marker (w->pointm[DESIRED_DISP], make_fixnum (pointm), the_buffer);
 
   /* Added 2-1-10 -- we should never have empty face or glyph cachels
      because we initialized them at startup and the only way to reduce
@@ -6403,18 +6415,33 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   if (echo_active)
     {
-      old_startp = marker_position (w->start[CURRENT_DISP]);
-      startp = 1;
+      old_startp = byte_marker_position (w->start[CURRENT_DISP]);
+
+      startp = BUF_BEG (b);
+      set_byte_marker_position (w->start[DESIRED_DISP], BYTE_BUF_BEG (b),
+                                the_buffer);
     }
   else
     {
-      startp = marker_position (w->start[CURRENT_DISP]);
-      if (startp < BUF_BEGV (b))
-	startp = BUF_BEGV (b);
-      else if (startp > BUF_ZV (b))
-	startp = BUF_ZV (b);
+      Bytebpos byte_startp = byte_marker_position (w->start[CURRENT_DISP]);
+      if (byte_startp < BYTE_BUF_BEGV (b))
+        {
+          byte_startp = BYTE_BUF_BEGV (b);
+          startp = BUF_BEGV (b);
+        }
+      else if (byte_startp > BYTE_BUF_ZV (b))
+        {
+          byte_startp = BYTE_BUF_ZV (b);
+          startp = BUF_ZV (b);
+        }
+      else
+        {
+          startp = bytebpos_to_charbpos (b, byte_startp);
+        }
+
+      set_byte_marker_position (w->start[DESIRED_DISP], byte_startp,
+                                the_buffer);
     }
-  Fset_marker (w->start[DESIRED_DISP], make_fixnum (startp), the_buffer);
 
   truncation_changed = (find_window_mirror (w)->truncate_win !=
 			(unsigned int) window_truncation_on (w));
@@ -6464,7 +6491,6 @@ redisplay_window (Lisp_Object window, int skip_selected)
     {
       /* Check if the cursor has actually moved. */
       if (EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
-	  && pointm == marker_position (w->last_point[CURRENT_DISP])
 	  && selected_globally
 	  && !w->windows_changed
 	  && !f->clip_changed
@@ -6474,7 +6500,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	  && !f->subwindows_changed
 	  /*	  && !f->subwindows_state_changed*/
 	  && !f->point_changed
-	  && !f->windows_structure_changed)
+	  && !f->windows_structure_changed
+	  && pointm == marker_position (w->last_point[CURRENT_DISP]))
 	{
 	  /* If not, we're done. */
 	  if (f->modeline_changed)
@@ -6616,8 +6643,10 @@ regeneration_done:
   if (echo_active)
     {
       w->buffer = old_buffer;
-      Fset_marker (w->pointm[DESIRED_DISP], make_fixnum (old_pointm), old_buffer);
-      Fset_marker (w->start[DESIRED_DISP], make_fixnum (old_startp), old_buffer);
+      set_byte_marker_position (w->pointm[DESIRED_DISP], old_pointm,
+                                old_buffer);
+      set_byte_marker_position (w->start[DESIRED_DISP], old_startp,
+                                old_buffer);
     }
 
   /* These also have to be set before calling redisplay_output_window
@@ -7294,41 +7323,6 @@ eval_within_redisplay (Lisp_Object dont_trust_this_damn_sucker)
      dont_trust_this_damn_sucker, 0);
 }
 
-/* Efficiently determine the window line number, and return a pointer
-   to its printed representation.  Do this regardless of whether
-   line-number-mode is on.  The first line in the buffer is counted as
-   1.  If narrowing is in effect, the lines are counted from the
-   beginning of the visible portion of the buffer.  */
-static Ibyte *
-window_line_number (struct window *w, int type)
-{
-  struct device *d = XDEVICE (XFRAME (w->frame)->device);
-  struct buffer *b = XBUFFER (w->buffer);
-  /* Be careful in the order of these tests. The first clause will
-     fail if DEVICE_SELECTED_FRAME == Qnil (since w->frame cannot be).
-     This can occur when the frame title is computed really early */
-  Bytebpos pos =
-    ((EQ (DEVICE_SELECTED_FRAME (d), w->frame) &&
-       (w == XWINDOW (FRAME_SELECTED_WINDOW (device_selected_frame (d)))) &&
-      EQ (DEVICE_CONSOLE (d), Vselected_console) &&
-      XDEVICE (CONSOLE_SELECTED_DEVICE (XCONSOLE (DEVICE_CONSOLE (d)))) == d )
-     ? BYTE_BUF_PT (b)
-     : byte_marker_position (w->pointm[type]));
-  EMACS_INT line;
-
-  line = buffer_line_number (b, pos, 1, 1);
-
-  {
-    static Ibyte window_line_number_buf[DECIMAL_PRINT_SIZE (Fixnum)];
-
-    fixnum_to_string (window_line_number_buf, sizeof (window_line_number_buf),
-                      line + 1, 10, Qnil);
-
-    return window_line_number_buf;
-  }
-}
-
-
 /* Given a character representing an object in a modeline
    specification, return a string (stored into the global array
    `mode_spec_ibyte_string') with the information that object
@@ -7393,7 +7387,17 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 
       /* print the current line number */
     case 'l':
-      str = (const Ascbyte *) window_line_number (w, type);
+      {
+	Bytebpos pos = (w == XWINDOW (Fselected_window (Qnil)))
+          ? BYTE_BUF_PT (b) : byte_marker_position (w->pointm[type]);
+        Charcount line = buffer_line_number (b, pos, 1, 1) + 1;
+        Ibyte buf[DECIMAL_PRINT_SIZE (line)];
+
+        Dynarr_add_many (mode_spec_ibyte_string, buf,
+                         fixnum_to_string (buf, sizeof (buf), line + 1, 10,
+                                           Qnil));
+        goto decode_mode_spec_done;
+      }
       break;
 
       /* print value of mode-name (obsolete) */
@@ -7481,40 +7485,38 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print percent of buffer above top of window, or Top, Bot or All */
     case 'p':
     {
-      Charbpos pos = marker_position (w->start[type]);
+      Bytebpos pos = byte_marker_position (w->start[type]);
 
       /* This had better be while the desired lines are being done. */
       if (w->window_end_pos[type] <= BUF_Z (b) - BUF_ZV (b))
 	{
-	  if (pos <= BUF_BEGV (b))
+	  if (pos <= BYTE_BUF_BEGV (b))
 	    str = "All";
 	  else
 	    str = "Bottom";
 	}
-      else if (pos <= BUF_BEGV (b))
+      else if (pos <= BYTE_BUF_BEGV (b))
 	str = "Top";
       else
 	{
-	  /* This hard limit is ok since the string it will hold has a
-	     fixed maximum length of 3.  But just to be safe... */
-	  Ascbyte buf[10];
-	  Charcount chars = pos - BUF_BEGV (b);
-	  Charcount total = BUF_ZV (b) - BUF_BEGV (b);
-
+	  EMACS_UINT bytes = pos - BYTE_BUF_BEGV (b);
+	  EMACS_UINT total = BYTE_BUF_ZV (b) - BYTE_BUF_BEGV (b);
 	  /* Avoid overflow on big buffers */
-	  int percent = total > LONG_MAX/200 ?
-	    (chars + total/200) / (total / 100) :
-	    (chars * 100 + total/2) / total;
+	  int percent = total > ((EMACS_UINT)(-1))/200 ?
+	    (int) ((bytes + total/200) / (total / 100)):
+	    (int) ((bytes * 100 + total/2) / total);
+          Ibyte buf[DECIMAL_PRINT_SIZE (percent)];
 
 	  /* We can't normally display a 3-digit number, so get us a
 	     2-digit number that is close. */
 	  if (percent == 100)
 	    percent = 99;
 
-	  sprintf (buf, "%d%%", percent);
-	  Dynarr_add_many (mode_spec_ibyte_string, (Ibyte *) buf,
-			   strlen (buf));
-
+	  Dynarr_add_many (mode_spec_ibyte_string, buf,
+                           fixnum_to_string (buf, sizeof (buf), percent,
+                                             10, Vfixnum_to_majuscule_ascii));
+          Dynarr_add_literal_string (mode_spec_ibyte_string, "%");
+          
 	  goto decode_mode_spec_done;
 	}
       break;
@@ -7524,48 +7526,53 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
        Top, or print Bottom or All */
     case 'P':
     {
-      Charbpos toppos = marker_position (w->start[type]);
       Charbpos botpos = BUF_Z (b) - w->window_end_pos[type];
-
-      /* botpos is only accurate as of the last redisplay, so we can
-	 only treat it as a hint.  In particular, after erase-buffer,
-	 botpos may be negative. */
-      if (botpos < toppos)
-	botpos = toppos;
 
       if (botpos >= BUF_ZV (b))
 	{
-	  if (toppos <= BUF_BEGV (b))
+	  if (byte_marker_position (w->start[type]) <= BYTE_BUF_BEGV (b))
 	    str = "All";
 	  else
 	    str = "Bottom";
 	}
       else
 	{
-	  /* This hard limit is ok since the string it will hold has a
-	     fixed maximum length of around 6.  But just to be safe... */
-	  Ascbyte buf[10];
-	  Charcount chars = botpos - BUF_BEGV (b);
-	  Charcount total = BUF_ZV (b) - BUF_BEGV (b);
+	  EMACS_UINT bytes, total = BYTE_BUF_ZV (b) - BYTE_BUF_BEGV (b);
+          Bytebpos toppos = byte_marker_position (w->start[type]);
+          int percent;
+          Ibyte buf[DECIMAL_PRINT_SIZE (percent)];
+
+          /* botpos is only accurate as of the last redisplay, so we can only
+             treat it as a hint.  In particular, after erase-buffer, botpos
+             may be negative. This is also why the byte-char sloppiness is OK
+             in this specific instance. */
+
+          if (botpos < toppos)
+            {
+              botpos = (Charbpos) toppos;
+            }
+
+          bytes = (EMACS_UINT)(botpos) - BYTE_BUF_BEGV (b);
 
 	  /* Avoid overflow on big buffers */
-	  int percent = total > LONG_MAX/200 ?
-	    (chars + total/200) / (total / 100) :
-	    (chars * 100 + total/2) / max (total, 1);
+	  percent = total > ((EMACS_UINT)(-1))/200 ?
+	    (int)((bytes + total/200) / (total / 100)) :
+	    (int)((bytes * 100 + total/2) / max (total, 1));
 
 	  /* We can't normally display a 3-digit number, so get us a
 	     2-digit number that is close. */
 	  if (percent == 100)
 	    percent = 99;
 
-	  if (toppos <= BUF_BEGV (b))
-	    sprintf (buf, "Top%d%%", percent);
-	  else
-	    sprintf (buf, "%d%%", percent);
+          if (toppos <= BYTE_BUF_BEGV (b))
+            {
+              Dynarr_add_literal_string (mode_spec_ibyte_string, "Top");
+            }
 
-	  Dynarr_add_many (mode_spec_ibyte_string, (Ibyte *) buf,
-			   strlen (buf));
-
+	  Dynarr_add_many (mode_spec_ibyte_string, buf,
+                           fixnum_to_string (buf, sizeof (buf), percent,
+                                             10, Vfixnum_to_majuscule_ascii));
+          Dynarr_add_literal_string (mode_spec_ibyte_string, "%");
 	  goto decode_mode_spec_done;
 	}
       break;
