@@ -1118,7 +1118,10 @@ init_tls (void)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x1010000fL
   /* Load the default configuration */
-  OPENSSL_init_crypto (OPENSSL_INIT_LOAD_CONFIG, NULL);
+  OPENSSL_init_ssl (OPENSSL_INIT_LOAD_SSL_STRINGS |
+		    OPENSSL_INIT_LOAD_CONFIG |
+		    OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
+		    NULL);
 
   /* Tell openssl to use our memory allocation functions */
   CRYPTO_set_mem_functions (openssl_malloc, openssl_realloc, openssl_free );
@@ -1130,13 +1133,13 @@ init_tls (void)
   CRYPTO_set_mem_functions ((void * (*)(size_t)) xmalloc,
 			    (void * (*)(void *, size_t)) xrealloc,
 			    xfree_1);
-#endif
 
   /* Load human-readable error messages */
   SSL_load_error_strings ();
 
   /* Initialize the library */
   SSL_library_init ();
+#endif
 
   /* Configure a client connection context, and send a handshake for the
    * highest supported TLS version. */
