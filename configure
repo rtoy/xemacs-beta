@@ -18090,7 +18090,7 @@ done
 esac
 
 
-for ac_func in cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen wcwidth
+for ac_func in cbrt closedir dup2 eaccess fmod fpathconf frexp fsync ftime ftruncate getaddrinfo gethostname getnameinfo getpagesize getrlimit gettimeofday getcwd link logb lrand48 matherr mkdir mktime perror poll random readlink rename res_init rint rmdir select setitimer setpgid setsid sigblock sighold sigprocmask snprintf strerror strlwr strupr symlink tzset ulimit umask usleep vlimit vsnprintf waitpid wcscmp wcslen
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -21309,9 +21309,9 @@ $as_echo "$ac_cv_lib_ssl_SSL_library_init" >&6; }
 if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
   with_tls=openssl
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPENSSL_init_crypto in -lssl" >&5
-$as_echo_n "checking for OPENSSL_init_crypto in -lssl... " >&6; }
-if ${ac_cv_lib_ssl_OPENSSL_init_crypto+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for OPENSSL_init_ssl in -lssl" >&5
+$as_echo_n "checking for OPENSSL_init_ssl in -lssl... " >&6; }
+if ${ac_cv_lib_ssl_OPENSSL_init_ssl+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -21325,27 +21325,27 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char OPENSSL_init_crypto ();
+char OPENSSL_init_ssl ();
 int
 main ()
 {
-return OPENSSL_init_crypto ();
+return OPENSSL_init_ssl ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ssl_OPENSSL_init_crypto=yes
+  ac_cv_lib_ssl_OPENSSL_init_ssl=yes
 else
-  ac_cv_lib_ssl_OPENSSL_init_crypto=no
+  ac_cv_lib_ssl_OPENSSL_init_ssl=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_OPENSSL_init_crypto" >&5
-$as_echo "$ac_cv_lib_ssl_OPENSSL_init_crypto" >&6; }
-if test "x$ac_cv_lib_ssl_OPENSSL_init_crypto" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ssl_OPENSSL_init_ssl" >&5
+$as_echo "$ac_cv_lib_ssl_OPENSSL_init_ssl" >&6; }
+if test "x$ac_cv_lib_ssl_OPENSSL_init_ssl" = xyes; then :
   with_tls=openssl
 else
   { echo "Error:" "Required openssl support cannot be provided." >&2; exit 1; }

@@ -1,3 +1,7 @@
+2018-11-01  Jerry James  <james@xemacs.org>
+
+	* tls.c (init_tls): Fix build with recent openssl versions.
+
 2018-10-31  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay-output.c (redisplay_move_cursor):
