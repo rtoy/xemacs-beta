@@ -1,3 +1,9 @@
+2018-11-19  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay.c (create_text_block):
+	Don't DEC_BYTEBPOS() with a bytebpos less than 1 in this function,
+	thank you for the bug report, Raymond Toy!
+
 2018-11-01  Jerry James  <james@xemacs.org>
 
 	* tls.c (init_tls): Fix build with recent openssl versions.
