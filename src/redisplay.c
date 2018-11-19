@@ -2982,27 +2982,38 @@ done:
 
   dl->cursor_elt = data.cursor_x;
   /* #### lossage lossage lossage! Fix this shit! */
-  {
-    Bytebpos end_bytebpos = data.byte_charpos;
-
-    if (data.byte_charpos > BYTE_BUF_ZV (b))
-      {
-        dl->end_charpos = BUF_ZV (b);
-        end_bytebpos = BYTE_BUF_ZV (b);
-      }
-    else
-      {
-        dl->end_charpos = bytebpos_to_charbpos (b, data.byte_charpos) - 1;
-        DEC_BYTEBPOS (b, end_bytebpos);
-      }
-    if (truncate_win)
-      data.dl->num_chars = column_at_point (b, end_bytebpos, 0);
-    else
-      /* This doesn't correctly take into account tabs and control
-         characters but if the window isn't being truncated then this
-         value isn't going to end up being used anyhow. */
-      data.dl->num_chars = dl->end_charpos - dl->charpos;
-  }
+  if (data.byte_charpos > BYTE_BUF_ZV (b))
+    {
+      dl->end_charpos = BUF_ZV (b);
+      if (truncate_win)
+        {
+          data.dl->num_chars = column_at_point (b, BYTE_BUF_ZV (b), 0);
+        }
+      else
+        {
+          /* This doesn't correctly take into account tabs and control
+             characters but if the window isn't being truncated then this
+             value isn't going to end up being used anyhow. */
+          data.dl->num_chars = dl->end_charpos - dl->charpos;
+        }
+    }
+  else
+    {
+      dl->end_charpos = bytebpos_to_charbpos (b, data.byte_charpos) - 1;
+      if (truncate_win)
+        {
+          data.dl->num_chars = column_at_point (b, data.byte_charpos > 1 ?
+                                                prev_bytebpos
+                                                (b, data.byte_charpos) : 1, 0);
+        }
+      else
+        {
+          /* This doesn't correctly take into account tabs and control
+             characters but if the window isn't being truncated then this
+             value isn't going to end up being used anyhow. */
+          data.dl->num_chars = dl->end_charpos - dl->charpos;
+        }
+    }
 
   /* #### handle horizontally scrolled line with text none of which
      was actually laid out. */
