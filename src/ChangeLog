@@ -1,3 +1,10 @@
+2018-12-08  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* redisplay.c (redisplay_window):
+	Narrow the values passed to set_byte_marker_position() with
+	old_pointm, old_startp here, as the old Fset_marker() code was
+	effectively doing. Thank you for the bug report, Raymond Toy.
+
 2018-11-19  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay.c (create_text_block):

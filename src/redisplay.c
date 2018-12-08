@@ -5891,7 +5891,9 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   w->last_facechange[DESIRED_DISP] = make_fixnum (BUF_FACECHANGE (b));
   Fset_marker (w->last_start[DESIRED_DISP], make_fixnum (startp), w->buffer);
   set_byte_marker_position (w->last_point[DESIRED_DISP],
-                            byte_pointm, w->buffer);
+                            min (BYTE_BUF_Z (XBUFFER (w->buffer)),
+                                 max (BYTE_BUF_BEG (XBUFFER (w->buffer)),
+                                      byte_pointm)), w->buffer);
 
   first_line = last_line = line;
   while (line <= dla_end)
@@ -6654,9 +6656,16 @@ regeneration_done:
   if (echo_active)
     {
       w->buffer = old_buffer;
-      set_byte_marker_position (w->pointm[DESIRED_DISP], old_pointm,
+
+      set_byte_marker_position (w->pointm[DESIRED_DISP],
+                                max (BYTE_BUF_BEG (XBUFFER (old_buffer)), 
+                                     min (BYTE_BUF_Z (XBUFFER (old_buffer)),
+                                          old_pointm)),
                                 old_buffer);
-      set_byte_marker_position (w->start[DESIRED_DISP], old_startp,
+      set_byte_marker_position (w->pointm[DESIRED_DISP],
+                                max (BYTE_BUF_BEG (XBUFFER (old_buffer)), 
+                                     min (BYTE_BUF_Z (XBUFFER (old_buffer)),
+                                          old_startp)),
                                 old_buffer);
     }
 
