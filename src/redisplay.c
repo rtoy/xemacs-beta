@@ -6301,8 +6301,8 @@ redisplay_window (Lisp_Object window, int skip_selected)
   int echo_active = 0;
   int startp = 1;
   int pointm;
-  Bytebpos old_startp = 1;
-  Bytebpos old_pointm = 1;
+  Lisp_Object old_startp = Qnil;
+  Lisp_Object old_pointm = Qnil;
   int selected_in_its_frame;
   int selected_globally;
   int skip_output = 0;
@@ -6354,12 +6354,11 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   if (echo_active)
     {
-      old_pointm = selected_globally
-		   ? BYTE_BUF_PT (b)
-		   : byte_marker_position (w->pointm[CURRENT_DISP]);
-      pointm = BUF_BEG (the_buffer);
+      old_pointm = noseeum_copy_marker (selected_globally ? b->point_marker
+                                        : w->pointm[CURRENT_DISP], Qnil);
+      pointm = BUF_BEG (b);
       set_byte_marker_position (w->pointm[DESIRED_DISP], BYTE_BUF_BEG (b),
-                                the_buffer);
+                                wrap_buffer (b));
     }
   else
     {
@@ -6428,7 +6427,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   if (echo_active)
     {
-      old_startp = byte_marker_position (w->start[CURRENT_DISP]);
+      old_startp = noseeum_copy_marker (w->start[CURRENT_DISP], Qnil);
 
       startp = BUF_BEG (b);
       set_byte_marker_position (w->start[DESIRED_DISP], BYTE_BUF_BEG (b),
@@ -6657,16 +6656,11 @@ regeneration_done:
     {
       w->buffer = old_buffer;
 
-      set_byte_marker_position (w->pointm[DESIRED_DISP],
-                                max (BYTE_BUF_BEG (XBUFFER (old_buffer)), 
-                                     min (BYTE_BUF_Z (XBUFFER (old_buffer)),
-                                          old_pointm)),
-                                old_buffer);
-      set_byte_marker_position (w->pointm[DESIRED_DISP],
-                                max (BYTE_BUF_BEG (XBUFFER (old_buffer)), 
-                                     min (BYTE_BUF_Z (XBUFFER (old_buffer)),
-                                          old_startp)),
-                                old_buffer);
+      Fset_marker (w->pointm[DESIRED_DISP], old_pointm, old_buffer);
+      Fset_marker (w->pointm[DESIRED_DISP], old_startp, old_buffer);
+
+      unchain_marker (old_pointm);
+      unchain_marker (old_startp);      
     }
 
   /* These also have to be set before calling redisplay_output_window
