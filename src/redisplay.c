@@ -2314,7 +2314,8 @@ create_text_block (struct window *w, struct display_line *dl,
 	 supposed to display. */
       if (selective > 0
 	  && (data.byte_charpos == BYTE_BUF_BEGV (b)
-	      || BUF_FETCH_CHAR (b, prev_bytebpos (b, data.byte_charpos)) == '\n'))
+	      || BYTE_BUF_FETCH_CHAR (b, prev_bytebpos (b, data.byte_charpos))
+              == '\n'))
 	{
 	  while (byte_spaces_at_point (b, data.byte_charpos) >= selective)
 	    {
@@ -6498,7 +6499,9 @@ redisplay_window (Lisp_Object window, int skip_selected)
       && !f->frame_changed
       && !truncation_changed
       /* check whether start is really at the beginning of a line  GE */
-      && (!w->start_at_line_beg || beginning_of_line_p (b, startp))
+      && (!w->start_at_line_beg ||
+          byte_beginning_of_line_p (b, byte_marker_position
+                                    (w->start[DESIRED_DISP])))
       )
     {
       /* Check if the cursor has actually moved. */
@@ -6574,11 +6577,12 @@ redisplay_window (Lisp_Object window, int skip_selected)
      if our start position is equal to point-max.  Otherwise we'll end
      up with a blank window. */
   else if (((w->start_at_line_beg || MINI_WINDOW_P (w))
-	    && !(startp == BUF_BEGV (b)
-		 || BUF_FETCH_CHAR (b, startp - 1) == '\n'))
+	    && !(byte_beginning_of_line_p
+                 (b, byte_marker_position (w->start[DESIRED_DISP]))))
 	   || (pointm == startp &&
 	       EQ (Fmarker_buffer (w->last_start[CURRENT_DISP]), w->buffer) &&
-	       startp < marker_position (w->last_start[CURRENT_DISP]))
+               byte_marker_position (w->start[DESIRED_DISP])
+                 < byte_marker_position (w->last_start[CURRENT_DISP]))
 	   || (startp == BUF_ZV (b)))
     {
       startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);

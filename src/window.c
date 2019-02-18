@@ -1994,13 +1994,13 @@ from overriding motion of point in order to display at this exact start.
 {
   struct window *w = decode_window (window);
 
-  CHECK_FIXNUM_COERCE_MARKER (pos);
   set_marker_restricted (w->start[CURRENT_DISP], pos, w->buffer);
   /* this is not right, but much easier than doing what is right. */
   /* w->start_at_line_beg = 0; */
   /* WTF is the above supposed to mean?  GE */
-  w->start_at_line_beg = beginning_of_line_p (XBUFFER (w->buffer),
-					      marker_position (w->start[CURRENT_DISP]));
+  w->start_at_line_beg
+    = byte_beginning_of_line_p (XBUFFER (w->buffer),
+                                byte_marker_position (w->start[CURRENT_DISP]));
   if (NILP (noforce))
     w->force_start = 1;
   w->redo_modeline = 1;
@@ -3324,7 +3324,9 @@ value is reasonable when this function is called.
 	{
 	  Fset_marker (w->start[CURRENT_DISP], make_fixnum (new_start),
 		       w->buffer);
-	  w->start_at_line_beg = beginning_of_line_p (b, new_start);
+	  w->start_at_line_beg
+            = byte_beginning_of_line_p
+            (b, byte_marker_position (w->start[CURRENT_DISP]));
 	}
       /* We need to do this, so that the window-scroll-functions
 	 get called.  */
@@ -3796,8 +3798,8 @@ global or per-frame buffer ordering.
   Fset_marker (w->sb_point, w->start[CURRENT_DISP], buffer);
   /* set start_at_line_beg correctly. GE */
   w->start_at_line_beg =
-    beginning_of_line_p (XBUFFER (buffer),
-			 marker_position (w->start[CURRENT_DISP]));
+    byte_beginning_of_line_p (XBUFFER (buffer),
+			 byte_marker_position (w->start[CURRENT_DISP]));
   w->force_start = 0;           /* XEmacs fix */
   SET_LAST_MODIFIED (w, 1);
   SET_LAST_FACECHANGE (w);
@@ -4636,7 +4638,9 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
       Fvertical_motion (make_fixnum (-window_char_height (w, 0) / 2),
                         window, Qnil);
       Fset_marker (w->start[CURRENT_DISP], point, w->buffer);
-      w->start_at_line_beg = beginning_of_line_p (b, XFIXNUM (point));
+      w->start_at_line_beg
+        = byte_beginning_of_line_p
+        (b, byte_marker_position (w->start[CURRENT_DISP]));
       WINDOW_TEXT_TOP_CLIP (w) = 0;
       MARK_WINDOWS_CHANGED (w);
     }
@@ -4732,10 +4736,13 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	    }
 	  else
 	    {
-	      set_marker_restricted (w->start[CURRENT_DISP], make_fixnum (startp),
+	      set_marker_restricted (w->start[CURRENT_DISP],
+                                     make_fixnum (startp),
 				     w->buffer);
 	      w->force_start = 1;
-	      w->start_at_line_beg = beginning_of_line_p (b, startp);
+	      w->start_at_line_beg
+                = byte_beginning_of_line_p
+                (b, byte_marker_position (w->start[CURRENT_DISP]));
 	      MARK_WINDOWS_CHANGED (w);
 
 	      if (!point_would_be_visible (w, startp, XFIXNUM (point), 0))
@@ -4785,7 +4792,9 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	      set_marker_restricted (w->start[CURRENT_DISP], make_fixnum (startp),
 				     w->buffer);
 	      w->force_start = 1;
-	      w->start_at_line_beg = beginning_of_line_p (b, startp);
+	      w->start_at_line_beg
+                = byte_beginning_of_line_p
+                (b, byte_marker_position (w->start[CURRENT_DISP]));
 	      MARK_WINDOWS_CHANGED (w);
 
 	      /* #### Scroll back by less than a line. This code was
@@ -4848,7 +4857,9 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	  set_marker_restricted (w->start[CURRENT_DISP], make_fixnum (startp),
 				 w->buffer);
 	  w->force_start = 1;
-	  w->start_at_line_beg = beginning_of_line_p (b, startp);
+	  w->start_at_line_beg
+            = byte_beginning_of_line_p
+            (b, byte_marker_position (w->start[CURRENT_DISP]));
 	  MARK_WINDOWS_CHANGED (w);
 
 	  if (!point_would_be_visible (w, startp, XFIXNUM (point), 0))
@@ -5026,7 +5037,9 @@ If WINDOW is nil, the selected window is used.
 
   Fset_marker (w->start[CURRENT_DISP], make_fixnum (startp), w->buffer);
 
-  w->start_at_line_beg = beginning_of_line_p (b, startp);
+  w->start_at_line_beg
+    = byte_beginning_of_line_p (b,
+                                byte_marker_position (w->start[CURRENT_DISP]));
   w->force_start = 1;
   MARK_WINDOWS_CHANGED (w);
   return Qnil;
@@ -5128,7 +5141,9 @@ If WINDOW is nil, the selected window is used.
 
       Fset_marker (w->start[CURRENT_DISP], make_fixnum (new_point),
 		   w->buffer);
-      w->start_at_line_beg = beginning_of_line_p (b, new_point);
+      w->start_at_line_beg
+        = byte_beginning_of_line_p
+        (b, byte_marker_position (w->start[CURRENT_DISP]));
       w->force_start = 1;
     }
   else

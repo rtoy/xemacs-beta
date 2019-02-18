@@ -515,26 +515,6 @@ If BUFFER is nil, the current buffer is assumed.
   return BYTE_BUF_PT (b) == BYTE_BUF_ZV (b) ? Qt : Qnil;
 }
 
-static Boolint
-byte_beginning_of_line_p (struct buffer *b, Bytebpos bpt)
-{
-  if (bpt <= BYTE_BUF_BEGV (b))
-    {
-      return 1;
-    }
-
-  DEC_BYTEBPOS (b, bpt);
-  return BYTE_BUF_FETCH_CHAR (b, bpt) == '\n';
-}
-
-/* #### Rework redisplay.c and the window code to use
-   byte_beginning_of_line_p() instead of this! */
-Boolint
-beginning_of_line_p (struct buffer *b, Charbpos pt)
-{
-  return pt <= BUF_BEGV (b) || BUF_FETCH_CHAR (b, pt - 1) == '\n';
-}
-
 DEFUN ("bolp", Fbolp, 0, 1, 0, /*
 Return t if point is at the beginning of a line.
 If BUFFER is nil, the current buffer is assumed.

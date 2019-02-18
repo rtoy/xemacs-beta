@@ -1312,4 +1312,21 @@ void r_alloc_free (unsigned char **);
 
 #endif /* !REL_ALLOC */
 
+/* This gets to go here because it's used enough in redisplay that it's worth
+   making it inline, and because lisp.h doesn't have access to the
+   buffer.h-internal macros. */
+DECLARE_INLINE_HEADER (
+Boolint
+byte_beginning_of_line_p (struct buffer *b, Bytebpos bpt)
+)
+{
+  if (bpt <= BYTE_BUF_BEGV (b))
+    {
+      return 1;
+    }
+
+  DEC_BYTEBPOS (b, bpt);
+  return BYTE_BUF_FETCH_CHAR (b, bpt) == '\n';
+}
+
 #endif /* INCLUDED_buffer_h_ */
