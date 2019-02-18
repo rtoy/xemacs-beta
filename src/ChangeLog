@@ -1,5 +1,30 @@
 2019-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Prefer byte_beginning_of_line_p() throughout the C code.
+	* buffer.h:
+	Make byte_beginning_of_line_p() inline, given its short length and
+	its use in redisplay.
+	Move it to this file from editfns.c given it needs access to
+	buffer internals.
+	* editfns.c (beginning_of_line_p): Remove this entirely.
+	* lisp.h: Remove its declaration from lisp.h.
+	* redisplay.c (create_text_block):
+	Correct some BUF_FETCH_CHAR vs. BYTE_BUF_FETCH_CHAR confusion.
+	* redisplay.c (redisplay_window):
+	Call byte_beginning_of_line_p() in this function.
+	* window.c (Fset_window_start):
+	Leave the POSITION munging to set_marker_restricted(), something
+	it's better at, anyway.
+	Call byte_beginning_of_line_p() here.
+	* window.c (Fdelete_other_windows):
+	* window.c (Fset_window_buffer):
+	* window.c (window_scroll):
+	* window.c (Fcenter_to_window_line):
+	* window.c (Fmove_to_window_line):
+	Call byte_beginning_of_line_p() in these other functions too.
+
+2019-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
 	Wrap some calls to Lisp here, as appropriate for code run within
 	redisplay.

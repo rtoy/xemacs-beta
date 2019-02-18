@@ -4835,7 +4835,6 @@ Lisp_Object save_restriction_save (struct buffer *buf);
 Lisp_Object save_excursion_restore (Lisp_Object);
 Lisp_Object save_restriction_restore (Lisp_Object);
 void widen_buffer (struct buffer *b, int no_clip);
-Boolint beginning_of_line_p (struct buffer *, Charbpos);
 Lisp_Object save_current_buffer_restore (Lisp_Object);
 
 extern Lisp_Object Qformat;
