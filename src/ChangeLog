@@ -1,3 +1,9 @@
+2019-02-18  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* menubar-x.c (menu_item_descriptor_to_widget_value_1):
+	Wrap some calls to Lisp here, as appropriate for code run within
+	redisplay.
+
 2018-12-16  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* redisplay.c (redisplay_window):
