@@ -198,14 +198,19 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 
 	  if ((!NILP (config_tag)
 	       && NILP (Fmemq (config_tag, Vmenubar_configuration)))
-	      || (included_spec && NILP (Feval (include_p))))
+              || (included_spec &&
+                  NILP (call1_trapping_problems ("Error with included spec",
+                                                 Qeval, include_p, 0))))
 	    {
 	      wv = NULL;
 	      goto menu_item_done;
 	    }
 
 	  if (active_spec)
-	    active_p = Feval (active_p);
+            {
+              active_p = call1_trapping_problems ("Error in menu filter",
+                                                  Qeval, active_p, 0);
+            }
 
 	  if (!NILP (hook_fn) && !NILP (active_p))
 	    {
@@ -213,7 +218,8 @@ menu_item_descriptor_to_widget_value_1 (Lisp_Object desc,
 	      if (filter_p || depth == 0)
 		{
 #endif
-		  desc = call1 (hook_fn, desc);
+                  desc = call1_trapping_problems ("Error in menu filter",
+                                                  hook_fn, desc, 0);
 		  if (UNBOUNDP (desc))
 		    desc = Qnil;
 #if defined LWLIB_MENUBARS_LUCID || defined LWLIB_MENUBARS_MOTIF
