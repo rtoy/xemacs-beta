@@ -254,10 +254,6 @@ struct buffer
      Or -1 if we didn't have a failure.  */
   int auto_save_failure_time;
 
-  /* Position in buffer at which display started
-     the last time this buffer was displayed.  */
-  int last_window_start;
-
   /* Everything from here down must be a Lisp_Object */
 
 #define MARKED_SLOT(x) Lisp_Object x;

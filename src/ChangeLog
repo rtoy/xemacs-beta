@@ -1,3 +1,36 @@
+2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move the buffer last_window_start to being a zero-length extent,
+	not an int.
+
+	Move the window saved point to being a zero-length extent also, to
+	give better behaviour with editing and deleting as we saw
+	previously with 
+	http://mid.xemacs.org/539b.674c.c8912.0ca7@parhasard.net . 
+
+	* buffer.c (finish_init_buffer):
+	* buffer.c (Ferase_buffer):
+	Initialise last_window_start as Qnil in both these functions,
+	meaning use the beginning of the visible region within redisplay.
+
+	* buffer.h (struct buffer): Remove last_window_start from the
+	non-Lisp_Object part of the buffer slots.
+	* bufslots.h:
+	Save it here instead, mark it as a Lisp_Object as appropriate.
+	* window.c (unshow_buffer):
+	Save the last point for this window and the window start as
+	zero-length extents rather than markers.
+	* window.c (Fset_window_buffer):
+	Use the zero-length extents rather than markers or ints.
+	* window.c (delete_saved_window_start): New.
+	Delete a saved window start zero-length extent, unless it is the
+	last_window_start for the associated buffer.
+	* window.c (Fdelete_window):
+	Use this when cleaning up the saved_last_window_start_cache. 
+	* winslots.h:
+	Update the documentation for saved_point_cache,
+	saved_last_window_start_cache.
+
 2019-02-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Prefer byte_beginning_of_line_p() throughout the C code.

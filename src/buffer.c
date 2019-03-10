@@ -621,7 +621,7 @@ finish_init_buffer (struct buffer *b, Lisp_Object name)
   reset_buffer_local_variables (b, 1);
   b->directory = current_buffer ? current_buffer->directory : Qnil;
 
-  b->last_window_start = 1;
+  b->last_window_start = Qnil;
 
   b->name = name;
   if (string_byte (name, 0) != ' ')
@@ -1762,7 +1762,7 @@ BUFFER defaults to the current buffer if omitted.
 
   widen_buffer (b, no_clip);
   buffer_delete_range (b, BUF_BEG (b), BUF_Z (b), 0);
-  b->last_window_start = 1;
+  b->last_window_start = Qnil;
 
   /* Prevent warnings, or suspension of auto saving, that would happen
      if future size is less than past size.  Use of erase-buffer
