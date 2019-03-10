@@ -5126,8 +5126,10 @@ If WINDOW is nil, the selected window is used.
     {
       int retval;
 
-      if (XFIXNUM (w->last_modified[CURRENT_DISP]) >= BUF_MODIFF (b)
-	  && XFIXNUM (w->last_facechange[CURRENT_DISP]) >= BUF_FACECHANGE (b))
+      if (buf_tick_arithcompare (XFIXNUM (w->last_modified[CURRENT_DISP]),
+                                 BUF_MODIFF (b)) >= 0
+          && buf_tick_arithcompare (XFIXNUM (w->last_facechange[CURRENT_DISP]),
+                                    BUF_FACECHANGE (b)) >= 0)
 	{
 	  new_point = point_at_center (w, CURRENT_DISP, 0, 0);
 

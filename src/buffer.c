@@ -973,7 +973,8 @@ No argument or nil as argument means use current buffer as BUFFER.
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
-  return BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf) ? Qt : Qnil;
+  return buf_tick_arithcompare (BUF_SAVE_MODIFF (buf), BUF_MODIFF (buf)) < 0
+    ? Qt : Qnil;
 }
 
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, 1, 2, 0, /*
@@ -993,7 +994,8 @@ as BUFFER means use current buffer.
   Lisp_Object fn = buf->file_truename;
   if (!NILP (fn))
     {
-      int already = BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf);
+      Boolint already = buf_tick_arithcompare (BUF_SAVE_MODIFF (buf),
+                                               BUF_MODIFF (buf)) < 0;
       if (already == NILP (flag))
 	{
 	  int count = specpdl_depth ();
@@ -1027,14 +1029,15 @@ as BUFFER means use current buffer.
 DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, 0, 1, 0, /*
 Return BUFFER's tick counter, incremented for each change in text.
 Each buffer has a tick counter which is incremented each time the text in
-that buffer is changed.  It wraps around occasionally.
+that buffer is changed.  It wraps around occasionally, and so user
+code needs to be careful about ordinal comparisons.
 No argument or nil as argument means use current buffer as BUFFER.
 */
        (buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 0);
 
-  return make_fixnum (BUF_MODIFF (buf));
+  return make_integer (BUF_MODIFF (buf));
 }
 
 DEFUN ("rename-buffer", Frename_buffer, 1, 2,
@@ -1245,7 +1248,7 @@ with `delete-process'.
 
   /* Query if the buffer is still modified.  */
   if (INTERACTIVE && !NILP (b->filename)
-      && BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+      && buf_tick_arithcompare (BUF_MODIFF (b), BUF_SAVE_MODIFF (b)) > 0)
     {
       Lisp_Object killp;
       GCPRO1 (buf);

@@ -86,12 +86,12 @@ struct buffer_text
   Charbpos bufz;	/* Equivalent as a Charbpos. */
   Bytecount gap_size;/* Size of buffer's gap */
   Bytecount end_gap_size;/* Size of buffer's end gap */
-  long modiff;		/* This counts buffer-modification events
+  EMACS_INT modiff;	/* This counts buffer-modification events
 			   for this buffer.  It is incremented for
 			   each such event, and never otherwise
 			   changed.  */
-  long save_modiff;	/* Previous value of modiff, as of last
-			   time buffer visited or saved a file.  */
+  EMACS_INT save_modiff; /* Previous value of modiff, as of last
+			    time buffer visited or saved a file.  */
 
 #ifdef MULE
 
@@ -172,8 +172,8 @@ struct buffer
   Bytebpos zv;		/* Index of end of accessible range. */
   Charbpos bufzv;		/* Equivalent as a Charbpos. */
 
-  int face_change;	/* This is set when a change in how the text should
-			   be displayed (e.g., font, color) is made. */
+  EMACS_INT face_change; /* This is set when a change in how the text should
+			    be displayed (e.g., font, color) is made. */
 
   /* Whether buffer specific face is specified. */
   int buffer_local_face_property;
@@ -248,7 +248,7 @@ struct buffer
   time_t modtime;
 
   /* the value of text->modiff at the last auto-save.  */
-  long auto_save_modified;
+  EMACS_INT auto_save_modified;
 
   /* The time at which we detected a failure to auto-save,
      Or -1 if we didn't have a failure.  */
@@ -1132,6 +1132,21 @@ do									   \
 
 /* Modification count */
 #define BUF_MODIFF(buf) ((buf)->text->modiff)
+
+/* The modification count wraps around, use the following to compare, which
+   uses the same approach as Fevent_timestamp_lessp(). */
+DECLARE_INLINE_HEADER (
+int
+buf_tick_arithcompare (EMACS_INT val1, EMACS_INT val2)
+)
+{
+  if (val1 < val2 && ((val2 - val1) < (EMACS_INT) ((~(EMACS_UINT)(0) >> 2))))
+    {
+      return -1;
+    }
+
+  return val1 != val2;
+}
 
 /* Saved modification count */
 #define BUF_SAVE_MODIFF(buf) ((buf)->text->save_modiff)
