@@ -355,7 +355,7 @@ set_marker_internal (Lisp_Object marker, Bytebpos byteno, struct buffer *b,
    BYTENO must be a valid byte position within BUFFER. MARKER may not be
    BUFFER's point marker. */
 Lisp_Object
-set_byte_marker_position (Lisp_Object marker, Bytebpos byteno,
+set_marker_byte_position (Lisp_Object marker, Bytebpos byteno,
 			  Lisp_Object buffer)
 {
 #ifdef ERROR_CHECK_STRUCTURES
@@ -447,8 +447,19 @@ unchain_marker (Lisp_Object m)
   marker->buffer = 0;
 }
 
+Charbpos
+marker_position (Lisp_Object marker)
+{
+  struct buffer *buf = XMARKER (marker)->buffer;
+
+  if (!buf)
+    invalid_argument ("Marker does not point anywhere", Qunbound);
+
+  return bytebpos_to_charbpos (buf, marker_byte_position (marker));
+}
+
 Bytebpos
-byte_marker_position (Lisp_Object marker)
+marker_byte_position (Lisp_Object marker)
 {
   Lisp_Marker *m = XMARKER (marker);
   struct buffer *buf = m->buffer;
@@ -466,17 +477,6 @@ byte_marker_position (Lisp_Object marker)
   pos = membpos_to_bytebpos (buf, m->membpos);
 
   return pos;
-}
-
-Charbpos
-marker_position (Lisp_Object marker)
-{
-  struct buffer *buf = XMARKER (marker)->buffer;
-
-  if (!buf)
-    invalid_argument ("Marker does not point anywhere", Qunbound);
-
-  return bytebpos_to_charbpos (buf, byte_marker_position (marker));
 }
 
 static Lisp_Object

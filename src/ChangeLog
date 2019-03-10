@@ -1,5 +1,63 @@
 2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Mechanically change byte_marker_position() to
+	marker_byte_position(), the GNU name for the same function, in our
+	C sources.
+	Include set_byte_marker_position() -> set_marker_byte_position()
+	in this for symmetry, despite that GNU doesn't use the latter
+	name.
+	* bytecode.c (bytecode_arithcompare):
+	* bytecode.c (bytecode_gtr):
+	* bytecode.c (bytecode_lss):
+	* bytecode.c (bytecode_leq):
+	* bytecode.c (bytecode_geq):
+	* bytecode.c (bytecode_arithop):
+	* callint.c (check_mark):
+	* callint.c (callint_prompt):
+	* data.c (ARITHCOMPARE_MANY):
+	* data.c (Fmax):
+	* data.c (Fmin):
+	* editfns.c (region_limit):
+	* editfns.c (Fpoint_min_marker):
+	* editfns.c (Fpoint_max_marker):
+	* editfns.c (save_restriction_save):
+	* editfns.c (save_restriction_restore):
+	* extents.h:
+	* fileio.c:
+	* fileio.c (restore_point_unwind):
+	* line-number.c (invalidate_line_number_cache):
+	* line-number.c (get_nearest_line_number):
+	* line-number.c (add_position_to_cache):
+	* lisp.h:
+	* lread.c (readchar):
+	* lread.c (unreadchar):
+	* lstream.c (lisp_buffer_reader):
+	* lstream.c (lisp_buffer_rewinder):
+	* lstream.c (lisp_buffer_marker):
+	* marker.c (set_byte_marker_position):
+	* marker.c (byte_marker_position):
+	* marker.c (copy_marker_1):
+	* print.c (output_string):
+	* redisplay-output.c (redisplay_move_cursor):
+	* redisplay-output.c (redisplay_update_line):
+	* redisplay-output.c (redisplay_output_window):
+	* redisplay.c (generate_display_line):
+	* redisplay.c (create_text_block):
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (decode_mode_spec):
+	* syntax.c (signal_syntax_cache_extent_changed):
+	* text.c (get_buffer_pos_byte):
+	* window.c (Fset_window_start):
+	* window.c (unshow_buffer):
+	* window.c (Fdelete_other_windows):
+	* window.c (Fset_window_buffer):
+	* window.c (window_scroll):
+	* window.c (Fcenter_to_window_line):
+	* window.c (Fmove_to_window_line):
+
+2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Make the modiff, save_modiff, face_change, auto_save_modified
 	buffer slots into EMACS_INTs.
 	Supply and use an arithcompare function for all of them that pays

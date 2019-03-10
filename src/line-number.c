@@ -134,7 +134,7 @@ invalidate_line_number_cache (struct buffer *b, Bytebpos pos)
 	 at point, which is way losing.  Isn't there a way to make a
 	 marker impervious to Finsert_before_markers()??  Maybe I
 	 should convert the code to use extents.  */
-      if (byte_marker_position (XCAR (ring[i])) >= pos)
+      if (marker_byte_position (XCAR (ring[i])) >= pos)
 	{
 	  /* Get the marker out of the way.  */
 	  Fset_marker (XCAR (ring[i]), Qnil, Qnil);
@@ -216,7 +216,7 @@ get_nearest_line_number (struct buffer *b, Bytebpos *beg, Bytebpos pos,
   /* Find the ring entry closest to POS, if it is closer than BEG. */
   for (i = 0; i < LINE_NUMBER_RING_SIZE && CONSP (ring[i]); i++)
     {
-      Bytebpos newpos = byte_marker_position (XCAR (ring[i]));
+      Bytebpos newpos = marker_byte_position (XCAR (ring[i]));
       Bytecount howfar = newpos - pos;
       if (howfar < 0)
 	howfar = -howfar;
@@ -245,7 +245,7 @@ add_position_to_cache (struct buffer *b, Bytebpos pos, EMACS_INT line)
     ring[i] = ring[i - 1];
 
   /* ...and update it. */
-  ring[0] = Fcons (set_byte_marker_position (Fmake_marker (), pos,
+  ring[0] = Fcons (set_marker_byte_position (Fmake_marker (), pos,
                                              wrap_buffer (b)),
 		   make_fixnum (line));
 }

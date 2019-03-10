@@ -959,7 +959,7 @@ generate_display_line (struct window *w, struct display_line *dl, int bounds,
 
   if (MARKERP (Voverlay_arrow_position)
       && EQ (w->buffer, Fmarker_buffer (Voverlay_arrow_position))
-      && byte_start_pos == byte_marker_position (Voverlay_arrow_position)
+      && byte_start_pos == marker_byte_position (Voverlay_arrow_position)
       && (STRINGP (Voverlay_arrow_string)
 	  || GLYPHP (Voverlay_arrow_string)))
     {
@@ -2257,7 +2257,7 @@ create_text_block (struct window *w, struct display_line *dl,
     }
   else if (w == XWINDOW (FRAME_SELECTED_WINDOW (f)))
     {
-      data.byte_cursor_charpos = byte_marker_position (w->pointm[type]);
+      data.byte_cursor_charpos = marker_byte_position (w->pointm[type]);
       data.cursor_type = CURSOR_ON;
     }
   else
@@ -5814,7 +5814,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   /* If the cursor is moved we attempt to update it.  If we succeed we
      go ahead and proceed with the optimization attempt. */
   if (!EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
-      || byte_pointm != byte_marker_position (w->last_point[CURRENT_DISP]))
+      || byte_pointm != marker_byte_position (w->last_point[CURRENT_DISP]))
     {
       struct frame *f = XFRAME (w->frame);
       struct device *d = XDEVICE (f->device);
@@ -5876,7 +5876,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   if (line > dla_end)
     {
       if (EQ (Fmarker_buffer (w->last_point[CURRENT_DISP]), w->buffer)
-	  && byte_pointm == byte_marker_position (w->last_point[CURRENT_DISP]))
+	  && byte_pointm == marker_byte_position (w->last_point[CURRENT_DISP]))
 	return 1;
       else
 	return 0;
@@ -5892,7 +5892,7 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
   w->last_modified[DESIRED_DISP] = make_fixnum (BUF_MODIFF (b));
   w->last_facechange[DESIRED_DISP] = make_fixnum (BUF_FACECHANGE (b));
   Fset_marker (w->last_start[DESIRED_DISP], make_fixnum (startp), w->buffer);
-  set_byte_marker_position (w->last_point[DESIRED_DISP],
+  set_marker_byte_position (w->last_point[DESIRED_DISP],
                             min (BYTE_BUF_Z (XBUFFER (w->buffer)),
                                  max (BYTE_BUF_BEG (XBUFFER (w->buffer)),
                                       byte_pointm)), w->buffer);
@@ -6359,7 +6359,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
       old_pointm = noseeum_copy_marker (selected_globally ? b->point_marker
                                         : w->pointm[CURRENT_DISP], Qnil);
       pointm = BUF_BEG (b);
-      set_byte_marker_position (w->pointm[DESIRED_DISP], BYTE_BUF_BEG (b),
+      set_marker_byte_position (w->pointm[DESIRED_DISP], BYTE_BUF_BEG (b),
                                 wrap_buffer (b));
     }
   else
@@ -6367,20 +6367,20 @@ redisplay_window (Lisp_Object window, int skip_selected)
       if (selected_globally)
 	{
 	  pointm = BUF_PT (b);
-          set_byte_marker_position (w->pointm[DESIRED_DISP], BYTE_BUF_PT (b),
+          set_marker_byte_position (w->pointm[DESIRED_DISP], BYTE_BUF_PT (b),
                                     the_buffer);
 
 	}
       else
 	{
 	  Bytebpos byte_pointm
-            = byte_marker_position (w->pointm[CURRENT_DISP]);
+            = marker_byte_position (w->pointm[CURRENT_DISP]);
 
 	  if (byte_pointm < BYTE_BUF_BEGV (b))
 	    byte_pointm = BYTE_BUF_BEGV (b);
 	  else if (byte_pointm > BYTE_BUF_ZV (b))
 	    byte_pointm = BYTE_BUF_ZV (b);
-          set_byte_marker_position (w->pointm[DESIRED_DISP], byte_pointm,
+          set_marker_byte_position (w->pointm[DESIRED_DISP], byte_pointm,
                                     the_buffer);
           pointm = bytebpos_to_charbpos (b, byte_pointm);
 	}
@@ -6432,12 +6432,12 @@ redisplay_window (Lisp_Object window, int skip_selected)
       old_startp = noseeum_copy_marker (w->start[CURRENT_DISP], Qnil);
 
       startp = BUF_BEG (b);
-      set_byte_marker_position (w->start[DESIRED_DISP], BYTE_BUF_BEG (b),
+      set_marker_byte_position (w->start[DESIRED_DISP], BYTE_BUF_BEG (b),
                                 the_buffer);
     }
   else
     {
-      Bytebpos byte_startp = byte_marker_position (w->start[CURRENT_DISP]);
+      Bytebpos byte_startp = marker_byte_position (w->start[CURRENT_DISP]);
       if (byte_startp < BYTE_BUF_BEGV (b))
         {
           byte_startp = BYTE_BUF_BEGV (b);
@@ -6453,7 +6453,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
           startp = bytebpos_to_charbpos (b, byte_startp);
         }
 
-      set_byte_marker_position (w->start[DESIRED_DISP], byte_startp,
+      set_marker_byte_position (w->start[DESIRED_DISP], byte_startp,
                                 the_buffer);
     }
 
@@ -6503,7 +6503,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
       && !truncation_changed
       /* check whether start is really at the beginning of a line  GE */
       && (!w->start_at_line_beg ||
-          byte_beginning_of_line_p (b, byte_marker_position
+          byte_beginning_of_line_p (b, marker_byte_position
                                     (w->start[DESIRED_DISP])))
       )
     {
@@ -6581,11 +6581,11 @@ redisplay_window (Lisp_Object window, int skip_selected)
      up with a blank window. */
   else if (((w->start_at_line_beg || MINI_WINDOW_P (w))
 	    && !(byte_beginning_of_line_p
-                 (b, byte_marker_position (w->start[DESIRED_DISP]))))
+                 (b, marker_byte_position (w->start[DESIRED_DISP]))))
 	   || (pointm == startp &&
 	       EQ (Fmarker_buffer (w->last_start[CURRENT_DISP]), w->buffer) &&
-               byte_marker_position (w->start[DESIRED_DISP])
-                 < byte_marker_position (w->last_start[CURRENT_DISP]))
+               marker_byte_position (w->start[DESIRED_DISP])
+                 < marker_byte_position (w->last_start[CURRENT_DISP]))
 	   || (startp == BUF_ZV (b)))
     {
       startp = regenerate_window_point_center (w, pointm, DESIRED_DISP);
@@ -7384,7 +7384,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       {
 	Bytebpos pt = (w == XWINDOW (Fselected_window (Qnil)))
 		    ? BYTE_BUF_PT (b)
-		    : byte_marker_position (w->pointm[type]);
+		    : marker_byte_position (w->pointm[type]);
 	Charcount col
           = column_at_point (b, pt, 1) + !!column_number_start_at_one;
 	Ibyte buf[DECIMAL_PRINT_SIZE (col)];
@@ -7412,7 +7412,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
     case 'l':
       {
 	Bytebpos pos = (w == XWINDOW (Fselected_window (Qnil)))
-          ? BYTE_BUF_PT (b) : byte_marker_position (w->pointm[type]);
+          ? BYTE_BUF_PT (b) : marker_byte_position (w->pointm[type]);
         Charcount line = buffer_line_number (b, pos, 1, 1) + 1;
         Ibyte buf[DECIMAL_PRINT_SIZE (line)];
 
@@ -7509,7 +7509,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print percent of buffer above top of window, or Top, Bot or All */
     case 'p':
     {
-      Bytebpos pos = byte_marker_position (w->start[type]);
+      Bytebpos pos = marker_byte_position (w->start[type]);
 
       /* This had better be while the desired lines are being done. */
       if (w->window_end_pos[type] <= BUF_Z (b) - BUF_ZV (b))
@@ -7554,7 +7554,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 
       if (botpos >= BUF_ZV (b))
 	{
-	  if (byte_marker_position (w->start[type]) <= BYTE_BUF_BEGV (b))
+	  if (marker_byte_position (w->start[type]) <= BYTE_BUF_BEGV (b))
 	    str = "All";
 	  else
 	    str = "Bottom";
@@ -7562,7 +7562,7 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       else
 	{
 	  EMACS_UINT bytes, total = BYTE_BUF_ZV (b) - BYTE_BUF_BEGV (b);
-          Bytebpos toppos = byte_marker_position (w->start[type]);
+          Bytebpos toppos = marker_byte_position (w->start[type]);
           int percent;
           Ibyte buf[DECIMAL_PRINT_SIZE (percent)];
 
