@@ -310,8 +310,8 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 #endif
     case LAZY_MARKER_T:
       {
-	Bytebpos ival1 = byte_marker_position (obj1);
-	Bytebpos ival2 = byte_marker_position (obj2);
+	Bytebpos ival1 = marker_byte_position (obj1);
+	Bytebpos ival2 = marker_byte_position (obj2);
 	return ival1 < ival2 ? -1 : ival1 > ival2 ? 1 : 0;
       }
 
@@ -335,8 +335,8 @@ bytecode_arithcompare (Lisp_Object obj1, Lisp_Object obj2)
 	if (MARKERP (obj2)
 	    && (XMARKER (obj1)->buffer == XMARKER (obj2)->buffer))
 	  {
-	    Bytebpos bpval1 = byte_marker_position (obj1);
-	    Bytebpos bpval2 = byte_marker_position (obj2);
+	    Bytebpos bpval1 = marker_byte_position (obj1);
+	    Bytebpos bpval2 = marker_byte_position (obj2);
 	    return bpval1 < bpval2 ? -1 : bpval1 > bpval2 ? 1 : 0;
 	  }
 
@@ -393,7 +393,7 @@ bytecode_gtr (Lisp_Object obj1, Lisp_Object obj2)
 {
   if (MARKERP (obj1) && FIXNUMP (obj2))
     {
-      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Bytebpos pos1 = marker_byte_position (obj1);
       const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
 
       /* (POS1 / MAX_ICHAR_LEN) is a lower bound on OBJ1's character length,
@@ -412,7 +412,7 @@ bytecode_gtr (Lisp_Object obj1, Lisp_Object obj2)
     }
   else if (FIXNUMP (obj1) && MARKERP (obj2))
     {
-      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Bytebpos pos2 = marker_byte_position (obj2);
       const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
 
       /* The byte marker position is an upper limit on the character marker
@@ -444,7 +444,7 @@ bytecode_lss (Lisp_Object obj1, Lisp_Object obj2)
   /* See bytecode_gtr() for the reasoning for the following. */
   if (MARKERP (obj1) && FIXNUMP (obj2))
     {
-      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Bytebpos pos1 = marker_byte_position (obj1);
       const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
 
       if (pos1 < XFIXNUM (obj2))
@@ -458,7 +458,7 @@ bytecode_lss (Lisp_Object obj1, Lisp_Object obj2)
     }
   else if (FIXNUMP (obj1) && MARKERP (obj2))
     {
-      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Bytebpos pos2 = marker_byte_position (obj2);
       const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
 
       if (XFIXNUM (obj1) < cpos2min)
@@ -480,7 +480,7 @@ bytecode_leq (Lisp_Object obj1, Lisp_Object obj2)
   /* See bytecode_gtr() for the reasoning for the following. */
   if (MARKERP (obj1) && FIXNUMP (obj2))
     {
-      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Bytebpos pos1 = marker_byte_position (obj1);
       const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
 
       if (pos1 <= XREALFIXNUM (obj2))
@@ -494,7 +494,7 @@ bytecode_leq (Lisp_Object obj1, Lisp_Object obj2)
     }
   else if (FIXNUMP (obj1) && MARKERP (obj2))
     {
-      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Bytebpos pos2 = marker_byte_position (obj2);
       const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
 
       if (XREALFIXNUM (obj1) <= cpos2min)
@@ -516,7 +516,7 @@ bytecode_geq (Lisp_Object obj1, Lisp_Object obj2)
   /* See bytecode_gtr() for the reasoning for the following. */
   if (MARKERP (obj1) && FIXNUMP (obj2))
     {
-      const Bytebpos pos1 = byte_marker_position (obj1);
+      const Bytebpos pos1 = marker_byte_position (obj1);
       const Charbpos cpos1min = LOWER_CHAR_BOUND (obj1, pos1);
 
       if (cpos1min >= XREALFIXNUM (obj2))
@@ -530,7 +530,7 @@ bytecode_geq (Lisp_Object obj1, Lisp_Object obj2)
     }
   else if (FIXNUMP (obj1) && MARKERP (obj2))
     {
-      const Bytebpos pos2 = byte_marker_position (obj2);
+      const Bytebpos pos2 = marker_byte_position (obj2);
       const Charbpos cpos2min = LOWER_CHAR_BOUND (obj2, pos2);
 
       if (XREALFIXNUM (obj1) >= pos2)
@@ -557,10 +557,10 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	switch (opcode)
 	  {
 	  case Bmax:
-	    return byte_marker_position (obj1) < byte_marker_position (obj2)
+	    return marker_byte_position (obj1) < marker_byte_position (obj2)
 	      ? obj2 : obj1;
 	  case Bmin:
-	    return byte_marker_position (obj1) > byte_marker_position (obj2)
+	    return marker_byte_position (obj1) > marker_byte_position (obj2)
 	      ? obj2 : obj1;
 	  default:
 	    obj1 = make_fixnum (marker_position (obj1));
@@ -722,12 +722,12 @@ bytecode_arithop (Lisp_Object obj1, Lisp_Object obj2, Opcode opcode)
 	{
 	  if (opcode == Bmax)
 	    {
-	      return byte_marker_position (obj1) < byte_marker_position (obj2)
+	      return marker_byte_position (obj1) < marker_byte_position (obj2)
 		? obj2 : obj1;
 	    }
 	  else if (opcode == Bmin)
 	    {
-	      return byte_marker_position (obj1) > byte_marker_position (obj2)
+	      return marker_byte_position (obj1) > marker_byte_position (obj2)
 		? obj2 : obj1;
 	    }
 	  /* Otherwise, convert to a fixnum in the normal way. */

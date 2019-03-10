@@ -204,7 +204,7 @@ region_limit (int beginningp, struct buffer *b)
     {
       invalid_operation ("There is no region now", Qunbound);
     }
-  if (!!(BYTE_BUF_PT (b) < byte_marker_position (b->mark)) == !!beginningp)
+  if (!!(BYTE_BUF_PT (b) < marker_byte_position (b->mark)) == !!beginningp)
     return make_fixnum (BUF_PT (b));
   else
     return Fmarker_position (b->mark);
@@ -431,7 +431,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return set_byte_marker_position (Fmake_marker (), BYTE_BUF_BEGV (b),
+  return set_marker_byte_position (Fmake_marker (), BYTE_BUF_BEGV (b),
                                    wrap_buffer (b));
 }
 
@@ -456,7 +456,7 @@ If BUFFER is nil, the current buffer is assumed.
        (buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  return set_byte_marker_position (Fmake_marker (), BYTE_BUF_ZV (b),
+  return set_marker_byte_position (Fmake_marker (), BYTE_BUF_ZV (b),
                                    wrap_buffer (b));
 }
 
@@ -2147,8 +2147,8 @@ save_restriction_save (struct buffer *buf)
 
      But that was clearly before the advent of marker-insertion-type. --ben */
 
-  set_byte_marker_position (bottom, BYTE_BUF_BEGV (buf), wrap_buffer (buf));
-  set_byte_marker_position (top, BYTE_BUF_ZV (buf), wrap_buffer (buf));
+  set_marker_byte_position (bottom, BYTE_BUF_BEGV (buf), wrap_buffer (buf));
+  set_marker_byte_position (top, BYTE_BUF_ZV (buf), wrap_buffer (buf));
   Fset_marker_insertion_type (top, Qt);
 
   return noseeum_cons (wrap_buffer (buf), noseeum_cons (bottom, top));
@@ -2165,8 +2165,8 @@ save_restriction_restore (Lisp_Object data)
   /* someone could have killed the buffer in the meantime ... */
   if (BUFFER_LIVE_P (buf))
     {
-      Bytebpos byte_start = byte_marker_position (XCAR (markers));
-      Bytebpos byte_end = byte_marker_position (XCDR (markers));
+      Bytebpos byte_start = marker_byte_position (XCAR (markers));
+      Bytebpos byte_end = marker_byte_position (XCDR (markers));
       Bytebpos clipped;
 
       if (BYTE_BUF_BEGV (buf) != byte_start)

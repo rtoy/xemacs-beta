@@ -221,7 +221,7 @@ stream_extent_position (Lisp_Object stream)
         case lrecord_type_buffer:
           return BYTE_BUF_PT (XBUFFER (stream));
         case lrecord_type_marker:
-          return byte_marker_position (stream);
+          return marker_byte_position (stream);
         }
     }
   return -1;

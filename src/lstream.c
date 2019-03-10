@@ -2067,8 +2067,8 @@ lisp_buffer_reader (Lstream *stream, Ibyte *data, Bytecount size)
   if (!BUFFER_LIVE_P (buf))
     return 0; /* Fut. */
 
-  start = byte_marker_position (str->start);
-  end = byte_marker_position (str->end);
+  start = marker_byte_position (str->start);
+  end = marker_byte_position (str->end);
   if (!(stream->flags & LSTR_IGNORE_ACCESSIBLE))
     {
       start = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (buf), start,
@@ -2090,7 +2090,7 @@ lisp_buffer_reader (Lstream *stream, Ibyte *data, Bytecount size)
 	  *p = '\n';
     }
 
-  set_byte_marker_position (str->start, end, wrap_buffer (buf));
+  set_marker_byte_position (str->start, end, wrap_buffer (buf));
   return size;
 }
 
@@ -2138,16 +2138,16 @@ lisp_buffer_rewinder (Lstream *stream)
   struct lisp_buffer_stream *str =
     LISP_BUFFER_STREAM_DATA (stream);
   struct buffer *buf = XBUFFER (str->buffer);
-  Bytebpos pos = byte_marker_position (str->orig_start);
+  Bytebpos pos = marker_byte_position (str->orig_start);
   if (!BUFFER_LIVE_P (buf))
     return -1; /* Fut. */
   if (pos > BYTE_BUF_ZV (buf))
     pos = BYTE_BUF_ZV (buf);
-  if (pos < byte_marker_position (str->orig_start))
-    pos = byte_marker_position (str->orig_start);
-  if (MARKERP (str->end) && pos > byte_marker_position (str->end))
-    pos = byte_marker_position (str->end);
-  set_byte_marker_position (str->start, pos, wrap_buffer (buf));
+  if (pos < marker_byte_position (str->orig_start))
+    pos = marker_byte_position (str->orig_start);
+  if (MARKERP (str->end) && pos > marker_byte_position (str->end))
+    pos = marker_byte_position (str->end);
+  set_marker_byte_position (str->start, pos, wrap_buffer (buf));
   return 0;
 }
 

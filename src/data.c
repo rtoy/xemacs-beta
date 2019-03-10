@@ -871,8 +871,8 @@ fixnum_char_or_marker_to_int (Lisp_Object obj)
 	  break;						\
 	BIGFLOAT_CASE (op)					\
         case LAZY_MARKER_T:                                     \
-          if (!(byte_marker_position (obj1) c_op                \
-                byte_marker_position (obj2)))                   \
+          if (!(marker_byte_position (obj1) c_op                \
+                marker_byte_position (obj2)))                   \
             return Qnil;                                        \
           break;                                                \
 	}							\
@@ -2474,8 +2474,8 @@ arguments: (FIRST &rest ARGS)
       switch (promote_args_lazy (args + maxindex, args + i))
 	{
         case LAZY_MARKER_T:
-          if (byte_marker_position (args[maxindex])
-	      < byte_marker_position (args[i]))
+          if (marker_byte_position (args[maxindex])
+	      < marker_byte_position (args[i]))
 	    maxindex = i;
 	  break;
 	case LAZY_FIXNUM_T:
@@ -2534,8 +2534,8 @@ arguments: (FIRST &rest ARGS)
           if (MARKERP (obj2)
               && (XMARKER (max_so_far)->buffer == XMARKER (obj2)->buffer))
             {
-              if (byte_marker_position (max_so_far)
-                  < byte_marker_position (obj2))
+              if (marker_byte_position (max_so_far)
+                  < marker_byte_position (obj2))
                 {
                   max_so_far = obj2;
                 }
@@ -2606,8 +2606,8 @@ arguments: (FIRST &rest ARGS)
       switch (promote_args_lazy (args + minindex, args + i))
 	{
         case LAZY_MARKER_T:
-	  if (byte_marker_position (args[minindex])
-              > byte_marker_position (args[i]))
+	  if (marker_byte_position (args[minindex])
+              > marker_byte_position (args[i]))
 	    minindex = i;
 	  break;
 	case LAZY_FIXNUM_T:
@@ -2667,8 +2667,8 @@ arguments: (FIRST &rest ARGS)
           if (MARKERP (obj2)
               && (XMARKER (min_so_far)->buffer == XMARKER (obj2)->buffer))
             {
-              if (byte_marker_position (min_so_far)
-                  > byte_marker_position (obj2))
+              if (marker_byte_position (min_so_far)
+                  > marker_byte_position (obj2))
                 {
                   min_so_far = obj2;
                 }

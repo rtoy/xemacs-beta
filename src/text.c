@@ -4252,7 +4252,7 @@ get_buffer_pos_byte (struct buffer *b, Lisp_Object pos, unsigned int flags)
       Bytebpos ind;
       Bytebpos min_allowed, max_allowed;
 
-      ind = byte_marker_position (pos);
+      ind = marker_byte_position (pos);
       min_allowed
         = flags & GB_ALLOW_PAST_ACCESSIBLE ? BYTE_BUF_BEG (b)
         : BYTE_BUF_BEGV (b);

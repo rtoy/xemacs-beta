@@ -605,8 +605,8 @@ signal_syntax_cache_extent_changed (EXTENT extent)
       struct syntax_cache *cache = XBUFFER (object)->syntax_cache;
       Bytexpos extent_start = extent_endpoint_byte (extent, 0);
       Bytexpos extent_end = extent_endpoint_byte (extent, 1);
-      Bytexpos cache_start = byte_marker_position (cache->start);
-      Bytexpos cache_end = byte_marker_position (cache->end);
+      Bytexpos cache_start = marker_byte_position (cache->start);
+      Bytexpos cache_end = marker_byte_position (cache->end);
       /* If the extent is entirely before or entirely after the cache
 	 range, it doesn't overlap.  Otherwise, invalidate the range. */
       if (!(extent_end < cache_start || extent_start > cache_end))

@@ -5702,8 +5702,8 @@ EXFUN (Fmarker_position, 1);
 EXFUN (Fset_marker, 3);
 EXFUN (Fset_marker_insertion_type, 2);
 
-Bytebpos byte_marker_position (Lisp_Object);
 Charbpos marker_position (Lisp_Object);
+Bytebpos marker_byte_position (Lisp_Object);
 
 /* Set the byte position of MARKER, a marker object, to BYTENO in
    BUFFER. MARKER must be a marker object, BUFFER must be a valid buffer, and
@@ -5711,7 +5711,7 @@ Charbpos marker_position (Lisp_Object);
    BUFFER's point marker. Values for MARKER, BYTENO, and BUFFER are checked
    only if ERROR_CHECK_STRUCTURES is defined, and cause an assertion failure
    if out of range, so callers need to check values themselves. */
-Lisp_Object set_byte_marker_position (Lisp_Object marker, Bytebpos byteno,
+Lisp_Object set_marker_byte_position (Lisp_Object marker, Bytebpos byteno,
                                       Lisp_Object buffer);
 /* No set_marker_position (); use Fset_marker (). */
 

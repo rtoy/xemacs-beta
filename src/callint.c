@@ -232,7 +232,7 @@ check_mark (void)
   if (NILP (tem) || (XBUFFER (tem) != current_buffer))
     invalid_operation ("The mark is not set now", Qunbound);
 
-  return byte_marker_position (current_buffer->mark);
+  return marker_byte_position (current_buffer->mark);
 }
 
 static Lisp_Object
