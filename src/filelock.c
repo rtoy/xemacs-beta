@@ -405,7 +405,8 @@ unlock_all_files (void)
   for (tail = Vbuffer_alist; CONSP (tail); tail = XCDR (tail))
     {
       struct buffer *b = XBUFFER (XCDR (XCAR (tail)));
-      if (STRINGP (b->file_truename) && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b))
+      if (STRINGP (b->file_truename)
+          && buf_tick_arithcompare (BUF_SAVE_MODIFF (b), BUF_MODIFF (b)) < 0)
 	unlock_file (b->file_truename);
     }
 }
@@ -420,7 +421,8 @@ or else nothing is done if current buffer isn't visiting a file.
   if (NILP (file))
     file = current_buffer->file_truename;
   CHECK_STRING (file);
-  if (BUF_SAVE_MODIFF (current_buffer) < BUF_MODIFF (current_buffer)
+  if (buf_tick_arithcompare (BUF_SAVE_MODIFF (current_buffer),
+                             BUF_MODIFF (current_buffer)) < 0
       && !NILP (file))
     lock_file (file);
   return Qnil;
@@ -437,7 +439,8 @@ if it should normally be locked.
      mean nasty things with pointy teeth.  If you call this make sure
      you protect things right. */
 
-  if (BUF_SAVE_MODIFF (current_buffer) < BUF_MODIFF (current_buffer)
+  if (buf_tick_arithcompare (BUF_SAVE_MODIFF (current_buffer),
+                             BUF_MODIFF (current_buffer)) < 0
       && STRINGP (current_buffer->file_truename))
     unlock_file (current_buffer->file_truename);
   return Qnil;
@@ -453,7 +456,8 @@ unlock_buffer (struct buffer *buffer)
   /* dmoore - and can destroy current_buffer and all sorts of other
      mean nasty things with pointy teeth.  If you call this make sure
      you protect things right. */
-  if (BUF_SAVE_MODIFF (buffer) < BUF_MODIFF (buffer)
+  if (buf_tick_arithcompare (BUF_SAVE_MODIFF (buffer),
+                             BUF_MODIFF (buffer)) < 0
       && STRINGP (buffer->file_truename))
     unlock_file (buffer->file_truename);
 }

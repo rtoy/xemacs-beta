@@ -85,7 +85,7 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
   if (hack_pending_boundary && NILP (pending_boundary))
     pending_boundary = Fcons (Qnil, Qnil);
 
-  if (BUF_MODIFF (b) <= BUF_SAVE_MODIFF (b))
+  if (buf_tick_arithcompare (BUF_MODIFF (b), BUF_SAVE_MODIFF (b)) <= 0)
     {
       /* Record that an unmodified buffer is about to be changed.
 	 Record the file modification date so that when undoing this

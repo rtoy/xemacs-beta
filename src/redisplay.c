@@ -5805,7 +5805,8 @@ regenerate_window_extents_only_changed (struct window *w, Charbpos startp,
      under which this can happen, but I believe that it is probably a
      reasonable happening. */
   if (!point_visible (w, pointm, CURRENT_DISP)
-      || XFIXNUM (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b))
+      || buf_tick_arithcompare (XFIXNUM (w->last_modified[CURRENT_DISP]),
+                                BUF_MODIFF (b)) < 0)
     return 0;
 
   byte_pointm = charbpos_to_bytebpos (b, pointm);
@@ -6490,8 +6491,10 @@ redisplay_window (Lisp_Object window, int skip_selected)
 
   /* If nothing has changed since the last redisplay, then we just
      need to make sure that point is still visible. */
-  if (XFIXNUM (w->last_modified[CURRENT_DISP]) >= BUF_MODIFF (b)
-      && XFIXNUM (w->last_facechange[CURRENT_DISP]) >= BUF_FACECHANGE (b)
+  if (buf_tick_arithcompare (XFIXNUM (w->last_modified[CURRENT_DISP]),
+                             BUF_MODIFF (b)) >= 0
+      && buf_tick_arithcompare (w->last_facechange[CURRENT_DISP],
+                                BUF_FACECHANGE (b)) >= 0
       && pointm >= startp
       /* This check is to make sure we restore the minibuffer after a
 	 temporary change to the echo area. */
@@ -6604,8 +6607,10 @@ redisplay_window (Lisp_Object window, int skip_selected)
 	   && regenerate_window_incrementally (w, startp, pointm))
     {
       if (f->modeline_changed
-	  || XFIXNUM (w->last_modified[CURRENT_DISP]) < BUF_MODIFF (b)
-	  || XFIXNUM (w->last_facechange[CURRENT_DISP]) < BUF_FACECHANGE (b))
+          || buf_tick_arithcompare (XFIXNUM (w->last_modified[CURRENT_DISP]),
+                                    BUF_MODIFF (b)) < 0
+	  || buf_tick_arithcompare (XFIXNUM (w->last_facechange[CURRENT_DISP]),
+                                    BUF_FACECHANGE (b)) < 0)
 	regenerate_modeline (w);
 
       skip_output = 1;
@@ -7457,14 +7462,15 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
       /* print %, * or hyphen, if buffer is read-only, modified or neither */
     case '*':
       str = (!NILP (b->read_only)
-	     ? "%" : ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+	     ? "%" : (buf_tick_arithcompare (BUF_MODIFF (b),
+                                             BUF_SAVE_MODIFF (b)) > 0
                       ? "*" : "-"));
       break;
 
       /* print * or hyphen -- XEmacs change to allow a buffer to be
 	 read-only but still indicate whether it is modified. */
     case '+':
-      str = ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+      str = ((buf_tick_arithcompare (BUF_MODIFF (b), BUF_SAVE_MODIFF (b)) > 0)
 	     ? "*"
 	     : (!NILP (b->read_only)
 		? "%"
@@ -7475,9 +7481,9 @@ decode_mode_spec (struct window *w, Ichar spec, int type)
 	 modeline-format doc string. */
       /* This differs from %* in that it ignores read-only-ness. */
     case '&':
-      str = ((BUF_MODIFF (b) > BUF_SAVE_MODIFF (b))
+      str = (buf_tick_arithcompare (BUF_MODIFF (b), BUF_SAVE_MODIFF (b)) > 0)
 	     ? "*"
-	     : "-");
+	     : "-";
       break;
 
       /* print process status */
@@ -7840,7 +7846,8 @@ validate_line_start_cache (struct window *w)
 	 does redisplay will catch it pretty quickly we no longer
 	 invalidate the cache if it is set.  This greatly speeds up
 	 dragging out regions with the mouse. */
-      if (XFIXNUM (w->line_cache_last_updated) < BUF_MODIFF (b)
+      if (buf_tick_arithcompare (XFIXNUM (w->line_cache_last_updated),
+                                 BUF_MODIFF (b)) < 0
 	  || f->faces_changed
 	  || f->clip_changed)
 	{

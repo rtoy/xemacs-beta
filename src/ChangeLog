@@ -1,5 +1,47 @@
 2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	Make the modiff, save_modiff, face_change, auto_save_modified
+	buffer slots into EMACS_INTs.
+	Supply and use an arithcompare function for all of them that pays
+	attention to the fact that they wrap around.
+	* buffer.c (Fbuffer_modified_tick):
+	Caution regarding ordinal comparisons with the result of this
+	function.
+	Use make_integer, not make_fixnum, there is no guarantee a fixnum
+	will have the bit width to represent the complete value.
+	* buffer.c (Fbuffer_modified_p):
+	* buffer.c (Fset_buffer_modified_p):
+	* buffer.c (Fkill_buffer):
+	Use buf_tick_arithcompare() in these functions.
+	* buffer.h:
+	* buffer.h (struct buffer_text):
+	* buffer.h (struct buffer):
+	Use EMACS_INT as appropriate in these structures.
+	* buffer.h (buf_tick_arithcompare): New.
+	Compare two buffer tick values, heuristically comparing for
+	wraparound.
+	* fileio.c (Fdo_auto_save):
+	Use buf_tick_arithcompare() as appropriate.
+	* filelock.c (unlock_all_files):
+	* filelock.c (Flock_buffer):
+	* filelock.c (Funlock_buffer):
+	* filelock.c (unlock_buffer):
+	Use buf_tick_arithcompare() as appropriate in these functions.
+	* insdel.c (signal_before_change):
+	* insdel.c (prepare_to_modify_buffer):
+	Use buf_tick_arithcompare() as appropriate in this file.
+	* redisplay.c (regenerate_window_extents_only_changed):
+	* redisplay.c (redisplay_window):
+	* redisplay.c (decode_mode_spec):
+	* redisplay.c (validate_line_start_cache):
+	Use buf_tick_arithcompare() as appropriate in this file.
+	* undo.c (undo_prelude):
+	Ditto.
+	* window.c (Fmove_to_window_line):
+	Ditto.
+
+2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	* buffer.c (complex_vars_of_buffer):
 	Document the revised format of the undo list, where the saved
 	modification time is now whatever was supplied by make_time().

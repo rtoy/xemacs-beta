@@ -797,7 +797,8 @@ signal_before_change (struct buffer *buf, Charbpos start, Charbpos end)
 	}
 
       /* If buffer is unmodified, run a special hook for that case.  */
-      if (BUF_SAVE_MODIFF (buf) >= BUF_MODIFF (buf))
+      if (buf_tick_arithcompare (BUF_SAVE_MODIFF (buf), BUF_MODIFF (buf))
+          > -1)
 	{
 	  MAP_INDIRECT_BUFFERS (buf, mbuf, bufcons)
 	    {
@@ -979,7 +980,7 @@ prepare_to_modify_buffer (struct buffer *buf, Charbpos start, Charbpos end,
   buffer = wrap_buffer (buf);
   GCPRO1 (buffer);
   if (!NILP (buf->filename) && lockit &&
-      BUF_SAVE_MODIFF (buf) >= BUF_MODIFF (buf))
+      buf_tick_arithcompare (BUF_SAVE_MODIFF (buf), BUF_MODIFF (buf)) >= 0)
     {
 #ifdef CLASH_DETECTION
       if (!NILP (buf->file_truename))

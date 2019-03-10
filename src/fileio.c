@@ -4178,9 +4178,12 @@ Non-nil second argument means save only current buffer.
 	     and file changed since last auto save
 	     and file changed since last real save.  */
 	  if (STRINGP (b->auto_save_file_name)
-	      && BUF_SAVE_MODIFF (b) < BUF_MODIFF (b)
-	      && b->auto_save_modified < BUF_MODIFF (b)
-	      /* -1 means we've turned off autosaving for a while--see below.  */
+	      && buf_tick_arithcompare (BUF_SAVE_MODIFF (b),
+                                        BUF_MODIFF (b)) < 0
+	      && buf_tick_arithcompare (b->auto_save_modified,
+                                        BUF_MODIFF (b)) < 0
+	      /* -1 means we've turned off autosaving for a while--see
+                 below.  */
 	      && XFIXNUM (b->saved_size) >= 0
 	      && (do_handled_files
 		  || NILP (Ffind_file_name_handler (b->auto_save_file_name,
