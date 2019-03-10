@@ -2816,9 +2816,9 @@ An entry (TEXT . POSITION) represents the deletion of the string TEXT
 from (abs POSITION).  If POSITION is positive, point was at the front
 of the text being deleted; if negative, point was at the end.
 
-An entry (t HIGH . LOW) indicates that the buffer previously had
-"unmodified" status.  HIGH and LOW are the high and low 16-bit portions
-of the visited file's modification time, as of that time.  If the
+An entry (t CONS) indicates that the buffer previously had "unmodified"
+status.  CONS is a Lisp representation of the visited file's modification time
+at that point.  See the SPECIFIED-TIME argument to `decode-time'.  If the
 modification time of the most recent save is different, this entry is
 obsolete.
 

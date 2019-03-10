@@ -92,10 +92,7 @@ undo_prelude (struct buffer *b, int hack_pending_boundary)
 	 entry we can tell whether it is obsolete because the file was
 	 saved again.  */
       b->undo_list
-	= Fcons (Fcons (Qt,
-			Fcons (make_fixnum ((b->modtime >> 16) & 0xffff),
-			       make_fixnum (b->modtime & 0xffff))),
-		 b->undo_list);
+	= Fcons (Fcons (Qt, make_time (b->modtime)), b->undo_list);
     }
   return 1;
 }
@@ -406,13 +403,10 @@ Return what remains of the list.
               if (EQ (car, Qt))
 		{
 		  /* Element (t high . low) records previous modtime.  */
-		  Lisp_Object high, low;
-		  int mod_time;
-		  if (!CONSP (cdr)) goto rotten;
-		  high = XCAR (cdr);
-		  low = XCDR (cdr);
-		  if (!FIXNUMP (high) || !FIXNUMP (low)) goto rotten;
-		  mod_time = (XFIXNUM (high) << 16) + XFIXNUM (low);
+		  time_t mod_time;
+
+                  if (!lisp_to_time (cdr, &mod_time)) goto rotten;
+
 		  /* If this records an obsolete save
 		     (not matching the actual disk file)
 		     then don't mark unmodified.  */

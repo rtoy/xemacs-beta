@@ -45,9 +45,6 @@ Lisp_Object Vgtk_sent_selection_hooks;
 
 Lisp_Object Qgtk_sent_selection_hooks;
 
-extern int lisp_to_time (Lisp_Object, time_t *);
-extern Lisp_Object time_to_lisp (time_t);
-
 static GdkAtom
 symbol_to_gtk_atom (struct device *UNUSED (d), Lisp_Object sym,
 		    int only_if_exists)

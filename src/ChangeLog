@@ -1,5 +1,32 @@
 2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* buffer.c (complex_vars_of_buffer):
+	Document the revised format of the undo list, where the saved
+	modification time is now whatever was supplied by make_time().
+	* buffer.h (struct buffer):
+	Make modtime and auto_save_failure_time into time_t, not int.
+	* editfns.c (lisp_to_time):
+	Give this a docstring, and declare it as returning a Boolint, for
+	more clarity about what's going on with its return value.
+	* fileio.c:
+	* fileio.c (Fset_visited_file_modtime):
+	Update the time of buf->modtime in this function.
+	* lisp.h:
+	Make lisp_to_time() generally available.
+	* select-gtk.c (symbol_to_gtk_atom):
+	No need to declare lisp_to_time() here, nor the long-obsolete
+	time_to_lisp().
+	* select-x.c:
+	No need to declare lisp_to_time() here, and we are using
+	lisp_to_uint32_t() anyway, as appropriate for X11.
+	* undo.c (undo_prelude):
+	Just call make_time() here when saving the modification time,
+	don't implement it ourselves.
+	* undo.c (Fprimitive_undo):
+	Use lisp_to_time() here, rather than implementing it ourselves.
+
+2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Move the buffer last_window_start to being a zero-length extent,
 	not an int.
 

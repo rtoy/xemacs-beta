@@ -958,8 +958,12 @@ time will be 0.
 }
 
 
-int lisp_to_time (Lisp_Object specified_time, time_t *result);
-int
+/* Decode SPECIFIED_TIME, a Lisp_Object in the format documented in the
+   docstring to `decode-time', storing the result at the address specified by
+   RESULT.
+   Return non-zero if this decoding was successful.
+   Error if the format of SPECIFIED_TIME does not match what we expect. */
+Boolint
 lisp_to_time (Lisp_Object specified_time, time_t *result)
 {
   Lisp_Object high, low;
