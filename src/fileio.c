@@ -63,8 +63,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #define DRIVE_LETTER(x) tolower (x)
 #endif /* WIN32_NATIVE || CYGWIN */
 
-int lisp_to_time (Lisp_Object, time_t *);
-
 /* Nonzero during writing of auto-save files */
 static int auto_saving;
 
@@ -3286,7 +3284,7 @@ under Mule, is very difficult.)
 			         filename)));
 
       /* If visiting nonexistent file, return nil.  */
-      if (buf->modtime == -1)
+      if (buf->modtime == (time_t)(-1))
 	report_file_error ("Opening input file",
 			   filename);
     }
@@ -3982,7 +3980,7 @@ An argument specifies the modification time value to use
     {
       time_t the_time;
       lisp_to_time (time_list, &the_time);
-      current_buffer->modtime = (int) the_time;
+      current_buffer->modtime = the_time;
     }
   else
     {

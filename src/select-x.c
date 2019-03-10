@@ -35,8 +35,6 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "systime.h"
 
-int lisp_to_time (Lisp_Object, time_t *);
-
 #ifdef LWLIB_USES_MOTIF
 # define MOTIF_CLIPBOARDS
 #endif

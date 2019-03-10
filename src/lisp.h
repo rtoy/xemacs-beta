@@ -4830,6 +4830,7 @@ void buffer_insert1 (struct buffer *, Lisp_Object);
 Lisp_Object make_string_from_buffer (struct buffer *, Charbpos, Charcount);
 Lisp_Object make_string_from_buffer_no_extents (struct buffer *, Charbpos, Charcount);
 Lisp_Object make_time (time_t);
+Boolint lisp_to_time (Lisp_Object, time_t *);
 Lisp_Object save_excursion_save (void);
 Lisp_Object save_restriction_save (struct buffer *buf);
 Lisp_Object save_excursion_restore (Lisp_Object);

@@ -245,14 +245,14 @@ struct buffer
      -1 means visited file was nonexistent.
      0  means visited file modtime unknown; in no case complain
      about any mismatch on next save attempt.  */
-  int modtime;
+  time_t modtime;
 
   /* the value of text->modiff at the last auto-save.  */
   long auto_save_modified;
 
   /* The time at which we detected a failure to auto-save,
      Or -1 if we didn't have a failure.  */
-  int auto_save_failure_time;
+  time_t auto_save_failure_time;
 
   /* Everything from here down must be a Lisp_Object */
 
