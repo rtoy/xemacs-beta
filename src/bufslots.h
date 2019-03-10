@@ -233,6 +233,12 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
     /* Last time this buffer was displayed using set-window-buffer. */
     MARKED_SLOT (display_time)
 
+    /* Position in buffer at which display started the last time this buffer
+       was displayed, as a zero-length extent or Qnil, if this buffer was
+       never displayed. It is rare that this is not also reachable through
+       some window saved_last_window_start_cache hash table. */
+    MARKED_SLOT (last_window_start)
+
     /* A hash table that maps from a "generic extent" (an extent in
        `modeline-format') into a buffer-specific extent. */
     MARKED_SLOT (modeline_extent_table)

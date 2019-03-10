@@ -2047,72 +2047,81 @@ static void
 unshow_buffer (struct window *w)
 {
   Lisp_Object buf = w->buffer;
+  Lisp_Object saved_point = Fgethash (buf, w->saved_point_cache, Qnil);
+  Lisp_Object saved_window_start
+    = Fgethash (buf, w->saved_last_window_start_cache, Qnil);
+  Boolint selected = EQ (wrap_window (w), Fselected_window (Qnil));
   struct buffer *b = XBUFFER (buf);
 
   assert (b == XMARKER (w->pointm[CURRENT_DISP])->buffer);
 
-  /* FSF disables this check, so I'll do it too.  I hope it won't
-     break things.  --ben */
-#if 0
-  if (w == XWINDOW (Fselected_window (Qnil))
-      || ! EQ (buf, XWINDOW (Fselected_window (Qnil))->buffer))
-    /* Do this except when the selected window's buffer
-       is being removed from some other window.  */
-#endif
-    /* last_window_start records the start position that this buffer
-       had in the last window to be disconnected from it.
-       Now that this statement is unconditional,
-       it is possible for the buffer to be displayed in the
-       selected window, while last_window_start reflects another
-       window which was recently showing the same buffer.
-       Some people might say that might be a good thing.  Let's see.  */
-    XBUFFER (buf)->last_window_start =
-      marker_position (w->start[CURRENT_DISP]);
-
   /* Point in the selected window's buffer
      is actually stored in that buffer, and the window's pointm isn't used.
      So don't clobber point in that buffer.  */
-  if (! EQ (buf, XWINDOW (Fselected_window (Qnil))->buffer))
-    BUF_SET_PT (b,
-		charbpos_clip_to_bounds
-		(BUF_BEGV (b),
-		 marker_position (w->pointm[CURRENT_DISP]),
-		 BUF_ZV (b)));
+  if (!EQ (buf, XWINDOW (Fselected_window (Qnil))->buffer))
+    {
+      set_marker_restricted (b->point_marker, w->pointm[CURRENT_DISP], buf);
+    }
 
-  {
-    Lisp_Object marker;
-    Lisp_Object saved_point = Fgethash (buf, w->saved_point_cache, Qnil);
-    int selected = EQ (wrap_window (w), Fselected_window (Qnil));
+  if (NILP (saved_point))
+    {
+      /* This is a start-open extent rather than a marker because of the
+         behaviour of markers on deletion of text. See
+         http://mid.xemacs.org/539b.674c.c8912.0ca7@parhasard.net and the
+         associated thread. */
+      saved_point = Fmake_extent (Qnil, Qnil, buf);
+      Fset_extent_property (saved_point, Qstart_open, Qt);
+      Fputhash (buf, saved_point, w->saved_point_cache);
+    }
 
-    if (NILP (saved_point))
-      {
-	saved_point = Fmake_extent (Qnil, Qnil, buf);
-        Fset_extent_property (saved_point, Qstart_open, Qt);
-	Fputhash (buf, saved_point, w->saved_point_cache);
-      }
+  if (selected)
+    {
+      set_extent_endpoints (XEXTENT (saved_point),
+                            BYTE_BUF_PT (b), BYTE_BUF_PT (b), buf);
+    }
+  else
+    {
+      set_extent_endpoints (XEXTENT (saved_point),
+                            byte_marker_position (w->pointm[CURRENT_DISP]),
+                            byte_marker_position (w->pointm[CURRENT_DISP]),
+                            buf);
+    }
 
-    if (selected)
-      {
-        set_extent_endpoints (XEXTENT (saved_point),
-                              BYTE_BUF_PT (b), BYTE_BUF_PT (b), buf);
-      }
-    else
-      {
-        set_extent_endpoints (XEXTENT (saved_point),
-                              byte_marker_position (w->pointm[CURRENT_DISP]),
-                              byte_marker_position (w->pointm[CURRENT_DISP]),
-                              buf);
-      }
+  if (NILP (saved_window_start))
+    {
+      /* This is a start-open extent rather than a marker because of the
+         behaviour of markers on deletion of text. See
+         http://mid.xemacs.org/539b.674c.c8912.0ca7@parhasard.net and the
+         associated thread. */
+      saved_window_start = Fmake_extent (Qnil, Qnil, buf);
+      Fset_extent_property (saved_window_start, Qstart_open, Qt);
+      Fputhash (buf, saved_window_start, w->saved_last_window_start_cache);
+    }
 
-    marker = Fgethash (buf, w->saved_last_window_start_cache, Qnil);
+  set_extent_endpoints (XEXTENT (saved_window_start),
+                        byte_marker_position (w->start[CURRENT_DISP]),
+                        byte_marker_position (w->start[CURRENT_DISP]),
+                        buf);
 
-    if (NILP (marker))
-      {
-	marker = Fmake_marker ();
-	Fputhash (buf, marker, w->saved_last_window_start_cache);
-      }
-    Fset_marker (marker, w->start[CURRENT_DISP], buf);
-  }
+  /* last_window_start records the start position that this buffer
+     had in the last window to be disconnected from it.
+     Now that this statement is unconditional,
+     it is possible for the buffer to be displayed in the
+     selected window, while last_window_start reflects another
+     window which was recently showing the same buffer.
+     Some people might say that might be a good thing.  Let's see.
+
+         The above is from Stallman in 1994, and it seems to work well. A more
+         recent XEmacs change is that last_window_start is now either a
+         zero-length extent, or Qnil, something which may or may not work
+         well. (It previously was just an int (not even a Charbpos) reflecting
+         the marker position of w->start[CURRENT_DISP] when this function was
+         called.) This costs approximately nothing in terms of memory and
+         buffer-editing speed, since we re-use the extent that's already in
+         the window cache.
+
+         Aidan Kehoe, So 10 Mär 2019 12:32:29 GMT */
+  XBUFFER (buf)->last_window_start = saved_window_start;
 }
 
 /* Put REPLACEMENT into the window structure in place of OLD. */
@@ -2246,6 +2255,26 @@ delete_saved_point (Lisp_Object UNUSED (buffer), Lisp_Object saved_point,
   return 0;
 }
 
+static int
+delete_saved_window_start (Lisp_Object UNUSED (buffer),
+                           Lisp_Object saved_window_start,
+                           void *UNUSED (closure))
+{
+  Lisp_Object obj = Fextent_object (saved_window_start);
+  
+  if (BUFFERP (obj)
+      && EQ (saved_window_start, XBUFFER (obj)->last_window_start))
+    {
+      /* Keep this extent around, it may be helpful the next time the buffer
+         is shown. */;
+    }
+  else
+    {
+      Fdelete_extent (saved_window_start);
+    }
+  return 0;
+}
+
 DEFUN ("delete-window", Fdelete_window, 0, 2, "", /*
 Remove WINDOW from the display.  Default is selected window.
 If window is the only one on its frame, the frame is deleted as well.
@@ -2363,6 +2392,10 @@ will automatically call `save-buffers-kill-emacs'.)
      from the buffer and thus won't be garbage-collected until the buffer
      is. */
   elisp_maphash_unsafe (delete_saved_point, w->saved_point_cache, NULL);
+
+  /* Ditto the saved window starts. */
+  elisp_maphash_unsafe (delete_saved_window_start,
+                        w->saved_last_window_start_cache, NULL);
 
   /* close up the hole in the sibling list */
   if (!NILP (w->next))
@@ -3731,9 +3764,10 @@ global or per-frame buffer ordering.
 */
        (window, buffer, norecord))
 {
-  Lisp_Object tem;
   struct window *w = decode_window (window);
+  Lisp_Object tem, saved_point, saved_window_start;
   int old_buffer_local_face_property = 0;
+  Bytebpos bpoint, bstart;
 
   buffer = Fget_buffer (buffer);
   CHECK_BUFFER (buffer);
@@ -3761,45 +3795,61 @@ global or per-frame buffer ordering.
   w->window_end_pos[CURRENT_DISP] = 0;
   w->hscroll = 0;
   w->modeline_hscroll = 0;
-#if 0 /* pre point caches */
-  Fset_marker (w->pointm[CURRENT_DISP],
-	       make_fixnum (BUF_PT (XBUFFER (buffer))),
-	       buffer);
-  set_marker_restricted (w->start[CURRENT_DISP],
-			 make_fixnum (XBUFFER (buffer)->last_window_start),
-			 buffer);
-#else
-  {
-    Lisp_Object saved_point = Fgethash (buffer, w->saved_point_cache, Qnil);
-    Lisp_Object newpoint =
-      (EXTENTP (saved_point) && NILP (Fextent_detached_p (saved_point)))
-      ? Fextent_start_position (saved_point)
-      : make_fixnum (BUF_PT (XBUFFER (buffer)));
-    Lisp_Object marker;
-    /* Previously, we had in here set-window-point, which did one of the
-       following two, but not both.  However, that could result in pointm
-       being in a different buffer from the window's buffer!  Probably
-       not a travesty since it always occurred when the window was
-       selected, meaning its value of point was ignored in favor of the
-       buffer's; but it tripped an assert() in unshow_buffer(). */
-    set_marker_restricted (w->pointm[CURRENT_DISP], newpoint, buffer);
-    if (EQ (wrap_window (w), Fselected_window (Qnil)))
-      Fgoto_char (newpoint, buffer); /* this will automatically clip to
-					accessible */
-    marker = Fgethash (buffer, w->saved_last_window_start_cache, Qnil);
-    set_marker_restricted (w->start[CURRENT_DISP],
-			   !NILP (marker) ?
-			   make_fixnum (marker_position (marker)) :
-			   make_fixnum (XBUFFER (buffer)->last_window_start),
-			   buffer);
-  }
-#endif
 
-  Fset_marker (w->sb_point, w->start[CURRENT_DISP], buffer);
+  saved_point = Fgethash (buffer, w->saved_point_cache, Qnil);
+  bpoint = (EXTENTP (saved_point) && NILP (Fextent_detached_p (saved_point)))
+    ? extent_endpoint_byte (XEXTENT (saved_point), 0)
+    : BYTE_BUF_PT (XBUFFER (buffer));
+
+  /* Adjust this so we don't have to call set_marker_restricted(). */
+  bpoint = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (XBUFFER (buffer)),
+                                    bpoint,
+                                    BYTE_BUF_ZV (XBUFFER (buffer)));
+
+  structure_checking_assert (!EXTENTP (saved_point)
+                             || EQ (Fextent_object (saved_point), buffer));
+   
+  /* Previously, we had in here set-window-point, which did one of the
+     following two, but not both.  However, that could result in pointm being
+     in a different buffer from the window's buffer!  Probably not a travesty
+     since it always occurred when the window was selected, meaning its value
+     of point was ignored in favor of the buffer's; but it tripped an assert()
+     in unshow_buffer(). */
+  set_byte_marker_position (w->pointm[CURRENT_DISP], bpoint, buffer);
+  if (EQ (wrap_window (w), Fselected_window (Qnil)))
+    {
+      BYTE_BUF_SET_PT (XBUFFER (buffer), bpoint);
+    }
+
+  saved_window_start
+    = Fgethash (buffer, w->saved_last_window_start_cache, Qnil);
+  if (!EXTENTP (saved_window_start))
+    {
+      saved_window_start = XBUFFER (buffer)->last_window_start;
+    }
+
+  structure_checking_assert (!EXTENTP (saved_window_start)
+                             || EQ (Fextent_object (saved_window_start),
+                                    buffer));
+
+  if (EXTENTP (saved_window_start)
+      && NILP (Fextent_detached_p (saved_window_start)))
+    {
+      bstart = bytebpos_clip_to_bounds (BYTE_BUF_BEGV (XBUFFER (buffer)),
+                                        extent_endpoint_byte
+                                        (XEXTENT (saved_window_start), 0),
+                                        BYTE_BUF_ZV (XBUFFER (buffer)));
+    }
+  else
+    {
+      bstart = BYTE_BUF_BEGV (XBUFFER (buffer));
+    }
+
+  set_byte_marker_position (w->start[CURRENT_DISP], bstart, buffer);
+  set_byte_marker_position (w->sb_point, bstart, buffer); 
+
   /* set start_at_line_beg correctly. GE */
-  w->start_at_line_beg =
-    byte_beginning_of_line_p (XBUFFER (buffer),
-			 byte_marker_position (w->start[CURRENT_DISP]));
+  w->start_at_line_beg = byte_beginning_of_line_p (XBUFFER (buffer), bstart);
   w->force_start = 0;           /* XEmacs fix */
   SET_LAST_MODIFIED (w, 1);
   SET_LAST_FACECHANGE (w);

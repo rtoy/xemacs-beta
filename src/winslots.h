@@ -125,18 +125,18 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
   /* A marker pointing to where in the text the scrollbar is pointing;
      #### moved to scrollbar.c? */
   WINDOW_SLOT (sb_point)
-  /* A table that remembers (in marker form) the value of point in buffers
-     previously displayed in this window.  Switching back to those buffers
-     causes the remembered point value to become current, rather than the
-     buffer's point.  This is so that you get sensible behavior if you have
-     a buffer displayed in multiple windows and temporarily switch away and
-     then back in one window.  We don't save or restore this table in a
-     window configuration, since that would be counterproductive -- we
-     always want to remember the most recent value of point in buffers we
-     switched away from. */
+  /* A table that remembers (in zero-length-extent form) the value of point in
+     buffers previously displayed in this window.  Switching back to those
+     buffers causes the remembered point value to become current, rather than
+     the buffer's point.  This is so that you get sensible behavior if you
+     have a buffer displayed in multiple windows and temporarily switch away
+     and then back in one window.  We don't save or restore this table in a
+     window configuration, since that would be counterproductive -- we always
+     want to remember the most recent value of point in buffers we switched
+     away from. */
   WINDOW_SLOT (saved_point_cache)
-  /* A table that remembers (in marker form) the value of window start in
-     buffers previously displayed in this window.  Save reason as for
+  /* A table that remembers (in zero-length extent form) the value of window
+     start in buffers previously displayed in this window.  Same reason as for
      the previous table. */
   WINDOW_SLOT (saved_last_window_start_cache)
 
