@@ -121,6 +121,8 @@
 ;;;                                             as data, not as a function,
 ;;;                                             and using it in a function
 ;;;                                             context )
+;;;                             'format-not-constant (using #'format without
+;;;                                             a constant CONTROL-STRING)
 ;;; emacs-lisp-file-regexp	Regexp for the extension of source-files;
 ;;;				see also the function `byte-compile-dest-file'.
 ;;; byte-compile-overwrite-file	If nil, delete old .elc files before saving.
@@ -342,7 +344,7 @@ If it is 'byte, then only byte-level optimizations will be logged.")
 ;; byte-compile-warning-types in FSF.
 (defvar byte-compile-default-warnings
   '(redefine callargs subr-callargs free-vars unresolved unused-vars obsolete
-    discarded-consing quoted-lambda)
+    discarded-consing quoted-lambda format-not-constant)
   "*The warnings used when byte-compile-warnings is t.")
 
 (defvar byte-compile-warnings t
@@ -1419,7 +1421,8 @@ otherwise pop it")
     (new-bytecodes byte-compile-new-bytecodes (t nil) val)
     (warnings byte-compile-warnings
 	      ((callargs subr-callargs redefine free-vars unused-vars
-			 unresolved discarded-consing quoted-lambda))
+			 unresolved discarded-consing quoted-lambda
+                         format-not-constant))
 	      val)))
 
 ;; XEmacs addition
@@ -4186,6 +4189,8 @@ forcing function quoting" ,en (car form))))
 (byte-defop-compiler-1 let*)
 
 (byte-defop-compiler-1 integerp)
+(byte-defop-compiler-1 format)
+(byte-defop-compiler-1 message)
 (byte-defop-compiler-1 eql)
 (byte-defop-compiler-1 fillarray)
 (byte-defop-compiler-1 gensym)
@@ -4489,6 +4494,25 @@ forcing function quoting" ,en (car form))))
                        (let ((print-readably t))
                          (prin1-to-string (nth 1 form)))))
   (byte-compile-normal-call form))
+
+(defun byte-compile-format (form)
+  (labels ((sufficiently-constant-stringp (form)
+             (or (stringp form)
+                 (and (eq 'if (car-safe form))
+                      (every #'sufficiently-constant-stringp (cddr form)))
+                 (and (or (eq 'gettext (car-safe form))
+                          (eq 'substitute-command-keys (car-safe form)))
+                      (every #'sufficiently-constant-stringp (cdr form))))))
+    (when (and (memq 'format-not-constant byte-compile-warnings)
+               (not (sufficiently-constant-stringp (second form))))
+      (byte-compile-warn "#'%s called with a non-constant CONTROL-STRING, %S"
+                         (first form) (second form)))
+    (byte-compile-normal-call form)))
+
+(defun byte-compile-message (form)
+  (if (and (null (second form)) (eql 2 (length form)))
+      (byte-compile-normal-call form)
+    (byte-compile-format form)))
 
 ;;(byte-defop-compiler-1 /= byte-compile-negated)
 (byte-defop-compiler-1 atom byte-compile-negated)
