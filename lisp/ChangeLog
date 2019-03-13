@@ -1,3 +1,15 @@
+2011-03-05  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* bytecomp.el:
+	* bytecomp.el (byte-compile-default-warnings):
+	* bytecomp.el (byte-compiler-legal-options):
+	* bytecomp.el (byte-compile-format): New.
+	* bytecomp.el (byte-compile-message): New.
+	Introduce `byte-compile-format', which warns if CONTROL-STRING is
+	not constant, something that is reasonably often a security
+	issue. Suppress this warning for calls to #'gettext, or
+	if-statements both branches of which are constant strings.
+
 2018-10-07  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* font-lock.el (font-lock-fontify-syntactically-region):
