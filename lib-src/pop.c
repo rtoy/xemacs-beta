@@ -1064,7 +1064,7 @@ socket_connection (char *host,
     {
       strcpy (pop_error, POP_SOCKET_ERROR);
       strncat (pop_error, strerror (errno),
-	       ERROR_MAX - sizeof (POP_SOCKET_ERROR));
+	       ERROR_MAX - sizeof (POP_SOCKET_ERROR) - 1);
       return (-1);
 	  
     }
@@ -1096,7 +1096,7 @@ socket_connection (char *host,
       CLOSESOCKET (sock);
       strcpy (pop_error, CONNECT_ERROR);
       strncat (pop_error, strerror (errno),
-	       ERROR_MAX - sizeof (CONNECT_ERROR));
+	       ERROR_MAX - sizeof (CONNECT_ERROR) - 1);
       return (-1);
 	  
     }
@@ -1115,7 +1115,7 @@ socket_connection (char *host,
 	    krb5_free_context (kcontext);
 	  strcpy (pop_error, KRB_ERROR);
 	  strncat (pop_error, error_message (rem),
-		   ERROR_MAX - sizeof(KRB_ERROR));
+		   ERROR_MAX - sizeof(KRB_ERROR) - 1);
 	  CLOSESOCKET (sock);
 	  return (-1);
 	}
@@ -1157,7 +1157,7 @@ socket_connection (char *host,
 	    {
 	      strcpy (pop_error, KRB_ERROR);
 	      strncat (pop_error, error_message (rem),
-		       ERROR_MAX - sizeof (KRB_ERROR));
+		       ERROR_MAX - sizeof (KRB_ERROR) - 1);
 	      strncat (pop_error, " [server says '",
 		       ERROR_MAX - strlen (pop_error) - 1);
 	      strncat (pop_error, err_ret->text.data,
@@ -1170,7 +1170,7 @@ socket_connection (char *host,
 	    {
 	      strcpy (pop_error, KRB_ERROR);
 	      strncat (pop_error, error_message (rem),
-		       ERROR_MAX - sizeof (KRB_ERROR));
+		       ERROR_MAX - sizeof (KRB_ERROR) - 1);
 	    }
 	  if (err_ret)
 	    krb5_free_error (kcontext, err_ret);
@@ -1194,7 +1194,7 @@ socket_connection (char *host,
 	{
 	  strcpy (pop_error, KRB_ERROR);
 	  strncat (pop_error, krb_err_txt[rem],
-		   ERROR_MAX - sizeof (KRB_ERROR));
+		   ERROR_MAX - sizeof (KRB_ERROR) - 1);
 	  CLOSESOCKET (sock);
 	  return (-1);
 	}
@@ -1302,7 +1302,7 @@ pop_getline (popserver server, char **line)
 	{
 	  strcpy (pop_error, GETLINE_ERROR);
 	  strncat (pop_error, strerror (errno),
-		   ERROR_MAX - sizeof (GETLINE_ERROR));
+		   ERROR_MAX - sizeof (GETLINE_ERROR) - 1);
 	  pop_trash (server);
 	  return (-1);
 	}
@@ -1388,7 +1388,7 @@ sendline (popserver server, char *line)
       pop_trash (server);
       strcpy (pop_error, SENDLINE_ERROR);
       strncat (pop_error, strerror (errno),
-	       ERROR_MAX - sizeof (SENDLINE_ERROR));
+	       ERROR_MAX - sizeof (SENDLINE_ERROR) - 1);
       return (ret);
     }
 
