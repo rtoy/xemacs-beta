@@ -1,5 +1,10 @@
 2019-03-21  Jerry James  <james@xemacs.org>
 
+	* data.c (lisp_to_OFF_T): fix conversion on 32-bit systems.
+	The lack of parentheses led to the upper bound being computed as 0.
+
+2019-03-21  Jerry James  <james@xemacs.org>
+
 	* redisplay.c (redisplay_window): add a missing XFIXNUM.
 
 2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
