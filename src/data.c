@@ -4078,13 +4078,13 @@ Return non-nil if OBJECT is an ephemeron.
       {                                                                 \
         if (sizeof (c_type) == SIZEOF_SHORT)                            \
           {                                                             \
-            max_lisp_to_c_type = (c_type) ((unsigned short) -1) / 2;    \
+            max_lisp_to_c_type = (c_type) (((unsigned short) -1) / 2);  \
             min_lisp_to_c_type                                          \
               = (c_type) ((unsigned short)(max_lisp_to_c_type) + 1);    \
           }                                                             \
         else if (sizeof (c_type) == SIZEOF_INT)                         \
           {                                                             \
-            max_lisp_to_c_type = (c_type) ((unsigned int) -1) / 2;      \
+            max_lisp_to_c_type = (c_type) (((unsigned int) -1) / 2);    \
             min_lisp_to_c_type                                          \
               = (c_type) ((unsigned int)(max_lisp_to_c_type) + 1);      \
           }                                                             \
