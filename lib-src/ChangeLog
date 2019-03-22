@@ -1,3 +1,9 @@
+2019-03-21  Jerry James  <james@xemacs.org>
+
+	* pop.c: Prevent potential buffer overflows.  The size argument to
+	strncat() must be at most 1 less than the buffer size, to leave room
+	for the terminating null byte.  See strncat(3).
+
 2018-04-27  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* make-case-conv.py:
