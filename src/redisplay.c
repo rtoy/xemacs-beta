@@ -6493,7 +6493,7 @@ redisplay_window (Lisp_Object window, int skip_selected)
      need to make sure that point is still visible. */
   if (buf_tick_arithcompare (XFIXNUM (w->last_modified[CURRENT_DISP]),
                              BUF_MODIFF (b)) >= 0
-      && buf_tick_arithcompare (w->last_facechange[CURRENT_DISP],
+      && buf_tick_arithcompare (XFIXNUM(w->last_facechange[CURRENT_DISP]),
                                 BUF_FACECHANGE (b)) >= 0
       && pointm >= startp
       /* This check is to make sure we restore the minibuffer after a
