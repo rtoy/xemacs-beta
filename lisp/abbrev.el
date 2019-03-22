@@ -76,6 +76,84 @@ This causes `save-some-buffers' to offer to save the abbrevs.")
   (setq abbrevs-changed t)
   nil)
 
+(defun* insert-abbrev-table-description (name &optional readable
+                                              (stream (current-buffer)))
+  "Insert before point a full description of abbrev table named NAME.
+
+NAME is a symbol whose value is an abbrev table.
+
+If optional 2nd arg READABLE is non-nil, a human-readable description is
+inserted.  Otherwise the description is an expression, a call to
+`define-abbrev-table', which would define the abbrev table NAME exactly as it
+is currently defined.
+
+Optional third argument STREAM is a stream to use instead of the current
+buffer. See the documentation of the variable `standard-output'.
+
+Abbrevs marked as \"system abbrevs\" are normally omitted.  However, if
+READABLE is non-nil, they are listed."
+  (labels
+      ((write-abbrev (symbol)
+         (let (count system-flag)
+           (if (fixnump (symbol-plist symbol))
+               (setq count (symbol-plist symbol)
+                     system-flag nil)
+             (setq count (get symbol 'count pi)
+                   system-flag (get symbol 'system-type)))
+           (if (or (null (symbol-value symbol)) system-flag)
+               (return-from write-abbrev nil))
+           (unless (fixnump count)
+             (error 'internal-error "odd abbrev table COUNT"))
+           (write-sequence "    (" stream)
+           (write-sequence (symbol-name symbol) stream)
+           (write-sequence " " stream)
+           (prin1 (symbol-value symbol) stream)
+           (write-sequence " " stream)
+           (prin1 (symbol-function symbol) stream)
+           (format-into stream " %d)\n" count)))
+       (describe-abbrev (symbol)
+         (let (count system-flag symbol-name)
+           (if (fixnump (symbol-plist symbol))
+               (setq count (symbol-plist symbol)
+                     system-flag nil)
+             (setq count (get symbol 'count pi)
+                   system-flag (get symbol 'system-type)))
+           (if (null (symbol-value symbol))
+               (return-from describe-abbrev nil))
+           (unless (fixnump count)
+             (error 'internal-error "odd abbrev table COUNT"))
+           (write-sequence (setq symbol-name (symbol-name symbol))
+                           stream)
+           (if system-flag
+               (format-into stream
+                            " (sys)%*S " (- 19 (length " (sys)")
+                                            (length symbol-name))
+                            count)
+             (format-into stream " %*S " (- 14 (length symbol-name)) count))
+           (prin1 (symbol-value symbol) stream)
+           (write-sequence " " stream)
+           (when (and (fboundp symbol) (symbol-function symbol))
+             (write-sequence " " stream)
+             (prin1 (symbol-function symbol) stream))
+           (write-sequence "\n" stream))))
+    (let ((symbols (sort (hash-table-value-list (symbol-value name))
+                         #'string-lessp)))
+      (if readable
+          (progn
+            (write-sequence "(" stream)
+            (prin1 name stream)
+            (write-sequence ")\n\n" stream)
+            (mapc #'describe-abbrev symbols)
+            (write-sequence "\n\n" stream))
+        (write-sequence "(define-abbrev-table '" stream)
+        (prin1 name stream)
+        (if (null symbols)
+            (write-sequence " '())\n\n" stream)
+          (write-sequence " '(\n" stream)
+          (mapc #'write-abbrev symbols)
+          (write-sequence "    ))\n\n" stream)))
+        nil)))
+
 (defun define-abbrev-table (table-name definitions)
   "Define TABLE-NAME (a symbol) as an abbrev table name.
 Define abbrevs in it according to DEFINITIONS, which is a list of elements
@@ -187,67 +265,6 @@ is not undone."
       (if (< last-abbrev-location opoint)
           (goto-char (- opoint adjust))
           (goto-char opoint)))))
-
-
-; APA: Moved to c (ported function from GNU Emacs to src/abbrev.c)
-; (defun insert-abbrev-table-description (name &optional human-readable)
-;   "Insert before point a full description of abbrev table named NAME.
-; NAME is a symbol whose value is an abbrev table.
-; If optional second argument HUMAN-READABLE is non-nil, insert a
-; human-readable description. Otherwise the description is an
-; expression, a call to `define-abbrev-table', which would define the
-; abbrev table NAME exactly as it is currently defined."
-;   (let ((table (symbol-value name))
-;         (stream (current-buffer)))
-;     (message "Abbrev-table %s..." name)
-;     (if human-readable
-;         (progn
-;           (prin1 (list name) stream)
-;           ;; Need two terpri's or cretinous edit-abbrevs blows out
-;           (terpri stream)
-;           (terpri stream)
-;           (mapatoms (function (lambda (sym)
-;                       (if (symbol-value sym)
-;                           (let* ((n (prin1-to-string (symbol-name sym)))
-;                                  (pos (length n)))
-;                             (princ n stream)
-;                             (while (< pos 14)
-;                               (write-char ?\  stream)
-;                               (setq pos (1+ pos)))
-;                             (princ (format " %-5S " (symbol-plist sym))
-;                                    stream)
-;                             (if (not (symbol-function sym))
-;                                 (prin1 (symbol-value sym) stream)
-;                               (progn
-;                                 (setq n (prin1-to-string (symbol-value sym))
-;                                       pos (+ pos 6 (length n)))
-;                                 (princ n stream)
-;                                 (while (< pos 45)
-;                                   (write-char ?\  stream)
-;                                   (setq pos (1+ pos)))
-;                                 (prin1 (symbol-function sym) stream)))
-;                             (terpri stream)))))
-;                     table)
-;           (terpri stream))
-;         (progn
-;           (princ "\(define-abbrev-table '" stream)
-;           (prin1 name stream)
-;           (princ " '\(\n" stream)
-;           (mapatoms (function (lambda (sym)
-;                       (if (symbol-value sym)
-;                           (progn
-;                             (princ "    " stream)
-;                             (prin1 (list (symbol-name sym)
-;                                          (symbol-value sym)
-;                                          (symbol-function sym)
-;                                          (symbol-plist sym))
-;                                    stream)
-;                             (terpri stream)))))
-;                     table)
-;           (princ "    \)\)\n" stream)))
-;     (terpri stream))
-;   (message ""))
-;;; End code not in FSF
 
 (defun abbrev-mode (arg)
   "Toggle abbrev mode.

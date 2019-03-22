@@ -90,4 +90,10 @@ a check is done for bogus resource specifications."
 DEVICE defaults to the selected device."
   (and (eq 'x (device-type device)) (device-connection device)))
 
+(defun default-x-device ()
+  "Return the default X device for resourcing.
+This is the first-created X device that still exists.
+See also `default-device'."
+  (default-device 'x))
+
 ;;; x-misc.el ends here

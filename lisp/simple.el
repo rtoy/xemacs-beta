@@ -2227,6 +2227,22 @@ the documentation for this variable for more details."
       (beginning-of-buffer nil)
       (end-of-buffer nil))))
 
+(defun backward-char (&optional count buffer)
+  "Move point left COUNT characters (right if COUNT is negative).
+On attempt to pass end of buffer, stop and signal `end-of-buffer'.
+On attempt to pass beginning of buffer, stop and signal `beginning-of-buffer'.
+
+The characters that are moved over may be added to the current selection
+\(i.e. active region) if the Shift key is held down, a motion key is used
+to invoke this command, and `shifted-motion-keys-select-region' is t; see
+the documentation for this variable for more details."
+  (interactive "_p")
+  (if (null count)
+      (setq count -1)
+    (check-type count fixnum)
+    (setq count (- count)))
+  (forward-char count buffer))
+
 (defun backward-char-command (&optional arg buffer)
   "Move point left ARG characters (right if ARG negative) in BUFFER.
 On attempt to pass end of buffer, stop and signal `end-of-buffer'.
@@ -2391,6 +2407,34 @@ to use and more reliable (no dependence on goal column, etc.)."
     (line-move (- count)))
   nil)
 
+(defun beginning-of-line (&optional count buffer)
+  "Move point to beginning of current line.
+With argument COUNT not nil or 1, move forward COUNT - 1 lines first.
+If scan reaches end of buffer, stop there without error.
+If BUFFER is nil, the current buffer is assumed.
+
+The characters that are moved over may be added to the current selection
+\(i.e. active region) if the Shift key is held down, a motion key is used
+to invoke this command, and `shifted-motion-keys-select-region' is t; see
+the documentation for this variable for more details."
+  (interactive "_p")
+  (goto-char (point-at-bol count buffer) buffer)
+  nil)
+
+(defun end-of-line (&optional count buffer)
+  "Move point to end of current line.
+With argument COUNT not nil or 1, move forward COUNT - 1 lines first.
+If scan reaches end of buffer, stop there without error.
+If BUFFER is nil, the current buffer is assumed.
+
+The characters that are moved over may be added to the current selection
+\(i.e. active region) if the Shift key is held down, a motion key is used
+to invoke this command, and `shifted-motion-keys-select-region' is t; see
+the documentation for this variable for more details."
+  (interactive "_p")
+  (goto-char (point-at-eol count buffer) buffer)
+  nil)
+
 (defcustom block-movement-size 6
   "*Number of lines that \"block movement\" commands (\\[forward-block-of-lines], \\[backward-block-of-lines]) move by."
   :type 'integer

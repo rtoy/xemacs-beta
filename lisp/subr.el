@@ -169,6 +169,118 @@ Used for compatibility among different emacs variants."
      (define-function ,@args)))
 
 
+(defun format (&optional control-string &rest arguments)
+  "Format a string out of CONTROL-STRING and ARGUMENTS.
+
+The first argument is a control string.
+The other arguments are substituted into it to make the result, a string.
+It may contain %-sequences meaning to substitute the next argument.
+%s means print all objects as-is, using `princ'.
+%S means print all objects as s-expressions, using `prin1'.
+%d or %i means print as a signed integer in decimal (%o octal, %x lowercase
+  hex, %X uppercase hex, %b binary).
+
+%c means print as a single character.
+%f means print as a floating-point number in fixed notation (e.g. 785.200).
+%e or %E means print as a floating-point number in scientific notation
+  (e.g. 7.85200e+03).
+%g or %G means print as a floating-point number in \"pretty format\";
+  depending on the number, either %f or %e/%E format will be used, and
+  trailing zeroes are removed from the fractional part.
+The argument used for all but %s, %S, and %c must be a number.  It will be
+  converted to an integer or a floating-point number as necessary.  In
+  addition, the integer %-sequences accept character arguments as equivalent
+  to the corresponding fixnums (see `char-int'), while the floating point
+  sequences do not.
+
+%$ means reposition to read a specific numbered argument; for example,
+  %3$s would apply the `%s' to the third argument after the control string,
+  and the next format directive would use the fourth argument, the
+  following one the fifth argument, etc. (There must be a positive integer
+  between the % and the $).
+
+Zero or more of the flag characters `-', `+', ` ', `0', `!', '&', `~' and `#'
+  may be specified between the optional repositioning spec and the conversion
+  character; see below.
+
+An optional minimum field width may be specified after any flag characters
+  and before the conversion character; it specifies the minimum number of
+  characters that the converted argument will take up.  Padding will be
+  added on the left (or on the right, if the `-' flag is specified), as
+  necessary.  Padding is with zeroes if the `0' flag is specified, with the
+  character specified following the `!' flag if that is supplied (see below),
+  or by default with spaces.
+
+If the field width is specified as `*', the field width is assumed to have
+  been specified as an argument.  Any repositioning specification that
+  would normally specify the argument to be converted will now specify
+  where to find this field width argument, not where to find the argument
+  to be converted.  If there is no repositioning specification, the normal
+  next argument is used.  The argument to be converted will be the next
+  argument after the field width argument unless the precision is also
+  specified as `*' (see below).
+
+An optional period character and precision may be specified after any
+  minimum field width.  It specifies the minimum number of digits to
+  appear in %d, %i, %o, %x, and %X conversions (the number is padded
+  on the left with zeroes as necessary); the number of digits printed
+  after the decimal point for %f, %e, and %E conversions; the number
+  of significant digits printed in %g and %G conversions; and the
+  maximum number of non-padding characters printed in %s and %S
+  conversions.  The default precision for floating-point conversions
+  is six. Using a precision with %c is an error.
+If the precision is specified as `*', the precision is assumed to have been
+  specified as an argument.  The argument used will be the next argument
+  after the field width argument, if any.  If the field width was not
+  specified as an argument, any repositioning specification that would
+  normally specify the argument to be converted will now specify where to
+  find the precision argument.  If there is no repositioning specification,
+  the normal next argument is used.
+
+An optional length modifier may be specified after any minimum field width or
+  precision.  The length modifiers available are `hh', `h', `l' (ell), `ll'
+  \(ell-ell).  These mean that a following integer conversion character will
+  print an integer truncated to eight, sixteen, thirty-two, or sixty-four
+  bits, respectively.  Note that this contrasts with ANSI C, where the bit
+  length depends on the machine choices for the bit width of various integer
+  types.
+
+An optional unsigned modifier, the character `u', may be specified after any
+  length modifier and before an integer conversion character.  This specifies
+  that the following integer conversion is to treat its argument as unsigned.
+  If no length modifier is specified, this simply means that `format' will
+  error if the corresponding integer is negative.  With a length modifier
+  `format' will print a positive integer reflecting the twos' complement
+  representation of the argument in the given number of bits. E.g. `(format
+  \"%hux\" -1)' will return the string \"ffff\".  If no integer conversion
+  character follows `u', the specification is regarded as equivalent to `ud',
+  and the argument will be printed in decimal.
+
+The ` ' and `+' flags mean prefix non-negative numbers with a space or
+  plus sign, respectively.
+The `#' flag means print numbers in an alternate, more verbose format:
+  octal numbers begin with zero; hex numbers begin with a 0x or 0X;
+  a decimal point is printed in %f, %e, and %E conversions even if no
+  numbers are printed after it; and trailing zeroes are not omitted in
+   %g and %G conversions.
+The `&' flag is analogous to the `#' flag for rationals, but the syntax used
+  to print numbers is that of Common Lisp, rather than C, so octal numbers are
+  preceded by `#o', binary numbers by `#b' and hexadecimal numbers by `#X' or
+  `#x' depending on the particular converter character specified.
+The `!' flag is followed by a single character, to be used as a pad character
+  instead of space.  It does not override the zero flag.
+The `~' flag, when combined with `&' or `#', means to place any sign before
+  the radix specifier.
+
+Use %% to put a single % into the output.
+
+Extent information in CONTROL-STRING and in ARGS is carried over into the
+output, in the same way as `concatenate'.  Any text created by a character or
+numeric %-sequence inherits the extents of the text around it, or of the text
+abutting it if those extents' `start-open' and `end-open' properties have the
+appropriate values."
+  (apply #'format-into 'string control-string arguments))
+
 (defun delete (item sequence)
   "Delete by side effect any occurrences of ITEM as a member of SEQUENCE.
 
@@ -304,6 +416,22 @@ your use case."
   "Return t if OBJECT is not a list.  `nil' is a list."
   (not (or (consp object) (eq object nil))))
 
+(defun arrayp (object)
+  "Return t if OBJECT is an array (string, vector, or bit vector)."
+  (or (stringp object) (vectorp object) (bit-vector-p object)))
+
+(defun sequencep (object)
+  "Return t if OBJECT is a sequence (list or array)."
+  (or (stringp object) (listp object) (vectorp object) (bit-vector-p object)))
+
+(defun natnump (object)
+  "Return t if OBJECT is a nonnegative integer."
+  (and (integerp object) (not (eql (signum object) -1))))
+
+(defun nonnegativep (object)
+  "Return t if OBJECT is a nonnegative rational."
+  (and (rationalp object) (not (eql (signum object) -1))))
+
 (defun bitp (object)
   "Return t if OBJECT is a bit (0 or 1)."
   (or (eql object 0) (eql object 1)))
@@ -372,10 +500,9 @@ which is at least the number of distinct elements."
             length (1+ length)))
     length))
 
-;; Some more, this time from fns.c
-(defun identity (arg)
-  "Return the argument unchanged."
-  arg)
+(defun identity (argument)
+  "Return ARGUMENT unchanged."
+  argument)
 
 (defun nth (n list)
   "Return the Nth element of LIST.
@@ -1969,5 +2096,27 @@ If not supplied, SPECIFIED-TIME defaults to the result of `current-time'."
      (or (and specified-time
 	      (/ (car specified-time) 1000000.0))
 	 0.0)))
+
+(defun char-to-string (character)
+  "Convert CHARACTER to a one-character string containing that character."
+  (when (eventp character)
+    (let ((event-to-character (event-to-character character t)))
+      (setq character
+	    (or event-to-character (error 'no-character-typed character)))))
+  (string character))
+
+(defun string-to-char (string)
+  "Convert arg STRING to a character, the first character of that string.
+An empty string will return the constant `nil'."
+  (check-type string string)
+  (unless (eql (length string) 0) (aref string 0)))
+
+(defun char-equal (character1 character2 &optional buffer)
+  "Return t if two characters match, optionally ignoring case.
+Both arguments must be characters (i.e. NOT integers).
+Case is ignored if `case-fold-search' is non-nil in BUFFER.
+If BUFFER is nil, the current buffer is assumed."
+  (or (eql character1 character2)
+      (eql (canoncase character1 buffer) (canoncase character2 buffer))))
 
 ;;; subr.el ends here

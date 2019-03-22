@@ -59,6 +59,7 @@ Lisp_Object Vmouse_leave_buffer_hook, Qmouse_leave_buffer_hook;
 
 Lisp_Object QletX, Qsave_excursion;
 
+Lisp_Object Qprefix_numeric_value;
 Lisp_Object Qread_from_minibuffer;
 Lisp_Object Qread_file_name;
 Lisp_Object Qread_directory_name;
@@ -820,7 +821,7 @@ when reading the arguments.
             {
             prefix_value:
               {
-                Lisp_Object tem = Fprefix_numeric_value (prefix);
+                Lisp_Object tem = call1 (Qprefix_numeric_value, prefix);
                 args[argnum] = tem;
               }
               break;
@@ -975,31 +976,13 @@ when reading the arguments.
   }
 }
 
-DEFUN ("prefix-numeric-value", Fprefix_numeric_value, 1, 1, 0, /*
-Return numeric meaning of raw prefix argument RAW.
-A raw prefix argument is what you get from `(interactive "P")'.
-Its numeric meaning is what you would get from `(interactive "p")'.
-*/
-       (raw))
-{
-  if (NILP (raw))
-    return Qone;
-  if (EQ (raw, Qminus))
-    return make_fixnum (-1);
-  if (FIXNUMP (raw))
-    return raw;
-  if (CONSP (raw) && FIXNUMP (XCAR (raw)))
-    return XCAR (raw);
-
-  return Qone;
-}
-
 void
 syms_of_callint (void)
 {
   DEFSYMBOL (Qcall_interactively);
   DEFSYMBOL (Qread_from_minibuffer);
   DEFSYMBOL (Qcompleting_read);
+  DEFSYMBOL (Qprefix_numeric_value);
   DEFSYMBOL (Qread_file_name);
   DEFSYMBOL (Qread_directory_name);
   DEFSYMBOL (Qread_string);
@@ -1023,7 +1006,6 @@ syms_of_callint (void)
 
   DEFSUBR (Finteractive);
   DEFSUBR (Fcall_interactively);
-  DEFSUBR (Fprefix_numeric_value);
 }
 
 void

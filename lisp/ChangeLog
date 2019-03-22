@@ -4,6 +4,51 @@
 	mismatched format strings and arguments.  Patch thanks to Tim
 	Landscheidt <tim@tim-landscheidt.de>.
 
+2019-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move several more functions, not loop hotspots and easily
+	implemented in Lisp, from C to Lisp.
+
+	* abbrev.el:
+	* abbrev.el (insert-abbrev-table-description): New.
+	Move this back to Lisp, now there's a penalty for it being in C
+	with NEWGC.
+	Remove comment with old Lisp implementation.
+
+	* cmdloop.el:
+	* cmdloop.el (prefix-numeric-value): New.
+	Move this here from callint.c.
+	* loadup.el:
+	* loadup.el (really-early-error-handler):
+	Use #'format-into rather than (princ (format ...)), now #'format
+	is not available on a bare-metal XEmacs.
+	* setup-paths.el (paths-default-info-directories):
+	Use (string directory-sep-char) rather than (char-to-string
+	directory-sep-char), now the latter is not available on a
+	bare-metal XEmacs.
+	* simple.el:
+	* simple.el (backward-char): New.
+	* simple.el (beginning-of-line): New.
+	* simple.el (end-of-line): New.
+	Move these three from cmds.c.
+	* subr.el:
+	* subr.el (format): New.
+	Move this from doprnt.c
+	* subr.el (arrayp): New.
+	* subr.el (sequencep): New.
+	* subr.el (natnump): New.
+	* subr.el (nonnegativep): New.
+	Move all these from data.c
+	* subr.el (identity):
+	Give this a better argument name and docstring.
+	* subr.el (char-to-string): New.
+	* subr.el (string-to-char): New.
+	* subr.el (char-equal): New.
+	Move these three from editfns.c.
+	* x-misc.el:
+	* x-misc.el (default-x-device): New.
+	Move this from device-x.c.
+
 2011-03-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:

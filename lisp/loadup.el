@@ -49,10 +49,10 @@
   ;; export XEMACSDEBUG='(setq debug-on-error t)'
   (setq debug-on-error t))
 
-;(princ (format "command-line-args: %s\n" command-line-args))
-;(princ (format "configure-lisp-directory: %S\n" configure-lisp-directory))
-;(princ (format "configure-data-directory: %S\n" configure-data-directory))
-;(princ (format "lisp-directory: %S\n" lisp-directory))
+;(format-into 'standard-output "command-line-args: %s\n" command-line-args)
+;(format-into 'standard-output "configure-lisp-directory: %S\n" configure-lisp-directory)
+;(format-into 'standard-output "configure-data-directory: %S\n" configure-data-directory)
+;(format-into 'standard-output "lisp-directory: %S\n" lisp-directory)
 
 (when (fboundp 'error)
   (error "loadup.el already loaded!"))
@@ -100,9 +100,10 @@ with the exception of `loadup.el'.")
 				(expand-file-name "modules" build-directory)))
 
 	;; message not defined yet ...
-	(external-debugging-output (format "\nUsing load-path %s" load-path))
-	(external-debugging-output (format "\nUsing module-load-path %s"
-					   module-load-path))
+	(format-into 'external-debugging-output "\nUsing load-path %s"
+                     load-path)
+	(format-into 'external-debugging-output "\nUsing module-load-path %s"
+					   module-load-path)
 
 	;; We don't want to have any undo records in the dumped XEmacs.
 	(buffer-disable-undo (get-buffer "*scratch*"))
@@ -139,12 +140,12 @@ with the exception of `loadup.el'.")
 		  ;; but garbage collection really slows down loading.
 		  (unless (memq 'quick-build internal-error-checking)
 		    (garbage-collect)))
-	      (external-debugging-output (format "\nLoad file %s: not found\n"
-						 file))
+	      (format-into 'external-debugging-output
+                           "\nLoad file %s: not found\n" file)
 	      ;; Uncomment in case of trouble
-	      ;;(print (format "late-package-hierarchies: %S" late-package-hierarchies))
-	      ;;(print (format "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p)))
-	      ;;(print (format "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p)))
+	      ;;(format-into 'external-debugging-output "late-package-hierarchies: %S" late-package-hierarchies)
+	      ;;(format-into 'external-debugging-output "guessed-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-root-p))
+	      ;;(format-into 'external-debugging-output "guessed-data-roots: %S" (paths-find-emacs-roots invocation-directory invocation-name #'paths-emacs-data-root-p))
 	      nil)))
 
 	(load (expand-file-name "dumped-lisp.el" source-lisp))

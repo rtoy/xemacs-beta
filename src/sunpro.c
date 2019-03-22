@@ -58,13 +58,15 @@ function has no effect and always returns `nil'.  See function
        )
 {
 #ifdef USAGE_TRACKING
-  Lisp_Object xs;
+  Lisp_Object xs, *fi_args;
   unsigned char *s;
 
   if (!NILP (Vusage_tracking))
     {
-      xs = Fformat (nargs, args);
-      CHECK_STRING (xs);
+      fi_args = alloca_array (Lisp_Object, nargs + 1);
+      fi_args[0] = Qstring;
+      memmove (fi_args + 1, args, nargs * sizeof (Lisp_Object));
+      xs = Fformat_into (nargs + 1, fi_args);
       s = XSTRING_DATA (xs);
       ut_log_text ((char *) s);
     }

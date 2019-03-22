@@ -98,46 +98,6 @@ init_editfns (void)
     Vuser_full_name = Fuser_full_name (Qnil);
 }
 
-DEFUN ("char-to-string", Fchar_to_string, 1, 1, 0, /*
-Convert CHARACTER to a one-character string containing that character.
-*/
-       (character))
-{
-  Bytecount len;
-  Ibyte str[MAX_ICHAR_LEN];
-
-  if (EVENTP (character))
-    {
-      Lisp_Object ch2 = Fevent_to_character (character, Qt, Qnil, Qnil);
-      if (NILP (ch2))
-        invalid_argument
-	  ("key has no character equivalent:", Fcopy_event (character, Qnil));
-      character = ch2;
-    }
-
-  CHECK_CHAR_COERCE_INT (character);
-
-  len = set_itext_ichar (str, XCHAR (character));
-  return make_string (str, len);
-}
-
-DEFUN ("string-to-char", Fstring_to_char, 1, 1, 0, /*
-Convert arg STRING to a character, the first character of that string.
-An empty string will return the constant `nil'.
-*/
-       (string))
-{
-  CHECK_STRING (string);
-
-  if (XSTRING_LENGTH (string) != 0)
-    return make_char (string_ichar (string, 0));
-  else
-    /* This used to return Qzero.  That is broken, broken, broken. */
-    /* It might be kinder to signal an error directly. -slb */
-    return Qnil;
-}
-
-
 DEFUN ("point", Fpoint, 0, 1, 0, /*
 Return value of point, as an integer.
 Beginning of buffer is position (point-min).
@@ -2239,28 +2199,6 @@ arguments: (&rest BODY)
 }
 
 
-DEFUN ("char-equal", Fchar_equal, 2, 3, 0, /*
-Return t if two characters match, optionally ignoring case.
-Both arguments must be characters (i.e. NOT integers).
-Case is ignored if `case-fold-search' is non-nil in BUFFER.
-If BUFFER is nil, the current buffer is assumed.
-*/
-       (character1, character2, buffer))
-{
-  Ichar x1, x2;
-  struct buffer *b = decode_buffer (buffer, 1);
-
-  CHECK_CHAR_COERCE_INT (character1);
-  CHECK_CHAR_COERCE_INT (character2);
-  x1 = XCHAR (character1);
-  x2 = XCHAR (character2);
-
-  return (!NILP (b->case_fold_search)
-	  ? CANONCASE (b, x1) == CANONCASE (b, x2)
-	  : x1 == x2)
-    ? Qt : Qnil;
-}
-
 #if 0 /* Undebugged FSFmacs code */
 /* Transpose the markers in two regions of the current buffer, and
    adjust the ones between them if necessary (i.e.: if the regions
@@ -2383,10 +2321,7 @@ syms_of_editfns (void)
   DEFSYMBOL (Qformat);
   DEFSYMBOL (Quser_files_and_directories);
 
-  DEFSUBR (Fchar_equal);
   DEFSUBR (Fgoto_char);
-  DEFSUBR (Fstring_to_char);
-  DEFSUBR (Fchar_to_string);
   DEFSUBR (Fbuffer_substring);
   DEFSUBR (Fbuffer_substring_no_properties);
 

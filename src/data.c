@@ -243,22 +243,6 @@ Return t if OBJECT is a string.
   return STRINGP (object) ? Qt : Qnil;
 }
 
-DEFUN ("arrayp", Farrayp, 1, 1, 0, /*
-Return t if OBJECT is an array (string, vector, or bit vector).
-*/
-       (object))
-{
-  return ARRAYP (object) ? Qt : Qnil;
-}
-
-DEFUN ("sequencep", Fsequencep, 1, 1, 0, /*
-Return t if OBJECT is a sequence (list or array).
-*/
-       (object))
-{
-  return SEQUENCEP (object) ? Qt : Qnil;
-}
-
 DEFUN ("markerp", Fmarkerp, 1, 1, 0, /*
 Return t if OBJECT is a marker (editor pointer).
 */
@@ -398,29 +382,6 @@ On builds without bignum support, this function is identical to `fixnump'.
        (object))
 {
   return INTEGERP (object) ? Qt : Qnil;
-}
-
-DEFUN ("natnump", Fnatnump, 1, 1, 0, /*
-Return t if OBJECT is a nonnegative integer.
-*/
-       (object))
-{
-  return NATNUMP (object) ? Qt : Qnil;
-}
-
-DEFUN ("nonnegativep", Fnonnegativep, 1, 1, 0, /*
-Return t if OBJECT is a nonnegative rational.
-*/
-       (object))
-{
-  return NATNUMP (object)
-#ifdef HAVE_RATIO
-    || (RATIOP (object) && ratio_sign (XRATIO_DATA (object)) >= 0)
-#endif
-#ifdef HAVE_BIGFLOAT
-    || (BIGFLOATP (object) && bigfloat_sign (XBIGFLOAT_DATA (object)) >= 0)
-#endif
-    ? Qt : Qnil;
 }
 
 DEFUN ("numberp", Fnumberp, 1, 1, 0, /*
@@ -4347,15 +4308,11 @@ syms_of_data (void)
   DEFSUBR (Fintegerp);
   DEFSUBR (Fnumberp);
   DEFSUBR (Ffloatp);
-  DEFSUBR (Fnatnump);
-  DEFSUBR (Fnonnegativep);
   DEFSUBR (Fsymbolp);
   DEFSUBR (Fkeywordp);
   DEFSUBR (Fstringp);
   DEFSUBR (Fvectorp);
   DEFSUBR (Fbit_vector_p);
-  DEFSUBR (Farrayp);
-  DEFSUBR (Fsequencep);
   DEFSUBR (Fmarkerp);
   DEFSUBR (Fsubrp);
   DEFSUBR (Fsubr_min_args);

@@ -35,6 +35,17 @@
 (globally-declare-fboundp
  (unless (featurep 'dialog) '(yes-or-no-p-dialog-box)))
 
+;; XEmacs; moved here from callint.c
+(defun prefix-numeric-value (raw)
+  "Return numeric meaning of raw prefix argument RAW.
+A raw prefix argument is what you get from `(interactive \"P\")'.
+Its numeric meaning is what you would get from `(interactive \"p\")'."
+  (cond ((not raw) 1)
+        ((eq raw '-) -1)
+        ((fixnump raw) raw)
+        ((fixnump (car-safe raw)) (car raw))
+        (t 1)))
+
 (defun recursion-depth ()
   "Return the current depth in recursive edits."
   (+ command-loop-level (minibuffer-depth)))

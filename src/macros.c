@@ -103,7 +103,7 @@ An argument of zero means repeat until error.
 {
   /* This function can GC */
   struct console *con = XCONSOLE (Vselected_console);
-  int repeat;
+  EMACS_INT repeat;
 
   if (NILP (con->defining_kbd_macro))
     invalid_operation ("Not defining kbd macro", Qunbound);
@@ -111,7 +111,11 @@ An argument of zero means repeat until error.
   if (NILP (arg))
     repeat = -1;
   else
-    repeat = XFIXNUM (Fprefix_numeric_value (arg));
+    {
+      arg = call1 (Qprefix_numeric_value, arg);
+      CHECK_FIXNUM (arg);
+      repeat = XFIXNUM (arg);
+    }
 
   if (!NILP (con->defining_kbd_macro))
     {
@@ -252,13 +256,14 @@ COUNT is a repeat count, or nil for once, or 0 for infinite loop.
   /* This function can GC */
   Lisp_Object final;
   int speccount = specpdl_depth ();
-  int repeat = 1;
+  EMACS_INT repeat = 1;
   struct gcpro gcpro1;
   struct console *con = XCONSOLE (Vselected_console);
 
   if (!NILP (count))
     {
-      count = Fprefix_numeric_value (count);
+      count = call1 (Qprefix_numeric_value, count);
+      CHECK_FIXNUM (count);
       repeat = XFIXNUM (count);
     }
 

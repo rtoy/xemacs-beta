@@ -1993,29 +1993,27 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 	return (HDDEDATA) NULL;
 
       {
-	Lisp_Object args[2];
+	Lisp_Object args[] = { Qstring, Qnil, Qnil };
 	struct gcpro gcpro1;
 	Lisp_Object res;
 	Extbyte *result;
 	DWORD bytes;
 
-	args[0] = Qnil;
-	args[1] = Qnil;
 	GCPRO1 (args[0]);
-	gcpro1.nvars = 2;
+	gcpro1.nvars = countof (args);
 
 
 	if (!DdeCmpStringHandles (hszItem, mswindows_dde_item_result))
 	  {
 	    if (NILP (dde_eval_error))
 	      {
-		args[0] = build_ascstring ("OK: %s");
-		args[1] = dde_eval_result;
+		args[1] = build_ascstring ("OK: %s");
+		args[2] = dde_eval_result;
 	      }
 	    else
 	      {
-		args[0] = build_ascstring ("ERR: %s");
-		args[1] = dde_eval_error;
+		args[1] = build_ascstring ("ERR: %s");
+		args[2] = dde_eval_error;
 	      }
 	  }
 	else
@@ -2031,12 +2029,12 @@ mswindows_dde_callback (UINT uType, UINT uFmt, HCONV UNUSED (hconv),
 		  continue;
 		hsz = (HSZ) (int) XFLOAT_DATA (val);
 		if (!DdeCmpStringHandles (hszItem, hsz))
-		  args[1] = Fsymbol_value (elt);
+		  args[2] = Fsymbol_value (elt);
 	      }
-	    args[0] = build_ascstring ("%s");
+	    args[1] = build_ascstring ("%s");
 	  }
 
-	res = Fformat (2, args);
+	res = Fformat_into (countof (args), args);
 	UNGCPRO;
 
 	bytes = (uFmt == CF_TEXT ? 1 : 2) * (XSTRING_LENGTH (res) + 1);
