@@ -4701,7 +4701,8 @@ window_scroll (Lisp_Object window, Lisp_Object count, int direction,
 	direction *= -1;
       else
 	{
-	  count = Fprefix_numeric_value (count);
+          count = call1 (Qprefix_numeric_value, count);
+          CHECK_FIXNUM (count);
 	  value = XFIXNUM (count) * direction;
 
 	  if (!value)
@@ -5037,9 +5038,18 @@ the documentation for this variable for more details.
 {
   Lisp_Object window = Fselected_window (Qnil);
   struct window *w = XWINDOW (window);
-  int n = (NILP (count) ?
-	   window_char_width (w, 0) - 2 :
-	   XFIXNUM (Fprefix_numeric_value (count)));
+  EMACS_INT n;
+
+  if (NILP (count))
+    {
+      n = window_char_width (w, 0) - 2;
+    }
+  else
+    {
+      count = call1 (Qprefix_numeric_value, count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
+    }
 
   return Fset_window_hscroll (window, make_fixnum (w->hscroll + n));
 }
@@ -5057,9 +5067,18 @@ the documentation for this variable for more details.
 {
   Lisp_Object window = Fselected_window (Qnil);
   struct window *w = XWINDOW (window);
-  int n = (NILP (count) ?
-	   window_char_width (w, 0) - 2 :
-	   XFIXNUM (Fprefix_numeric_value (count)));
+  EMACS_INT n;
+
+  if (NILP (count))
+    {
+      n = window_char_width (w, 0) - 2;
+    }
+  else
+    {
+      count = call1 (Qprefix_numeric_value, count);
+      CHECK_FIXNUM (count);
+      n = XFIXNUM (count);
+    }
 
   return Fset_window_hscroll (window, make_fixnum (w->hscroll - n));
 }
@@ -5080,7 +5099,7 @@ If WINDOW is nil, the selected window is used.
     startp = start_with_line_at_pixpos (w, opoint, window_half_pixpos (w));
   else
     {
-      n = Fprefix_numeric_value (n);
+      n = call1 (Qprefix_numeric_value, n);
       CHECK_FIXNUM (n);
       startp = start_with_point_on_display_line (w, opoint, XFIXNUM (n));
     }
@@ -5171,7 +5190,8 @@ If WINDOW is nil, the selected window is used.
   else
     {
       /* #### Is this going to work right when at eob? */
-      arg = Fprefix_numeric_value (arg);
+      arg = call1 (Qprefix_numeric_value, arg);
+      CHECK_FIXNUM (arg);
       if (XFIXNUM (arg) < 0)
 	arg = make_fixnum (XFIXNUM (arg) + height);
     }

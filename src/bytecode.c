@@ -1853,7 +1853,8 @@ execute_rare_opcode (Lisp_Object *stack_ptr,
       }
 
     case Bend_of_line:
-      TOP_LVALUE = Fend_of_line (TOP, Qnil);
+      Fgoto_char (Fpoint_at_eol (TOP, Qnil), Qnil);
+      TOP_LVALUE = Qnil;
       break;
 
     case Btemp_output_buffer_setup:

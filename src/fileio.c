@@ -1840,7 +1840,7 @@ A prefix arg makes KEEP-TIME non-nil.
       if (!IS_DIRECTORY_SEP (string_byte (newname,
 					   XSTRING_LENGTH (newname) - 1)))
 
-	args[i++] = Fchar_to_string (Vdirectory_sep_char);
+	args[i++] = Fstring (1, &Vdirectory_sep_char);
       args[i++] = Ffile_name_nondirectory (filename);
       newname = concatenate (i, args, Qstring, 0);
       NUNGCPRO;

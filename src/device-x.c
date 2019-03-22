@@ -1716,16 +1716,6 @@ standard resource specification.
 /*                   display information functions                      */
 /************************************************************************/
 
-DEFUN ("default-x-device", Fdefault_x_device, 0, 0, 0, /*
-Return the default X device for resourcing.
-This is the first-created X device that still exists.
-See also `default-device'.
-*/
-       ())
-{
-  return get_default_device (Qx);
-}
-
 DEFUN ("x-display-visual-class", Fx_display_visual_class, 0, 1, 0, /*
 Return the visual class of the X display DEVICE is using.
 This can be altered from the default at startup using the XResource "EmacsVisual".
@@ -2063,7 +2053,6 @@ syms_of_device_x (void)
   DEFSUBR (Fx_get_resource_prefix);
   DEFSUBR (Fx_put_resource);
 
-  DEFSUBR (Fdefault_x_device);
   DEFSUBR (Fx_display_visual_class);
   DEFSUBR (Fx_display_visual_depth);
   DEFSUBR (Fx_server_vendor);

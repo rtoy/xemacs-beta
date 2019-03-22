@@ -716,7 +716,7 @@ scrollbar_reset_cursor (Lisp_Object win, Lisp_Object orig_pt)
       Fmove_to_window_line (make_fixnum (-1), win);
 
       if (selected)
-	Fbeginning_of_line (Qnil, buf);
+        BUF_SET_PT (XBUFFER (buf), XFIXNUM (Fpoint_at_bol (Qnil, buf)));
       else
 	{
 	  /* #### Taken from forward-line. */

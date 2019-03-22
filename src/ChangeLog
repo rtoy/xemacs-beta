@@ -14,6 +14,61 @@
 
 	* redisplay.c (redisplay_window): add a missing XFIXNUM.
 
+2019-03-21  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Move several more functions, not loop hotspots and easily
+	implemented in Lisp, from C to Lisp.
+
+	* abbrev.c:
+	* abbrev.c (syms_of_abbrev):
+	* abbrev.c (vars_of_abbrev):
+	Move Finsert_abbrev_table_description() to abbrev.el.
+	* bytecode.c (UNUSED):
+	Fend_of_line() no longer in C, use its implementation.
+	* callint.c:
+	* callint.c (Fcall_interactively):
+	* callint.c (syms_of_callint):
+	* callint.c (vars_of_callint):
+	Move Fprefix_numeric_value() to cmdloop.el, call it using its
+	symbol as needed.
+	* cmds.c:
+	* cmds.c (syms_of_cmds):
+	Move Fbackward_char(), Fbeginning_of_line(), Fend_of_line() to
+	simple.el.
+	* data.c (syms_of_data):
+	Move Farrayp(), Fsequencep(), Fnatnump(), Fnonnegativep() to
+	subr.el.
+	* device-x.c (syms_of_device_x):
+	Move Fdefault_x_device() to x-misc.el.
+	* doprnt.c:
+	* doprnt.c (syms_of_doprnt):
+	Move Fformat() to subr.el.
+	* editfns.c:
+	* editfns.c (syms_of_editfns):
+	Move Fchar_equal(), Fstring_to_char(), Fchar_to_string() to subr.el
+	* event-msw.c (mswindows_dde_callback):
+	Call Fformat_into() here, now Fformat() is in Lisp.
+	* fileio.c (Fcopy_file):
+	Call Fstring() here, now Fchar_to_string() is in Lisp.
+	* lisp.h:
+	* lread.c (read0):
+	Call Fstring() here, now Fchar_to_string() is in Lisp.
+	* macros.c (Fend_kbd_macro):
+	* macros.c (Fexecute_kbd_macro):
+	Call #'prefix-numeric-value through its Lisp symbol here, now it's
+	no longer in C.
+	* scrollbar.c (scrollbar_reset_cursor):
+	Fbeginning_of_line() no longer in C, use its implementation.
+	* sunpro.c:
+	Call Fformat_into() here, now Fformat() is in Lisp.	
+	* window.c (window_scroll):
+	* window.c (Fscroll_left):
+	* window.c (Fscroll_right):
+	* window.c (Fcenter_to_window_line):
+	* window.c (Fmove_to_window_line):
+	Call #'prefix-numeric-value through its Lisp symbol here, now it's
+	no longer in C.
+
 2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Mechanically change byte_marker_position() to

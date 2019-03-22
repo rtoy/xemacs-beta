@@ -60,7 +60,7 @@
   (mapcar (function
 	   (lambda (dirlist)
 	     (paths-construct-path
-	      dirlist (char-to-string directory-sep-char))))
+	      dirlist (string directory-sep-char))))
 	  '(("usr" "local" "info")
 	    ("usr" "info")
 	    ("usr" "local" "share" "info")

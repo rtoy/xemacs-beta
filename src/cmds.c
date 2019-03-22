@@ -96,28 +96,6 @@ the documentation for this variable for more details.
   return Qnil;
 }
 
-DEFUN ("backward-char", Fbackward_char, 0, 2, "_p", /*
-Move point left COUNT characters (right if COUNT is negative).
-On attempt to pass end of buffer, stop and signal `end-of-buffer'.
-On attempt to pass beginning of buffer, stop and signal `beginning-of-buffer'.
-
-The characters that are moved over may be added to the current selection
-\(i.e. active region) if the Shift key is held down, a motion key is used
-to invoke this command, and `shifted-motion-keys-select-region' is t; see
-the documentation for this variable for more details.
-*/
-       (count, buffer))
-{
-  if (NILP (count))
-    count = make_fixnum (-1);
-  else
-    {
-      CHECK_FIXNUM (count);
-      count = make_fixnum (- XFIXNUM (count));
-    }
-  return Fforward_char (count, buffer);
-}
-
 DEFUN ("forward-line", Fforward_line, 0, 2, "_p", /*
 Move COUNT lines forward (backward if COUNT is negative).
 Precisely, if point is on line I, move to the start of line I + COUNT.
@@ -189,25 +167,6 @@ This function does not move point.
   return make_fixnum (end);
 }
 
-DEFUN ("beginning-of-line", Fbeginning_of_line, 0, 2, "_p", /*
-Move point to beginning of current line.
-With argument COUNT not nil or 1, move forward COUNT - 1 lines first.
-If scan reaches end of buffer, stop there without error.
-If BUFFER is nil, the current buffer is assumed.
-
-The characters that are moved over may be added to the current selection
-\(i.e. active region) if the Shift key is held down, a motion key is used
-to invoke this command, and `shifted-motion-keys-select-region' is t; see
-the documentation for this variable for more details.
-*/
-       (count, buffer))
-{
-  struct buffer *b = decode_buffer (buffer, 1);
-
-  BUF_SET_PT (b, XFIXNUM (Fpoint_at_bol (count, buffer)));
-  return Qnil;
-}
-
 DEFUN ("point-at-eol", Fpoint_at_eol, 0, 2, 0, /*
 Return the character position of the last character on the current line.
 With argument COUNT not nil or 1, move forward COUNT - 1 lines first.
@@ -229,25 +188,6 @@ This function does not move point.
 
   return make_fixnum (find_before_next_newline (buf, BUF_PT (buf), 0,
 						n - (n <= 0)));
-}
-
-DEFUN ("end-of-line", Fend_of_line, 0, 2, "_p", /*
-Move point to end of current line.
-With argument COUNT not nil or 1, move forward COUNT - 1 lines first.
-If scan reaches end of buffer, stop there without error.
-If BUFFER is nil, the current buffer is assumed.
-
-The characters that are moved over may be added to the current selection
-\(i.e. active region) if the Shift key is held down, a motion key is used
-to invoke this command, and `shifted-motion-keys-select-region' is t; see
-the documentation for this variable for more details.
-*/
-       (count, buffer))
-{
-  struct buffer *b = decode_buffer (buffer, 1);
-
-  BUF_SET_PT (b, XFIXNUM (Fpoint_at_eol (count, buffer)));
-  return Qnil;
 }
 
 DEFUN ("delete-char", Fdelete_char, 0, 2, "*p\nP", /*
@@ -515,10 +455,7 @@ syms_of_cmds (void)
   DEFSYMBOL (Qno_self_insert);
 
   DEFSUBR (Fforward_char);
-  DEFSUBR (Fbackward_char);
   DEFSUBR (Fforward_line);
-  DEFSUBR (Fbeginning_of_line);
-  DEFSUBR (Fend_of_line);
 
   DEFSUBR (Fpoint_at_bol);
   DEFSUBR (Fpoint_at_eol);

@@ -4559,9 +4559,9 @@ extern Lisp_Object Qbyte_code, Qinvalid_byte_code;
 
 /* Defined in callint.c */
 EXFUN (Fcall_interactively, 3);
-EXFUN (Fprefix_numeric_value, 1);
 extern Lisp_Object Qcall_interactively;
 extern Lisp_Object Qmouse_leave_buffer_hook;
+extern Lisp_Object Qprefix_numeric_value;
 extern Lisp_Object Qread_from_minibuffer;
 extern Lisp_Object Vcommand_history;
 extern Lisp_Object Vcurrent_prefix_arg;
@@ -4589,8 +4589,8 @@ extern Lisp_Object Qtop_level;
 extern Lisp_Object Vdisabled_command_hook;
 
 /* Defined in cmds.c */
-EXFUN (Fbeginning_of_line, 2);
-EXFUN (Fend_of_line, 2);
+EXFUN (Fpoint_at_bol, 2);
+EXFUN (Fpoint_at_eol, 2);
 EXFUN (Fforward_char, 2);
 EXFUN (Fforward_line, 2);
 extern Lisp_Object Qself_insert_command;
@@ -4801,13 +4801,12 @@ EXFUN (Fbobp, 1);
 EXFUN (Fbolp, 1);
 EXFUN (Fbuffer_substring, 3);
 EXFUN (Fchar_after, 2);
-EXFUN (Fchar_to_string, 1);
 EXFUN (Fcurrent_time, 0);
 EXFUN (Fdelete_region, 3);
 EXFUN (Feobp, 1);
 EXFUN (Feolp, 1);
 EXFUN (Ffollowing_char, 1);
-EXFUN (Fformat, MANY);
+EXFUN (Fformat_into, MANY);
 EXFUN (Fgoto_char, 2);
 EXFUN (Finsert, MANY);
 EXFUN (Finsert_buffer_substring, 3);

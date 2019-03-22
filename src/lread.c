@@ -1616,10 +1616,10 @@ read0 (Lisp_Object readcharfun)
 
   if (CONSP (val) && UNBOUNDP (XCAR (val)))
     {
-      Ichar c = XCHAR (XCDR (val));
+      Lisp_Object c = XCDR (val);
+      CHECK_CHAR (c);
       free_cons (val);
-      return Fsignal (Qinvalid_read_syntax,
-		      list1 (Fchar_to_string (make_char (c))));
+      return Fsignal (Qinvalid_read_syntax, list1 (Fstring (1, &c)));
     }
 
   return val;
