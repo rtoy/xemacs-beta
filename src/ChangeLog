@@ -1,3 +1,10 @@
+2019-03-23  Jerry James  <james@xemacs.org>
+
+	* array.h (XD_DYNARR_DESC,XD_LISP_DYNARR_DESC): fix segfaults when
+	undumping Dynarrs on 64-bit big endian architectures.  When the type
+	of the len_ element was changed in commit c5889f9bb7f4, the memory
+	description was not changed to match.
+
 2019-03-21  Jerry James  <james@xemacs.org>
 
 	* data.c (lisp_to_OFF_T): fix conversion on 32-bit systems.
