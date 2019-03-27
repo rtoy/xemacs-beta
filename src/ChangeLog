@@ -69,6 +69,15 @@
 	Call #'prefix-numeric-value through its Lisp symbol here, now it's
 	no longer in C.
 
+2019-03-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* dired.c:
+	* dired.c (Fuser_name_completion):
+	* dired.c (user_name_completion):
+	* dired.c (syms_of_dired):
+	Remove Fuser_name_completion_1(), return its CDR as the second
+	value from Fuser_name_completion() instead.
+
 2019-03-10  Aidan Kehoe  <kehoea@parhasard.net>
 
 	Mechanically change byte_marker_position() to

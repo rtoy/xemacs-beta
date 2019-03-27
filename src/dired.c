@@ -513,39 +513,26 @@ file_name_completion (Lisp_Object file, Lisp_Object directory, int all_flag,
 
 static Lisp_Object user_name_completion (Lisp_Object user,
                                          int all_flag,
-                                         int *uniq);
+                                         Lisp_Object *uniq);
 
 DEFUN ("user-name-completion", Fuser_name_completion, 1, 1, 0, /*
 Complete user name from PARTIAL-USERNAME.
+
 Return the longest prefix common to all user names starting with
 PARTIAL-USERNAME.  If there is only one and PARTIAL-USERNAME matches
 it exactly, returns t.  Return nil if there is no user name starting
 with PARTIAL-USERNAME.
+
+This function returns two values, see `multiple-value-bind'. The second value
+is non-nil if and only if the completion returned as the first value was
+unique.
 */
        (partial_username))
 {
-  return user_name_completion (partial_username, 0, NULL);
-}
+  Lisp_Object valz[] = { Qnil, Qnil };
 
-DEFUN ("user-name-completion-1", Fuser_name_completion_1, 1, 1, 0, /*
-Complete user name from PARTIAL-USERNAME.
-
-This function is identical to `user-name-completion', except that
-the cons of the completion and an indication of whether the
-completion was unique is returned.
-
-The car of the returned value is the longest prefix common to all user
-names that start with PARTIAL-USERNAME.  If there is only one and
-PARTIAL-USERNAME matches it exactly, the car is t.  The car is nil if
-there is no user name starting with PARTIAL-USERNAME.  The cdr of the
-result is non-nil if and only if the completion returned in the car
-was unique.
-*/
-       (partial_username))
-{
-  int uniq;
-  Lisp_Object completed = user_name_completion (partial_username, 0, &uniq);
-  return Fcons (completed, uniq ? Qt : Qnil);
+  valz[0] = user_name_completion (partial_username, 0, valz + 1);
+  return Fvalues (countof (valz), valz);
 }
 
 DEFUN ("user-name-all-completions", Fuser_name_all_completions, 1, 1, 0, /*
@@ -601,7 +588,7 @@ user_name_completion_unwind (Lisp_Object cache_incomplete_p)
 #define  USER_CACHE_TTL  (24*60*60)  /* Time to live: 1 day, in seconds */
 
 static Lisp_Object
-user_name_completion (Lisp_Object user, int all_flag, int *uniq)
+user_name_completion (Lisp_Object user, int all_flag, Lisp_Object *uniq)
 {
   /* This function can GC */
   int matchcount = 0;
@@ -765,7 +752,7 @@ user_name_completion (Lisp_Object user, int all_flag, int *uniq)
   UNGCPRO;
 
   if (uniq)
-    *uniq = (matchcount == 1);
+    *uniq = (matchcount == 1) ? Qt : Qnil;
 
   if (all_flag || NILP (bestmatch))
     return bestmatch;
@@ -968,7 +955,6 @@ syms_of_dired (void)
   DEFSUBR (Ffile_name_completion);
   DEFSUBR (Ffile_name_all_completions);
   DEFSUBR (Fuser_name_completion);
-  DEFSUBR (Fuser_name_completion_1);
   DEFSUBR (Fuser_name_all_completions);
   DEFSUBR (Ffile_attributes);
 }
