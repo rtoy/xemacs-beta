@@ -1728,25 +1728,22 @@ DIR defaults to current buffer's directory default."
              (name    (if orig (file-name-nondirectory sstring) string))
              (direct  (if specdir (expand-file-name specdir dir) dir)))
         ;; ~username completion
-        (if (and (fboundp 'user-name-completion-1)
-                 (string-match "^[~]" name))
+        (if (and (> (length name) 0) (eql ?~ (aref name 0)))
             (let ((user (substring name 1)))
               (cond ((eq action 'lambda)
                      (file-directory-p name))
-                    ((eq action 't)
+                    ((eq action t)
                      ;; all completions
                      (mapcar #'(lambda (p) (concat "~" p))
-                             (declare-fboundp
-			      (user-name-all-completions user))))
+                             (user-name-all-completions user)))
                     (t;; 'nil
                      ;; complete
-                     (let* ((val+uniq (declare-fboundp
-				       (user-name-completion-1 user)))
-                            (val  (car val+uniq))
-                            (uniq (cdr val+uniq)))
+                     (multiple-value-bind (val uniq)
+                         (user-name-completion user)
                        (cond ((stringp val)
                               (if uniq
-                                  (file-name-as-directory (concat "~" val))
+                                  (file-name-as-directory
+                                   (concat "~" val))
                                 (concat "~" val)))
                              ((eq val t)
                               (file-name-as-directory name))

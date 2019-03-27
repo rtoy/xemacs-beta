@@ -49,6 +49,12 @@
 	* x-misc.el (default-x-device): New.
 	Move this from device-x.c.
 
+2019-03-27  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* minibuf.el (read-file-name-internal-1):
+	Revise this now #'user-name-completion returns two values and
+	#'user-name-completion-1 is no longer available.
+
 2011-03-05  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* bytecomp.el:
