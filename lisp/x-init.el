@@ -89,50 +89,67 @@
 
 (labels
     ((pseudo-canonicalize-keysym (keysym)
-       "If KEYSYM (a string or a symbol) might describe a keysym on
-the current keyboard, return its canonical XEmacs form, a symbol;
+       "If KEYSYM (a string, symbol or character) might describe a keysym on
+the current keyboard, return its canonical XEmacs form, a character or symbol;
 otherwise return nil.
 
 Does not intern new symbols, since if a string doesn't correspond to a
 keysym that XEmacs has seen, that string won't be in obarray."
-       (if (symbolp keysym)
-	   keysym
-	 (if (stringp keysym)
-             (or (intern-soft keysym)
-                 (intern-soft (nsubstitute ?- ?_ (downcase keysym))))))))
+       (cond
+         ((symbolp keysym) keysym)
+	 ((stringp keysym) (or (intern-soft keysym)
+                               (intern-soft
+                                (nsubstitute ?- ?_
+                                             (downcase keysym)))))
+         ((characterp keysym) keysym))))
   (declare (inline pseudo-canonicalize-keysym))
 
   (defun x-keysym-on-keyboard-sans-modifiers-p (keysym &optional device)
     "Return true if KEYSYM names a key on the keyboard of DEVICE.
-More precisely, return true if pressing a physical key
-on the keyboard of DEVICE without any modifier keys generates KEYSYM.
+
+More precisely, return true if pressing a physical key on the keyboard
+of DEVICE without any modifier keys generates KEYSYM.
+
 Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-The keysym name can be provided in two forms:
-- if keysym is a string, it must be the name as known to X windows.
-- if keysym is a symbol, it must be the name as known to XEmacs.
-The two names differ in capitalization and underscoring."
+
+KEYSYM can be provided in three forms:
+- if KEYSYM is a string, it must be the name as known to X windows.
+- if KEYSYM is a symbol, it must be the name as known to XEmacs.
+- KEYSYM may also be a Lisp character.
+The two multi-character names names differ in capitalization and
+underscoring.
+
+For consistency with the other device implementations, the XEmacs X11 code
+uses a Lisp character object as the keysym for an X11 key, if there is a known
+correspondence between that key and a Lisp character.  There are a few ASCII
+exceptions, including backspace, tab, space.  It previously used symbols that
+reflected the X11 keysym names for these keys too, and you may see old code
+that assumes this.  Such code should be fixed as appropriate."
     (eq 'sans-modifiers (gethash (pseudo-canonicalize-keysym keysym)
 				 (x-keysym-hash-table device))))
 
  (defun x-keysym-on-keyboard-p (keysym &optional device)
    "Return true if KEYSYM names a key on the keyboard of DEVICE.
+
 More precisely, return true if some keystroke (possibly including modifiers)
 on the keyboard of DEVICE keys generates KEYSYM.
+
 Valid keysyms are listed in the files /usr/include/X11/keysymdef.h and in
 /usr/lib/X11/XKeysymDB, or whatever the equivalents are on your system.
-The keysym name can be provided in two forms:
-- if keysym is a string, it must be the name as known to X windows.
-- if keysym is a symbol, it must be the name as known to XEmacs.
-The two names differ in capitalization and underscoring.
 
-This function is not entirely trustworthy, in that Xlib compose processing
-can produce keysyms that XEmacs will not have seen when it examined the
-keysyms available on startup.  So pressing `dead-diaeresis' and then 'a' may
-pass `adiaeresis' to XEmacs, or (in some implementations) even `U00E4',
-where `(x-keysym-on-keyboard-p 'adiaeresis)' and `(x-keysym-on-keyboard-p
-'U00E4)' would both have returned nil.  Subsequent to XEmacs seeing a keysym
-it was previously unaware of, the predicate will take note of it, though."
+KEYSYM can be provided in three forms:
+- if KEYSYM is a string, it must be the name as known to X windows.
+- if KEYSYM is a symbol, it must be the name as known to XEmacs.
+- KEYSYM may also be a Lisp character.
+The two multi-character names differ in capitalization and underscoring.
+
+For consistency with the other device implementations, the XEmacs X11 code
+uses a Lisp character object as the keysym for an X11 key, if there is a known
+correspondence between that key and a Lisp character.  There are a few ASCII
+exceptions, including backspace, tab, space.  It previously used symbols that
+reflected the X11 keysym names for these keys too, and you may see old code
+that assumes this.  Such code should be fixed as appropriate."
    (and	(gethash (pseudo-canonicalize-keysym keysym)
                  (x-keysym-hash-table device))
 	t)))
