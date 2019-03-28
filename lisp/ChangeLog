@@ -1,3 +1,12 @@
+2019-03-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* x-init.el (pseudo-canonicalize-keysym):
+	* x-init.el (x-keysym-on-keyboard-sans-modifiers-p):
+	* x-init.el (x-keysym-on-keyboard-p):
+	Accept characters as keysyms in these functions, as well as
+	strings and symbols. This is needed since changeset a69c6e871607
+	of 2017-12-20, which applied to the C code.
+
 2019-03-21  Jerry James  <james@xemacs.org>
 
 	* startup.el (startup-setup-paths): Silence startup warnings due to
