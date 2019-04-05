@@ -2228,8 +2228,11 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
 {
   Widget w = FRAME_X_SHELL_WIDGET (f);
   Display *dpy = XtDisplay (w);
-  Dimension frame_w = DisplayWidth  (dpy, DefaultScreen (dpy));
-  Dimension frame_h = DisplayHeight (dpy, DefaultScreen (dpy));
+  Lisp_Object root_size = Fdevice_system_metric (FRAME_DEVICE (f),
+						 Qsize_device,
+						 Qnil);
+  Dimension screen_w = XFIXNUM (XCAR (root_size));
+  Dimension screen_h = XFIXNUM (XCDR (root_size));
   Dimension shell_w, shell_h, shell_bord;
   int win_gravity;
   Arg al[3];
@@ -2245,9 +2248,9 @@ x_set_frame_position (struct frame *f, int xoff, int yoff)
     yoff >= 0 ? NorthEastGravity :
     SouthEastGravity;
   if (xoff < 0)
-    xoff += frame_w - shell_w - 2*shell_bord;
+    xoff += screen_w - shell_w - 2*shell_bord;
   if (yoff < 0)
-    yoff += frame_h - shell_h - 2*shell_bord;
+    yoff += screen_h - shell_h - 2*shell_bord;
 
   /* Update the hints so that, if this window is currently iconified, it will
      come back at the right place.  We can't look at s->visible to determine

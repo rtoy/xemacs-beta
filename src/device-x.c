@@ -1755,12 +1755,29 @@ x_device_system_metrics (struct device *d,
 
   switch (m)
     {
+      /* In Xlib, both macros and functions checking configuration
+      seem to cache the results from the first call.  So we check on
+      the root window instead.  I considered selecting ConfigureNotify
+      on the root window, checking the size on that event, and caching
+      the result in struct x_device.  However, ConfigureNotify doesn't
+      seem to be used that way for any other device metrics, so
+      responding to the event immediately doesn't seem necessary, and
+      it would involve complexity I don't understand.  I guess this is
+      because Xlib does so much caching itself, so that using Xlib
+      calls is not very expensive for rarely changing metrics. */
     case DM_size_device:
-      return Fcons (make_fixnum (DisplayWidth (dpy, DefaultScreen (dpy))),
-		    make_fixnum (DisplayHeight (dpy, DefaultScreen (dpy))));
+      {
+	int x, y;
+	/* Nobody would be running X on a smaller screen, right? */
+	Dimension w = 1024, h = 768, b, d;
+	Window root = RootWindow(dpy, DefaultScreen(dpy));
+	/* If this fails, Xlib promises w and h are not updated. */
+	XGetGeometry(dpy, root, &root, &x, &y, &w, &h, &b, &d);
+	Fcons (make_fixnum (w), make_fixnum (h));
+      }
     case DM_size_device_mm:
-      return Fcons (make_fixnum (DisplayWidthMM (dpy, DefaultScreen (dpy))),
-		    make_fixnum (DisplayHeightMM (dpy, DefaultScreen (dpy))));
+      return Fcons (make_fixnum (XDisplayWidthMM (dpy, DefaultScreen (dpy))),
+		    make_fixnum (XDisplayHeightMM (dpy, DefaultScreen (dpy))));
     case DM_num_bit_planes:
       return make_fixnum (DisplayPlanes (dpy, DefaultScreen (dpy)));
     case DM_num_color_cells:

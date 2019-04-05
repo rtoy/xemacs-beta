@@ -1,3 +1,16 @@
+2019-04-02  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
+
+	* device-x.c (x_device_system_metrics):
+	Use geometry of root window to get pixel size of display, not the
+	Display* macros.  The Xlib macros (and functions!) seem to cache
+	old values, which gives wrong results on displays that can change
+	size on the fly.
+
+	* frame-x.c (x_set_frame_position):
+	* balloon_help.c (balloon_help_create):
+	Use Fdevice_system_metric for width and height in case screen size
+	has changed.  Change "frame_[wh]" to "screen_[wh]".
+
 2019-03-23  Jerry James  <james@xemacs.org>
 
 	* array.h (XD_DYNARR_DESC,XD_LISP_DYNARR_DESC): fix segfaults when
