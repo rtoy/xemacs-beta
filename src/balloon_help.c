@@ -507,6 +507,8 @@ balloon_help_create (Display* dpy,
 		     Pixel fg, Pixel bg, Pixel shine, Pixel shadow,
 		     XFontStruct* font)
 {
+  Lisp_Object root_size;
+
   if (b_dpy) balloon_help_destroy ();
 
   b_dpy = dpy;
@@ -526,8 +528,11 @@ balloon_help_create (Display* dpy,
   b_timer     = None;
   b_delay     = 500;
 
-  b_screenWidth  = DisplayWidth (b_dpy, DefaultScreen(b_dpy));
-  b_screenHeight = DisplayHeight (b_dpy, DefaultScreen(b_dpy));
+  root_size = Fdevice_system_metric (get_device_from_display (dpy),
+				     Qsize_device,
+				     Qnil);
+  b_screenWidth  = XFIXNUM (XCAR (root_size));
+  b_screenHeight = XFIXNUM (XCDR (root_size));
 
   b_lastShape = SHAPE_CONE_FREE;
 }
