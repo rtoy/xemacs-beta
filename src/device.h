@@ -93,6 +93,7 @@ EXFUN (Fmake_device, 3);
 EXFUN (Fselected_device, 1);
 
 extern Lisp_Object Qcreate_device_hook, Qdelete_device_hook, Qgrayscale;
+extern Lisp_Object Qsize_device;
 extern Lisp_Object Qinit_post_tty_win, Qmono;
 extern Lisp_Object Vdevice_class_list;
 
