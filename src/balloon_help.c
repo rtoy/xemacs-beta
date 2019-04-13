@@ -40,8 +40,11 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
 
+#include "lisp.h"
+
 #include "compiler.h"
 #include "xintrinsic.h"
+#include "device.h"
 
 #include "balloon_help.h"
 
