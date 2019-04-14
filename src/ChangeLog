@@ -1,5 +1,22 @@
 2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
 
+	* cmds.c (Fforward_char):
+	Make this usually free in terms of calls to charbpos_to_bytebpos().
+	* cmds.c (Fforward_line):
+	Avoid needless char-byte conversion in this function.
+	* cmds.c (Fpoint_at_bol):
+	Ditto.
+	* cmds.c (Fpoint_at_eol):
+	Ditto.
+	* lisp.h:
+	Remove the declaration for find_before_next_newline(), no longer
+	used.
+	* search.c :
+	Remove find_before_next_newline(), only called by Fpoint_at_eol(),
+	which now includes the (very simple) implementation of f_b_n_n().
+
+2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
 	Get Stephen's last change compiling, fix a clear bug.
 	* balloon_help.c:
 	Make the types, macros from from lisp.h, device.h, console-x.h

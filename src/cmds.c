@@ -76,21 +76,48 @@ the documentation for this variable for more details.
      proposed position, then set point.  */
   {
     Charbpos new_point = BUF_PT (buf) + n;
+    Bytebpos bcursor;
 
     if (new_point < BUF_BEGV (buf))
       {
-	BUF_SET_PT (buf, BUF_BEGV (buf));
+	BOTH_BUF_SET_PT (buf, BUF_BEGV (buf), BYTE_BUF_BEGV (buf));
 	Fsignal (Qbeginning_of_buffer, Qnil);
 	return Qnil;
       }
     if (new_point > BUF_ZV (buf))
       {
-	BUF_SET_PT (buf, BUF_ZV (buf));
+	BOTH_BUF_SET_PT (buf, BUF_ZV (buf), BYTE_BUF_ZV (buf));
 	Fsignal (Qend_of_buffer, Qnil);
 	return Qnil;
       }
 
-    BUF_SET_PT (buf, new_point);
+    bcursor = BYTE_BUF_PT (buf);
+
+    if (n >= 0)
+      {
+        while (n != 0 && n <= 16)
+          {
+            bcursor = next_bytebpos (buf, bcursor);
+            n--;
+          }
+      }
+    else
+      {
+        while (n != 0 && n >= -16)
+          {
+            bcursor = prev_bytebpos (buf, bcursor);
+            n++;
+          }
+      }
+
+    if (n == 0) /* We don't need to call charbpos_to_bytebpos(). */
+      {
+        BOTH_BUF_SET_PT (buf, new_point, bcursor);
+      }
+    else
+      {
+        BUF_SET_PT (buf, new_point);
+      }
   }
 
   return Qnil;
@@ -115,8 +142,7 @@ the documentation for this variable for more details.
        (count, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
-  Charbpos pos2 = BUF_PT (buf);
-  Charbpos pos;
+  Bytebpos pos;
   EMACS_INT n, shortage, negp;
 
   if (NILP (count))
@@ -128,14 +154,15 @@ the documentation for this variable for more details.
     }
 
   negp = n <= 0;
-  pos = scan_buffer (buf, '\n', pos2, 0, n - negp, &shortage, 1);
+  pos = byte_scan_buffer (buf, '\n', BYTE_BUF_PT (buf), 0, n - negp,
+                          &shortage, 1);
   if (shortage > 0
       && (negp
-	  || (BUF_ZV (buf) > BUF_BEGV (buf)
-	      && pos != pos2
-	      && BUF_FETCH_CHAR (buf, pos - 1) != '\n')))
+	  || (BYTE_BUF_ZV (buf) > BYTE_BUF_BEGV (buf)
+	      && pos != BYTE_BUF_PT (buf)
+	      && byte_beginning_of_line_p (buf, pos))))
     shortage--;
-  BUF_SET_PT (buf, pos);
+  BYTE_BUF_SET_PT (buf, pos);
   return make_fixnum (negp ? - shortage : shortage);
 }
 
@@ -148,23 +175,21 @@ This function does not move point.
        (count, buffer))
 {
   struct buffer *b = decode_buffer (buffer, 1);
-  REGISTER Charbpos orig, end;
+  EMACS_INT n, shortage, negp;
+  Bytebpos pos;
 
-  buffer = wrap_buffer (b);
   if (NILP (count))
-    count = make_fixnum (0);
+    n = 0;
   else
     {
       CHECK_FIXNUM (count);
-      count = make_fixnum (XFIXNUM (count) - 1);
+      n = XFIXNUM (count) - 1;
     }
 
-  orig = BUF_PT (b);
-  Fforward_line (count, buffer);
-  end = BUF_PT (b);
-  BUF_SET_PT (b, orig);
+  negp = n <= 0;
+  pos = byte_scan_buffer (b, '\n', BYTE_BUF_PT (b), 0, n - negp, &shortage, 1);
 
-  return make_fixnum (end);
+  return make_integer (bytebpos_to_charbpos (b, pos));
 }
 
 DEFUN ("point-at-eol", Fpoint_at_eol, 0, 2, 0, /*
@@ -176,7 +201,8 @@ This function does not move point.
        (count, buffer))
 {
   struct buffer *buf = decode_buffer (buffer, 1);
-  EMACS_INT n;
+  EMACS_INT n, shortage;
+  Bytebpos pos;
 
   if (NILP (count))
     n = 1;
@@ -186,8 +212,15 @@ This function does not move point.
       n = XFIXNUM (count);
     }
 
-  return make_fixnum (find_before_next_newline (buf, BUF_PT (buf), 0,
-						n - (n <= 0)));
+  pos = byte_scan_buffer (buf, '\n', BYTE_BUF_PT (buf), 0, n - (n <= 0),
+                          &shortage, 1);
+
+  if (shortage == 0)
+    {
+      pos = prev_bytebpos (buf, pos);
+    }
+
+  return make_integer (bytebpos_to_charbpos (buf, pos));
 }
 
 DEFUN ("delete-char", Fdelete_char, 0, 2, "*p\nP", /*
