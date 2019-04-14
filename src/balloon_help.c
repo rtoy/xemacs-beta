@@ -31,26 +31,21 @@ along with XEmacs.  If not, see <http://www.gnu.org/licenses/>. */
  */
 
 #include <config.h>
+#include "lisp.h"
+#include "device.h"
+#include "console-x.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
 
-#include "compiler.h"
 #include "xintrinsic.h"
 
 #include "balloon_help.h"
-
-#ifndef max
-#define max(x,y) (x>y?x:y)
-#endif
-
-#undef bool
-#define bool int
 
 #define MARGIN_WIDTH      4
 #define POINTER_OFFSET    8
@@ -78,7 +73,7 @@ static GC b_shineGC;
 static GC b_shadowGC;
 
 static Window b_win;
-static bool   b_winMapped;
+static Boolint   b_winMapped;
 
 static Pixmap b_mask;
 static int    b_maskWidth, b_maskHeight;
@@ -377,7 +372,7 @@ show_help (XtPointer UNUSED (data), XtIntervalId* id)
       XClearWindow (b_dpy, b_win);
 
       XMapRaised (b_dpy, b_win);
-      b_winMapped = True;
+      b_winMapped = 1;
 
       draw_text (b_dpy, b_win, b_gc, b_fontStruct,
 		 BORDER_WIDTH + MARGIN_WIDTH,
@@ -524,13 +519,13 @@ balloon_help_create (Display* dpy,
   create_pixmap_mask (1, 1);
   b_maskGC = create_gc (dpy, b_mask, bg, fg, b_fontStruct);
 
-  b_winMapped = False;
+  b_winMapped = 0;
   b_timer     = None;
   b_delay     = 500;
 
-  root_size = Fdevice_system_metric (get_device_from_display (dpy),
-				     Qsize_device,
-				     Qnil);
+  root_size
+    = Fdevice_system_metric (wrap_device (get_device_from_display (dpy)),
+                             Qsize_device, Qnil);
   b_screenWidth  = XFIXNUM (XCAR (root_size));
   b_screenHeight = XFIXNUM (XCDR (root_size));
 
@@ -572,7 +567,7 @@ balloon_help_hide (void)
 
   b_text = NULL;
   XUnmapWindow (b_dpy, b_win);
-  b_winMapped = False;
+  b_winMapped = 0;
   if (b_timer)
     {
       XtRemoveTimeOut (b_timer);

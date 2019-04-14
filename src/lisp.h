@@ -4708,6 +4708,7 @@ Lisp_Object call_critical_lisp_code (struct device *d, Lisp_Object function,
 				     Lisp_Object object);
 
 extern Lisp_Object Qdevice_live_p;
+EXFUN (Fdevice_system_metric, 3);
 
 /* Defined in device-x.c */
 extern Lisp_Object Vx_initial_argv_list;

@@ -275,6 +275,7 @@ SYMBOL (Qseven);
 SYMBOL (Qsignal);
 SYMBOL_MODULE_API (Qsimple);
 SYMBOL (Qsize);
+SYMBOL (Qsize_device);
 SYMBOL (Qsound);
 SYMBOL (Qspace);
 SYMBOL (Qspecifier);
