@@ -94,6 +94,7 @@ reachability of CONTENTS.  When CONTENTS is garbage-collected,
                    (progn
                      (defalias 'weak-box-ref-1
                          #'(lambda (weak-box)
+                             (check-type weak-box weak-box)
                              (cdr (assq weak-box
                                         (weak-list-list all-weak-boxes)))))
                      ;; Use defvar so calls to #'make-weak-box when it is
@@ -110,7 +111,17 @@ reachability of CONTENTS.  When CONTENTS is garbage-collected,
 (defun weak-box-ref (weak-box)
   "Return the contents of weak box WEAK-BOX.
 If the contents have been GCed, return NIL."
-  (check-argument-type 'weak-box-p weak-box)
   (weak-box-ref-1 weak-box))
+
+(eval-when (:load-toplevel)
+  (defalias 'weak-box-ref
+      (make-byte-code
+       (compiled-function-arglist (symbol-function 'weak-box-ref-1))
+       (compiled-function-instructions (symbol-function 'weak-box-ref-1))
+       (compiled-function-constants (symbol-function 'weak-box-ref-1))
+       (compiled-function-stack-depth (symbol-function 'weak-box-ref-1))
+       ;; Use the docstring info of #'weak-box-ref itself.
+       (compiled-function-doc-string (symbol-function 'weak-box-ref))))
+  (unintern 'weak-box-ref-1))
 
 ;;; misc.el ends here
