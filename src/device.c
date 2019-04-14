@@ -72,7 +72,7 @@ Lisp_Object
   Qcolor_scrollbar, Qcolor_desktop, Qcolor_workspace, Qfont_default,
   Qfont_menubar, Qfont_dialog, Qsize_cursor, Qsize_scrollbar,
   Qsize_menu, Qsize_toolbar, Qsize_toolbar_button,
-  Qsize_toolbar_border, Qsize_icon, Qsize_icon_small, Qsize_device,
+  Qsize_toolbar_border, Qsize_icon, Qsize_icon_small,
   Qsize_workspace, Qoffset_workspace, Qsize_device_mm, Qdevice_dpi,
   Qnum_bit_planes, Qnum_color_cells, Qnum_screens, Qmouse_buttons,
   Qsave_under, Qswap_buttons, Qshow_sounds, Qslow_device, Qsecurity,
