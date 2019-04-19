@@ -918,22 +918,6 @@ byte_find_next_ichar_in_string (Lisp_Object str, Ichar target, Bytecount st,
     }
   return st;
 }
-
-/* Like find_next_newline, but returns position before the newline,
-   not after, and only search up to TO.  This isn't just
-   find_next_newline (...)-1, because you might hit TO.  */
-Charbpos
-find_before_next_newline (struct buffer *buf, Charbpos from, Charbpos to,
-			  EMACS_INT count)
-{
-  EMACS_INT shortage;
-  Charbpos pos = scan_buffer (buf, '\n', from, to, count, &shortage, 1);
-
-  if (shortage == 0)
-    pos--;
-
-  return pos;
-}
 
 /* This function synched with FSF 21.1 */
 static Lisp_Object

@@ -1,3 +1,46 @@
+2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* cmds.c (Fforward_char):
+	Make this usually free in terms of calls to charbpos_to_bytebpos().
+	* cmds.c (Fforward_line):
+	Avoid needless char-byte conversion in this function.
+	* cmds.c (Fpoint_at_bol):
+	Ditto.
+	* cmds.c (Fpoint_at_eol):
+	Ditto.
+	* lisp.h:
+	Remove the declaration for find_before_next_newline(), no longer
+	used.
+	* search.c :
+	Remove find_before_next_newline(), only called by Fpoint_at_eol(),
+	which now includes the (very simple) implementation of f_b_n_n().
+
+2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	Get Stephen's last change compiling, fix a clear bug.
+	* balloon_help.c:
+	Make the types, macros from from lisp.h, device.h, console-x.h
+	available here.
+	Use the XEmacs Boolint rather than making a new boolean.
+	* balloon_help.c (show_help):
+	* balloon_help.c (balloon_help_create):
+	Wrap the pointer to the device returned by
+	get_device_from_display(), making it a Lisp_Object, as we want.
+	* balloon_help.c (balloon_help_hide):
+	* device-x.c (x_device_system_metrics):
+	Declare the parameters to XGetGeometry using the documented types.
+	Return the pixel size as intended, rather than falling through to
+	the DM_size_device_mm case.
+	* device.c:
+	Move Qsize_device to general-slots.h.
+	* frame-x.c (x_set_frame_position):
+	DPY isn't used, removed it.
+	* general-slots.h:
+	Move Qsize_device here.
+	* lisp.h:
+	Declare Fdevice_system_metric(), now it's used in frame_x.c,
+	balloon_help.c.
+
 2019-04-02  Stephen J. Turnbull  <turnbull@sk.tsukuba.ac.jp>
 
 	* device-x.c (x_device_system_metrics):

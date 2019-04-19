@@ -4708,6 +4708,7 @@ Lisp_Object call_critical_lisp_code (struct device *d, Lisp_Object function,
 				     Lisp_Object object);
 
 extern Lisp_Object Qdevice_live_p;
+EXFUN (Fdevice_system_metric, 3);
 
 /* Defined in device-x.c */
 extern Lisp_Object Vx_initial_argv_list;
@@ -6016,8 +6017,6 @@ Charbpos find_next_newline_no_quit (struct buffer *, Charbpos, int);
 Bytebpos byte_find_next_newline_no_quit (struct buffer *, Bytebpos, int);
 Bytecount byte_find_next_ichar_in_string (Lisp_Object, Ichar, Bytecount,
 					 EMACS_INT);
-Charbpos find_before_next_newline (struct buffer *, Charbpos, Charbpos,
-				   EMACS_INT);
 struct re_pattern_buffer *compile_pattern (Lisp_Object pattern,
 					   struct re_registers *regp,
 					   Lisp_Object translate,

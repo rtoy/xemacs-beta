@@ -1769,11 +1769,11 @@ x_device_system_metrics (struct device *d,
       {
 	int x, y;
 	/* Nobody would be running X on a smaller screen, right? */
-	Dimension w = 1024, h = 768, b, d;
+	unsigned int w = 1024, h = 768, b, dd;
 	Window root = RootWindow(dpy, DefaultScreen(dpy));
 	/* If this fails, Xlib promises w and h are not updated. */
-	XGetGeometry(dpy, root, &root, &x, &y, &w, &h, &b, &d);
-	Fcons (make_fixnum (w), make_fixnum (h));
+	XGetGeometry(dpy, root, &root, &x, &y, &w, &h, &b, &dd);
+	return Fcons (make_fixnum (w), make_fixnum (h));
       }
     case DM_size_device_mm:
       return Fcons (make_fixnum (XDisplayWidthMM (dpy, DefaultScreen (dpy))),
