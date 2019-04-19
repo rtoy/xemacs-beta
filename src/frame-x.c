@@ -2227,7 +2227,6 @@ static void
 x_set_frame_position (struct frame *f, int xoff, int yoff)
 {
   Widget w = FRAME_X_SHELL_WIDGET (f);
-  Display *dpy = XtDisplay (w);
   Lisp_Object root_size = Fdevice_system_metric (FRAME_DEVICE (f),
 						 Qsize_device,
 						 Qnil);

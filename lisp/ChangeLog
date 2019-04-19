@@ -1,3 +1,12 @@
+2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* misc.el:
+	* misc.el (make-weak-box):
+	* misc.el (weak-box-ref):
+	* misc.el (:load-toplevel):
+	Remove #'weak-box-ref-1 from the dumped Lisp binary, using
+	(eval-when (:load-toplevel) ...) to ensure a reasonable docstring.
+
 2019-03-28  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* x-init.el (pseudo-canonicalize-keysym):
