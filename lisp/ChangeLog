@@ -1,3 +1,13 @@
+2019-04-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.el (setenv):
+	Sync the API of this function with GNU.
+	Remove UNSET as an argument, giving nil for VALUE always has been
+	equivalent.
+	Add SUBSTITUTE-ENV-VARS in its stead, 
+	Check that VARIABLE, VALUE can be encoded in the coding system of
+	the system, error if they can't.	
+
 2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* misc.el:
