@@ -672,18 +672,23 @@ Use `$$' to insert a single dollar sign."
 		   start (+ (match-beginning 0) 1)))))
     string))
 
-(defun setenv (variable &optional value unset substitute-env-vars)
+(defun setenv (variable &optional value substitute-env-vars)
   "Set the value of the environment variable named VARIABLE to VALUE.
 VARIABLE should be a string.  VALUE is optional; if not provided or is
 `nil', the environment variable VARIABLE will be removed.  
 
-UNSET, if non-nil, means to remove VARIABLE from the environment.
+Interactively, a prefix argument means to unset the variable, and
+otherwise the current value (if any) of the variable appears at
+the front of the history list when you type in the new value.
+This function always replaces environment variables with the new
+value when called non-interactively.
+
 SUBSTITUTE-ENV-VARS, if non-nil, means to substitute environment
 variables in VALUE using `substitute-env-vars'.
+This is normally used only for interactive calls.
 
-Interactively, a prefix argument means to unset the variable.
-Interactively, the current value (if any) of the variable
-appears at the front of the history list when you type in the new value.
+The return value is the new value of VARIABLE, or nil if
+it was removed from the environment.
 
 This function works by modifying `process-environment'.
 
@@ -691,7 +696,7 @@ As a special case, setting variable `TZ' calls `set-time-zone-rule' as
 a side-effect."
   (interactive
    (if current-prefix-arg
-       (list (read-envvar-name "Clear environment variable: " 'exact) nil t)
+       (list (read-envvar-name "Clear environment variable: " 'exact) nil)
      (let* ((var (read-envvar-name "Set environment variable: " nil))
             (value (getenv var)))
        (when value
@@ -702,45 +707,27 @@ a side-effect."
                                        ;; XEmacs change; don't specify a
                                        ;; default. (Nor an abbrev table.)
                                        )))))
-  (if unset 
-      (setq value nil)
-    (if substitute-env-vars
-	(setq value (substitute-env-vars value))))
-
-  ;; GNU fuck around with coding systems here. We do it at a much lower
-  ;; level; an equivalent of the following code of Handa's would be
-  ;; worthwhile here, though:
-
-; (let ((codings (find-coding-systems-string (concat variable value))))
-;   (unless (or (eq 'undecided (car codings))
-;               (memq (coding-system-base locale-coding-system) codings))
-;     (error "Can't encode `%s=%s' with `locale-coding-system'"
-;            variable (or value "")))))
-
-  ;; But then right now our find-coding-systems analogue is in packages.
-
-  (if (position ?= variable)
-      (error "Environment variable name `%s' contains `='" variable)
-    (let ((pattern (concat "\\`" (regexp-quote (concat variable "="))))
-	  (case-fold-search nil)
-	  (scan process-environment)
-	  found)
-      (if (string-equal "TZ" variable)
-	  (set-time-zone-rule value))
-      (while scan
-	(cond ((string-match pattern (car scan))
-	       (setq found t)
-	       (if (eq nil value)
-		   (setq process-environment
-                         (delete* (car scan) process-environment))
-		 (setcar scan (concat variable "=" value)))
-	       (setq scan nil)))
-	(setq scan (cdr scan)))
-      (or found
-	  (if value
-	      (setq process-environment
-		    (cons (concat variable "=" value)
-			  process-environment)))))))
+  (when (position ?= variable)
+    (error 'invalid-argument "Environment variable name contains `='"
+           variable))
+  (query-coding-string variable 'native nil t)
+  (and value substitute-env-vars (setq value (substitute-env-vars value)))
+  ;; 
+  (if (equal "TZ" variable) (set-time-zone-rule value))
+  (labels ((prefixp (needle haystack)
+             "Return non-nil if HAYSTACK starts with NEEDLE."
+             (not (mismatch haystack needle :end1 (length needle)))))
+    (if (eq nil value)
+        (setq process-environment
+              (delete* (concat variable "=") process-environment
+                       :test #'prefixp))
+      (query-coding-string value 'native nil t)
+      (let ((found (assoc* (concat variable "=") process-environment
+                           :test #'prefixp)))
+        (if found
+            (setf (car found) (concat variable "=" value))
+          (push (concat variable "=" value) process-environment))))
+    value))
 
 ;; already in C.  Can't move it to Lisp too easily because it's needed
 ;; extremely early in the Lisp loadup sequence.
