@@ -2372,14 +2372,11 @@ getenv_internal (const Ibyte *var,
 		 Ibyte **value,
 		 Bytecount *valuelen)
 {
-  Lisp_Object scan;
-
-  assert (env_initted);
-
-  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
+  EXTERNAL_LIST_LOOP_2 (entry, Vprocess_environment)
     {
-      Lisp_Object entry = XCAR (scan);
-
+#ifdef ERROR_CHECK_ANY
+      assert (env_initted);
+#endif
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
 	  && string_byte (entry, varlen) == '='
@@ -2406,14 +2403,11 @@ putenv_internal (const Ibyte *var,
 		 const Ibyte *value,
 		 Bytecount valuelen)
 {
-  Lisp_Object scan;
-
-  assert (env_initted);
-
-  for (scan = Vprocess_environment; CONSP (scan); scan = XCDR (scan))
+  EXTERNAL_LIST_LOOP_3 (entry, Vprocess_environment, scan)
     {
-      Lisp_Object entry = XCAR (scan);
-
+#ifdef ERROR_CHECK_ANY
+      assert (env_initted);
+#endif
       if (STRINGP (entry)
 	  && XSTRING_LENGTH (entry) > varlen
 	  && string_byte (entry, varlen) == '='

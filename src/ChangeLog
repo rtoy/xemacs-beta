@@ -1,3 +1,11 @@
+2019-04-22  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* process.c (getenv_internal):
+	* process.c (putenv_internal):
+	Vprocess_environment is a Lisp-accessible list, use the
+	EXTERNAL_LIST_LOOP macros to iterate through it, avoiding issues
+	with circular lists.
+
 2019-04-14  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* cmds.c (Fforward_char):
