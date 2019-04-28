@@ -1,3 +1,9 @@
+2019-04-23  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (syms_of_elhash):
+	staticpro() Vequalp_hash_table_test, necessary for interning into
+	a hash table having test #'equalp to actually work.
+
 2019-04-22  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* process.c (getenv_internal):
