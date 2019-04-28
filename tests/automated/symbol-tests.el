@@ -66,6 +66,105 @@
     (Assert (not (eq interned uninterned)))
     (Assert (not (equal interned uninterned)))))
 
+(macrolet
+    ((Check-package-case-sensitivity (&rest names)
+       (cons
+        'progn
+        (mapcan
+         #'(lambda (name)
+             (block done
+               (if (eq 'decode-coding-string (car-safe name))
+                   (if (featurep 'mule)
+                       (setq name (eval name))
+                     ;; Can't handle this string on non-mule:
+                     (return-from done nil)))
+               (let ((name-upper (upcase name))
+                     (name-lower (downcase name))
+                     (name-titlecase (upcase-initials name)))
+                 `((Assert (not (eq (intern ,name sensitive)
+                                    (intern ,name insensitive)))
+                           ,(concat "Checking `" name
+                                    "' interns as distinct symbols in "
+                                    "distinct packages"))
+                   ,@(unless
+                      (equal name name-upper)
+                      `((Assert (eq (intern ,name insensitive)
+                                    (intern ,name-upper insensitive))
+                                ,(concat "Checking `" name
+                                         "' and `" name-upper
+                                         "' map to the same symbol, "
+                                         "case-insensitive package"))
+                        (Assert (eq (intern-soft ,name-upper sensitive pi)
+                                    pi)
+                                ,(concat "Checking `" name-upper
+                                         "' not yet interned in the "
+                                         "case-sensitive package"))
+                        (Assert (not (eq (intern ,name sensitive)
+                                         (intern ,name-upper sensitive)))
+                                ,(concat "Checking `" name
+                                         "' and `" name-upper
+                                         "' map to distinct symbols, "
+                                         "case-sensitive package"))))
+                   ,@(unless
+                      (equal name name-lower)
+                      `((Assert (eq (intern ,name insensitive)
+                                    (intern ,name-lower insensitive))
+                                ,(concat "Checking `" name
+                                         "' and `" name-lower
+                                         "' map to the same symbol, "
+                                         "case-insensitive package"))
+                        (Assert (eq (intern-soft ,name-lower sensitive pi)
+                                    pi)
+                                ,(concat "Checking `" name-lower
+                                         "' not yet interned in the "
+                                         "case-sensitive package"))
+                        (Assert (not (eq (intern ,name sensitive)
+                                         (intern ,name-lower sensitive)))
+                                ,(concat "Checking `" name
+                                         "' and `" name-lower
+                                         "' map to distinct symbols, "
+                                         "case-sensitive package"))))
+                   ,@(unless
+                      (equal name name-titlecase)
+                      `((Assert (eq (intern ,name insensitive)
+                                    (intern ,name-titlecase insensitive))
+                                ,(concat "Checking `" name
+                                         "' and `" name-titlecase
+                                         "' map to the same symbol, "
+                                         "case-insensitive package"))
+                        (Assert (eq (intern-soft ,name-titlecase sensitive pi)
+                                    pi)
+                                ,(concat "Checking `" name-titlecase
+                                         "' not yet interned in the "
+                                         "case-sensitive package"))
+                        (Assert (not (eq (intern ,name sensitive)
+                                         (intern ,name-titlecase sensitive)))
+                                ,(concat "Checking `" name
+                                         "' and `" name-titlecase
+                                         "' map to distinct symbols, "
+                                         "case-sensitive package"))))))))
+           names))))
+  (let ((insensitive (make-hash-table :test #'equalp))
+        (sensitive (make-hash-table :test #'equal)))
+    (Check-package-case-sensitivity
+     "foo" "bar" "" "something with space in it"
+     "a string with \0 in the middle." "100" "10.0" "#<>[]]]];'\\';"
+     ;; "καρδιακή"
+     (decode-coding-string
+      "\xce\xba\xce\xb1\xcf\x81\xce\xb4\xce\xb9\xce\xb1\xce\xba\xce\xae"
+      'utf-8)
+     ;; ", κοινώς γνωστό ως καρδιακή προσβολή, "
+     (decode-coding-string
+      "\x2c\x20\xce\xba\xce\xbf\xce\xb9\xce\xbd\xcf\x8e\xcf\x82\x20\xce\xb3\xce\xbd\xcf\x89\xcf\x83\xcf\x84\xcf\x8c\x20\xcf\x89\xcf\x82\x20\xce\xba\xce\xb1\xcf\x81\xce\xb4\xce\xb9\xce\xb1\xce\xba\xce\xae\x20\xcf\x80\xcf\x81\xce\xbf\xcf\x83\xce\xb2\xce\xbf\xce\xbb\xce\xae\x2c\x20"
+      'utf-8)
+     "!@#$%^^&*(()__"
+     ;; "Иногда"
+     (decode-coding-string "\xd0\x98\xd0\xbd\xd0\xbe\xd0\xb3\xd0\xb4\xd0\xb0"
+                           'utf-8)
+     ;; "цианокобаламин, так как именно"
+     (decode-coding-string "\xd1\x86\xd0\xb8\xd0\xb0\xd0\xbd\xd0\xbe\xd0\xba\xd0\xbe\xd0\xb1\xd0\xb0\xd0\xbb\xd0\xb0\xd0\xbc\xd0\xb8\xd0\xbd\x2c\x20\xd1\x82\xd0\xb0\xd0\xba\x20\xd0\xba\xd0\xb0\xd0\xba\x20\xd0\xb8\xd0\xbc\xd0\xb5\xd0\xbd\xd0\xbd\xd0\xbe"
+                           'utf-8))))
+
 (labels ((check-weak-list-unique (weak-list &optional reversep)
            "Check that elements of WEAK-LIST are referenced only there."
            (let ((len (length (weak-list-list weak-list))))

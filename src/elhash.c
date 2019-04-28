@@ -2854,6 +2854,7 @@ syms_of_elhash (void)
     = Fcons (Fcons (Qequal, Vequal_hash_table_test),
              XWEAK_LIST_LIST (Vhash_table_test_weak_list));
 
+  staticpro (&Vequalp_hash_table_test);
   Vequalp_hash_table_test
     = define_hash_table_test (Qequalp, lisp_object_equalp_equal,
                               lisp_object_equalp_hash, Qequalp, Qequalp_hash);
