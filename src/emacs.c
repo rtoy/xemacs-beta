@@ -2713,9 +2713,14 @@ main_1 (int argc, Wexttext **argv, Wexttext **UNUSED (envp), int restart)
       else
 	{
 	  Vinvocation_path = split_env_path ("PATH", NULL);
-	  locate_file (Vinvocation_path, Vinvocation_name,
-		       Vlisp_EXEC_SUFFIXES,
-		       &Vinvocation_directory, X_OK);
+          /* There is a bootstrapping issue on old-Mule if there are any
+             non-ASCII, non-Latin-1 executables in PATH, which issue
+             locate_file_without_hash() works around.
+             Old-Mule is still really shafted if its pathname is non-ASCII
+             non-Latin-1 and argv[0] is a non-absolute path. */
+	  locate_file_without_hash (Vinvocation_path, Vinvocation_name,
+                                    Vlisp_EXEC_SUFFIXES,
+                                    &Vinvocation_directory, X_OK);
 	}
 
       if (NILP (Vinvocation_directory))
