@@ -1103,9 +1103,10 @@ locate_file_in_directory (Lisp_Object directory, Lisp_Object str,
   return closure.fd;
 }
 
-/* do the same as locate_file() but don't use any hash tables. */
-
-static int
+/* Do the same as locate_file() but don't use any hash tables. Non-static only
+   because of a need for it from emacs.c, before Vdata_directory is available
+   for the Unicode mapping tables. */
+int
 locate_file_without_hash (Lisp_Object path, Lisp_Object str,
 			  Lisp_Object suffixes, Lisp_Object *storeptr,
 			  int mode)

@@ -5658,6 +5658,8 @@ EXFUN (Fread, 1);
 void ebolify_bytecode_constants (Lisp_Object);
 void close_load_descs (void);
 int locate_file (Lisp_Object, Lisp_Object, Lisp_Object, Lisp_Object *, int);
+int locate_file_without_hash (Lisp_Object, Lisp_Object, Lisp_Object,
+                              Lisp_Object *, int);
 EXFUN (Flocate_file_clear_hashing, 1);
 int isfloat_string (const char *);
 int isratio_string (const char *);
