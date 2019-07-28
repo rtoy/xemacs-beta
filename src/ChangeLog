@@ -1,3 +1,9 @@
+2019-07-28  Aidan Kehoe  <kehoea@parhasard.net>
+
+	* elhash.c (intern_istring):
+	Correct an assertion here that didn't take into account
+	case-insensitive packages, thank you Stephen!
+
 2019-06-18  Aidan Kehoe  <kehoea@parhasard.net>
 
 	* emacs.c (main_1):
