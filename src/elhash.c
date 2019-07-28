@@ -1888,6 +1888,7 @@ intern_istring (const Ibyte *str, Bytecount len, Lisp_Object reloc,
 #ifdef ERROR_CHECK_STRUCTURES
   assert (HTENTRY_CLEAR_P (probe));
   assert (NILP (reloc) ||
+	  EQ (Vequalp_hash_table_test, ht->test) ||
           (EQ (Vequal_hash_table_test, ht->test)
            && !memcmp (XSTRING_DATA (reloc), str, len)));
 #endif
